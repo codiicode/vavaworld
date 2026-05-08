@@ -6,3 +6,12 @@ export type SelectedTile = {
   lng: number;
   tier: Tier;
 };
+
+export type ClaimedTile = {
+  h3: string;
+  owner: string;          // base58 pubkey
+  tier: Tier;
+  claimedAt: number;      // unix seconds
+  pricePaid: bigint;
+  bump: number;
+};
