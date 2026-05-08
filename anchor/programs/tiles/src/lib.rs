@@ -18,4 +18,12 @@ pub mod tiles {
     pub fn init_counter(ctx: Context<InitCounter>, tier: u8) -> Result<()> {
         init_counter_handler(ctx, tier)
     }
+
+    pub fn claim<'info>(
+        ctx: Context<'info, Claim<'info>>,
+        h3_ids: Vec<u64>,
+        expected_max_total: u64,
+    ) -> Result<()> {
+        claim_handler(ctx, h3_ids, expected_max_total)
+    }
 }
