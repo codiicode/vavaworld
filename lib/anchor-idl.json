@@ -1,0 +1,183 @@
+{
+  "address": "GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt",
+  "metadata": {
+    "name": "tiles",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Tomorrowland tiles program."
+  },
+  "instructions": [
+    {
+      "name": "claim",
+      "discriminator": [
+        62,
+        198,
+        214,
+        193,
+        213,
+        159,
+        108,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "claimer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury",
+          "writable": true,
+          "address": "74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X"
+        },
+        {
+          "name": "t1_counter",
+          "writable": true
+        },
+        {
+          "name": "t2_counter",
+          "writable": true
+        },
+        {
+          "name": "t3_counter",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "h3_ids",
+          "type": {
+            "vec": "u64"
+          }
+        },
+        {
+          "name": "expected_max_total",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_counter",
+      "discriminator": [
+        247,
+        168,
+        146,
+        45,
+        125,
+        26,
+        142,
+        80
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "address": "74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X"
+        },
+        {
+          "name": "counter",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "tier",
+          "type": "u8"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "TierCounter",
+      "discriminator": [
+        233,
+        165,
+        123,
+        122,
+        110,
+        54,
+        55,
+        207
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "BatchSizeInvalid",
+      "msg": "h3_ids length out of range [1,20]"
+    },
+    {
+      "code": 6001,
+      "name": "AlreadyClaimed",
+      "msg": "Tile already claimed"
+    },
+    {
+      "code": 6002,
+      "name": "PdaInvalid",
+      "msg": "Tile PDA does not match the expected h3_id"
+    },
+    {
+      "code": 6003,
+      "name": "TreasuryMismatch",
+      "msg": "Treasury account mismatch"
+    },
+    {
+      "code": 6004,
+      "name": "SlippageExceeded",
+      "msg": "Total cost exceeds expected_max_total (slippage)"
+    },
+    {
+      "code": 6005,
+      "name": "CounterMismatch",
+      "msg": "Counter PDA mismatch for tier"
+    },
+    {
+      "code": 6006,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidH3",
+      "msg": "Invalid h3 cell — could not derive coordinates"
+    },
+    {
+      "code": 6008,
+      "name": "TierInvalid",
+      "msg": "Tier value out of range"
+    }
+  ],
+  "types": [
+    {
+      "name": "TierCounter",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "tier",
+            "type": "u8"
+          },
+          {
+            "name": "sold",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
