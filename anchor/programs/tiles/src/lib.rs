@@ -4,6 +4,7 @@ declare_id!("GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt");
 
 pub mod constants;
 pub mod h3_coords;
+pub mod tier;
 
 #[program]
 pub mod tiles {
