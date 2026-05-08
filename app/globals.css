@@ -1,27 +1,29 @@
+@import 'mapbox-gl/dist/mapbox-gl.css';
+@import '@solana/wallet-adapter-react-ui/styles.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0b0d10;
+  --panel: #14171c;
+  --border: #232830;
+  --fg: #e6e8eb;
+  --muted: #8a8f98;
+  --amber: #f4a02633;
+  --teal: #14b8a633;
+  --gray: #6b727a26;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html, body { height: 100%; }
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
+* { box-shadow: none !important; }
+
+.mapboxgl-ctrl-attrib, .mapboxgl-ctrl-logo { opacity: 0.4; }
