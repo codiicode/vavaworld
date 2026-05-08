@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, SystemProgram, PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
@@ -19,12 +19,10 @@ export function ClaimModal({
   selectedHexes,
   onClose,
   onConfirmed,
-  treasury,
 }: {
   selectedHexes: Set<string>;
   onClose: () => void;
   onConfirmed: (h3s: string[]) => void;
-  treasury: PublicKey;
 }) {
   const wallet = useWallet();
   const counters = useCounters();
@@ -56,11 +54,9 @@ export function ClaimModal({
         .claim(h3Bns, new BN(expectedMax.toString()))
         .accounts({
           claimer: wallet.publicKey,
-          treasury,
           t1Counter: counterPda(1, programIdPk)[0],
           t2Counter: counterPda(2, programIdPk)[0],
           t3Counter: counterPda(3, programIdPk)[0],
-          systemProgram: SystemProgram.programId,
         })
         .remainingAccounts(
           tilePdas.map((p) => ({ pubkey: p, isWritable: true, isSigner: false })),
