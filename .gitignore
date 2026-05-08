@@ -34,3 +34,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.superpowers/
+
+# Anchor build artifacts
+anchor/target/
+anchor/.anchor/
+
+# Claude Code local cache
+.claude/

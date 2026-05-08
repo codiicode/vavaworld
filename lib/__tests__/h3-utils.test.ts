@@ -27,7 +27,7 @@ describe('hexToFeature', () => {
 });
 
 describe('HEX_RES', () => {
-  it('is resolution 10', () => {
-    expect(HEX_RES).toBe(10);
+  it('is resolution 9', () => {
+    expect(HEX_RES).toBe(9);
   });
 });

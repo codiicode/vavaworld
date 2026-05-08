@@ -126,7 +126,7 @@ export function MapView({
       mapboxAccessToken={token}
       initialViewState={{ longitude: 13.405, latitude: 52.52, zoom: 10 }}
       style={{ position: 'absolute', inset: 0 }}
-      mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
+      mapStyle="mapbox://styles/mapbox/satellite-v9"
       onLoad={onLoad}
       onMoveEnd={refreshHexes}
       onClick={onClick}
