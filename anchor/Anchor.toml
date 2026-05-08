@@ -1,12 +1,15 @@
 [toolchain]
-anchor_version = "0.30.1"
+anchor_version = "1.0.2"
 
 [features]
 resolution = true
 skip-lint = false
 
 [programs.localnet]
-tiles = "Tiles11111111111111111111111111111111111111"
+tiles = "GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt"
+
+[programs.devnet]
+tiles = "GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt"
 
 [registry]
 url = "https://api.apr.dev"

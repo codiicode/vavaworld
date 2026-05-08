@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("Tiles11111111111111111111111111111111111111");
+declare_id!("GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt");
 
 #[program]
 pub mod tiles {
