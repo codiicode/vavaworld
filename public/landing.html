@@ -978,5 +978,44 @@ setInterval(()=>{
   });
 })();
 </script>
+
+<script>
+// Detect Privy session and swap auth CTAs accordingly.
+// Landing is static HTML so we can't use the Privy SDK here — we sniff its
+// storage instead. Runs on every page visit so logout state stays in sync.
+(function(){
+  function isLoggedIn() {
+    try {
+      const cookies = document.cookie || '';
+      if (cookies.includes('privy-id-token') || cookies.includes('privy-token') || cookies.includes('privy-refresh-token')) return true;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i) || '';
+        if (k.startsWith('privy:identity') || k.startsWith('privy:token') || k.startsWith('privy:refresh') || k.startsWith('privy:user')) return true;
+      }
+    } catch (e) { /* storage may be blocked */ }
+    return false;
+  }
+
+  function applyLoggedInState() {
+    document.querySelectorAll('a, button').forEach(function(el){
+      const txt = (el.textContent || '').trim();
+      if (txt === 'Log in') {
+        el.textContent = 'Profile';
+        if (el.tagName === 'A') el.setAttribute('href', '/map');
+      } else if (txt === 'Sign up') {
+        el.style.display = 'none';
+      }
+    });
+  }
+
+  if (isLoggedIn()) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', applyLoggedInState);
+    } else {
+      applyLoggedInState();
+    }
+  }
+})();
+</script>
 </body>
 </html>
