@@ -36,6 +36,7 @@ yarn-error.log*
 next-env.d.ts
 
 .superpowers/
+.tmp-vavaworld/
 
 # Anchor build artifacts
 anchor/target/

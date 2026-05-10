@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VAVAWORLD — Every tile has a holder.</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:        #07090b;
+    --bg-2:      #0c0f12;
+    --ink:       #eef2ee;
+    --ink-2:     #c8cdc8;
+    --dim:       rgba(238,242,238,0.55);
+    --dim-2:     rgba(238,242,238,0.32);
+    --hairline:  rgba(238,242,238,0.10);
+    --hair-2:    rgba(238,242,238,0.06);
+    --signal:    #00C805;
+    --signal-soft: rgba(0,200,5,0.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--ink);}
+  body{
+    font-family:'Space Grotesk',-apple-system,system-ui,sans-serif;
+    font-size:15px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 40%, rgba(0,200,5,0.06), transparent 60%),
+      radial-gradient(ellipse 60% 80% at 50% 100%, rgba(0,200,5,0.04), transparent 70%),
+      var(--bg);
+  }
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;background:none;border:none;color:inherit;}
+  ::selection{background:var(--signal);color:#000;}
+  svg{display:block;}
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--dim);}
+  .serif{font-family:'Instrument Serif',Georgia,serif;font-style:italic;font-weight:400;}
+
+  /* ── NAV ─────────────────────────────────────────── */
+  nav.site{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    background:rgba(7,9,11,0.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--hairline);
+  }
+  .nav-inner{
+    max-width:1440px;margin:0 auto;padding:18px 32px;
+    display:flex;align-items:center;justify-content:space-between;gap:32px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand .mark{width:24px;height:24px;}
+  .brand .name{font-weight:700;font-size:15px;letter-spacing:0.08em;}
+  .brand .name .dot{color:var(--signal);}
+  .nav-links{display:flex;align-items:center;gap:36px;}
+  .nav-links a{font-size:14px;color:var(--ink-2);font-weight:500;transition:color .15s;}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-right{display:flex;align-items:center;gap:14px;}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:10px 18px;font-size:13.5px;font-weight:500;
+    border:1px solid transparent;
+    transition:all .15s;cursor:pointer;
+  }
+  .btn-primary{background:var(--signal);color:#000;}
+  .btn-primary:hover{filter:brightness(1.1);}
+  .btn-ghost{background:transparent;color:var(--ink);border-color:var(--hairline);}
+  .btn-ghost:hover{border-color:var(--ink);}
+  .btn-text{padding:10px 4px;color:var(--ink-2);font-weight:500;}
+  .btn-text:hover{color:var(--ink);}
+  .btn-light{background:var(--ink);color:#000;}
+
+  /* ── HERO STAGE ──────────────────────────────────── */
+  .stage{
+    position:relative;
+    min-height:100vh;
+    padding-top:78px;
+    overflow:hidden;
+  }
+  .globe-canvas-wrap{
+    position:absolute;
+    inset:0;
+    display:flex;align-items:center;justify-content:center;
+    pointer-events:auto;
+  }
+  #globe{
+    width:min(112vh, 112vw, 1320px);
+    height:min(112vh, 112vw, 1320px);
+    max-width:none;
+    display:block;
+    filter: drop-shadow(0 0 60px rgba(0,200,5,0.06));
+  }
+
+  /* Overlay copy */
+  .stage-grid{
+    position:relative;
+    max-width:1440px;
+    margin:0 auto;
+    padding:48px 48px 64px;
+    min-height: calc(100vh - 78px);
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    gap:24px;
+    pointer-events:none;
+  }
+  .stage-grid > *{pointer-events:auto;}
+
+  .hero-copy{
+    grid-column:1 / span 1;
+    grid-row:1 / span 1;
+    max-width:440px;
+  }
+  .hero-copy .eyebrow{
+    display:inline-flex;align-items:center;gap:10px;
+    margin-bottom:24px;
+  }
+  .hero-copy .eyebrow .live-dot{
+    width:7px;height:7px;background:var(--signal);border-radius:50%;
+    box-shadow:0 0 12px var(--signal);
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+  .hero-copy h1{
+    font-weight:500;
+    font-size:clamp(42px,5.4vw,72px);
+    line-height:1.0;
+    letter-spacing:-0.02em;
+    text-wrap:balance;
+    color:var(--ink);
+  }
+  .hero-copy h1 .em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--signal);}
+  .hero-copy p.lead{
+    margin-top:22px;
+    font-size:15.5px;line-height:1.55;
+    color:var(--dim);max-width:380px;
+    text-wrap:pretty;
+  }
+  .hero-copy .ctas{margin-top:28px;display:flex;gap:10px;flex-wrap:wrap;}
+
+  /* Big stats column on the left, lower */
+  .stats-col-l{
+    grid-column:1 / span 1;
+    grid-row:2 / span 1;
+    align-self:end;
+    display:flex;flex-direction:column;gap:32px;
+    margin-bottom:24px;
+  }
+  .stat-big{display:flex;align-items:baseline;gap:24px;}
+  .stat-big .v{
+    font-family:'Instrument Serif',serif;
+    font-style:normal;font-weight:400;
+    font-size:64px;line-height:1;letter-spacing:-0.02em;
+    color:var(--signal);
+    min-width:140px;
+    font-feature-settings:"tnum";
+  }
+  .stat-big .k{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;letter-spacing:0.32em;text-transform:uppercase;
+    color:var(--dim-2);
+  }
+
+  /* Right side — live ticker rail */
+  .live-rail{
+    grid-column:3 / span 1;
+    grid-row:1 / span 2;
+    align-self:start;
+    margin-left:auto;
+    width:min(360px,100%);
+    background:rgba(12,15,18,0.55);
+    border:1px solid var(--hairline);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+  }
+  .live-rail .head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;
+    border-bottom:1px solid var(--hairline);
+  }
+  .live-rail .head .l{display:flex;align-items:center;gap:9px;}
+  .live-rail .head .live-dot{
+    width:7px;height:7px;background:var(--signal);border-radius:50%;
+    box-shadow:0 0 10px var(--signal);
+    animation:pulse 1.6s infinite;
+  }
+  .live-rail .head .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink);}
+  .live-rail .head .ct{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--dim);}
+  .live-rail .body{
+    max-height:400px;overflow:hidden;
+    position:relative;
+  }
+  .live-rail .body::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:60px;
+    background:linear-gradient(to bottom, transparent, rgba(12,15,18,0.95));
+    pointer-events:none;
+  }
+  .live-row{
+    padding:13px 18px;
+    border-bottom:1px solid var(--hair-2);
+    font-size:12.5px;
+    display:grid;
+    grid-template-columns: auto 1fr auto;
+    gap:10px;
+    align-items:center;
+  }
+  .live-row:last-child{border-bottom:0;}
+  .live-row.entering{animation:slideIn .5s ease-out;}
+  @keyframes slideIn{
+    from{background:rgba(0,200,5,0.18);transform:translateY(-6px);opacity:0;}
+    to{background:transparent;transform:none;opacity:1;}
+  }
+  .live-row .verb{
+    font-family:'JetBrains Mono',monospace;font-size:10px;
+    letter-spacing:0.16em;text-transform:uppercase;
+    padding:3px 7px;border:1px solid var(--hairline);
+    color:var(--ink-2);
+  }
+  .live-row .verb.claim{color:var(--signal);border-color:rgba(0,200,5,0.35);}
+  .live-row .verb.list{color:#e8b54a;border-color:rgba(232,181,74,0.3);}
+  .live-row .verb.resell{color:var(--ink);border-color:var(--hairline);}
+  .live-row .mid{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .live-row .mid .t{color:var(--ink);font-size:13px;}
+  .live-row .mid .t .id{color:var(--signal);font-family:'JetBrains Mono',monospace;font-size:11.5px;}
+  .live-row .mid .sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:0.04em;}
+  .live-row .px{
+    text-align:right;font-family:'JetBrains Mono',monospace;
+    font-size:13px;color:var(--ink);
+    font-feature-settings:"tnum";
+  }
+  .live-row .px .ago{display:block;font-size:9.5px;color:var(--dim-2);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;}
+
+  /* Bottom row */
+  .stage-foot{
+    grid-column:1 / -1;
+    grid-row:3 / span 1;
+    display:flex;justify-content:space-between;align-items:end;gap:32px;
+    padding-top:24px;
+    border-top:1px solid var(--hairline);
+  }
+  .stage-foot .l, .stage-foot .r{display:flex;align-items:center;gap:24px;}
+  .stage-foot .ratio{
+    display:flex;align-items:baseline;gap:14px;
+  }
+  .stage-foot .ratio .v{font-family:'Instrument Serif',serif;font-size:30px;color:var(--ink);}
+  .stage-foot .ratio .v .signal{color:var(--signal);}
+  .stage-foot .ratio .k{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--dim-2);}
+  .scroll-hint{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;
+    color:var(--dim);
+  }
+  .scroll-hint .arr{
+    width:1px;height:18px;background:var(--dim);
+    position:relative;overflow:hidden;
+  }
+  .scroll-hint .arr::after{
+    content:"";position:absolute;left:0;right:0;height:6px;background:var(--signal);
+    animation:scrollArr 1.6s ease-in-out infinite;
+  }
+  @keyframes scrollArr{
+    0%{top:-6px;opacity:0;}30%{opacity:1;}100%{top:18px;opacity:0;}
+  }
+
+  /* ── DESTINATION CARDS ──────────────────────────── */
+  .destinations{
+    max-width:1440px;margin:0 auto;padding:96px 32px 96px;
+  }
+  .section-head{
+    display:flex;justify-content:space-between;align-items:end;gap:32px;
+    margin-bottom:48px;padding-bottom:24px;border-bottom:1px solid var(--hairline);
+  }
+  .section-head h2{font-weight:500;font-size:42px;letter-spacing:-0.015em;line-height:1;color:var(--ink);}
+  .section-head h2 .em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--signal);}
+  .section-head .sub{font-size:14px;color:var(--dim);max-width:480px;margin-top:12px;}
+  .section-head .num{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--dim-2);}
+
+  .actions{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:0;border:1px solid var(--hairline);
+    background:rgba(12,15,18,0.5);
+  }
+  .action{
+    padding:36px 32px 32px;
+    border-right:1px solid var(--hairline);
+    display:flex;flex-direction:column;gap:14px;
+    transition:background .2s;position:relative;min-height:240px;
+  }
+  .action:last-child{border-right:0;}
+  .action:hover{background:rgba(0,200,5,0.04);}
+  .action .head{display:flex;align-items:center;justify-content:space-between;}
+  .action .head .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--dim-2);}
+  .action .head .arrow{color:var(--ink);transition:transform .2s;}
+  .action:hover .head .arrow{transform:translate(2px,-2px);color:var(--signal);}
+  .action h3{font-weight:500;font-size:30px;letter-spacing:-0.015em;line-height:1.05;color:var(--ink);}
+  .action p{font-size:14px;line-height:1.55;color:var(--dim);max-width:320px;text-wrap:pretty;}
+  .action .meta{margin-top:auto;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-2);display:flex;align-items:center;gap:10px;}
+  .action .meta .signal-dot{width:6px;height:6px;background:var(--signal);border-radius:50%;box-shadow:0 0 8px var(--signal);}
+
+  /* ── HOW IT WORKS ───────────────────────────────── */
+  .how{max-width:1440px;margin:0 auto;padding:0 32px 96px;}
+  .how-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+    border:1px solid var(--hairline);
+    background:rgba(12,15,18,0.5);
+  }
+  .how-step{padding:40px 36px;border-right:1px solid var(--hairline);display:flex;flex-direction:column;gap:14px;min-height:260px;}
+  .how-step:last-child{border-right:0;}
+  .how-step .step-no{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.26em;color:var(--signal);}
+  .how-step h3{font-weight:500;font-size:22px;letter-spacing:-0.005em;line-height:1.2;margin-top:6px;color:var(--ink);}
+  .how-step p{font-size:14.5px;line-height:1.6;color:var(--ink-2);text-wrap:pretty;}
+  .how-step .ill{margin-top:auto;padding-top:24px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.16em;color:var(--dim-2);text-transform:uppercase;}
+
+  /* ── CTA ─────────────────────────────────────────── */
+  .cta{max-width:1440px;margin:0 auto;padding:0 32px 96px;}
+  .cta-card{
+    border:1px solid var(--hairline);
+    background:linear-gradient(135deg, rgba(0,200,5,0.08), rgba(0,200,5,0) 60%), rgba(12,15,18,0.7);
+    padding:80px 64px;
+    display:grid;grid-template-columns:1.4fr 1fr;gap:48px;align-items:center;
+    position:relative;overflow:hidden;
+  }
+  .cta-card h2{font-weight:500;font-size:clamp(34px,4vw,52px);line-height:1;letter-spacing:-0.015em;text-wrap:balance;color:var(--ink);}
+  .cta-card h2 .em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--signal);}
+  .cta-card p{margin-top:18px;color:var(--dim);font-size:16px;line-height:1.5;max-width:480px;}
+  .cta-card .btns{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;}
+  .cta-card::before{
+    content:"";position:absolute;right:-120px;top:-120px;
+    width:480px;height:480px;border-radius:50%;
+    background:radial-gradient(circle, rgba(0,200,5,0.15), transparent 60%);
+    pointer-events:none;
+  }
+
+  /* ── FOOTER ─────────────────────────────────────── */
+  footer.site{border-top:1px solid var(--hairline);padding:48px 32px 36px;}
+  .foot-inner{
+    max-width:1440px;margin:0 auto;
+    display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;
+  }
+  .foot-brand p{margin-top:14px;color:var(--dim);font-size:13.5px;line-height:1.55;max-width:340px;}
+  .foot-col h4{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.22em;text-transform:uppercase;color:var(--dim-2);margin-bottom:14px;font-weight:500;}
+  .foot-col ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .foot-col a{color:var(--ink-2);font-size:14px;}
+  .foot-col a:hover{color:var(--signal);}
+  .foot-bottom{
+    max-width:1440px;margin:48px auto 0;padding-top:24px;border-top:1px solid var(--hairline);
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.16em;color:var(--dim-2);text-transform:uppercase;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 1100px){
+    .stage-grid{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;}
+    .hero-copy{grid-column:1;grid-row:1;}
+    .live-rail{grid-column:1;grid-row:2;width:100%;max-width:520px;}
+    .stats-col-l{grid-column:1;grid-row:3;flex-direction:row;flex-wrap:wrap;}
+    .stage-foot{grid-row:4;}
+    #globe{width:min(120vw,800px);height:min(120vw,800px);opacity:0.55;}
+  }
+  @media (max-width: 760px){
+    .nav-links{display:none;}
+    .actions{grid-template-columns:1fr;}
+    .action{border-right:0;border-bottom:1px solid var(--hairline);}
+    .action:last-child{border-bottom:0;}
+    .how-grid{grid-template-columns:1fr;}
+    .how-step{border-right:0;border-bottom:1px solid var(--hairline);min-height:auto;}
+    .how-step:last-child{border-bottom:0;}
+    .cta-card{grid-template-columns:1fr;padding:48px 32px;}
+    .cta-card .btns{justify-content:flex-start;}
+    .foot-inner{grid-template-columns:1fr 1fr;}
+    .stat-big .v{font-size:42px;min-width:90px;}
+    .stage-grid{padding:32px 24px 48px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────── -->
+<nav class="site">
+  <div class="nav-inner">
+    <a href="#" class="brand" aria-label="VAVAWORLD">
+      <svg class="mark" viewBox="-5 -5 10 10" aria-hidden="true"><g id="brand-mark"></g></svg>
+      <span class="name">VAVAWORLD<span class="dot">.</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#buy">Buy land</a>
+      <a href="#marketplace">Marketplace</a>
+      <a href="#leaderboard">Leaderboard</a>
+      <a href="#how">How it works</a>
+    </div>
+    <div class="nav-right">
+      <button class="btn btn-text">Log in</button>
+      <button class="btn btn-primary">Sign up</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO STAGE WITH GLOBE ──────────────────────── -->
+<section class="stage">
+  <div class="globe-canvas-wrap">
+    <canvas id="globe" width="1600" height="1600"></canvas>
+  </div>
+
+  <div class="stage-grid">
+    <div class="hero-copy">
+      <span class="eyebrow mono"><span class="live-dot"></span>Live · Solana mainnet</span>
+      <h1>Every tile<br>has a <span class="em">holder.</span></h1>
+      <p class="lead">VAVAWORLD divides Earth into 100&nbsp;million hexagonal tiles. Watch ownership flow between cities in real time.</p>
+      <div class="ctas">
+        <button class="btn btn-primary">Buy land →</button>
+        <button class="btn btn-ghost">How it works</button>
+      </div>
+    </div>
+
+    <aside class="live-rail" aria-label="Live activity">
+      <div class="head">
+        <div class="l"><span class="live-dot"></span><span class="label">Live activity</span></div>
+        <span class="ct" id="rail-ct">— —</span>
+      </div>
+      <div class="body" id="rail-body">
+        <!-- rows injected -->
+      </div>
+    </aside>
+
+    <div class="stats-col-l">
+      <div class="stat-big">
+        <span class="v" id="stat-claimed">18,432</span>
+        <span class="k">Tiles<br>claimed</span>
+      </div>
+      <div class="stat-big">
+        <span class="v">1,247</span>
+        <span class="k">Total<br>volume · SOL</span>
+      </div>
+      <div class="stat-big">
+        <span class="v">112</span>
+        <span class="k">Cities<br>connected</span>
+      </div>
+    </div>
+
+    <div class="stage-foot">
+      <div class="l">
+        <div class="ratio">
+          <span class="v"><span class="signal">0.018</span><span style="color:var(--dim-2);">%</span></span>
+          <span class="k">of Earth<br>claimed</span>
+        </div>
+      </div>
+      <div class="r">
+        <span class="scroll-hint"><span class="arr"></span>Scroll</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── DESTINATION CARDS ──────────────────────────── -->
+<section class="destinations">
+  <div class="section-head">
+    <div>
+      <h2>Three ways<br>into the <span class="em">map.</span></h2>
+      <p class="sub">Claim a tile, trade peer-to-peer, or watch the leaderboard fill up.</p>
+    </div>
+    <span class="num">§ 01 — 03</span>
+  </div>
+
+  <div class="actions">
+    <a href="#buy" class="action" id="buy">
+      <div class="head">
+        <span class="label">01 / Map</span>
+        <span class="arrow">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 17L17 5M17 5H8M17 5V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"/></svg>
+        </span>
+      </div>
+      <h3>Buy land</h3>
+      <p>Open the live map. Pick a tile anywhere on Earth and claim it for SOL.</p>
+      <span class="meta"><span class="signal-dot"></span>From 0.04 SOL · 100M tiles</span>
+    </a>
+    <a href="#marketplace" class="action" id="marketplace">
+      <div class="head">
+        <span class="label">02 / Secondary</span>
+        <span class="arrow">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 17L17 5M17 5H8M17 5V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"/></svg>
+        </span>
+      </div>
+      <h3>Marketplace</h3>
+      <p>Browse and trade tiles peer-to-peer. Bids, asks, instant settlement.</p>
+      <span class="meta">2,108 listings · 24h vol 38 SOL</span>
+    </a>
+    <a href="#leaderboard" class="action" id="leaderboard">
+      <div class="head">
+        <span class="label">03 / Holders</span>
+        <span class="arrow">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M5 17L17 5M17 5H8M17 5V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"/></svg>
+        </span>
+      </div>
+      <h3>Leaderboard</h3>
+      <p>The biggest landholders, the rarest tiles, the loudest moves of the week.</p>
+      <span class="meta">Top 100 · updated hourly</span>
+    </a>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ──────────────────────────────── -->
+<section class="how" id="how">
+  <div class="section-head">
+    <div>
+      <h2>How it <span class="em">works.</span></h2>
+      <p class="sub">Three steps from anywhere on Earth to a tile that's permanently yours.</p>
+    </div>
+    <span class="num">§ Process</span>
+  </div>
+  <div class="how-grid">
+    <div class="how-step">
+      <span class="step-no">Step 01</span>
+      <h3>Find a place on Earth.</h3>
+      <p>Real satellite imagery, real coordinates. Your house, the Eiffel Tower, an arena — anywhere on the map.</p>
+      <span class="ill">Map · Tile picker</span>
+    </div>
+    <div class="how-step">
+      <span class="step-no">Step 02</span>
+      <h3>Pay in SOL.</h3>
+      <p>One transaction, ~400&nbsp;ms confirmation, fees under one cent. No subscriptions, no leases.</p>
+      <span class="ill">Solana · Mainnet</span>
+    </div>
+    <div class="how-step">
+      <span class="step-no">Step 03</span>
+      <h3>It's yours, permanently.</h3>
+      <p>Transferable, inheritable, non-revocable. Resell on the marketplace whenever you like.</p>
+      <span class="ill">On-chain · Forever</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ─────────────────────────────────────────── -->
+<section class="cta">
+  <div class="cta-card">
+    <div>
+      <h2>Land was free once. <span class="em">Claim yours before the rest do.</span></h2>
+      <p>18,432 tiles claimed. 99.98 million remaining. The map only fills up once.</p>
+    </div>
+    <div class="btns">
+      <button class="btn btn-ghost">Sign up</button>
+      <button class="btn btn-primary">Open the map</button>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ──────────────────────────────────────── -->
+<footer class="site">
+  <div class="foot-inner">
+    <div class="foot-brand">
+      <div class="brand">
+        <svg class="mark" viewBox="-5 -5 10 10" aria-hidden="true"><g id="foot-mark"></g></svg>
+        <span class="name">VAVAWORLD<span class="dot">.</span></span>
+      </div>
+      <p>Permanent ownership of hexagonal tiles on a satellite map of Earth. Built on Solana.</p>
+    </div>
+    <div class="foot-col">
+      <h4>Product</h4>
+      <ul>
+        <li><a href="#buy">Buy land</a></li>
+        <li><a href="#marketplace">Marketplace</a></li>
+        <li><a href="#leaderboard">Leaderboard</a></li>
+        <li><a href="#how">How it works</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Manifesto</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Careers</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <h4>Connect</h4>
+      <ul>
+        <li><a href="#">Twitter</a></li>
+        <li><a href="#">Discord</a></li>
+        <li><a href="#">Github</a></li>
+        <li><a href="#">Docs</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© 2026 VAVAWORLD</span>
+    <span>Solana mainnet</span>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+// ── BRAND MARK ─────────────────────────────────────
+(function(){
+  function hexPts(cx,cy,r){const pts=[];for(let i=0;i<6;i++){const a=(Math.PI/180)*(60*i+30);pts.push((cx+r*Math.cos(a)).toFixed(4)+','+(cy+r*Math.sin(a)).toFixed(4));}return pts.join(' ');}
+  const SQ3=Math.sqrt(3);
+  const CELLS=[];
+  for(let r=-2;r<=2;r++){for(let q=-2;q<=2;q++){if(Math.abs(q+r)>2)continue;CELLS.push({q,r,ring:Math.max(Math.abs(q),Math.abs(r),Math.abs(q+r))});}}
+  function buildCells(fitW){const SCALE=fitW/(2.5*SQ3);return CELLS.map(c=>({ring:c.ring,x:SQ3*(c.q+c.r/2)*SCALE,y:1.5*c.r*SCALE,R:SCALE}));}
+  function render(g){
+    const cells=buildCells(4.6);
+    const sw=(cells[0].R*0.08).toFixed(4);
+    let s='';
+    cells.forEach(c=>{
+      const fill = c.ring===0 ? '#00C805' : '#0c0f12';
+      const stroke = c.ring===0 ? '#00C805' : '#eef2ee';
+      s+=`<polygon points="${hexPts(c.x,c.y,c.R)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="miter"/>`;
+    });
+    g.innerHTML=s;
+  }
+  render(document.getElementById('brand-mark'));
+  render(document.getElementById('foot-mark'));
+})();
+
+// ── HELPERS ────────────────────────────────────────
+function fmt(n){return n.toLocaleString('en-US');}
+function pad(n,w){return String(n).padStart(w,'0');}
+function rndAddr(){const h='0123456789abcdef';let a='';for(let i=0;i<4;i++)a+=h[Math.floor(Math.random()*16)];a+='…';for(let i=0;i<4;i++)a+=h[Math.floor(Math.random()*16)];return a;}
+
+// ── CITY DATA ──────────────────────────────────────
+const CITIES = [
+  {name:'Tokyo',         cc:'JP', lon:139.6917, lat:35.6895, mag:1.0},
+  {name:'Manhattan',     cc:'US', lon:-74.0060, lat:40.7128, mag:1.0},
+  {name:'London',        cc:'GB', lon:-0.1276,  lat:51.5074, mag:0.95},
+  {name:'Paris',         cc:'FR', lon:2.3522,   lat:48.8566, mag:0.9},
+  {name:'Berlin',        cc:'DE', lon:13.4050,  lat:52.5200, mag:0.7},
+  {name:'Stockholm',     cc:'SE', lon:18.0686,  lat:59.3293, mag:0.85},
+  {name:'Helsinki',      cc:'FI', lon:24.94,    lat:60.17,   mag:0.5},
+  {name:'Lisbon',        cc:'PT', lon:-9.14,    lat:38.72,   mag:0.6},
+  {name:'Madrid',        cc:'ES', lon:-3.70,    lat:40.42,   mag:0.7},
+  {name:'Rome',          cc:'IT', lon:12.50,    lat:41.90,   mag:0.65},
+  {name:'Moscow',        cc:'RU', lon:37.62,    lat:55.76,   mag:0.7},
+  {name:'Istanbul',      cc:'TR', lon:28.98,    lat:41.01,   mag:0.7},
+  {name:'Dubai',         cc:'AE', lon:55.27,    lat:25.20,   mag:0.85},
+  {name:'Mumbai',        cc:'IN', lon:72.88,    lat:19.08,   mag:0.7},
+  {name:'Delhi',         cc:'IN', lon:77.21,    lat:28.61,   mag:0.7},
+  {name:'Bangkok',       cc:'TH', lon:100.50,   lat:13.76,   mag:0.7},
+  {name:'Singapore',     cc:'SG', lon:103.82,   lat:1.35,    mag:0.85},
+  {name:'Hong Kong',     cc:'HK', lon:114.11,   lat:22.40,   mag:0.85},
+  {name:'Shanghai',      cc:'CN', lon:121.47,   lat:31.23,   mag:0.85},
+  {name:'Beijing',       cc:'CN', lon:116.41,   lat:39.90,   mag:0.8},
+  {name:'Seoul',         cc:'KR', lon:126.98,   lat:37.57,   mag:0.85},
+  {name:'Sydney',        cc:'AU', lon:151.21,   lat:-33.87,  mag:0.85},
+  {name:'Auckland',      cc:'NZ', lon:174.76,   lat:-36.85,  mag:0.5},
+  {name:'San Francisco', cc:'US', lon:-122.42,  lat:37.77,   mag:0.95},
+  {name:'Los Angeles',   cc:'US', lon:-118.24,  lat:34.05,   mag:0.9},
+  {name:'Chicago',       cc:'US', lon:-87.63,   lat:41.88,   mag:0.7},
+  {name:'Toronto',       cc:'CA', lon:-79.38,   lat:43.65,   mag:0.7},
+  {name:'Mexico City',   cc:'MX', lon:-99.13,   lat:19.43,   mag:0.7},
+  {name:'São Paulo',     cc:'BR', lon:-46.63,   lat:-23.55,  mag:0.8},
+  {name:'Rio',           cc:'BR', lon:-43.17,   lat:-22.91,  mag:0.7},
+  {name:'Buenos Aires',  cc:'AR', lon:-58.38,   lat:-34.60,  mag:0.7},
+  {name:'Lagos',         cc:'NG', lon:3.38,     lat:6.52,    mag:0.65},
+  {name:'Cairo',         cc:'EG', lon:31.24,    lat:30.04,   mag:0.65},
+  {name:'Johannesburg',  cc:'ZA', lon:28.05,    lat:-26.20,  mag:0.6},
+  {name:'Reykjavík',     cc:'IS', lon:-21.94,   lat:64.15,   mag:0.4},
+];
+
+// ── LIVE RAIL ──────────────────────────────────────
+function makeEvent(){
+  const r = Math.random();
+  let verb, verbLabel, price;
+  if (r < 0.62){ verb='claim'; verbLabel='Claim'; price=(Math.random()*0.5+0.04).toFixed(2); }
+  else if (r < 0.85){ verb='list'; verbLabel='Listed'; price=(Math.random()*8+0.3).toFixed(2); }
+  else { verb='resell'; verbLabel='Resold'; price=(Math.random()*12+0.5).toFixed(2); }
+  const a = CITIES[Math.floor(Math.random()*CITIES.length)];
+  let b = a;
+  if (verb !== 'claim'){
+    while (b===a) b = CITIES[Math.floor(Math.random()*CITIES.length)];
+  }
+  return {
+    verb, verbLabel, price,
+    cityA: a, cityB: b,
+    id: 1000000 + Math.floor(Math.random()*9000000),
+    who: rndAddr(),
+    t: performance.now(),
+  };
+}
+function renderEvent(d, fresh){
+  const row = document.createElement('div');
+  row.className = 'live-row' + (fresh ? ' entering' : '');
+  const place = (d.verb==='claim') ? `${d.cityA.name}, ${d.cityA.cc}` : `${d.cityA.name} → ${d.cityB.name}`;
+  row.innerHTML = `
+    <span class="verb ${d.verb}">${d.verbLabel}</span>
+    <span class="mid">
+      <span class="t">Tile <span class="id">#${d.id}</span></span>
+      <span class="sub">${place}</span>
+    </span>
+    <span class="px">${d.price} SOL<span class="ago">now</span></span>`;
+  return row;
+}
+let railCount = 0;
+(function initRail(){
+  const body = document.getElementById('rail-body');
+  for (let i=0;i<6;i++){
+    const ev = makeEvent();
+    const row = renderEvent(ev, false);
+    // backdate ago
+    row.querySelector('.ago').textContent = `${(i+1)*7 + Math.floor(Math.random()*5)}s ago`;
+    body.appendChild(row);
+  }
+  railCount = 6;
+  document.getElementById('rail-ct').textContent = `${pad(railCount,3)} events`;
+})();
+
+// ── ARC DISPATCH (drives both globe arcs and rail) ──
+const arcQueue = [];
+function dispatchArc(a, b, opts={}){
+  arcQueue.push({a, b, t:0, dur:opts.dur || 1.6, color:opts.color || '#00C805'});
+}
+
+setInterval(()=>{
+  // Spawn a random arc
+  let a = CITIES[Math.floor(Math.random()*CITIES.length)];
+  let b = a; while (b===a) b = CITIES[Math.floor(Math.random()*CITIES.length)];
+  dispatchArc(a, b);
+
+  // Push to rail
+  const ev = makeEvent();
+  ev.cityA = a; ev.cityB = b;
+  if (Math.random() < 0.4){ ev.verb='claim'; ev.verbLabel='Claim'; }
+  const body = document.getElementById('rail-body');
+  body.insertBefore(renderEvent(ev, true), body.firstChild);
+  while (body.children.length > 7) body.removeChild(body.lastChild);
+  // tick existing ago labels
+  Array.from(body.querySelectorAll('.ago')).slice(1).forEach((el,i)=>{
+    el.textContent = `${(i+1)*5 + Math.floor(Math.random()*4)}s ago`;
+  });
+  // counter
+  if (ev.verb==='claim'){
+    const c = document.getElementById('stat-claimed');
+    const v = parseInt(c.textContent.replace(/,/g,''),10) + 1;
+    c.textContent = fmt(v);
+  }
+  railCount++;
+  document.getElementById('rail-ct').textContent = `${pad(Math.min(railCount,999),3)} events`;
+}, 1700);
+
+// ── GLOBE ──────────────────────────────────────────
+(async function(){
+  const canvas = document.getElementById('globe');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
+  const radius = Math.min(W,H)/2 - 80;
+
+  let world=null, land=null, countries=null;
+  try{
+    const res = await fetch('https://unpkg.com/world-atlas@2.0.2/countries-110m.json');
+    world = await res.json();
+    land = topojson.feature(world, world.objects.land);
+    countries = topojson.feature(world, world.objects.countries);
+  }catch(e){ console.warn('world fetch failed', e); }
+
+  const projection = d3.geoOrthographic().scale(radius).translate([cx,cy]).clipAngle(90);
+  const path = d3.geoPath(projection, ctx);
+
+  let lambda = 0, mouseInside = false, dragging = false, dragLast = null, lastUserAction = 0;
+  const TILT = -14;
+
+  // Pulsing claimed dots — picked from CITIES with phases
+  const cityPhases = CITIES.map((_,i)=>Math.random()*Math.PI*2);
+
+  // Pre-seed some persistent arcs so it never looks empty
+  for (let i=0;i<5;i++){
+    let a = CITIES[Math.floor(Math.random()*CITIES.length)];
+    let b = a; while (b===a) b = CITIES[Math.floor(Math.random()*CITIES.length)];
+    arcQueue.push({a,b,t:Math.random()*1.5,dur:1.8 + Math.random()*0.6, color:'#00C805'});
+  }
+
+  function isVisible(lon,lat){
+    // Check if point is on visible hemisphere
+    const rot = projection.rotate();
+    const λ0 = -rot[0]*Math.PI/180, φ0 = -rot[1]*Math.PI/180;
+    const λ = lon*Math.PI/180, φ = lat*Math.PI/180;
+    const cosD = Math.sin(φ0)*Math.sin(φ) + Math.cos(φ0)*Math.cos(φ)*Math.cos(λ-λ0);
+    return cosD > 0;
+  }
+
+  // Build a great-circle interpolator using d3.geoInterpolate
+  function arcPath(a, b, t){
+    const interp = d3.geoInterpolate([a.lon,a.lat],[b.lon,b.lat]);
+    const N = 64;
+    const pts = [];
+    const tt = Math.min(1, t);
+    for (let i=0;i<=N*tt;i++){
+      const f = (i/N);
+      const [lo,la] = interp(f);
+      pts.push([lo,la]);
+    }
+    return pts;
+  }
+
+  function drawArc(a, b, prog){
+    // Lift arc above globe surface by drawing curve with a height-altered great-circle approximation
+    // We'll project endpoints + a midpoint that's lifted in screen space to fake altitude
+    const midLon = d3.geoInterpolate([a.lon,a.lat],[b.lon,b.lat])(0.5);
+    const aVis = isVisible(a.lon, a.lat);
+    const bVis = isVisible(b.lon, b.lat);
+    if (!aVis && !bVis) return;
+
+    // Sample along great circle, project, lift toward camera proportional to chord length
+    const N = 60;
+    const chord = d3.geoDistance([a.lon,a.lat],[b.lon,b.lat]); // radians 0..π
+    const lift = Math.min(0.55, chord * 0.42); // max lift fraction of radius
+
+    // Compute screen-space midpoint reference
+    const pA = projection([a.lon,a.lat]);
+    const pB = projection([b.lon,b.lat]);
+    const midGreatCircle = projection(midLon);
+    if (!pA || !pB || !midGreatCircle) return;
+
+    const screenMidX = (pA[0]+pB[0])/2;
+    const screenMidY = (pA[1]+pB[1])/2;
+    // Direction from globe center to mid → push outward
+    let dx = midGreatCircle[0]-cx, dy = midGreatCircle[1]-cy;
+    const dlen = Math.hypot(dx,dy) || 1;
+    dx/=dlen; dy/=dlen;
+    const liftedMid = [
+      midGreatCircle[0] + dx*lift*radius,
+      midGreatCircle[1] + dy*lift*radius
+    ];
+
+    // Draw using quadratic Bezier in screen space — limit by progress
+    const steps = Math.max(2, Math.floor(N*prog));
+    ctx.lineWidth = 2.4;
+    // Glow pass
+    ctx.strokeStyle = 'rgba(0,200,5,0.55)';
+    ctx.shadowColor = 'rgba(0,200,5,0.9)';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    for (let i=0;i<=steps;i++){
+      const t = i/N;
+      // quadratic bezier
+      const u = 1-t;
+      const x = u*u*pA[0] + 2*u*t*liftedMid[0] + t*t*pB[0];
+      const y = u*u*pA[1] + 2*u*t*liftedMid[1] + t*t*pB[1];
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    // Crisp inner stroke
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 1.0;
+    ctx.strokeStyle = 'rgba(180,255,180,0.85)';
+    ctx.stroke();
+
+    // Travelling pulse head
+    if (prog < 1){
+      const t = prog;
+      const u = 1-t;
+      const px = u*u*pA[0] + 2*u*t*liftedMid[0] + t*t*pB[0];
+      const py = u*u*pA[1] + 2*u*t*liftedMid[1] + t*t*pB[1];
+      ctx.beginPath();
+      ctx.arc(px,py,5,0,Math.PI*2);
+      const pg = ctx.createRadialGradient(px,py,0,px,py,16);
+      pg.addColorStop(0,'rgba(220,255,220,1)');
+      pg.addColorStop(0.4,'rgba(0,200,5,0.7)');
+      pg.addColorStop(1,'rgba(0,200,5,0)');
+      ctx.fillStyle = pg;
+      ctx.fill();
+    }
+  }
+
+  function drawScene(dt){
+    ctx.clearRect(0,0,W,H);
+    projection.rotate([lambda, TILT, 0]);
+
+    // Outer glow ring
+    const og = ctx.createRadialGradient(cx,cy,radius*0.95, cx,cy,radius*1.15);
+    og.addColorStop(0,'rgba(0,200,5,0.10)');
+    og.addColorStop(1,'rgba(0,200,5,0)');
+    ctx.fillStyle = og;
+    ctx.beginPath(); ctx.arc(cx,cy,radius*1.18,0,Math.PI*2); ctx.fill();
+
+    // Globe disc — deep dark with subtle gradient
+    ctx.beginPath(); path({type:'Sphere'});
+    const g = ctx.createRadialGradient(cx-radius*0.3, cy-radius*0.3, radius*0.2, cx, cy, radius*1.05);
+    g.addColorStop(0,'#0e1417');
+    g.addColorStop(0.55,'#080b0d');
+    g.addColorStop(1,'#04060700');
+    ctx.fillStyle=g; ctx.fill();
+
+    // Graticule
+    const graticule = d3.geoGraticule10();
+    ctx.beginPath(); path(graticule);
+    ctx.lineWidth=0.8;
+    ctx.strokeStyle='rgba(0,200,5,0.06)'; ctx.stroke();
+
+    // Land — outline with very faint signal-tinted fill
+    if (land){
+      ctx.beginPath(); path(land);
+      ctx.fillStyle='rgba(20,40,28,0.55)'; ctx.fill();
+      ctx.lineWidth=0.6; ctx.strokeStyle='rgba(0,200,5,0.22)'; ctx.stroke();
+    }
+    if (countries){
+      ctx.beginPath(); path(countries);
+      ctx.lineWidth=0.4; ctx.strokeStyle='rgba(0,200,5,0.10)'; ctx.stroke();
+    }
+
+    // Sphere outline
+    ctx.beginPath(); path({type:'Sphere'});
+    ctx.lineWidth = 1.2; ctx.strokeStyle='rgba(0,200,5,0.32)'; ctx.stroke();
+
+    // City markers — pulsing
+    const now = performance.now()/1000;
+    CITIES.forEach((c,i)=>{
+      if (!isVisible(c.lon,c.lat)) return;
+      const p = projection([c.lon,c.lat]); if (!p) return;
+      const pulse = 0.5 + 0.5*Math.sin(now*1.3 + cityPhases[i]);
+      const base = 1.5 + c.mag*1.6;
+      // halo
+      ctx.beginPath();
+      ctx.arc(p[0],p[1], base + 4 + pulse*5, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(0,200,5,${0.05 + pulse*0.10})`;
+      ctx.fill();
+      // dot
+      ctx.beginPath();
+      ctx.arc(p[0],p[1], base, 0, Math.PI*2);
+      ctx.fillStyle = '#00C805';
+      ctx.shadowColor = 'rgba(0,200,5,0.9)';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    });
+
+    // Arcs
+    for (let i=arcQueue.length-1;i>=0;i--){
+      const arc = arcQueue[i];
+      arc.t += dt/arc.dur;
+      const fadeOut = arc.t > 1.3;
+      ctx.save();
+      if (fadeOut){
+        ctx.globalAlpha = Math.max(0, 1 - (arc.t - 1.3)/0.7);
+      }
+      const drawProg = Math.min(1, arc.t);
+      drawArc(arc.a, arc.b, drawProg);
+      ctx.restore();
+      if (arc.t > 2.0) arcQueue.splice(i,1);
+    }
+
+    // Subtle latitude tick on the right
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.fillStyle = 'rgba(238,242,238,0.25)';
+    ctx.textAlign = 'left';
+    // current rotation indicator
+  }
+
+  let last=performance.now();
+  function loop(t){
+    const dt = (t-last)/1000; last = t;
+    const sinceUser = (t - lastUserAction);
+    const autoRotate = !mouseInside && !dragging && sinceUser > 1500;
+    if (autoRotate) lambda = (lambda + dt*5.5) % 360;
+    drawScene(dt);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // Drag to rotate
+  const wrap = document.querySelector('.globe-canvas-wrap');
+  wrap.addEventListener('mouseenter', ()=>{ mouseInside = true; });
+  wrap.addEventListener('mouseleave', ()=>{ mouseInside = false; dragging=false; });
+  wrap.addEventListener('mousedown', (e)=>{
+    dragging = true; dragLast = {x:e.clientX, y:e.clientY};
+    lastUserAction = performance.now();
+  });
+  window.addEventListener('mouseup', ()=>{ dragging=false; });
+  window.addEventListener('mousemove', (e)=>{
+    if (!dragging) return;
+    const dx = e.clientX - dragLast.x;
+    lambda = (lambda + dx*0.4) % 360;
+    dragLast = {x:e.clientX, y:e.clientY};
+    lastUserAction = performance.now();
+  });
+})();
+</script>
+</body>
+</html>
