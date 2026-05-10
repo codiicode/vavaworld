@@ -1,14 +1,16 @@
-# Tomorrowland Tiles
+# VAVA
 
-Full-screen Mapbox satellite map with an H3 resolution-10 hex overlay, Solana wallet connect, and a per-tile claim sidebar. Empty Anchor `tiles` program is scaffolded under `/anchor`.
+vavaworld.fun · $VAVA
+
+Full-screen Mapbox satellite map with an H3 resolution-9 hex overlay where users claim tiles by paying SOL. Anchor program with bonding-curve pricing per tier (T1 city / T2 suburb / T3 remote), live tier counters via websocket subscription, in-app marketplace planned for Fas 2.
 
 ## Stack
 
 - Next.js 14 (App Router) · TypeScript · Tailwind
-- Mapbox GL + react-map-gl (v8, imported via `react-map-gl/mapbox`)
-- h3-js (resolution 10)
+- Mapbox GL + react-map-gl 8 (imported via `react-map-gl/mapbox`), satellite-v9 style
+- h3-js 4 (resolution 9, ~201 m hex edge)
 - @solana/web3.js + wallet-adapter (Phantom, Solflare; Backpack via Wallet Standard auto-detection)
-- Anchor 0.30 (Rust) — empty program at `anchor/programs/tiles`
+- Anchor 1.0.2 program at `anchor/programs/tiles` (deployed on devnet)
 
 ## Setup
 
@@ -18,56 +20,53 @@ Full-screen Mapbox satellite map with an H3 resolution-10 hex overlay, Solana wa
    ```
 
 2. **Get a Mapbox token**
-   - Sign up at https://account.mapbox.com/
-   - Open https://account.mapbox.com/access-tokens/
-   - Either copy your default public token (starts with `pk.`) or click *Create a token*. The default scopes are sufficient.
-   - Copy `.env.local.example` to `.env.local` and paste:
-     ```
-     NEXT_PUBLIC_MAPBOX_TOKEN=pk.your_real_token_here
-     ```
+   - https://account.mapbox.com/access-tokens/ — copy your default public `pk.` token
+   - Copy `.env.local.example` to `.env.local`, paste your token
 
-3. **Run the dev server**
+3. **Run dev server**
    ```bash
    npm run dev
    ```
-   Open http://localhost:3000 — you should see the satellite map, hex grid, wallet button top-right, and sidebar.
+   Open http://localhost:3000.
+
+4. **Connect a Solana wallet** (Phantom recommended) on **devnet**: Phantom → Settings → Developer Settings → Testnet Mode → Solana Devnet. Get devnet SOL via https://faucet.solana.com.
 
 ## Scripts
 
 - `npm run dev` — Next dev server
 - `npm run build` — production build
-- `npm test` — Vitest unit tests (tier classifier, h3 helpers)
+- `npm test` — Vitest unit tests
 - `npm run lint` — ESLint
 
 ## Project layout
 
 ```
-app/                Next.js App Router pages
-components/         MapView, Sidebar, WalletProviders, WalletButton
-lib/                cities.ts, tier.ts, h3-utils.ts (+ tests)
-types/              SelectedTile etc.
-anchor/             Anchor workspace (empty `tiles` program)
+app/                Next.js App Router page
+components/         MapView, Sidebar, SearchBar, ClaimModal, WalletProviders, ...
+lib/                anchor-client, tile-pda, owner-color, quote, geocoding, use-tiles, use-counters, ...
+types/              SelectedTile, ClaimedTile
+anchor/             Cargo workspace — programs/tiles + scripts/init-counters.mjs
 ```
 
-## Tier rules
+## Tier & pricing (Fas 1)
 
-A hex's tier is computed from its center's haversine distance to the nearest of the hardcoded large-city dataset (`lib/cities.ts`):
+Tier is geographic — haversine distance from the hex centroid to the nearest of 102 hardcoded large cities (`lib/cities.ts`, mirrored in `anchor/programs/tiles/src/constants.rs`):
 
-- **Tier 1** — within 50 km — amber
-- **Tier 2** — within 200 km — teal
-- **Tier 3** — beyond 200 km — gray
+- **T1** ≤ 50 km from a city — start 0.02 SOL, +0.0005 per sold-in-tier
+- **T2** ≤ 200 km — start 0.01 SOL, +0.0001 per sold-in-tier
+- **T3** beyond — start 0.001 SOL, +0.00001 per sold-in-tier
 
-## Performance note: H3 viewport rendering
-
-The hex grid targets resolution 10, but `lib/h3-utils.ts` clamps the resolution down at zoomed-out viewports — at world view, res 10 would be tens of millions of cells. Tweak `estimateSafeRes` thresholds if you want a different curve.
+Bulk claim up to 20 tiles per transaction with 2% slippage tolerance. Out of scope for Fas 1: marketplace, tile customization (name/note/image), royalties, leaderboard, animations, mobile-responsive.
 
 ## Anchor program
 
-The `anchor/` workspace is a parallel Cargo workspace, not part of the Next build. To build the program you'll need [Anchor 0.30+](https://www.anchor-lang.com/docs/installation):
+The `anchor/` workspace is a parallel Cargo workspace, not part of the Next build. Toolchain: Rust + Solana CLI (Agave 3.x) + Anchor CLI 1.0.
 
 ```bash
 cd anchor
 anchor build
+anchor program deploy --provider.cluster devnet
+node scripts/init-counters.mjs   # one-time per deploy: initialize T1/T2/T3 counter PDAs
 ```
 
-The current `tiles` program is empty — instructions and accounts will be added later. The placeholder program ID in `Anchor.toml` and `lib.rs` (`Tiles11111111111111111111111111111111111111`) will be regenerated as a real keypair on first build.
+Program ID (devnet): `GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt`
