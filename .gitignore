@@ -44,3 +44,5 @@ anchor/.anchor/
 
 # Claude Code local cache
 .claude/
+
+.vercel

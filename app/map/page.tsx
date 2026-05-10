@@ -2,8 +2,6 @@
 
 import { useRef, useState } from 'react';
 import type { MapRef } from 'react-map-gl/mapbox';
-import { PrivyProviders } from '@/components/PrivyProviders';
-import { WalletProviders } from '@/components/WalletProviders';
 import { AuthButton } from '@/components/AuthButton';
 import { BrandLink } from '@/components/BrandLink';
 import { MapView } from '@/components/MapView';
@@ -12,16 +10,6 @@ import { SearchBar } from '@/components/SearchBar';
 import { ClaimModal } from '@/components/ClaimModal';
 
 export default function Page() {
-  return (
-    <PrivyProviders>
-      <WalletProviders>
-        <PageBody />
-      </WalletProviders>
-    </PrivyProviders>
-  );
-}
-
-function PageBody() {
   const [selectedHexes, setSelectedHexes] = useState<Set<string>>(new Set());
   const [showClaim, setShowClaim] = useState(false);
   const mapRef = useRef<MapRef | null>(null);

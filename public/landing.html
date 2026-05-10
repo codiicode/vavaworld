@@ -1001,7 +1001,7 @@ setInterval(()=>{
       const txt = (el.textContent || '').trim();
       if (txt === 'Log in') {
         el.textContent = 'Profile';
-        if (el.tagName === 'A') el.setAttribute('href', '/map');
+        if (el.tagName === 'A') el.setAttribute('href', '/profile');
       } else if (txt === 'Sign up') {
         el.style.display = 'none';
       }
