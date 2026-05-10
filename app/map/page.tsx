@@ -5,6 +5,7 @@ import type { MapRef } from 'react-map-gl/mapbox';
 import { PrivyProviders } from '@/components/PrivyProviders';
 import { WalletProviders } from '@/components/WalletProviders';
 import { AuthButton } from '@/components/AuthButton';
+import { BrandLink } from '@/components/BrandLink';
 import { MapView } from '@/components/MapView';
 import { Sidebar } from '@/components/Sidebar';
 import { SearchBar } from '@/components/SearchBar';
@@ -52,6 +53,7 @@ function PageBody() {
         onClaim={() => setShowClaim(true)}
         mapRef={mapRef}
       />
+      <BrandLink />
       <SearchBar mapRef={mapRef} />
       <AuthButton />
       {showClaim && (
