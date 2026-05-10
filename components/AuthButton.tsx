@@ -14,20 +14,23 @@ export function AuthButton() {
   const [balance, setBalance] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
 
-  // Auto-trigger Privy login when arriving via /map?login=true (from landing's Log in CTA)
+  // Auto-trigger Privy login when arriving via /map?login=true (from landing's Log in CTA).
+  // Wait for SDK to hydrate first — otherwise we'd open the modal even for users who already
+  // have a session (which would just dismiss as no-op but flash the UI).
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!wallet.ready) return;
     const params = new URLSearchParams(window.location.search);
     if (params.get('login') === 'true' && !wallet.connected) {
       wallet.login();
-      // Clean URL so refresh doesn't re-trigger
+    }
+    if (params.has('login')) {
       params.delete('login');
       const newSearch = params.toString();
       const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
       window.history.replaceState({}, '', newUrl);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [wallet.ready, wallet.connected, wallet.login, wallet]);
 
   // Fetch balance when wallet changes
   useEffect(() => {
@@ -49,6 +52,11 @@ export function AuthButton() {
       cancelled = true;
     };
   }, [wallet.publicKey]);
+
+  // Don't show anything until SDK has hydrated — prevents "Sign in" flash on returning users
+  if (!wallet.ready) {
+    return null;
+  }
 
   if (!wallet.connected) {
     return (
