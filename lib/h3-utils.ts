@@ -1,7 +1,7 @@
 import { polygonToCells, cellToBoundary, cellToLatLng } from 'h3-js';
 import type { Feature, Polygon } from 'geojson';
 
-export const HEX_RES = 9 as const;
+export const HEX_RES = 11 as const;
 const SAFETY_CAP = 20000;
 
 export type Bbox = [west: number, south: number, east: number, north: number];

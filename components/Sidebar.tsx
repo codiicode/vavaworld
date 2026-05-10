@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
 import type { MapRef } from 'react-map-gl/mapbox';
+import { useActiveWallet } from '@/lib/active-wallet';
 import { SelectionPanel } from './SelectionPanel';
 import { MyTilesPanel } from './MyTilesPanel';
 
@@ -19,31 +19,49 @@ export function Sidebar({
   onClaim: () => void;
   mapRef: React.RefObject<MapRef | null>;
 }) {
-  const { connected } = useWallet();
+  const { connected } = useActiveWallet();
   const [tab, setTab] = useState<Tab>('selection');
 
   return (
     <aside
-      className="absolute right-0 top-0 h-full w-80 border-l border-[var(--border)] bg-[var(--panel)] z-10 overflow-y-auto"
-      style={{ paddingTop: '5rem' }}
+      className="absolute right-0 top-0 h-full w-[340px] z-10 overflow-y-auto"
+      style={{
+        paddingTop: '5rem',
+        background: 'rgba(12, 15, 18, 0.78)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
+        borderLeft: '1px solid var(--hairline)',
+      }}
     >
-      <div className="flex border-b border-[var(--border)]">
+      <div className="flex" style={{ borderBottom: '1px solid var(--hairline)' }}>
         <button
           onClick={() => setTab('selection')}
-          className={
-            'flex-1 py-3 text-xs uppercase tracking-widest ' +
-            (tab === 'selection' ? 'text-[var(--fg)] border-b border-[var(--fg)]' : 'text-[var(--muted)]')
-          }
+          className="flex-1 py-4 transition-colors"
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '10.5px',
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: tab === 'selection' ? 'var(--ink)' : 'var(--dim)',
+            borderBottom: tab === 'selection' ? '1px solid var(--signal)' : '1px solid transparent',
+            background: 'transparent',
+          }}
         >
           Selection
         </button>
         <button
           onClick={() => setTab('mytiles')}
           disabled={!connected}
-          className={
-            'flex-1 py-3 text-xs uppercase tracking-widest disabled:opacity-40 ' +
-            (tab === 'mytiles' ? 'text-[var(--fg)] border-b border-[var(--fg)]' : 'text-[var(--muted)]')
-          }
+          className="flex-1 py-4 transition-colors disabled:opacity-40"
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '10.5px',
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: tab === 'mytiles' ? 'var(--ink)' : 'var(--dim)',
+            borderBottom: tab === 'mytiles' ? '1px solid var(--signal)' : '1px solid transparent',
+            background: 'transparent',
+          }}
         >
           My Tiles
         </button>

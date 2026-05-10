@@ -5,24 +5,48 @@ export type Place = {
   lng: number;
 };
 
-const ENDPOINT = 'https://api.mapbox.com/geocoding/v5/mapbox.places';
+const ENDPOINT = 'https://api.mapbox.com/search/searchbox/v1/forward';
+
+type Feature = {
+  type: 'Feature';
+  id: string;
+  geometry: { type: 'Point'; coordinates: [number, number] };
+  properties: {
+    name: string;
+    name_preferred?: string;
+    place_formatted?: string;
+    feature_type?: string;
+    full_address?: string;
+  };
+};
 
 export async function searchPlaces(query: string, token: string): Promise<Place[]> {
   const q = query.trim();
   if (!q) return [];
 
-  const url = `${ENDPOINT}/${encodeURIComponent(q)}.json?access_token=${token}&limit=5`;
+  const params = new URLSearchParams({
+    q,
+    access_token: token,
+    limit: '8',
+    language: 'sv,en',
+    types: 'poi,address,place,locality,neighborhood,district,street',
+  });
+  const url = `${ENDPOINT}?${params.toString()}`;
 
   try {
     const res = await fetch(url);
     if (!res.ok) return [];
-    const data = (await res.json()) as { features?: Array<{ id: string; place_name: string; center: [number, number] }> };
-    return (data.features ?? []).map((f) => ({
-      id: f.id,
-      name: f.place_name,
-      lng: f.center[0],
-      lat: f.center[1],
-    }));
+    const data = (await res.json()) as { features?: Feature[] };
+    return (data.features ?? []).map((f) => {
+      const name = f.properties.name_preferred ?? f.properties.name;
+      const ctx = f.properties.place_formatted ?? f.properties.full_address ?? '';
+      return {
+        id: f.id,
+        name: ctx ? `${name}, ${ctx}` : name,
+        lng: f.geometry.coordinates[0],
+        lat: f.geometry.coordinates[1],
+      };
+    });
   } catch {
     return [];
   }

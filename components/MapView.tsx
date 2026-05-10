@@ -26,6 +26,7 @@ type Props = {
 export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesRef }: Props) {
   const [ready, setReady] = useState(false);
   const [visibleHexes, setVisibleHexes] = useState<string[]>([]);
+  const [zoomedIn, setZoomedIn] = useState(false);
   const { tiles, refresh } = useTiles(visibleHexes);
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -55,9 +56,20 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
     [tiles, selectedHexes],
   );
 
+  // Hide the hex grid entirely below this zoom — at world-view zoom the
+  // hex count balloons and viewport-batched RPC calls become slow.
+  // Only render hexes when zoomed in enough that they're meaningful.
+  const MIN_ZOOM_FOR_HEXES = 14;
+
   const refreshHexes = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
+    const isZoomedIn = map.getZoom() >= MIN_ZOOM_FOR_HEXES;
+    setZoomedIn(isZoomedIn);
+    if (!isZoomedIn) {
+      setVisibleHexes([]);
+      return;
+    }
     const b = map.getBounds();
     if (!b) return;
     const bbox: [number, number, number, number] = [
@@ -102,7 +114,7 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
           3, TIER_FILL[3],
           TIER_FILL[3],
         ],
-        'fill-opacity': ['case', ['get', 'claimed'], 0.0, 0.18],
+        'fill-opacity': 0,
       },
     });
     map.addLayer({
@@ -118,7 +130,7 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
       id: LINE_LAYER,
       type: 'line',
       source: SOURCE_ID,
-      paint: { 'line-color': '#232830', 'line-width': 0.4 },
+      paint: { 'line-color': '#ffffff', 'line-width': 1.2, 'line-opacity': 0.35 },
     });
     map.addLayer({
       id: SELECTED_LAYER,
@@ -224,6 +236,29 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
           (e.currentTarget as HTMLDivElement).style.pointerEvents = 'none';
         }}
       />
+      {ready && !zoomedIn && (
+        <div
+          className="absolute z-[6] pointer-events-none flex items-center gap-2 px-4 py-2.5"
+          style={{
+            left: '50%',
+            bottom: '40px',
+            transform: 'translateX(-50%)',
+            background: 'rgba(12, 15, 18, 0.85)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid var(--hairline)',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '10.5px',
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: 'var(--ink-2)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{ color: 'var(--signal)' }}>+</span>
+          Zoom in to see tiles
+        </div>
+      )}
     </>
   );
 }

@@ -1,16 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { searchPlaces, type Place } from '../geocoding';
 
-describe('searchPlaces', () => {
+describe('searchPlaces (Mapbox Search Box v6)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('returns parsed place results', async () => {
+  it('returns parsed place results with name + context', async () => {
     const fakeResp = {
       features: [
-        { id: 'a', place_name: 'Berlin, Germany', center: [13.405, 52.52] },
-        { id: 'b', place_name: 'Berlin, NH, USA', center: [-71.18, 44.46] },
+        {
+          type: 'Feature',
+          id: 'a',
+          geometry: { type: 'Point', coordinates: [13.405, 52.52] },
+          properties: { name: 'Berlin', place_formatted: 'Germany', feature_type: 'place' },
+        },
+        {
+          type: 'Feature',
+          id: 'b',
+          geometry: { type: 'Point', coordinates: [-71.18, 44.46] },
+          properties: { name: 'Berlin', place_formatted: 'NH, USA', feature_type: 'place' },
+        },
       ],
     };
     vi.spyOn(global, 'fetch').mockResolvedValue({

@@ -9,7 +9,7 @@ const WalletMultiButton = dynamic(
 
 export function WalletButton() {
   return (
-    <div className="absolute top-4 right-4 z-20">
+    <div className="absolute top-5 right-5 z-20">
       <WalletMultiButton />
     </div>
   );

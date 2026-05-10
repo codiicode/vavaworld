@@ -1,0 +1,32 @@
+'use client';
+
+import { PrivyProvider } from '@privy-io/react-auth';
+import type { ReactNode } from 'react';
+
+export function PrivyProviders({ children }: { children: ReactNode }) {
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? '';
+
+  return (
+    <PrivyProvider
+      appId={appId}
+      config={{
+        loginMethods: ['email', 'google', 'twitter'],
+        appearance: {
+          theme: 'dark',
+          accentColor: '#00C805',
+          logo: '/vavaworld-mark.svg',
+          landingHeader: 'Welcome to VAVAWORLD',
+          showWalletLoginFirst: false,
+          walletChainType: 'solana-only',
+        },
+        embeddedWallets: {
+          solana: {
+            createOnLogin: 'users-without-wallets',
+          },
+        },
+      }}
+    >
+      {children}
+    </PrivyProvider>
+  );
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useActiveWallet } from '@/lib/active-wallet';
 import { BorshAccountsCoder, type Idl } from '@coral-xyz/anchor';
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import idl from '@/lib/anchor-idl.json';
@@ -23,7 +23,7 @@ type DecodedTile = {
 };
 
 export function MyTilesPanel({ mapRef }: { mapRef: React.RefObject<MapRef | null> }) {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected } = useActiveWallet();
   const [tiles, setTiles] = useState<ClaimedTile[] | null>(null);
   const [loading, setLoading] = useState(false);
   const reqIdRef = useRef(0);
@@ -72,38 +72,77 @@ export function MyTilesPanel({ mapRef }: { mapRef: React.RefObject<MapRef | null
     mapRef.current?.flyTo({ center: [c.lng, c.lat], zoom: 14, duration: 1500 });
   };
 
+  const monoLabel: React.CSSProperties = {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: '10.5px',
+    letterSpacing: '0.22em',
+    textTransform: 'uppercase',
+    color: 'var(--dim)',
+  };
+  const monoValue: React.CSSProperties = {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: '12px',
+  };
+
   if (!connected) {
-    return <p className="text-[var(--muted)] text-sm">Anslut wallet för att se dina tiles.</p>;
+    return (
+      <div className="flex flex-col gap-4">
+        <span style={monoLabel}>Wallet required</span>
+        <p className="text-sm" style={{ color: 'var(--dim)', lineHeight: 1.55 }}>
+          Anslut wallet för att se dina tiles.
+        </p>
+      </div>
+    );
   }
   if (loading) {
-    return <p className="text-[var(--muted)] text-sm">Laddar…</p>;
+    return <p style={{ ...monoLabel, color: 'var(--dim-2)' }}>Loading…</p>;
   }
   if (!tiles || tiles.length === 0) {
-    return <p className="text-[var(--muted)] text-sm">Du har inte claimat några tiles än.</p>;
+    return (
+      <div className="flex flex-col gap-4">
+        <span style={monoLabel}>Empty</span>
+        <p className="text-sm" style={{ color: 'var(--dim)', lineHeight: 1.55 }}>
+          Du har inte claimat några tiles än.
+        </p>
+      </div>
+    );
   }
   return (
-    <ul className="flex flex-col">
-      {tiles.map((t) => (
-        <li
-          key={t.h3}
-          className="flex items-center justify-between px-3 py-2 text-sm border-b border-[var(--border)] last:border-b-0"
-        >
-          <div className="flex items-center gap-3">
-            <span className="inline-block w-2 h-2" style={{ background: TIER_FILL[t.tier] }} />
-            <span className="font-mono text-xs">{t.h3.slice(0, 7)}…</span>
-            <span className="text-[var(--muted)] text-xs">
-              {(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(4)} SOL
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => flyTo(t.h3)}
-            className="text-[var(--muted)] hover:text-[var(--fg)] text-xs"
+    <div className="flex flex-col gap-4">
+      <div className="flex items-baseline justify-between">
+        <span style={monoLabel}>Holdings</span>
+        <span style={{ ...monoValue, color: 'var(--ink)' }}>{tiles.length}</span>
+      </div>
+      <ul style={{ borderTop: '1px solid var(--hair-2)' }}>
+        {tiles.map((t) => (
+          <li
+            key={t.h3}
+            className="flex items-center justify-between px-1 py-2.5"
+            style={{ borderBottom: '1px solid var(--hair-2)' }}
           >
-            ↗ fly to
-          </button>
-        </li>
-      ))}
-    </ul>
+            <div className="flex items-center gap-3">
+              <span
+                className="inline-block w-1.5 h-1.5 rounded-full"
+                style={{ background: TIER_FILL[t.tier] }}
+              />
+              <span style={{ ...monoValue, color: 'var(--ink-2)' }}>{t.h3.slice(0, 9)}…</span>
+              <span style={{ ...monoLabel, fontSize: '9.5px' }}>
+                {(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(4)} SOL
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => flyTo(t.h3)}
+              className="px-2 transition-colors"
+              style={{ ...monoLabel, fontSize: '9.5px' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--signal)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--dim)')}
+            >
+              Fly →
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

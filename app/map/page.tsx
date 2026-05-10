@@ -2,8 +2,9 @@
 
 import { useRef, useState } from 'react';
 import type { MapRef } from 'react-map-gl/mapbox';
+import { PrivyProviders } from '@/components/PrivyProviders';
 import { WalletProviders } from '@/components/WalletProviders';
-import { WalletButton } from '@/components/WalletButton';
+import { AuthButton } from '@/components/AuthButton';
 import { MapView } from '@/components/MapView';
 import { Sidebar } from '@/components/Sidebar';
 import { SearchBar } from '@/components/SearchBar';
@@ -11,9 +12,11 @@ import { ClaimModal } from '@/components/ClaimModal';
 
 export default function Page() {
   return (
-    <WalletProviders>
-      <PageBody />
-    </WalletProviders>
+    <PrivyProviders>
+      <WalletProviders>
+        <PageBody />
+      </WalletProviders>
+    </PrivyProviders>
   );
 }
 
@@ -50,7 +53,7 @@ function PageBody() {
         mapRef={mapRef}
       />
       <SearchBar mapRef={mapRef} />
-      <WalletButton />
+      <AuthButton />
       {showClaim && (
         <ClaimModal
           selectedHexes={selectedHexes}
