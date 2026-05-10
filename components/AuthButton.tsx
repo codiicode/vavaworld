@@ -14,6 +14,21 @@ export function AuthButton() {
   const [balance, setBalance] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
 
+  // Auto-trigger Privy login when arriving via /map?login=true (from landing's Log in CTA)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('login') === 'true' && !wallet.connected) {
+      wallet.login();
+      // Clean URL so refresh doesn't re-trigger
+      params.delete('login');
+      const newSearch = params.toString();
+      const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Fetch balance when wallet changes
   useEffect(() => {
     if (!wallet.publicKey) {
