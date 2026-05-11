@@ -22,6 +22,20 @@ type DecodedTile = {
   bump: number;
 };
 
+const uiLabel: React.CSSProperties = {
+  fontFamily: "'Inter', sans-serif",
+  fontSize: '11px',
+  letterSpacing: '0.22em',
+  textTransform: 'uppercase',
+  color: 'var(--dim)',
+  fontWeight: 500,
+};
+const monoNum: React.CSSProperties = {
+  fontFamily: "'Inter', sans-serif",
+  fontSize: '12px',
+  fontFeatureSettings: '"tnum"',
+};
+
 export function MyTilesPanel({ mapRef }: { mapRef: React.RefObject<MapRef | null> }) {
   const { publicKey, connected } = useActiveWallet();
   const [tiles, setTiles] = useState<ClaimedTile[] | null>(null);
@@ -72,36 +86,40 @@ export function MyTilesPanel({ mapRef }: { mapRef: React.RefObject<MapRef | null
     mapRef.current?.flyTo({ center: [c.lng, c.lat], zoom: 14, duration: 1500 });
   };
 
-  const monoLabel: React.CSSProperties = {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: '10.5px',
-    letterSpacing: '0.22em',
-    textTransform: 'uppercase',
-    color: 'var(--dim)',
-  };
-  const monoValue: React.CSSProperties = {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: '12px',
-  };
-
   if (!connected) {
     return (
       <div className="flex flex-col gap-4">
-        <span style={monoLabel}>Wallet required</span>
-        <p className="text-sm" style={{ color: 'var(--dim)', lineHeight: 1.55 }}>
+        <span style={uiLabel}>Wallet required</span>
+        <p
+          style={{
+            color: 'var(--ink-2)',
+            lineHeight: 1.55,
+            fontStyle: 'italic',
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: '16px',
+          }}
+        >
           Anslut wallet för att se dina tiles.
         </p>
       </div>
     );
   }
   if (loading) {
-    return <p style={{ ...monoLabel, color: 'var(--dim-2)' }}>Loading…</p>;
+    return <p style={{ ...uiLabel, color: 'var(--dim-2)' }}>Loading…</p>;
   }
   if (!tiles || tiles.length === 0) {
     return (
       <div className="flex flex-col gap-4">
-        <span style={monoLabel}>Empty</span>
-        <p className="text-sm" style={{ color: 'var(--dim)', lineHeight: 1.55 }}>
+        <span style={uiLabel}>Empty</span>
+        <p
+          style={{
+            color: 'var(--ink-2)',
+            lineHeight: 1.55,
+            fontStyle: 'italic',
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: '16px',
+          }}
+        >
           Du har inte claimat några tiles än.
         </p>
       </div>
@@ -110,8 +128,8 @@ export function MyTilesPanel({ mapRef }: { mapRef: React.RefObject<MapRef | null
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between">
-        <span style={monoLabel}>Holdings</span>
-        <span style={{ ...monoValue, color: 'var(--ink)' }}>{tiles.length}</span>
+        <span style={uiLabel}>Holdings</span>
+        <span style={{ ...monoNum, color: 'var(--ink)' }}>{tiles.length}</span>
       </div>
       <ul style={{ borderTop: '1px solid var(--hair-2)' }}>
         {tiles.map((t) => (
@@ -125,8 +143,8 @@ export function MyTilesPanel({ mapRef }: { mapRef: React.RefObject<MapRef | null
                 className="inline-block w-1.5 h-1.5 rounded-full"
                 style={{ background: TIER_FILL[t.tier] }}
               />
-              <span style={{ ...monoValue, color: 'var(--ink-2)' }}>{t.h3.slice(0, 9)}…</span>
-              <span style={{ ...monoLabel, fontSize: '9.5px' }}>
+              <span style={{ ...monoNum, color: 'var(--ink-2)' }}>{t.h3.slice(0, 9)}…</span>
+              <span style={{ ...uiLabel, fontSize: '10px' }}>
                 {(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(4)} SOL
               </span>
             </div>
@@ -134,7 +152,7 @@ export function MyTilesPanel({ mapRef }: { mapRef: React.RefObject<MapRef | null
               type="button"
               onClick={() => flyTo(t.h3)}
               className="px-2 transition-colors"
-              style={{ ...monoLabel, fontSize: '9.5px' }}
+              style={{ ...uiLabel, fontSize: '10px' }}
               onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--signal)')}
               onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--dim)')}
             >

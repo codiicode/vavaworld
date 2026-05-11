@@ -27,9 +27,9 @@ export function Sidebar({
       className="absolute right-0 top-0 h-full w-[340px] z-10 overflow-y-auto"
       style={{
         paddingTop: '5rem',
-        background: 'rgba(12, 15, 18, 0.78)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
+        background: 'rgba(255, 255, 255, 0.78)',
+        backdropFilter: 'blur(14px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(14px) saturate(140%)',
         borderLeft: '1px solid var(--hairline)',
       }}
     >
@@ -38,13 +38,14 @@ export function Sidebar({
           onClick={() => setTab('selection')}
           className="flex-1 py-4 transition-colors"
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '10.5px',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '11px',
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
-            color: tab === 'selection' ? 'var(--ink)' : 'var(--dim)',
-            borderBottom: tab === 'selection' ? '1px solid var(--signal)' : '1px solid transparent',
+            color: tab === 'selection' ? 'var(--signal)' : 'var(--dim)',
+            borderBottom: tab === 'selection' ? '1.5px solid var(--signal)' : '1.5px solid transparent',
             background: 'transparent',
+            fontWeight: 500,
           }}
         >
           Selection
@@ -54,13 +55,14 @@ export function Sidebar({
           disabled={!connected}
           className="flex-1 py-4 transition-colors disabled:opacity-40"
           style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '10.5px',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '11px',
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
-            color: tab === 'mytiles' ? 'var(--ink)' : 'var(--dim)',
-            borderBottom: tab === 'mytiles' ? '1px solid var(--signal)' : '1px solid transparent',
+            color: tab === 'mytiles' ? 'var(--signal)' : 'var(--dim)',
+            borderBottom: tab === 'mytiles' ? '1.5px solid var(--signal)' : '1.5px solid transparent',
             background: 'transparent',
+            fontWeight: 500,
           }}
         >
           My Tiles

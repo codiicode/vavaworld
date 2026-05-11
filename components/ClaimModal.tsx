@@ -15,17 +15,19 @@ import type { Tiles } from '@/lib/anchor-types';
 
 const programIdPk = new PublicKey(PROGRAM_ID);
 
-const monoLabel: React.CSSProperties = {
-  fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '10.5px',
+const uiLabel: React.CSSProperties = {
+  fontFamily: "'Inter', sans-serif",
+  fontSize: '11px',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
   color: 'var(--dim)',
+  fontWeight: 500,
 };
 
-const monoValue: React.CSSProperties = {
-  fontFamily: "'JetBrains Mono', monospace",
+const monoNum: React.CSSProperties = {
+  fontFamily: "'Inter', sans-serif",
   fontSize: '12px',
+  fontFeatureSettings: '"tnum"',
 };
 
 type State = 'review' | 'signing' | 'confirmed' | 'error';
@@ -51,7 +53,7 @@ export function ClaimModal({
   });
   const totalLamports = quoteBatch(items, counters);
   const totalSol = Number(totalLamports) / LAMPORTS_PER_SOL;
-  const expectedMax = (totalLamports * 102n) / 100n; // 2% slippage tolerance
+  const expectedMax = (totalLamports * 102n) / 100n;
 
   const handleConfirm = async () => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
@@ -62,7 +64,6 @@ export function ClaimModal({
     setState('signing');
     try {
       const connection = getConnection();
-      // Build the claim instruction via Anchor (no provider needed — read-only program for ix building)
       const program = new Program<Tiles>(idl as Idl, { connection });
       const h3Bns = items.map((it) => new BN(BigInt('0x' + it.h3).toString()));
       const tilePdas = items.map((it) => tilePda(it.h3, programIdPk)[0]);
@@ -98,20 +99,50 @@ export function ClaimModal({
     }
   };
 
+  const primaryBtn: React.CSSProperties = {
+    fontFamily: "'Inter', sans-serif",
+    fontSize: '13.5px',
+    fontWeight: 500,
+    background: 'var(--signal)',
+    color: '#ffffff',
+    border: '1.5px solid var(--signal)',
+    borderRadius: 999,
+  };
+
+  const ghostBtn: React.CSSProperties = {
+    fontFamily: "'Inter', sans-serif",
+    fontSize: '13.5px',
+    fontWeight: 500,
+    border: '1px solid var(--hairline)',
+    background: 'transparent',
+    color: 'var(--ink)',
+    borderRadius: 999,
+  };
+
   return (
-    <div className="fixed inset-0 z-30 grid place-items-center" style={{ background: 'rgba(7, 9, 11, 0.78)', backdropFilter: 'blur(8px)' }}>
+    <div
+      className="fixed inset-0 z-30 grid place-items-center"
+      style={{
+        background: 'rgba(29, 94, 149, 0.32)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+      }}
+    >
       <div
-        className="w-[440px] p-7"
+        className="w-[460px] p-8"
         style={{
-          background: 'var(--bg-2)',
-          border: '1px solid var(--hairline)',
+          background: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(14px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(14px) saturate(140%)',
+          border: '1.5px solid var(--hairline)',
+          borderRadius: 18,
         }}
       >
         <div className="flex items-baseline justify-between mb-6">
-          <h2 style={monoLabel}>Claim · {items.length} {items.length === 1 ? 'tile' : 'tiles'}</h2>
+          <h2 style={uiLabel}>Claim · {items.length} {items.length === 1 ? 'tile' : 'tiles'}</h2>
           <button
             onClick={onClose}
-            style={{ ...monoLabel, color: 'var(--dim-2)', cursor: 'pointer' }}
+            style={{ ...uiLabel, color: 'var(--dim-2)', cursor: 'pointer' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--ink)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--dim-2)')}
             aria-label="Close"
@@ -132,37 +163,33 @@ export function ClaimModal({
                   className="flex justify-between px-1 py-2.5"
                   style={{ borderBottom: '1px solid var(--hair-2)' }}
                 >
-                  <span style={{ ...monoValue, color: 'var(--ink-2)' }}>{it.h3}</span>
-                  <span style={{ ...monoLabel, fontSize: '9.5px' }}>T{it.tier}</span>
+                  <span style={{ ...monoNum, color: 'var(--ink-2)' }}>{it.h3}</span>
+                  <span style={{ ...uiLabel, fontSize: '10px' }}>T{it.tier}</span>
                 </li>
               ))}
             </ul>
             <div className="flex items-baseline justify-between mb-7">
-              <span style={monoLabel}>Estimated total</span>
+              <span style={uiLabel}>Estimated total</span>
               <span
                 style={{
-                  fontFamily: "'Instrument Serif', serif",
-                  fontSize: '32px',
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontStyle: 'italic',
+                  fontWeight: 400,
+                  fontSize: '36px',
                   lineHeight: 1,
                   color: 'var(--signal)',
+                  fontFeatureSettings: '"tnum"',
                 }}
               >
                 {totalSol.toFixed(4)}
-                <span style={{ ...monoLabel, marginLeft: '8px' }}>SOL</span>
+                <span style={{ ...uiLabel, marginLeft: '8px', fontStyle: 'normal' }}>SOL</span>
               </span>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={onClose}
                 className="flex-1 py-3 transition-colors"
-                style={{
-                  fontFamily: "'Space Grotesk', sans-serif",
-                  fontSize: '13.5px',
-                  fontWeight: 500,
-                  border: '1px solid var(--hairline)',
-                  background: 'transparent',
-                  color: 'var(--ink)',
-                }}
+                style={ghostBtn}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink)')}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
               >
@@ -171,16 +198,15 @@ export function ClaimModal({
               <button
                 onClick={handleConfirm}
                 className="flex-1 py-3 transition-all"
-                style={{
-                  fontFamily: "'Space Grotesk', sans-serif",
-                  fontSize: '13.5px',
-                  fontWeight: 500,
-                  background: 'var(--signal)',
-                  color: '#000',
-                  border: '1px solid var(--signal)',
+                style={primaryBtn}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--signal-deep)';
+                  e.currentTarget.style.borderColor = 'var(--signal-deep)';
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(1.1)')}
-                onMouseLeave={(e) => (e.currentTarget.style.filter = '')}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--signal)';
+                  e.currentTarget.style.borderColor = 'var(--signal)';
+                }}
               >
                 Confirm claim
               </button>
@@ -194,15 +220,14 @@ export function ClaimModal({
               className="w-2 h-2 rounded-full"
               style={{
                 background: 'var(--signal)',
-                boxShadow: '0 0 12px var(--signal)',
                 animation: 'pulse 1.6s ease-in-out infinite',
               }}
             />
-            <span style={monoLabel}>Signing transaction…</span>
+            <span style={uiLabel}>Signing transaction…</span>
             <style jsx>{`
               @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.35; }
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.35; transform: scale(0.85); }
               }
             `}</style>
           </div>
@@ -217,14 +242,14 @@ export function ClaimModal({
               >
                 ✓
               </div>
-              <div style={{ ...monoLabel, color: 'var(--ink)' }}>
+              <div style={{ ...uiLabel, color: 'var(--ink)' }}>
                 {items.length} {items.length === 1 ? 'tile' : 'tiles'} claimed
               </div>
               <a
                 href={`https://solscan.io/tx/${txSig}?cluster=devnet`}
                 target="_blank"
                 rel="noreferrer"
-                style={{ ...monoLabel, color: 'var(--dim)', textDecoration: 'underline' }}
+                style={{ ...uiLabel, color: 'var(--signal)', textDecoration: 'underline' }}
               >
                 View on Solscan →
               </a>
@@ -232,14 +257,7 @@ export function ClaimModal({
             <button
               onClick={onClose}
               className="w-full py-3 transition-colors"
-              style={{
-                fontFamily: "'Space Grotesk', sans-serif",
-                fontSize: '13.5px',
-                fontWeight: 500,
-                border: '1px solid var(--hairline)',
-                background: 'transparent',
-                color: 'var(--ink)',
-              }}
+              style={ghostBtn}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink)')}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
             >
@@ -251,11 +269,11 @@ export function ClaimModal({
         {state === 'error' && (
           <>
             <div className="py-4 mb-4">
-              <div style={{ ...monoLabel, color: '#ff6b6b', marginBottom: '10px' }}>Error</div>
+              <div style={{ ...uiLabel, color: '#b91c1c', marginBottom: '10px' }}>Error</div>
               <pre
                 className="whitespace-pre-wrap"
                 style={{
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "'Inter', sans-serif",
                   fontSize: '11px',
                   color: 'var(--ink-2)',
                   lineHeight: 1.5,
@@ -265,18 +283,7 @@ export function ClaimModal({
               </pre>
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="flex-1 py-3 transition-colors"
-                style={{
-                  fontFamily: "'Space Grotesk', sans-serif",
-                  fontSize: '13.5px',
-                  fontWeight: 500,
-                  border: '1px solid var(--hairline)',
-                  background: 'transparent',
-                  color: 'var(--ink)',
-                }}
-              >
+              <button onClick={onClose} className="flex-1 py-3 transition-colors" style={ghostBtn}>
                 Cancel
               </button>
               <button
@@ -285,14 +292,7 @@ export function ClaimModal({
                   setErrorMsg('');
                 }}
                 className="flex-1 py-3 transition-all"
-                style={{
-                  fontFamily: "'Space Grotesk', sans-serif",
-                  fontSize: '13.5px',
-                  fontWeight: 500,
-                  background: 'var(--signal)',
-                  color: '#000',
-                  border: '1px solid var(--signal)',
-                }}
+                style={primaryBtn}
               >
                 Try again
               </button>

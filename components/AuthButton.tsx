@@ -9,7 +9,7 @@ function shortAddr(addr: string): string {
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
-export function AuthButton() {
+export function AuthButton({ onDark = false }: { onDark?: boolean }) {
   const wallet = useActiveWallet();
   const [balance, setBalance] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
@@ -58,49 +58,65 @@ export function AuthButton() {
     return null;
   }
 
+  // Brand-blue filled CTA — works on both dark satellite (high contrast)
+  // and light /profile background. Pill shape, Inter, matches the landing nav primary.
   if (!wallet.connected) {
     return (
       <button
         onClick={wallet.login}
         className="absolute top-5 right-5 z-20 transition-all"
         style={{
-          fontFamily: "'Space Grotesk', sans-serif",
+          fontFamily: "'Inter', sans-serif",
           fontSize: '13.5px',
           fontWeight: 500,
-          padding: '10px 18px',
+          padding: '10px 22px',
           background: 'var(--signal)',
-          color: '#000',
-          border: '1px solid var(--signal)',
+          color: '#ffffff',
+          border: '1.5px solid var(--signal)',
+          borderRadius: 999,
+          letterSpacing: '0.01em',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.filter = 'brightness(1.1)')}
-        onMouseLeave={(e) => (e.currentTarget.style.filter = '')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'var(--signal-deep)';
+          e.currentTarget.style.borderColor = 'var(--signal-deep)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'var(--signal)';
+          e.currentTarget.style.borderColor = 'var(--signal)';
+        }}
       >
         Sign in
       </button>
     );
   }
 
+  // Wallet pill — translucent white glass over satellite imagery,
+  // brand-blue accent dot + Inter mono numerals.
+  const pillBg = onDark ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.62)';
   return (
     <div className="absolute top-5 right-5 z-20">
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-3 transition-colors"
         style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: '12px',
-          padding: '10px 16px',
-          background: 'rgba(12, 15, 18, 0.85)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
+          fontFamily: "'Inter', sans-serif",
+          fontSize: '12.5px',
+          fontWeight: 500,
+          padding: '10px 18px',
+          background: pillBg,
+          backdropFilter: 'blur(14px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(14px) saturate(140%)',
           border: '1px solid var(--hairline)',
+          borderRadius: 999,
           color: 'var(--ink)',
+          fontFeatureSettings: '"tnum"',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink-2)')}
+        onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--signal)')}
         onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
       >
         <span
           className="inline-block w-1.5 h-1.5 rounded-full"
-          style={{ background: 'var(--signal)', boxShadow: '0 0 8px var(--signal)' }}
+          style={{ background: 'var(--signal)' }}
         />
         <span>{shortAddr(wallet.address ?? '')}</span>
         {balance !== null && (
@@ -111,10 +127,12 @@ export function AuthButton() {
         <div
           className="mt-1.5"
           style={{
-            background: 'rgba(12, 15, 18, 0.92)',
-            backdropFilter: 'blur(14px)',
-            WebkitBackdropFilter: 'blur(14px)',
+            background: 'rgba(255, 255, 255, 0.94)',
+            backdropFilter: 'blur(14px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(14px) saturate(140%)',
             border: '1px solid var(--hairline)',
+            borderRadius: 14,
+            overflow: 'hidden',
           }}
         >
           <button
@@ -124,11 +142,12 @@ export function AuthButton() {
             }}
             className="w-full px-4 py-2.5 text-left transition-colors"
             style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: '10.5px',
-              letterSpacing: '0.22em',
+              fontFamily: "'Inter', sans-serif",
+              fontSize: '11px',
+              letterSpacing: '0.18em',
               textTransform: 'uppercase',
               color: 'var(--ink-2)',
+              fontWeight: 500,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--signal)')}
             onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-2)')}

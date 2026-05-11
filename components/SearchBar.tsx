@@ -42,10 +42,11 @@ export function SearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | null> }
       <div
         className="flex items-center gap-3 px-4 py-3 transition-colors"
         style={{
-          background: 'rgba(12, 15, 18, 0.78)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          border: focused ? '1px solid var(--ink-2)' : '1px solid var(--hairline)',
+          background: 'rgba(255, 255, 255, 0.82)',
+          backdropFilter: 'blur(14px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(14px) saturate(140%)',
+          border: focused ? '1px solid var(--signal)' : '1px solid var(--hairline)',
+          borderRadius: 999,
         }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--dim)' }}>
@@ -65,10 +66,10 @@ export function SearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | null> }
             if (e.key === 'Enter')     { e.preventDefault(); if (results[active]) select(results[active]); }
             if (e.key === 'Escape')    { setOpen(false); setQ(''); }
           }}
-          placeholder="Search any place on Earth..."
-          className="flex-1 bg-transparent focus:outline-none"
+          placeholder="Search any place on Earth…"
+          className="flex-1 bg-transparent focus:outline-none placeholder:text-[var(--dim)]"
           style={{
-            fontFamily: "'Space Grotesk', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             fontSize: '14px',
             color: 'var(--ink)',
           }}
@@ -89,12 +90,13 @@ export function SearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | null> }
       </div>
       {open && results.length > 0 && (
         <ul
-          className="mt-1.5"
+          className="mt-1.5 overflow-hidden"
           style={{
-            background: 'rgba(12, 15, 18, 0.92)',
-            backdropFilter: 'blur(14px)',
-            WebkitBackdropFilter: 'blur(14px)',
+            background: 'rgba(255, 255, 255, 0.94)',
+            backdropFilter: 'blur(14px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(14px) saturate(140%)',
             border: '1px solid var(--hairline)',
+            borderRadius: 14,
           }}
         >
           {results.map((p, i) => (
@@ -104,12 +106,12 @@ export function SearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | null> }
               onMouseEnter={() => setActive(i)}
               className="px-4 py-2.5 cursor-pointer transition-colors"
               style={{
-                fontFamily: "'Space Grotesk', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: '13.5px',
                 color: i === active ? 'var(--ink)' : 'var(--ink-2)',
-                background: i === active ? 'rgba(0, 200, 5, 0.05)' : 'transparent',
+                background: i === active ? 'rgba(29, 94, 149, 0.06)' : 'transparent',
                 borderLeft: i === active ? '2px solid var(--signal)' : '2px solid transparent',
-                borderBottom: '1px solid var(--hair-2)',
+                borderBottom: i < results.length - 1 ? '1px solid var(--hair-2)' : 'none',
               }}
             >
               {p.name}

@@ -6,17 +6,19 @@ import { quoteBatch } from '@/lib/quote';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useCounters } from '@/lib/use-counters';
 
-const monoLabel: React.CSSProperties = {
-  fontFamily: "'JetBrains Mono', monospace",
-  fontSize: '10.5px',
+const uiLabel: React.CSSProperties = {
+  fontFamily: "'Inter', sans-serif",
+  fontSize: '11px',
   letterSpacing: '0.22em',
   textTransform: 'uppercase',
   color: 'var(--dim)',
+  fontWeight: 500,
 };
 
-const monoValue: React.CSSProperties = {
-  fontFamily: "'JetBrains Mono', monospace",
+const monoNum: React.CSSProperties = {
+  fontFamily: "'Inter', sans-serif",
   fontSize: '12px',
+  fontFeatureSettings: '"tnum"',
 };
 
 export function SelectionPanel({
@@ -42,8 +44,16 @@ export function SelectionPanel({
   if (items.length === 0) {
     return (
       <div className="flex flex-col gap-4">
-        <span style={monoLabel}>No selection</span>
-        <p className="text-sm" style={{ color: 'var(--dim)', lineHeight: 1.55 }}>
+        <span style={uiLabel}>No selection</span>
+        <p
+          style={{
+            color: 'var(--ink-2)',
+            lineHeight: 1.55,
+            fontStyle: 'italic',
+            fontFamily: "'Cormorant Garamond', serif",
+            fontSize: '16px',
+          }}
+        >
           Klicka en hex för att markera. Shift-klicka för fler. Ctrl-dra för ett område.
         </p>
       </div>
@@ -53,8 +63,8 @@ export function SelectionPanel({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-baseline justify-between">
-        <span style={monoLabel}>Selection</span>
-        <span style={{ ...monoValue, color: 'var(--ink)' }}>
+        <span style={uiLabel}>Selection</span>
+        <span style={{ ...monoNum, color: 'var(--ink)' }}>
           {items.length} / 20
         </span>
       </div>
@@ -74,10 +84,10 @@ export function SelectionPanel({
                 className="inline-block w-1.5 h-1.5 rounded-full"
                 style={{ background: TIER_FILL[it.tier] }}
               />
-              <span style={{ ...monoValue, color: 'var(--ink-2)' }}>
+              <span style={{ ...monoNum, color: 'var(--ink-2)' }}>
                 {it.h3.slice(0, 9)}…
               </span>
-              <span style={{ ...monoLabel, fontSize: '9.5px' }}>T{it.tier}</span>
+              <span style={{ ...uiLabel, fontSize: '10px' }}>T{it.tier}</span>
             </div>
             <button
               type="button"
@@ -95,17 +105,20 @@ export function SelectionPanel({
       </ul>
 
       <div className="flex items-baseline justify-between">
-        <span style={monoLabel}>Total</span>
+        <span style={uiLabel}>Total</span>
         <span
           style={{
-            fontFamily: "'Instrument Serif', serif",
-            fontSize: '28px',
+            fontFamily: "'Cormorant Garamond', serif",
+            fontStyle: 'italic',
+            fontWeight: 400,
+            fontSize: '32px',
             lineHeight: 1,
             color: 'var(--signal)',
+            fontFeatureSettings: '"tnum"',
           }}
         >
           {totalSol.toFixed(4)}
-          <span style={{ ...monoLabel, marginLeft: '8px', fontSize: '10.5px' }}>SOL</span>
+          <span style={{ ...uiLabel, marginLeft: '8px', fontSize: '10.5px', fontStyle: 'normal' }}>SOL</span>
         </span>
       </div>
 
@@ -113,25 +126,31 @@ export function SelectionPanel({
         type="button"
         disabled={!walletConnected || items.length > 20}
         onClick={onClaim}
-        className="w-full py-3 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full py-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         style={{
-          fontFamily: "'Space Grotesk', sans-serif",
+          fontFamily: "'Inter', sans-serif",
           fontSize: '13.5px',
           fontWeight: 500,
+          letterSpacing: '0.01em',
           background: walletConnected && items.length <= 20 ? 'var(--signal)' : 'transparent',
-          color: walletConnected && items.length <= 20 ? '#000' : 'var(--ink)',
+          color: walletConnected && items.length <= 20 ? '#ffffff' : 'var(--ink-2)',
           border:
             walletConnected && items.length <= 20
-              ? '1px solid var(--signal)'
-              : '1px solid var(--hairline)',
+              ? '1.5px solid var(--signal)'
+              : '1.5px solid var(--hairline)',
+          borderRadius: 999,
         }}
         onMouseEnter={(e) => {
           if (walletConnected && items.length <= 20) {
-            e.currentTarget.style.filter = 'brightness(1.1)';
+            e.currentTarget.style.background = 'var(--signal-deep)';
+            e.currentTarget.style.borderColor = 'var(--signal-deep)';
           }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.filter = '';
+          if (walletConnected && items.length <= 20) {
+            e.currentTarget.style.background = 'var(--signal)';
+            e.currentTarget.style.borderColor = 'var(--signal)';
+          }
         }}
       >
         {items.length > 20

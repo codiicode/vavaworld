@@ -41,9 +41,9 @@ export default function Page() {
         onClaim={() => setShowClaim(true)}
         mapRef={mapRef}
       />
-      <BrandLink />
+      <BrandLink onDark />
       <SearchBar mapRef={mapRef} />
-      <AuthButton />
+      <AuthButton onDark />
       {showClaim && (
         <ClaimModal
           selectedHexes={selectedHexes}

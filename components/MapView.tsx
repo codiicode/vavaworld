@@ -238,21 +238,23 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
       />
       {ready && !zoomedIn && (
         <div
-          className="absolute z-[6] pointer-events-none flex items-center gap-2 px-4 py-2.5"
+          className="absolute z-[6] pointer-events-none flex items-center gap-2 px-5 py-2.5"
           style={{
             left: '50%',
             bottom: '40px',
             transform: 'translateX(-50%)',
-            background: 'rgba(12, 15, 18, 0.85)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            background: 'rgba(255, 255, 255, 0.88)',
+            backdropFilter: 'blur(14px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(14px) saturate(140%)',
             border: '1px solid var(--hairline)',
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '10.5px',
+            borderRadius: 999,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '11px',
             letterSpacing: '0.22em',
             textTransform: 'uppercase',
             color: 'var(--ink-2)',
             whiteSpace: 'nowrap',
+            fontWeight: 500,
           }}
         >
           <span style={{ color: 'var(--signal)' }}>+</span>
