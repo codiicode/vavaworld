@@ -2,7 +2,6 @@
 
 import { useRef, useState } from 'react';
 import type { MapRef } from 'react-map-gl/mapbox';
-import { BrandLink } from '@/components/BrandLink';
 import { MapView } from '@/components/MapView';
 import { MapSidebar } from '@/components/map/sidebar';
 import { SearchBar } from '@/components/SearchBar';
@@ -26,8 +25,10 @@ export default function Page() {
     setShowClaim(false);
   };
 
+  // `absolute inset-0` inside the (app) layout's <main>, so the global left rail stays visible.
+  // The map's right sidebar (MapSidebar) sits inside this container, not the viewport.
   return (
-    <main className="fixed inset-0">
+    <div className="absolute inset-0">
       <MapView
         selectedHexes={selectedHexes}
         setSelectedHexes={setSelectedHexes}
@@ -40,7 +41,6 @@ export default function Page() {
         onClaim={() => setShowClaim(true)}
         mapRef={mapRef}
       />
-      <BrandLink onDark />
       <SearchBar mapRef={mapRef} />
       {showClaim && (
         <ClaimModal
@@ -49,6 +49,6 @@ export default function Page() {
           onConfirmed={onClaimConfirmed}
         />
       )}
-    </main>
+    </div>
   );
 }

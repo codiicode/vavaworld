@@ -38,7 +38,7 @@ export function SearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | null> }
   };
 
   return (
-    <div className="absolute top-5 z-20 w-[360px]" style={{ left: '180px' }}>
+    <div className="absolute left-5 top-5 z-20 w-[360px]">
       <div
         className="flex items-center gap-3 px-4 py-3 transition-colors"
         style={{

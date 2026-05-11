@@ -70,7 +70,7 @@ export function MapSidebar({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <aside className="fixed right-0 top-0 z-10 flex h-screen w-[380px] flex-col border-l border-border bg-background">
+      <aside className="absolute right-0 top-0 z-10 flex h-full w-[380px] flex-col border-l border-border bg-background">
         <SidebarWallet />
 
         <SidebarRegion
