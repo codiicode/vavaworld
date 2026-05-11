@@ -34,7 +34,7 @@ function gradientFromAddr(addr: string | null): string {
 
 const NAV: ReadonlyArray<{ label: string; href: string; icon: typeof MapIcon }> = [
   { label: 'Map', href: '/map', icon: MapIcon },
-  { label: 'Portfolio', href: '/portfolio', icon: Wallet },
+  { label: 'Profile', href: '/profile', icon: Wallet },
   { label: 'Marketplace', href: '/marketplace', icon: Store },
   { label: 'Stake', href: '/stake', icon: Coins },
   { label: 'Activity', href: '/activity', icon: Activity },
