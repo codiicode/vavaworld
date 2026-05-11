@@ -2,10 +2,9 @@
 
 import { useRef, useState } from 'react';
 import type { MapRef } from 'react-map-gl/mapbox';
-import { AuthButton } from '@/components/AuthButton';
 import { BrandLink } from '@/components/BrandLink';
 import { MapView } from '@/components/MapView';
-import { Sidebar } from '@/components/Sidebar';
+import { MapSidebar } from '@/components/map/sidebar';
 import { SearchBar } from '@/components/SearchBar';
 import { ClaimModal } from '@/components/ClaimModal';
 
@@ -35,7 +34,7 @@ export default function Page() {
         mapRef={mapRef}
         refreshTilesRef={refreshTilesRef}
       />
-      <Sidebar
+      <MapSidebar
         selectedHexes={selectedHexes}
         onRemoveHex={removeHex}
         onClaim={() => setShowClaim(true)}
@@ -43,7 +42,6 @@ export default function Page() {
       />
       <BrandLink onDark />
       <SearchBar mapRef={mapRef} />
-      <AuthButton onDark />
       {showClaim && (
         <ClaimModal
           selectedHexes={selectedHexes}
