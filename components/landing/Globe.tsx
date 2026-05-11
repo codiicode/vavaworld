@@ -1,0 +1,237 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+import * as d3 from 'd3-geo';
+import { feature } from 'topojson-client';
+import type { Feature, FeatureCollection } from 'geojson';
+import type { Topology, GeometryCollection } from 'topojson-specification';
+import { CITIES, type City } from './landing-cities';
+
+/**
+ * Orthographic globe rendered to canvas at 1400x1400 (downscaled by CSS).
+ * Auto-rotates ~5°/sec when idle; drag to spin; pause on hover.
+ * Draws cubic-bezier arcs between random city pairs (the `arcQueue` in the reference).
+ */
+type WorldTopo = Topology<{ land: GeometryCollection; countries: GeometryCollection }>;
+
+export function Globe() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!canvas || !wrap) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
+    const radius = Math.min(W, H) / 2 - 60;
+    const DEEP = '#1d5e95';
+
+    let land: Feature | FeatureCollection | null = null;
+    let countries: Feature | FeatureCollection | null = null;
+
+    let cancelled = false;
+    fetch('/countries-110m.json')
+      .then((r) => r.json() as Promise<WorldTopo>)
+      .then((world) => {
+        if (cancelled) return;
+        land = feature(world, world.objects.land) as Feature | FeatureCollection;
+        countries = feature(world, world.objects.countries) as Feature | FeatureCollection;
+      })
+      .catch(() => { /* offline ok */ });
+
+    const projection = d3.geoOrthographic().scale(radius).translate([cx, cy]).clipAngle(90);
+    const path = d3.geoPath(projection, ctx);
+
+    let lambda = 0;
+    let mouseInside = false;
+    let dragging = false;
+    let dragLast: { x: number; y: number } | null = null;
+    let lastUserAction = 0;
+    const TILT = -14;
+
+    type Arc = { a: City; b: City; t: number; dur: number };
+    const arcQueue: Arc[] = [];
+    for (let i = 0; i < 4; i++) {
+      const a = pickCity();
+      let b = a;
+      while (b === a) b = pickCity();
+      arcQueue.push({ a, b, t: Math.random() * 1.5, dur: 1.9 + Math.random() * 0.5 });
+    }
+
+    function pickCity() { return CITIES[Math.floor(Math.random() * CITIES.length)]; }
+
+    function isVisible(lon: number, lat: number) {
+      const rot = projection.rotate();
+      const lambda0 = -rot[0] * Math.PI / 180;
+      const phi0 = -rot[1] * Math.PI / 180;
+      const lam = lon * Math.PI / 180;
+      const phi = lat * Math.PI / 180;
+      return Math.sin(phi0) * Math.sin(phi) + Math.cos(phi0) * Math.cos(phi) * Math.cos(lam - lambda0) > 0;
+    }
+
+    function drawArc(a: City, b: City, prog: number) {
+      if (!ctx) return;
+      if (!isVisible(a.lon, a.lat) && !isVisible(b.lon, b.lat)) return;
+      const midLL = d3.geoInterpolate([a.lon, a.lat], [b.lon, b.lat])(0.5) as [number, number];
+      const chord = d3.geoDistance([a.lon, a.lat], [b.lon, b.lat]);
+      const lift = Math.min(0.55, chord * 0.42);
+      const pA = projection([a.lon, a.lat]);
+      const pB = projection([b.lon, b.lat]);
+      const pM = projection(midLL);
+      if (!pA || !pB || !pM) return;
+      let dx = pM[0] - cx;
+      let dy = pM[1] - cy;
+      const dl = Math.hypot(dx, dy) || 1;
+      dx /= dl;
+      dy /= dl;
+      const lm: [number, number] = [pM[0] + dx * lift * radius, pM[1] + dy * lift * radius];
+      const steps = Math.max(2, Math.floor(60 * prog));
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = 'rgba(29,94,149,0.78)';
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const t = i / 60;
+        const u = 1 - t;
+        const x = u * u * pA[0] + 2 * u * t * lm[0] + t * t * pB[0];
+        const y = u * u * pA[1] + 2 * u * t * lm[1] + t * t * pB[1];
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      if (prog < 1) {
+        const t = prog;
+        const u = 1 - t;
+        const px = u * u * pA[0] + 2 * u * t * lm[0] + t * t * pB[0];
+        const py = u * u * pA[1] + 2 * u * t * lm[1] + t * t * pB[1];
+        ctx.beginPath();
+        ctx.arc(px, py, 5, 0, Math.PI * 2);
+        ctx.fillStyle = DEEP;
+        ctx.fill();
+      }
+    }
+
+    function drawScene(dt: number) {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, W, H);
+      projection.rotate([lambda, TILT, 0]);
+
+      ctx.beginPath();
+      path({ type: 'Sphere' });
+      const g = ctx.createRadialGradient(cx - radius * 0.35, cy - radius * 0.35, radius * 0.2, cx, cy, radius * 1.05);
+      g.addColorStop(0, '#e7f2fb');
+      g.addColorStop(0.55, '#a9d2ee');
+      g.addColorStop(1, '#5a9dc8');
+      ctx.fillStyle = g;
+      ctx.fill();
+
+      ctx.beginPath();
+      path(d3.geoGraticule10());
+      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.stroke();
+
+      if (land) {
+        ctx.beginPath();
+        path(land);
+        ctx.fillStyle = 'rgba(255,255,255,0.94)';
+        ctx.fill();
+      }
+      if (countries) {
+        ctx.beginPath();
+        path(countries);
+        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = 'rgba(29,94,149,0.32)';
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      path({ type: 'Sphere' });
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(29,94,149,0.55)';
+      ctx.stroke();
+
+      CITIES.forEach((c) => {
+        if (!isVisible(c.lon, c.lat)) return;
+        const p = projection([c.lon, c.lat]);
+        if (!p) return;
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = DEEP;
+        ctx.fill();
+      });
+
+      for (let i = arcQueue.length - 1; i >= 0; i--) {
+        const arc = arcQueue[i];
+        arc.t += dt / arc.dur;
+        ctx.save();
+        if (arc.t > 1.3) ctx.globalAlpha = Math.max(0, 1 - (arc.t - 1.3) / 0.7);
+        drawArc(arc.a, arc.b, Math.min(1, arc.t));
+        ctx.restore();
+        if (arc.t > 2.0) arcQueue.splice(i, 1);
+      }
+
+      // Occasionally spawn a fresh arc so the queue doesn't drain
+      if (Math.random() < 0.012) {
+        const a = pickCity();
+        let b = a;
+        while (b === a) b = pickCity();
+        arcQueue.push({ a, b, t: 0, dur: 1.9 + Math.random() * 0.5 });
+      }
+    }
+
+    let last = performance.now();
+    let raf = 0;
+    function loop(t: number) {
+      const dt = (t - last) / 1000;
+      last = t;
+      const sinceUser = t - lastUserAction;
+      if (!mouseInside && !dragging && sinceUser > 1500) {
+        lambda = (lambda + dt * 5) % 360;
+      }
+      drawScene(dt);
+      raf = requestAnimationFrame(loop);
+    }
+    raf = requestAnimationFrame(loop);
+
+    const onEnter = () => { mouseInside = true; };
+    const onLeave = () => { mouseInside = false; dragging = false; };
+    const onDown = (e: MouseEvent) => {
+      dragging = true;
+      dragLast = { x: e.clientX, y: e.clientY };
+      lastUserAction = performance.now();
+    };
+    const onUp = () => { dragging = false; };
+    const onMove = (e: MouseEvent) => {
+      if (!dragging || !dragLast) return;
+      lambda = (lambda + (e.clientX - dragLast.x) * 0.4) % 360;
+      dragLast = { x: e.clientX, y: e.clientY };
+      lastUserAction = performance.now();
+    };
+    wrap.addEventListener('mouseenter', onEnter);
+    wrap.addEventListener('mouseleave', onLeave);
+    wrap.addEventListener('mousedown', onDown);
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('mousemove', onMove);
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      wrap.removeEventListener('mouseenter', onEnter);
+      wrap.removeEventListener('mouseleave', onLeave);
+      wrap.removeEventListener('mousedown', onDown);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('mousemove', onMove);
+    };
+  }, []);
+
+  return (
+    <div ref={wrapRef} className="l-globe-wrap">
+      <canvas ref={canvasRef} width={1400} height={1400} />
+    </div>
+  );
+}
