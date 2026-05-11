@@ -14,10 +14,11 @@ import {
   Wallet,
 } from 'lucide-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { getConnection } from '@/lib/anchor-client';
+import { useUserProfile } from '@/lib/use-user-profile';
 import { cn } from '@/lib/utils';
 
 function shortAddr(addr: string): string {
@@ -50,6 +51,7 @@ const NAV: ReadonlyArray<{ label: string; href: string; icon: typeof MapIcon }> 
 export function AppSidebar() {
   const pathname = usePathname();
   const wallet = useActiveWallet();
+  const profile = useUserProfile();
   const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
@@ -112,8 +114,12 @@ export function AppSidebar() {
         </Link>
 
         {wallet.ready && wallet.connected && (
-          <div className="flex items-center gap-2.5 rounded-md border border-border bg-muted/30 px-3 py-2.5">
+          <Link
+            href="/profile"
+            className="flex items-center gap-2.5 rounded-md border border-border bg-muted/30 px-3 py-2.5 transition-colors hover:bg-muted/60"
+          >
             <Avatar className="h-6 w-6">
+              {profile.avatarUrl && <AvatarImage src={profile.avatarUrl} alt={profile.displayName} />}
               <AvatarFallback
                 className="text-[9px] font-medium text-white"
                 style={{ background: gradientFromAddr(wallet.address) }}
@@ -122,14 +128,14 @@ export function AppSidebar() {
               </AvatarFallback>
             </Avatar>
             <div className="flex min-w-0 flex-col">
-              <span className="truncate text-xs font-medium leading-tight tabular-nums">
-                {shortAddr(wallet.address ?? '')}
+              <span className="truncate text-xs font-medium leading-tight">
+                {profile.username ? `@${profile.username}` : shortAddr(wallet.address ?? '')}
               </span>
               <span className="truncate text-[10.5px] leading-tight tabular-nums text-muted-foreground">
                 {balance !== null ? `${balance.toFixed(3)} SOL` : '— SOL'}
               </span>
             </div>
-          </div>
+          </Link>
         )}
 
         {wallet.ready && !wallet.connected && (
