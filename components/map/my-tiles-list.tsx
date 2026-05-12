@@ -1,77 +1,21 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { BorshAccountsCoder, type Idl } from '@coral-xyz/anchor';
-import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import type { MapRef } from 'react-map-gl/mapbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useActiveWallet } from '@/lib/active-wallet';
-import idl from '@/lib/anchor-idl.json';
-import { getConnection, PROGRAM_ID } from '@/lib/anchor-client';
 import { hexCenter } from '@/lib/h3-utils';
+import { useUserTiles } from '@/lib/use-user-tiles';
 import { useHexLocations } from '@/lib/use-hex-locations';
 import { flagEmoji } from '@/lib/flag-emoji';
-import type { ClaimedTile } from '@/types/tile';
-
-const coder = new BorshAccountsCoder(idl as Idl);
-
-type DecodedTile = {
-  owner: PublicKey;
-  h3Id: { toString: (radix?: number) => string };
-  claimedAt: { toNumber: () => number };
-  tier: number;
-  pricePaid: { toString: () => string };
-  bump: number;
-};
 
 export function MyTilesList({ mapRef }: { mapRef: React.RefObject<MapRef | null> }) {
-  const { publicKey, connected } = useActiveWallet();
-  const [tiles, setTiles] = useState<ClaimedTile[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const reqIdRef = useRef(0);
-
+  const { connected } = useActiveWallet();
+  const { tiles, loading } = useUserTiles();
   const hexSet = useMemo(() => new Set(tiles?.map((t) => t.h3) ?? []), [tiles]);
   const locations = useHexLocations(hexSet);
-
-  useEffect(() => {
-    if (!connected || !publicKey) {
-      setTiles(null);
-      return;
-    }
-    const id = ++reqIdRef.current;
-    setLoading(true);
-    (async () => {
-      try {
-        const conn = getConnection();
-        const accs = await conn.getProgramAccounts(new PublicKey(PROGRAM_ID), {
-          filters: [
-            { dataSize: 66 },
-            { memcmp: { offset: 8, bytes: publicKey.toBase58() } },
-          ],
-        });
-        if (id !== reqIdRef.current) return;
-        const out: ClaimedTile[] = [];
-        for (const acc of accs) {
-          try {
-            const decoded = coder.decode<DecodedTile>('Tile', acc.account.data);
-            out.push({
-              h3: decoded.h3Id.toString(16).padStart(15, '0'),
-              owner: decoded.owner.toBase58(),
-              tier: decoded.tier as 1 | 2 | 3,
-              claimedAt: decoded.claimedAt.toNumber(),
-              pricePaid: BigInt(decoded.pricePaid.toString()),
-              bump: decoded.bump,
-            });
-          } catch { /* skip undecodable */ }
-        }
-        out.sort((a, b) => b.claimedAt - a.claimedAt);
-        setTiles(out);
-      } finally {
-        if (id === reqIdRef.current) setLoading(false);
-      }
-    })();
-  }, [connected, publicKey]);
 
   const flyTo = (h3: string) => {
     const c = hexCenter(h3);
@@ -85,7 +29,7 @@ export function MyTilesList({ mapRef }: { mapRef: React.RefObject<MapRef | null>
       </p>
     );
   }
-  if (loading) {
+  if (loading && !tiles) {
     return (
       <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
         Loading…

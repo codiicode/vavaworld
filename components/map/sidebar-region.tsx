@@ -4,10 +4,11 @@ import { useReverseGeocode } from '@/lib/use-reverse-geocode';
 import { flagEmoji } from '@/lib/flag-emoji';
 
 /**
- * Region context: viewport-center reverse-geocoded + three mini stats.
- * Only renders when zoom > 11. Caller passes (centerLat, centerLng, zoom).
+ * Region context: the viewport-centre's place name + country flag.
+ * Only renders when zoom > 11 — at world view the centre is meaningless.
  *
- * TODO: replace mocked stats with `/api/regions/stats?bbox=…` when indexer exists.
+ * Per-region tile stats (count / floor / available) need an indexer; intentionally
+ * dropped until that exists rather than showing made-up numbers.
  */
 export function SidebarRegion({
   centerLat,
@@ -31,26 +32,10 @@ export function SidebarRegion({
       <div className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
         Viewing
       </div>
-      <div className="mb-4 flex items-center gap-2">
+      <div className="flex items-center gap-2">
         {flag && <span className="text-base leading-none">{flag}</span>}
         <h2 className="truncate text-[17px] font-semibold tracking-tight">{display}</h2>
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <Stat label="Tiles" value="2,847" />
-        <Stat label="Claimed" value="182" />
-        <Stat label="Floor" value="0.04 SOL" />
-      </div>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-        {label}
-      </div>
-      <div className="text-base font-semibold tabular-nums tracking-tight">{value}</div>
     </div>
   );
 }

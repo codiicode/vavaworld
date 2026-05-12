@@ -120,7 +120,7 @@ export function MapSidebar({
           </TabsContent>
         </Tabs>
 
-        <HotNearby mapRef={mapRef} />
+        <HotNearby />
       </aside>
     </TooltipProvider>
   );

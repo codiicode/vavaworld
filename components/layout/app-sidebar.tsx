@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -13,12 +12,11 @@ import {
   Trophy,
   Wallet,
 } from 'lucide-react';
-import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ConnectButton } from '@/components/connect-button';
 import { useActiveWallet } from '@/lib/active-wallet';
-import { getConnection } from '@/lib/anchor-client';
 import { useUserProfile } from '@/lib/use-user-profile';
+import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { cn } from '@/lib/utils';
 
 function shortAddr(addr: string): string {
@@ -52,27 +50,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
-  const [balance, setBalance] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!wallet.publicKey) {
-      setBalance(null);
-      return;
-    }
-    const conn: Connection = getConnection();
-    let cancelled = false;
-    (async () => {
-      try {
-        const lamports = await conn.getBalance(wallet.publicKey!);
-        if (!cancelled) setBalance(lamports / LAMPORTS_PER_SOL);
-      } catch {
-        if (!cancelled) setBalance(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [wallet.publicKey]);
+  const { balance } = useWalletBalance(wallet.publicKey);
 
   return (
     <aside className="flex h-screen w-[200px] flex-shrink-0 flex-col border-r border-border bg-background">

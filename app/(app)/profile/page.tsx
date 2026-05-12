@@ -4,25 +4,26 @@ import { useCallback, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { IdentityCard } from '@/components/profile/identity-card';
-import { OverviewTab } from '@/components/profile/overview-tab';
 import { TilesTab } from '@/components/profile/tiles-tab';
 import { ActivityTab } from '@/components/profile/activity-tab';
 import { ProfileVersionProvider } from '@/lib/use-user-profile';
 
 /**
- * /profile — identity surface for the signed-in user.
+ * /profile — identity surface + tile holdings.
  *
- *   1. IdentityCard (avatar, display name, wallet addr, summary stats, edit button)
+ *   1. IdentityCard (avatar, display name, summary stats, edit button)
  *   2. Tabs:
- *      - Overview — KPIs, portfolio chart, recent activity preview
  *      - Tiles    — full holdings table/grid with search + filter
- *      - Activity — full activity feed with type filter
+ *      - Activity — placeholder until indexer exists
+ *
+ * Overview tab is gone — IdentityCard's three stats are the summary; a
+ * separate Overview duplicated them with mock data, which wasn't useful.
  *
  * ProfileVersionProvider lets a save in the edit dialog force every
- * `useUserProfile` consumer (this page, AppSidebar, etc.) to re-fetch.
+ * `useUserProfile` consumer (this page, AppSidebar) to re-fetch.
  */
 export default function ProfilePage() {
-  const [tab, setTab] = useState<'overview' | 'tiles' | 'activity'>('overview');
+  const [tab, setTab] = useState<'tiles' | 'activity'>('tiles');
   const [version, setVersion] = useState(0);
   const bump = useCallback(() => setVersion((v) => v + 1), []);
 
@@ -34,7 +35,7 @@ export default function ProfilePage() {
 
           <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
             <TabsList className="mb-6 h-auto rounded-none border-b border-border bg-transparent p-0">
-              {(['overview', 'tiles', 'activity'] as const).map((t) => (
+              {(['tiles', 'activity'] as const).map((t) => (
                 <TabsTrigger
                   key={t}
                   value={t}
@@ -45,9 +46,6 @@ export default function ProfilePage() {
               ))}
             </TabsList>
 
-            <TabsContent value="overview" className="mt-0">
-              <OverviewTab onSeeAllActivity={() => setTab('activity')} />
-            </TabsContent>
             <TabsContent value="tiles" className="mt-0">
               <TilesTab />
             </TabsContent>

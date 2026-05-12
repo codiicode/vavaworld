@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import { AtSign, Check, Copy } from 'lucide-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { flagEmoji } from '@/lib/flag-emoji';
 import { findCountry } from '@/lib/countries';
+import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
-import { mockTiles } from '@/lib/mock-data';
+import { useUserTiles } from '@/lib/use-user-tiles';
+import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { EditProfileDialog } from './edit-profile-dialog';
 
 function shortAddr(addr: string): string {
@@ -23,18 +26,24 @@ function gradientFromAddr(addr: string | null): string {
 }
 
 /**
- * Top section of /profile. Avatar (Supabase upload > Twitter pic > gradient),
- * display name + provider/flag badges, wallet address with copy, inline
- * summary stats, and an "Edit profile" button on the right.
+ * Top section of /profile. Real data only:
+ *   - Avatar (Supabase upload > Twitter pic > gradient)
+ *   - Name + provider badge + chosen country flag
+ *   - Wallet address (copy-able) + join date
+ *   - Summary stats: tiles owned, total spent on-chain, current SOL balance
  *
  * `onSavedBumpVersion` is called after a successful edit so the page can
  * force every `useUserProfile` consumer to re-fetch.
  */
 export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () => void }) {
   const profile = useUserProfile();
+  const wallet = useActiveWallet();
+  const { tiles } = useUserTiles();
+  const { balance } = useWalletBalance(wallet.publicKey);
   const [copied, setCopied] = useState(false);
 
-  const totalValue = mockTiles.reduce((sum, t) => sum + t.floor, 0);
+  const totalSpent =
+    tiles?.reduce((sum, t) => sum + Number(t.pricePaid) / LAMPORTS_PER_SOL, 0) ?? null;
   const country = findCountry(profile.flagCountryCode);
 
   const handleCopy = async () => {
@@ -123,7 +132,7 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
           </div>
         </div>
 
-        {/* Right: edit button + inline summary */}
+        {/* Right: edit button + real summary */}
         <div className="flex flex-col items-end gap-4">
           {profile.walletAddress && (
             <EditProfileDialog
@@ -136,9 +145,17 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
             />
           )}
           <div className="grid grid-cols-3 gap-6 sm:gap-8">
-            <SummaryStat label="Tiles" value={String(mockTiles.length)} />
-            <SummaryStat label="Value" value={totalValue.toFixed(2)} unit="SOL" />
-            <SummaryStat label="$VAVA" value="284K" />
+            <SummaryStat label="Tiles" value={tiles ? String(tiles.length) : '—'} />
+            <SummaryStat
+              label="Spent"
+              value={totalSpent !== null ? totalSpent.toFixed(3) : '—'}
+              unit="SOL"
+            />
+            <SummaryStat
+              label="Balance"
+              value={balance !== null ? balance.toFixed(3) : '—'}
+              unit="SOL"
+            />
           </div>
         </div>
       </div>

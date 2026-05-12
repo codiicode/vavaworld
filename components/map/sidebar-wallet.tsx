@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { ChevronDown, LogOut, Wallet } from 'lucide-react';
-import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useActiveWallet } from '@/lib/active-wallet';
-import { getConnection } from '@/lib/anchor-client';
+import { useWalletBalance } from '@/lib/use-wallet-balance';
 
 function shortAddr(addr: string): string {
   if (!addr) return '—';
@@ -28,27 +26,7 @@ function gradientFromAddr(addr: string | null): string {
  */
 export function SidebarWallet() {
   const wallet = useActiveWallet();
-  const [balance, setBalance] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!wallet.publicKey) {
-      setBalance(null);
-      return;
-    }
-    const conn: Connection = getConnection();
-    let cancelled = false;
-    (async () => {
-      try {
-        const lamports = await conn.getBalance(wallet.publicKey!);
-        if (!cancelled) setBalance(lamports / LAMPORTS_PER_SOL);
-      } catch {
-        if (!cancelled) setBalance(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [wallet.publicKey]);
+  const { balance } = useWalletBalance(wallet.publicKey);
 
   if (!wallet.ready) {
     return <div className="h-[60px] border-b border-border" aria-hidden />;
