@@ -5,13 +5,19 @@ import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { getConnection } from './anchor-client';
 
 /**
- * Reads the SOL balance for the given public key and subscribes to live updates
- * via `connection.onAccountChange`. Returns `null` when there's no key or while
- * the first fetch is in flight.
+ * Reads the SOL balance for the given public key.
  *
- * Used by AppSidebar, SidebarWallet (map), IdentityCard (profile). Replaces the
- * three independent `getBalance` effects we had scattered before.
+ * Originally subscribed to live updates via `onAccountChange`. We removed that
+ * because Helius RPC URLs include an `?api-key=…` query string, and the
+ * web3.js Connection class rebuilds the WSS URL in a way that breaks against
+ * that — every reconnect attempt fails with "Insufficient resources" and the
+ * client tight-loops, swamping the browser.
+ *
+ * Instead we poll every 30s. Cheap, no socket storm. `refetch()` lets callers
+ * force an immediate re-read (e.g. right after a successful claim).
  */
+const POLL_MS = 30_000;
+
 export function useWalletBalance(publicKey: PublicKey | null): {
   balance: number | null;
   loading: boolean;
@@ -29,35 +35,26 @@ export function useWalletBalance(publicKey: PublicKey | null): {
     }
     const connection: Connection = getConnection();
     let cancelled = false;
-    setLoading(true);
-    (async () => {
+
+    const fetchOnce = async () => {
+      if (!publicKey) return;
       try {
         const lamports = await connection.getBalance(publicKey);
         if (!cancelled) setBalance(lamports / LAMPORTS_PER_SOL);
       } catch {
         if (!cancelled) setBalance(null);
-      } finally {
-        if (!cancelled) setLoading(false);
       }
-    })();
+    };
 
-    // Subscribe to balance changes — the websocket pushes a new lamports value
-    // whenever the account is touched. Cheap, keeps the UI live across claims.
-    let subId: number | null = null;
-    try {
-      subId = connection.onAccountChange(publicKey, (acc) => {
-        if (cancelled) return;
-        setBalance(acc.lamports / LAMPORTS_PER_SOL);
-      });
-    } catch {
-      /* RPC doesn't support subscriptions — silent, balance won't auto-update */
-    }
+    setLoading(true);
+    fetchOnce().finally(() => {
+      if (!cancelled) setLoading(false);
+    });
 
+    const intervalId = window.setInterval(fetchOnce, POLL_MS);
     return () => {
       cancelled = true;
-      if (subId != null) {
-        connection.removeAccountChangeListener(subId).catch(() => {});
-      }
+      window.clearInterval(intervalId);
     };
   }, [publicKey, reqId]);
 

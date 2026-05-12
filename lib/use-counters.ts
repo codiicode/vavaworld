@@ -21,34 +21,42 @@ function decodeCounter(buf: Buffer): bigint {
   }
 }
 
+/**
+ * Reads the three TierCounter PDAs.
+ *
+ * Originally subscribed to live updates via `onAccountChange`, but Helius RPC
+ * URLs carry a query-string API key which the web3.js WSS client mangles. The
+ * resulting connection failures retry in a tight loop and swamp the browser.
+ * Polling every 30s is plenty for pricing UI.
+ */
+const POLL_MS = 30_000;
+
 export function useCounters(): Counters {
   const [counters, setCounters] = useState<Counters>({ 1: 0n, 2: 0n, 3: 0n });
 
   useEffect(() => {
     const conn = getConnection();
-    const subs: number[] = [];
+    let cancelled = false;
 
-    (async () => {
+    const fetchOnce = async () => {
       for (const tier of [1, 2, 3] as const) {
-        const [pda] = counterPda(tier, programIdPk);
-
-        const ai = await conn.getAccountInfo(pda);
-        if (ai) {
+        try {
+          const [pda] = counterPda(tier, programIdPk);
+          const ai = await conn.getAccountInfo(pda);
+          if (!ai || cancelled) continue;
           const sold = decodeCounter(ai.data as Buffer);
           setCounters((c) => ({ ...c, [tier]: sold }));
+        } catch {
+          /* one tier failed — keep going */
         }
-
-        const sub = conn.onAccountChange(pda, (acc) => {
-          const sold = decodeCounter(acc.data as Buffer);
-          setCounters((c) => ({ ...c, [tier]: sold }));
-        });
-        subs.push(sub);
       }
-    })();
+    };
 
+    fetchOnce();
+    const intervalId = window.setInterval(fetchOnce, POLL_MS);
     return () => {
-      const conn = getConnection();
-      subs.forEach((s) => conn.removeAccountChangeListener(s));
+      cancelled = true;
+      window.clearInterval(intervalId);
     };
   }, []);
 
