@@ -1,18 +1,20 @@
 'use client';
 
 import Link from 'next/link';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { BrandMark } from './BrandMark';
 
 /**
- * Fixed glassy top nav. CTAs change based on Privy session:
- *  - signed out → "Log in" + "Sign up" both call `wallet.login()` to open the
- *    Privy modal in-place (no navigation away from the landing).
+ * Fixed glassy top nav. CTAs change based on session state:
+ *  - signed out → "Log in" (Privy: email/Google/X) + "Connect wallet"
+ *    (wallet-adapter: Phantom/Solflare/Backpack — no Privy involved).
  *  - signed in  → "Profile" → /profile
- *  - hydrating  → render placeholder shell so layout doesn't jump
+ *  - hydrating  → render placeholder shell so layout doesn't jump.
  */
 export function SiteNav() {
   const wallet = useActiveWallet();
+  const { setVisible: openWalletModal } = useWalletModal();
 
   return (
     <nav className="l-site">
@@ -47,10 +49,10 @@ export function SiteNav() {
               </button>
               <button
                 type="button"
-                onClick={wallet.login}
+                onClick={() => openWalletModal(true)}
                 className="l-btn l-btn-overlay-ghost"
               >
-                Sign up
+                Connect wallet
               </button>
             </>
           )}

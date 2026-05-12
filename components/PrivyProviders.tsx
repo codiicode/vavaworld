@@ -14,7 +14,8 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
     <PrivyProvider
       appId={appId}
       config={{
-        loginMethods: ['email', 'google', 'twitter', 'wallet'],
+        // External wallets (Phantom etc.) live outside Privy — see ConnectButton.
+        loginMethods: ['email', 'google', 'twitter'],
         appearance: {
           theme: 'light',
           accentColor: '#7CBFEC',

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { ConnectButton } from '@/components/connect-button';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { getConnection } from '@/lib/anchor-client';
 import { useUserProfile } from '@/lib/use-user-profile';
@@ -138,11 +138,7 @@ export function AppSidebar() {
           </Link>
         )}
 
-        {wallet.ready && !wallet.connected && (
-          <Button size="sm" onClick={wallet.login} className="w-full h-8 text-xs font-medium">
-            Connect
-          </Button>
-        )}
+        {wallet.ready && !wallet.connected && <ConnectButton variant="sidebar" />}
       </div>
     </aside>
   );
