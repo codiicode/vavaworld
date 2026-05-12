@@ -5,8 +5,15 @@ import bs58 from 'bs58';
 import { usePrivy } from '@privy-io/react-auth';
 import { useWallets as usePrivySolanaWallets, useSignAndSendTransaction } from '@privy-io/react-auth/solana';
 import { useWallet as useAdapterWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, type Transaction, type VersionedTransaction } from '@solana/web3.js';
+import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { getConnection } from './anchor-client';
+
+/** Privy v3 wants raw bytes — serialize whatever Transaction subtype we're given. */
+function serializeTx(tx: Transaction | VersionedTransaction): Uint8Array {
+  if (tx instanceof VersionedTransaction) return tx.serialize();
+  // Legacy Transaction: skip signature verification (we haven't signed yet, the wallet will).
+  return tx.serialize({ requireAllSignatures: false, verifySignatures: false });
+}
 
 export type ActiveWalletSource = 'privy' | 'adapter' | null;
 
@@ -56,14 +63,13 @@ export function useActiveWallet(): ActiveWallet {
         ready: true,
         connected: true,
         signAndSendTransaction: async (tx) => {
-          const connection = getConnection();
-          const { signature } = await privySignAndSend({
-            // @ts-expect-error - Privy accepts both legacy Transaction and VersionedTransaction
-            transaction: tx,
-            connection,
-            address,
+          const result = await privySignAndSend({
+            transaction: serializeTx(tx),
+            wallet: privyWallet,
           });
-          return typeof signature === 'string' ? signature : bs58.encode(signature);
+          const sig = result?.signature;
+          if (!sig) throw new Error('Privy returned no signature');
+          return typeof sig === 'string' ? sig : bs58.encode(sig);
         },
         login,
         logout,
