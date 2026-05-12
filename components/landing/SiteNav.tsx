@@ -6,7 +6,8 @@ import { BrandMark } from './BrandMark';
 
 /**
  * Fixed glassy top nav. CTAs change based on Privy session:
- *  - signed out → "Log in" + "Sign up" (both → /map?login=true to fire Privy modal)
+ *  - signed out → "Log in" + "Sign up" both call `wallet.login()` to open the
+ *    Privy modal in-place (no navigation away from the landing).
  *  - signed in  → "Profile" → /profile
  *  - hydrating  → render placeholder shell so layout doesn't jump
  */
@@ -37,8 +38,20 @@ export function SiteNav() {
           )}
           {wallet.ready && !wallet.connected && (
             <>
-              <Link href="/map?login=true" className="l-btn l-btn-text">Log in</Link>
-              <Link href="/map?login=true" className="l-btn l-btn-overlay-ghost">Sign up</Link>
+              <button
+                type="button"
+                onClick={wallet.login}
+                className="l-btn l-btn-text"
+              >
+                Log in
+              </button>
+              <button
+                type="button"
+                onClick={wallet.login}
+                className="l-btn l-btn-overlay-ghost"
+              >
+                Sign up
+              </button>
             </>
           )}
         </div>

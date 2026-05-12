@@ -14,10 +14,10 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
     <PrivyProvider
       appId={appId}
       config={{
-        loginMethods: ['email', 'google', 'twitter'],
+        loginMethods: ['email', 'google', 'twitter', 'wallet'],
         appearance: {
-          theme: 'dark',
-          accentColor: '#00C805',
+          theme: 'light',
+          accentColor: '#7CBFEC',
           logo: '/vavaworld-mark.svg',
           landingHeader: 'Welcome to VAVAWORLD',
           showWalletLoginFirst: false,
