@@ -87,6 +87,18 @@ export function ClaimModal({
         recentBlockhash: blockhash,
       }).add(ix);
 
+      // Simulate before sending — if the program rejects, we get the on-chain logs
+      // (Anchor custom errors, account constraint failures, etc.) and can show them
+      // instead of the opaque "simulation failed" message Privy bubbles up.
+      const sim = await connection.simulateTransaction(tx, undefined, [wallet.publicKey]);
+      if (sim.value.err) {
+        const logs = sim.value.logs ?? [];
+        const programLog = logs.find((l) => l.includes('AnchorError') || l.includes('failed:') || l.includes('Program log: Error'));
+        const friendly = programLog ?? `Simulation rejected: ${JSON.stringify(sim.value.err)}`;
+        console.error('[claim] simulation failed', { err: sim.value.err, logs });
+        throw new Error(friendly + (logs.length ? '\n\nFull logs:\n' + logs.join('\n') : ''));
+      }
+
       const sig = await wallet.signAndSendTransaction(tx);
       await connection.confirmTransaction(sig, 'confirmed');
 
@@ -271,8 +283,9 @@ export function ClaimModal({
             <div className="py-4 mb-4">
               <div style={{ ...uiLabel, color: '#b91c1c', marginBottom: '10px' }}>Error</div>
               <pre
-                className="whitespace-pre-wrap"
+                className="whitespace-pre-wrap overflow-y-auto"
                 style={{
+                  maxHeight: 280,
                   fontFamily: "'Inter', sans-serif",
                   fontSize: '11px',
                   color: 'var(--ink-2)',
