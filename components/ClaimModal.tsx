@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
+import { ComputeBudgetProgram, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import { BN, Program, type Idl } from '@coral-xyz/anchor';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
@@ -82,10 +82,17 @@ export function ClaimModal({
         .instruction();
 
       const { blockhash } = await connection.getLatestBlockhash('confirmed');
+      // The claim instruction's tier classifier walks 102 cities with libm-based
+      // haversine and burns way past the 200K default CU limit. Bump to 1M up
+      // front for headroom (Solana allows up to 1.4M per tx). Scales linearly
+      // with batch size, so we add ~150K extra per tile on top of a base 400K.
+      const computeUnits = Math.min(1_400_000, 400_000 + items.length * 150_000);
       const tx = new Transaction({
         feePayer: wallet.publicKey,
         recentBlockhash: blockhash,
-      }).add(ix);
+      })
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnits }))
+        .add(ix);
 
       // Simulate before sending — if the program rejects, we get the on-chain logs
       // (Anchor custom errors, account constraint failures, etc.) and can show them
