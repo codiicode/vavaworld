@@ -8,11 +8,25 @@ import { useWallet as useAdapterWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { getConnection } from './anchor-client';
 
-/** Privy v3 wants raw bytes — serialize whatever Transaction subtype we're given. */
+/** Privy v3 wants raw bytes — serialize whatever Transaction subtype we're given.
+ *  Uses duck-typing (`'version' in tx`) rather than `instanceof` to survive cross-chunk
+ *  class-identity issues in production bundles. Wraps the result in a fresh `Uint8Array`
+ *  so we pass a native typed array (legacy `Transaction.serialize` returns a Buffer). */
 function serializeTx(tx: Transaction | VersionedTransaction): Uint8Array {
-  if (tx instanceof VersionedTransaction) return tx.serialize();
-  // Legacy Transaction: skip signature verification (we haven't signed yet, the wallet will).
-  return tx.serialize({ requireAllSignatures: false, verifySignatures: false });
+  if ('version' in tx && typeof tx.version === 'number') {
+    return new Uint8Array((tx as VersionedTransaction).serialize());
+  }
+  return new Uint8Array(
+    (tx as Transaction).serialize({ requireAllSignatures: false, verifySignatures: false }),
+  );
+}
+
+/** Which Solana cluster does our app's RPC point at? Privy needs this to scope its sign. */
+function inferSolanaChain(): 'solana:mainnet' | 'solana:devnet' | 'solana:testnet' {
+  const url = process.env.NEXT_PUBLIC_RPC_URL ?? '';
+  if (url.includes('devnet')) return 'solana:devnet';
+  if (url.includes('testnet')) return 'solana:testnet';
+  return 'solana:mainnet';
 }
 
 export type ActiveWalletSource = 'privy' | 'adapter' | null;
@@ -63,13 +77,19 @@ export function useActiveWallet(): ActiveWallet {
         ready: true,
         connected: true,
         signAndSendTransaction: async (tx) => {
-          const result = await privySignAndSend({
-            transaction: serializeTx(tx),
-            wallet: privyWallet,
-          });
-          const sig = result?.signature;
-          if (!sig) throw new Error('Privy returned no signature');
-          return typeof sig === 'string' ? sig : bs58.encode(sig);
+          try {
+            const result = await privySignAndSend({
+              transaction: serializeTx(tx),
+              wallet: privyWallet,
+              chain: inferSolanaChain(),
+            });
+            const sig = result?.signature;
+            if (!sig) throw new Error('Privy returned no signature');
+            return typeof sig === 'string' ? sig : bs58.encode(sig);
+          } catch (e) {
+            console.error('[active-wallet] Privy signAndSendTransaction failed:', e);
+            throw e;
+          }
         },
         login,
         logout,
