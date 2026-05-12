@@ -12,6 +12,7 @@ import { useUserProfile } from '@/lib/use-user-profile';
 import { useUserTiles } from '@/lib/use-user-tiles';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { EditProfileDialog } from './edit-profile-dialog';
+import { ExportKeyButton } from './export-key-button';
 
 function shortAddr(addr: string): string {
   if (!addr) return '—';
@@ -132,18 +133,21 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
           </div>
         </div>
 
-        {/* Right: edit button + real summary */}
+        {/* Right: edit + export buttons + real summary */}
         <div className="flex flex-col items-end gap-4">
-          {profile.walletAddress && (
-            <EditProfileDialog
-              walletAddress={profile.walletAddress}
-              initialUsername={profile.username}
-              initialFlagCode={profile.flagCountryCode}
-              initialAvatarUrl={profile.avatarUrl}
-              initialBio={profile.bio}
-              onSaved={onSavedBumpVersion}
-            />
-          )}
+          <div className="flex items-center gap-2">
+            <ExportKeyButton />
+            {profile.walletAddress && (
+              <EditProfileDialog
+                walletAddress={profile.walletAddress}
+                initialUsername={profile.username}
+                initialFlagCode={profile.flagCountryCode}
+                initialAvatarUrl={profile.avatarUrl}
+                initialBio={profile.bio}
+                onSaved={onSavedBumpVersion}
+              />
+            )}
+          </div>
           <div className="grid grid-cols-3 gap-6 sm:gap-8">
             <SummaryStat label="Tiles" value={tiles ? String(tiles.length) : '—'} />
             <SummaryStat
