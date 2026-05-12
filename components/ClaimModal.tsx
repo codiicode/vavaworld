@@ -83,10 +83,11 @@ export function ClaimModal({
 
       const { blockhash } = await connection.getLatestBlockhash('confirmed');
       // The claim instruction's tier classifier walks 102 cities with libm-based
-      // haversine and burns way past the 200K default CU limit. Bump to 1M up
-      // front for headroom (Solana allows up to 1.4M per tx). Scales linearly
-      // with batch size, so we add ~150K extra per tile on top of a base 400K.
-      const computeUnits = Math.min(1_400_000, 400_000 + items.length * 150_000);
+      // haversine and burns ~550K CUs per tile on BPF. Solana's per-tx max is
+      // 1.4M CUs, so we cap there. Single-tile claims will work; multi-tile
+      // batches >2 are not feasible without optimising the on-chain classifier
+      // (e.g. coarse spatial pre-filter before haversine).
+      const computeUnits = 1_400_000;
       const tx = new Transaction({
         feePayer: wallet.publicKey,
         recentBlockhash: blockhash,
