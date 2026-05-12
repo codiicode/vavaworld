@@ -7,14 +7,11 @@ import { getConnection } from './anchor-client';
 /**
  * Reads the SOL balance for the given public key.
  *
- * Originally subscribed to live updates via `onAccountChange`. We removed that
- * because Helius RPC URLs include an `?api-key=…` query string, and the
- * web3.js Connection class rebuilds the WSS URL in a way that breaks against
- * that — every reconnect attempt fails with "Insufficient resources" and the
- * client tight-loops, swamping the browser.
- *
- * Instead we poll every 30s. Cheap, no socket storm. `refetch()` lets callers
- * force an immediate re-read (e.g. right after a successful claim).
+ * IMPORTANT: depends on the stringified base58 address, NOT the PublicKey
+ * object itself. `useActiveWallet` rebuilds a fresh PublicKey instance every
+ * render — using it as a useEffect dep tore the effect down and remounted it
+ * on every render, which fired thousands of getBalance requests per second
+ * and got us 429-rate-limited.
  */
 const POLL_MS = 30_000;
 
@@ -28,18 +25,20 @@ export function useWalletBalance(publicKey: PublicKey | null): {
   const [reqId, setReqId] = useState(0);
   const refetch = useCallback(() => setReqId((x) => x + 1), []);
 
+  const addressKey = publicKey?.toBase58() ?? null;
+
   useEffect(() => {
-    if (!publicKey) {
+    if (!addressKey) {
       setBalance(null);
       return;
     }
     const connection: Connection = getConnection();
+    const pk = new PublicKey(addressKey);
     let cancelled = false;
 
     const fetchOnce = async () => {
-      if (!publicKey) return;
       try {
-        const lamports = await connection.getBalance(publicKey);
+        const lamports = await connection.getBalance(pk);
         if (!cancelled) setBalance(lamports / LAMPORTS_PER_SOL);
       } catch {
         if (!cancelled) setBalance(null);
@@ -56,7 +55,7 @@ export function useWalletBalance(publicKey: PublicKey | null): {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [publicKey, reqId]);
+  }, [addressKey, reqId]);
 
   return { balance, loading, refetch };
 }

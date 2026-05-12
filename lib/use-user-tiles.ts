@@ -39,8 +39,13 @@ export function useUserTiles(): {
   const [version, setVersion] = useState(0);
   const refetch = useCallback(() => setVersion((v) => v + 1), []);
 
+  // Stringify before using as a useEffect dep — `useActiveWallet` rebuilds the
+  // PublicKey object every render, which would tear down + remount the effect
+  // each render and storm getProgramAccounts (same bug as in use-wallet-balance).
+  const addressKey = publicKey?.toBase58() ?? null;
+
   useEffect(() => {
-    if (!connected || !publicKey) {
+    if (!connected || !addressKey) {
       setTiles(null);
       return;
     }
@@ -52,7 +57,7 @@ export function useUserTiles(): {
         const accs = await conn.getProgramAccounts(new PublicKey(PROGRAM_ID), {
           filters: [
             { dataSize: 66 },
-            { memcmp: { offset: 8, bytes: publicKey.toBase58() } },
+            { memcmp: { offset: 8, bytes: addressKey } },
           ],
         });
         if (id !== reqIdRef.current) return;
@@ -78,7 +83,7 @@ export function useUserTiles(): {
         if (id === reqIdRef.current) setLoading(false);
       }
     })();
-  }, [connected, publicKey, version]);
+  }, [connected, addressKey, version]);
 
   return { tiles, loading, refetch };
 }
