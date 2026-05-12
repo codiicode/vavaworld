@@ -4,8 +4,11 @@ import { useState } from 'react';
 import { AtSign, Check, Copy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { flagEmoji } from '@/lib/flag-emoji';
+import { findCountry } from '@/lib/countries';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { mockTiles } from '@/lib/mock-data';
+import { EditProfileDialog } from './edit-profile-dialog';
 
 function shortAddr(addr: string): string {
   if (!addr) return '—';
@@ -20,14 +23,19 @@ function gradientFromAddr(addr: string | null): string {
 }
 
 /**
- * Top section of /profile. Avatar (Twitter pic when linked, gradient fallback),
- * display name + provider badge, wallet address with copy, inline summary stats.
+ * Top section of /profile. Avatar (Supabase upload > Twitter pic > gradient),
+ * display name + provider/flag badges, wallet address with copy, inline
+ * summary stats, and an "Edit profile" button on the right.
+ *
+ * `onSavedBumpVersion` is called after a successful edit so the page can
+ * force every `useUserProfile` consumer to re-fetch.
  */
-export function IdentityCard() {
+export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () => void }) {
   const profile = useUserProfile();
   const [copied, setCopied] = useState(false);
 
   const totalValue = mockTiles.reduce((sum, t) => sum + t.floor, 0);
+  const country = findCountry(profile.flagCountryCode);
 
   const handleCopy = async () => {
     if (!profile.walletAddress) return;
@@ -58,6 +66,14 @@ export function IdentityCard() {
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight">{profile.displayName}</h1>
+              {country && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-base leading-none">{flagEmoji(country.code)}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>{country.name}</TooltipContent>
+                </Tooltip>
+              )}
               {profile.provider === 'twitter' && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -69,6 +85,12 @@ export function IdentityCard() {
                 </Tooltip>
               )}
             </div>
+
+            {profile.bio && (
+              <p className="max-w-md text-sm leading-snug text-muted-foreground">
+                {profile.bio}
+              </p>
+            )}
 
             <div className="flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
               <button
@@ -101,11 +123,23 @@ export function IdentityCard() {
           </div>
         </div>
 
-        {/* Right: inline summary */}
-        <div className="grid grid-cols-3 gap-6 sm:gap-8">
-          <SummaryStat label="Tiles" value={String(mockTiles.length)} />
-          <SummaryStat label="Value" value={totalValue.toFixed(2)} unit="SOL" />
-          <SummaryStat label="$VAVA" value="284K" />
+        {/* Right: edit button + inline summary */}
+        <div className="flex flex-col items-end gap-4">
+          {profile.walletAddress && (
+            <EditProfileDialog
+              walletAddress={profile.walletAddress}
+              initialUsername={profile.username}
+              initialFlagCode={profile.flagCountryCode}
+              initialAvatarUrl={profile.avatarUrl}
+              initialBio={profile.bio}
+              onSaved={onSavedBumpVersion}
+            />
+          )}
+          <div className="grid grid-cols-3 gap-6 sm:gap-8">
+            <SummaryStat label="Tiles" value={String(mockTiles.length)} />
+            <SummaryStat label="Value" value={totalValue.toFixed(2)} unit="SOL" />
+            <SummaryStat label="$VAVA" value="284K" />
+          </div>
         </div>
       </div>
     </div>
