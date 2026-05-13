@@ -31,11 +31,22 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  // Latest selectedHexes for paint-mode mouseup (avoids stale closure capture).
+  // Latest selectedHexes / visibleHexes / tiles tracked in refs so the
+  // mousedown / mousemove handlers we attach in onLoad can rebuild the
+  // mapbox source data directly (without going through React state) for
+  // instant visual feedback while paint-dragging.
   const selectedRef = useRef(selectedHexes);
   useEffect(() => {
     selectedRef.current = selectedHexes;
   }, [selectedHexes]);
+  const visibleRef = useRef<string[]>([]);
+  useEffect(() => {
+    visibleRef.current = visibleHexes;
+  }, [visibleHexes]);
+  const tilesRef = useRef(tiles);
+  useEffect(() => {
+    tilesRef.current = tiles;
+  }, [tiles]);
 
   // Paint-drag state: when the user mousedowns on a hex and starts dragging,
   // we collect every hex the cursor passes over and merge them into the
@@ -191,7 +202,31 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) p.moved = true;
       const feats = map.queryRenderedFeatures(e.point, { layers: [FILL_LAYER] });
       const h3 = feats[0]?.properties?.h3 as string | undefined;
-      if (h3) p.hexes.add(h3);
+      if (!h3 || p.hexes.has(h3)) return;
+      p.hexes.add(h3);
+
+      // Live preview: rebuild source data with the in-progress paint set
+      // merged into the committed selection. We rebuild directly here
+      // instead of going through React state so each new hex lights up on
+      // the next animation frame.
+      const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+      if (!src) return;
+      const merged = new Set(selectedRef.current);
+      for (const h of p.hexes) merged.add(h);
+      const features = visibleRef.current.map((id) => {
+        const f = hexToFeature(id);
+        const c = hexCenter(id);
+        const claimed = tilesRef.current.get(id);
+        f.properties = {
+          ...f.properties,
+          tier: classifyTier(c.lat, c.lng),
+          claimed: !!claimed,
+          ownerColor: claimed ? ownerColor(new PublicKey(claimed.owner)) : null,
+          selected: merged.has(id),
+        };
+        return f;
+      });
+      src.setData({ type: 'FeatureCollection', features });
     });
 
     const endPaint = () => {
