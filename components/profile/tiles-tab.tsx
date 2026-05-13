@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   List,
   MoreHorizontal,
+  RefreshCw,
   Search,
 } from 'lucide-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -50,7 +51,7 @@ export function TilesTab() {
   const [tierFilter, setTierFilter] = useState<string>('all');
   const [page] = useState(1);
 
-  const { tiles, loading } = useUserTiles();
+  const { tiles, loading, refetch } = useUserTiles();
   const hexSet = useMemo(() => new Set(tiles?.map((t) => t.h3) ?? []), [tiles]);
   const locations = useHexLocations(hexSet);
 
@@ -93,6 +94,17 @@ export function TilesTab() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={refetch}
+            disabled={loading}
+            className="h-9 gap-1.5 px-3 text-xs"
+            aria-label="Refresh tiles"
+          >
+            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </Button>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
