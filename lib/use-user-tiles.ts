@@ -11,12 +11,14 @@ import type { ClaimedTile } from '@/types/tile';
 
 const coder = new BorshAccountsCoder(idl as Idl);
 
+/** Anchor 1.0+ keeps snake_case from the IDL in the decoded object — we tried
+ *  camelCase first and got `undefined` on every field. */
 type DecodedTile = {
   owner: PublicKey;
-  h3Id: { toString: (radix?: number) => string };
-  claimedAt: { toNumber: () => number };
+  h3_id: { toString: (radix?: number) => string };
+  claimed_at: { toNumber: () => number };
   tier: number;
-  pricePaid: { toString: () => string };
+  price_paid: { toString: () => string };
   bump: number;
 };
 
@@ -70,11 +72,11 @@ export function useUserTiles(): {
           try {
             const decoded = coder.decode<DecodedTile>('Tile', acc.account.data);
             out.push({
-              h3: decoded.h3Id.toString(16).padStart(15, '0'),
+              h3: decoded.h3_id.toString(16).padStart(15, '0'),
               owner: decoded.owner.toBase58(),
               tier: decoded.tier as 1 | 2 | 3,
-              claimedAt: decoded.claimedAt.toNumber(),
-              pricePaid: BigInt(decoded.pricePaid.toString()),
+              claimedAt: decoded.claimed_at.toNumber(),
+              pricePaid: BigInt(decoded.price_paid.toString()),
               bump: decoded.bump,
             });
           } catch (e) {

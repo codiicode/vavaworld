@@ -16,20 +16,22 @@ const coder = new BorshAccountsCoder(idl as Idl);
 
 function decodeTile(buf: Buffer, h3: string): ClaimedTile | null {
   try {
+    // Field names match the IDL (snake_case). Anchor 1.0+ does NOT translate
+    // these to camelCase on decode — we tried h3Id/claimedAt and got undefined.
     const decoded = coder.decode<{
       owner: PublicKey;
-      h3Id: { toString: () => string };
-      claimedAt: { toNumber: () => number };
+      h3_id: { toString: () => string };
+      claimed_at: { toNumber: () => number };
       tier: number;
-      pricePaid: { toString: () => string };
+      price_paid: { toString: () => string };
       bump: number;
     }>('Tile', buf);
     return {
       h3,
       owner: decoded.owner.toBase58(),
       tier: decoded.tier as Tier,
-      claimedAt: decoded.claimedAt.toNumber(),
-      pricePaid: BigInt(decoded.pricePaid.toString()),
+      claimedAt: decoded.claimed_at.toNumber(),
+      pricePaid: BigInt(decoded.price_paid.toString()),
       bump: decoded.bump,
     };
   } catch {
