@@ -34,8 +34,10 @@ export default function Page() {
 
   return (
     <>
-      {/* Map fills the entire main column; sits behind every glass overlay */}
-      <div className="absolute inset-0 z-0">
+      {/* Map fills the viewport — `fixed` so it's independent of any parent
+          layout height. AppSidebar and GlassRightPanel are also fixed and sit
+          on top via higher z-index. */}
+      <div className="fixed inset-0 z-0">
         <MapView
           selectedHexes={selectedHexes}
           setSelectedHexes={setSelectedHexes}
@@ -49,7 +51,7 @@ export default function Page() {
           dark to be translucent over so the white text stays legible. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-[5]"
+        className="pointer-events-none fixed inset-0 z-[5]"
         style={{
           background: `
             radial-gradient(120% 80% at 20% 0%, rgba(43,70,130,0.45), transparent 60%),
@@ -61,7 +63,7 @@ export default function Page() {
 
       {/* Search pill — slots between the left rail (ends at 250px) and the right
           panel (starts at right:18 with 320px width = 356px total). */}
-      <div className="pointer-events-none absolute left-[250px] right-[356px] top-[18px] z-20 px-[18px]">
+      <div className="pointer-events-none fixed left-[250px] right-[356px] top-[18px] z-20 px-[18px]">
         <GlassSearchBar mapRef={mapRef} />
       </div>
 

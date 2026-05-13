@@ -84,7 +84,10 @@
 
 html, body { height: 100%; }
 body {
-  @apply bg-background text-foreground;
+  /* Global dark canvas so the .glass primitive always has contrast,
+     even on routes that don't render the Mapbox canvas underneath. */
+  background: #0a0e1a;
+  color: var(--glass-text);
   font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1, "ss01" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
