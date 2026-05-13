@@ -1,11 +1,12 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MapRef } from 'react-map-gl/mapbox';
 import { MapView } from '@/components/MapView';
 import { GlassRightPanel } from '@/components/map/glass-right-panel';
 import { GlassSearchBar } from '@/components/map/glass-search-bar';
 import { ClaimModal } from '@/components/ClaimModal';
+import { hexCenter } from '@/lib/h3-utils';
 
 /**
  * Full-bleed map page. The map fills the viewport behind everything; the AppSidebar
@@ -31,6 +32,46 @@ export default function Page() {
     refreshTilesRef.current?.(h3s);
     setShowClaim(false);
   };
+
+  // Deep-link support: /map#<h3> (used by "View on map" from the profile tile
+  // dropdown). When the underlying mapbox-gl map is ready we flyTo the hex
+  // centre and preselect it. Re-runs on hashchange so consecutive navigations
+  // (e.g. clicking different tiles on /profile and pressing browser back/forward)
+  // also work.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const flyToHash = () => {
+      const hash = window.location.hash.replace(/^#/, '').trim();
+      if (!/^[0-9a-f]+$/i.test(hash)) return;
+
+      let center: { lat: number; lng: number };
+      try {
+        center = hexCenter(hash);
+      } catch {
+        return;
+      }
+
+      const tryFly = () => {
+        const map = mapRef.current?.getMap();
+        if (!map) {
+          window.setTimeout(tryFly, 150);
+          return;
+        }
+        const run = () => {
+          map.flyTo({ center: [center.lng, center.lat], zoom: 16, duration: 1200 });
+          setSelectedHexes(new Set([hash]));
+        };
+        if (map.loaded()) run();
+        else map.once('load', run);
+      };
+      tryFly();
+    };
+
+    flyToHash();
+    window.addEventListener('hashchange', flyToHash);
+    return () => window.removeEventListener('hashchange', flyToHash);
+  }, []);
 
   return (
     <>

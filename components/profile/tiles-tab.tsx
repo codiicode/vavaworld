@@ -42,6 +42,12 @@ import { hexCenter } from '@/lib/h3-utils';
 import { useUserTiles } from '@/lib/use-user-tiles';
 import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
 import type { ClaimedTile } from '@/types/tile';
+import { TileDetailsDialog } from './tile-details-dialog';
+import { TileListDialog } from './tile-list-dialog';
+import { TileTransferDialog } from './tile-transfer-dialog';
+
+type DialogKind = 'details' | 'list' | 'transfer';
+type DialogState = { kind: DialogKind; tile: ClaimedTile } | null;
 
 const PER_PAGE = 10;
 
@@ -54,6 +60,9 @@ export function TilesTab() {
   const { tiles, loading, refetch } = useUserTiles();
   const hexSet = useMemo(() => new Set(tiles?.map((t) => t.h3) ?? []), [tiles]);
   const locations = useHexLocations(hexSet);
+  const [dialog, setDialog] = useState<DialogState>(null);
+  const openDialog = (kind: DialogKind, tile: ClaimedTile) => setDialog({ kind, tile });
+  const dialogLocation = dialog ? locations.get(dialog.tile.h3) ?? null : null;
 
   const filtered = useMemo(() => {
     if (!tiles) return [];
@@ -177,6 +186,7 @@ export function TilesTab() {
                 tile={t}
                 index={start + i + 1}
                 location={locations.get(t.h3) ?? null}
+                onAction={openDialog}
               />
             ))}
           </TableBody>
@@ -202,6 +212,25 @@ export function TilesTab() {
           </div>
         </div>
       )}
+
+      <TileDetailsDialog
+        tile={dialog?.kind === 'details' ? dialog.tile : null}
+        location={dialog?.kind === 'details' ? dialogLocation : null}
+        open={dialog?.kind === 'details'}
+        onOpenChange={(next) => !next && setDialog(null)}
+      />
+      <TileListDialog
+        tile={dialog?.kind === 'list' ? dialog.tile : null}
+        location={dialog?.kind === 'list' ? dialogLocation : null}
+        open={dialog?.kind === 'list'}
+        onOpenChange={(next) => !next && setDialog(null)}
+      />
+      <TileTransferDialog
+        tile={dialog?.kind === 'transfer' ? dialog.tile : null}
+        location={dialog?.kind === 'transfer' ? dialogLocation : null}
+        open={dialog?.kind === 'transfer'}
+        onOpenChange={(next) => !next && setDialog(null)}
+      />
     </div>
   );
 }
@@ -210,10 +239,12 @@ function TileRow({
   tile: t,
   index,
   location: loc,
+  onAction,
 }: {
   tile: ClaimedTile;
   index: number;
   location: HexLocation | null;
+  onAction: (kind: DialogKind, tile: ClaimedTile) => void;
 }) {
   const c = hexCenter(t.h3);
   const title = loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? 'Locating…';
@@ -270,10 +301,10 @@ function TileRow({
             <DropdownMenuItem asChild>
               <Link href={`/map#${t.h3}`}>View on map</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>List for sale</DropdownMenuItem>
-            <DropdownMenuItem disabled>Transfer</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onAction('list', t)}>List for sale</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onAction('transfer', t)}>Transfer</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>Details</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onAction('details', t)}>Details</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
