@@ -84,12 +84,13 @@
 
 html, body { height: 100%; }
 body {
-  /* Light sky canvas — glass panels float on top with white-translucent
+  /* Sky photo backdrop — glass panels float on top with white-translucent
      backgrounds and dark text. Map page overrides with mapbox + dim overlay. */
-  background:
-    radial-gradient(ellipse 90% 60% at 50% 0%, rgba(255, 255, 255, 0.7), transparent 60%),
-    radial-gradient(ellipse 70% 50% at 80% 100%, rgba(255, 255, 255, 0.45), transparent 60%),
-    linear-gradient(180deg, #dfeaff 0%, #c2d8f4 50%, #a8c4eb 100%);
+  background-color: #c2d8f4;
+  background-image: url('/sky-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
   color: hsl(var(--foreground));
   font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1, "ss01" 1;
