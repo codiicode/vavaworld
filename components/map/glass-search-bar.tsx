@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import type { MapRef } from 'react-map-gl/mapbox';
 import { searchPlaces, type Place } from '@/lib/geocoding';
 
@@ -17,10 +17,18 @@ export function GlassSearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | nu
   const [active, setActive] = useState(0);
   const debounceRef = useRef<number | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // True for the single `q` change that comes from selecting a result. Stops
+  // the debounce effect from re-searching the place name and reopening the
+  // dropdown right after the user picked an option.
+  const justSelectedRef = useRef(false);
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? '';
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    if (justSelectedRef.current) {
+      justSelectedRef.current = false;
+      return;
+    }
     if (!q.trim()) {
       setResults([]);
       setOpen(false);
@@ -50,10 +58,19 @@ export function GlassSearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | nu
   }, []);
 
   const select = (p: Place) => {
+    justSelectedRef.current = true;
     mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14, duration: 1500 });
     setQ(p.name);
     setOpen(false);
+    setResults([]);
     inputRef.current?.blur();
+  };
+
+  const clear = () => {
+    setQ('');
+    setResults([]);
+    setOpen(false);
+    inputRef.current?.focus();
   };
 
   return (
@@ -88,11 +105,16 @@ export function GlassSearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | nu
           placeholder="Search any place on Earth…"
           className="relative z-[1] flex-1 bg-transparent text-[14.5px] tracking-[0.01em] text-white placeholder:text-white/52 focus:outline-none"
         />
-        <span
-          className="relative z-[1] rounded-md border border-white/15 bg-white/[0.05] px-[7px] py-[3px] text-[11px] text-white/52"
-        >
-          ⌘K
-        </span>
+        {q && (
+          <button
+            type="button"
+            onClick={clear}
+            aria-label="Clear search"
+            className="relative z-[1] grid h-6 w-6 place-items-center rounded-full text-white/52 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <X size={14} strokeWidth={2} />
+          </button>
+        )}
       </div>
 
       {open && results.length > 0 && (
