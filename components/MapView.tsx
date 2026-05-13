@@ -31,6 +31,28 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
 
+  // Latest selectedHexes for paint-mode mouseup (avoids stale closure capture).
+  const selectedRef = useRef(selectedHexes);
+  useEffect(() => {
+    selectedRef.current = selectedHexes;
+  }, [selectedHexes]);
+
+  // Paint-drag state: when the user mousedowns on a hex and starts dragging,
+  // we collect every hex the cursor passes over and merge them into the
+  // selection on mouseup. Map pan is disabled for the duration so the camera
+  // doesn't move while painting.
+  const paintRef = useRef<{
+    pressed: boolean;
+    moved: boolean;
+    hexes: Set<string>;
+    startX: number;
+    startY: number;
+  } | null>(null);
+
+  // Suppresses the mapbox 'click' event that fires right after a paint-drag
+  // ends, otherwise the click handler would replace the freshly painted set.
+  const skipClickRef = useRef(false);
+
   // Expose refresh to parent so claim modal can invalidate after a successful tx
   useEffect(() => {
     if (refreshTilesRef) refreshTilesRef.current = refresh;
@@ -140,12 +162,67 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
       filter: ['==', ['get', 'selected'], true],
     });
 
+    // ─── Paint-drag selection ────────────────────────────────────────
+    // Mousedown on a hex (no modifier) → disable map pan, start collecting.
+    // Mousemove keeps adding hexes the cursor passes over.
+    // Mouseup commits the merged set into the selection and re-enables pan.
+    map.on('mousedown', FILL_LAYER, (e) => {
+      const ev = e.originalEvent as MouseEvent;
+      if (ev.button !== 0) return; // left button only
+      if (ev.shiftKey || ev.ctrlKey || ev.metaKey || ev.altKey) return; // leave modifier flows alone
+      const h3 = e.features?.[0]?.properties?.h3 as string | undefined;
+      if (!h3) return;
+
+      map.dragPan.disable();
+      paintRef.current = {
+        pressed: true,
+        moved: false,
+        hexes: new Set([h3]),
+        startX: e.point.x,
+        startY: e.point.y,
+      };
+    });
+
+    map.on('mousemove', (e) => {
+      const p = paintRef.current;
+      if (!p?.pressed) return;
+      const dx = e.point.x - p.startX;
+      const dy = e.point.y - p.startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) p.moved = true;
+      const feats = map.queryRenderedFeatures(e.point, { layers: [FILL_LAYER] });
+      const h3 = feats[0]?.properties?.h3 as string | undefined;
+      if (h3) p.hexes.add(h3);
+    });
+
+    const endPaint = () => {
+      const p = paintRef.current;
+      if (!p?.pressed) return;
+      map.dragPan.enable();
+      if (p.moved && p.hexes.size > 0) {
+        const merged = new Set(selectedRef.current);
+        for (const h of p.hexes) merged.add(h);
+        setSelectedHexes(merged);
+        skipClickRef.current = true;
+      }
+      paintRef.current = null;
+    };
+    map.on('mouseup', endPaint);
+    // If the cursor leaves the canvas mid-paint, end gracefully so we don't
+    // strand a "pressed" state and lock pan forever.
+    map.getCanvas().addEventListener('mouseleave', endPaint);
+
     setReady(true);
     refreshHexes();
-  }, [mapRef, refreshHexes]);
+  }, [mapRef, refreshHexes, setSelectedHexes]);
 
   const onClick = useCallback(
     (e: MapMouseEvent) => {
+      // The mapbox 'click' event fires after a paint-drag's mouseup. Skip it
+      // so we don't replace the freshly painted selection with a single-hex.
+      if (skipClickRef.current) {
+        skipClickRef.current = false;
+        return;
+      }
       const map = mapRef.current?.getMap();
       if (!map) return;
       const feats = map.queryRenderedFeatures(e.point, { layers: [FILL_LAYER, CLAIMED_LAYER] });
