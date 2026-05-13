@@ -10,6 +10,7 @@ import { useCounters } from '@/lib/use-counters';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { tilePda, counterPda } from '@/lib/tile-pda';
 import { getConnection, PROGRAM_ID } from '@/lib/anchor-client';
+import { dispatchClaimDone } from '@/lib/claim-events';
 import idl from '@/lib/anchor-idl.json';
 import type { Tiles } from '@/lib/anchor-types';
 
@@ -112,7 +113,11 @@ export function ClaimModal({
 
       setTxSig(sig);
       setState('confirmed');
-      onConfirmed(items.map((it) => it.h3));
+      const h3List = items.map((it) => it.h3);
+      onConfirmed(h3List);
+      // Broadcast so /profile + balance + counters refetch immediately even
+      // though they live in separate hook trees.
+      dispatchClaimDone({ h3s: h3List, txSig: sig });
     } catch (e: unknown) {
       setState('error');
       setErrorMsg(e instanceof Error ? e.message : String(e));

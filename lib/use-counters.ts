@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BorshAccountsCoder, type Idl } from '@coral-xyz/anchor';
 import { PublicKey } from '@solana/web3.js';
 import idl from './anchor-idl.json';
 import { counterPda } from './tile-pda';
 import { getConnection, PROGRAM_ID } from './anchor-client';
+import { useClaimDoneListener } from './claim-events';
 
 const programIdPk = new PublicKey(PROGRAM_ID);
 const coder = new BorshAccountsCoder(idl as Idl);
@@ -34,31 +35,30 @@ const POLL_MS = 30_000;
 export function useCounters(): Counters {
   const [counters, setCounters] = useState<Counters>({ 1: 0n, 2: 0n, 3: 0n });
 
-  useEffect(() => {
+  const fetchAll = useCallback(async () => {
     const conn = getConnection();
-    let cancelled = false;
-
-    const fetchOnce = async () => {
-      for (const tier of [1, 2, 3] as const) {
-        try {
-          const [pda] = counterPda(tier, programIdPk);
-          const ai = await conn.getAccountInfo(pda);
-          if (!ai || cancelled) continue;
-          const sold = decodeCounter(ai.data as Buffer);
-          setCounters((c) => ({ ...c, [tier]: sold }));
-        } catch {
-          /* one tier failed — keep going */
-        }
+    for (const tier of [1, 2, 3] as const) {
+      try {
+        const [pda] = counterPda(tier, programIdPk);
+        const ai = await conn.getAccountInfo(pda);
+        if (!ai) continue;
+        const sold = decodeCounter(ai.data as Buffer);
+        setCounters((c) => ({ ...c, [tier]: sold }));
+      } catch {
+        /* one tier failed — keep going */
       }
-    };
-
-    fetchOnce();
-    const intervalId = window.setInterval(fetchOnce, POLL_MS);
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-    };
+    }
   }, []);
+
+  useEffect(() => {
+    fetchAll();
+    const intervalId = window.setInterval(fetchAll, POLL_MS);
+    return () => window.clearInterval(intervalId);
+  }, [fetchAll]);
+
+  useClaimDoneListener(() => {
+    window.setTimeout(fetchAll, 800);
+  });
 
   return counters;
 }

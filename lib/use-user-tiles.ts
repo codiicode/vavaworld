@@ -6,6 +6,7 @@ import { PublicKey } from '@solana/web3.js';
 import { useActiveWallet } from './active-wallet';
 import { getConnection, PROGRAM_ID } from './anchor-client';
 import idl from './anchor-idl.json';
+import { useClaimDoneListener } from './claim-events';
 import type { ClaimedTile } from '@/types/tile';
 
 const coder = new BorshAccountsCoder(idl as Idl);
@@ -84,6 +85,13 @@ export function useUserTiles(): {
       }
     })();
   }, [connected, addressKey, version]);
+
+  // Devnet getProgramAccounts can lag a few hundred ms behind the tx the user
+  // just confirmed. Defer the refetch one tick so we don't re-query before the
+  // RPC has indexed the new Tile PDAs.
+  useClaimDoneListener(() => {
+    window.setTimeout(refetch, 800);
+  });
 
   return { tiles, loading, refetch };
 }

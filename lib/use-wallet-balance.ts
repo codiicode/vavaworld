@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { getConnection } from './anchor-client';
+import { useClaimDoneListener } from './claim-events';
 
 /**
  * Reads the SOL balance for the given public key.
@@ -56,6 +57,10 @@ export function useWalletBalance(publicKey: PublicKey | null): {
       window.clearInterval(intervalId);
     };
   }, [addressKey, reqId]);
+
+  useClaimDoneListener(() => {
+    window.setTimeout(refetch, 800);
+  });
 
   return { balance, loading, refetch };
 }

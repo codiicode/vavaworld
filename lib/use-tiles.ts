@@ -6,6 +6,7 @@ import { BorshAccountsCoder, type Idl } from '@coral-xyz/anchor';
 import idl from './anchor-idl.json';
 import { tilePda } from './tile-pda';
 import { getConnection, PROGRAM_ID } from './anchor-client';
+import { useClaimDoneListener } from './claim-events';
 import type { ClaimedTile } from '@/types/tile';
 import type { Tier } from './tier';
 
@@ -82,6 +83,14 @@ export function useTiles(visibleHexes: string[]): {
     },
     [fetchH3s],
   );
+
+  // Belt-and-suspenders: if a claim fires while this hook is mounted, refetch
+  // the affected hexes after a short delay (RPC indexing lag on devnet).
+  useClaimDoneListener((detail) => {
+    window.setTimeout(() => {
+      void refresh(detail.h3s);
+    }, 800);
+  });
 
   return { tiles, refresh };
 }
