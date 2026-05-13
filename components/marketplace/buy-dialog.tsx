@@ -36,7 +36,7 @@ export function BuyDialog({
             Confirm purchase
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="text-sm text-muted-foreground">
-            You&apos;re about to claim this tile from its current holder.
+            You&apos;re about to claim this hex from its current holder.
           </DialogPrimitive.Description>
         </div>
 

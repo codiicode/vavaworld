@@ -164,7 +164,7 @@ export function ClaimModal({
         }}
       >
         <div className="flex items-baseline justify-between mb-6">
-          <h2 style={uiLabel}>Claim · {items.length} {items.length === 1 ? 'tile' : 'tiles'}</h2>
+          <h2 style={uiLabel}>Claim · {items.length} {items.length === 1 ? 'hex' : 'hexes'}</h2>
           <button
             onClick={onClose}
             style={{ ...uiLabel, color: 'var(--dim-2)', cursor: 'pointer' }}
@@ -268,7 +268,7 @@ export function ClaimModal({
                 ✓
               </div>
               <div style={{ ...uiLabel, color: 'var(--ink)' }}>
-                {items.length} {items.length === 1 ? 'tile' : 'tiles'} claimed
+                {items.length} {items.length === 1 ? 'hex' : 'hexes'} claimed
               </div>
               <a
                 href={`https://solscan.io/tx/${txSig}?cluster=devnet`}

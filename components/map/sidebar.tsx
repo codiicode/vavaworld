@@ -93,7 +93,7 @@ export function MapSidebar({
                 disabled={!connected}
                 className="mr-6 rounded-none border-b-2 border-transparent px-0 pb-3 text-[13px] font-medium text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground"
               >
-                My Tiles
+                My Hexes
               </TabsTrigger>
               <TabsTrigger
                 value="activity"

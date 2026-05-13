@@ -31,7 +31,7 @@ export function ListTileDialog({
       <DialogContent className="sm:max-w-[420px]">
         <div className="space-y-1.5">
           <DialogPrimitive.Title className="text-lg font-semibold tracking-tight">
-            List tile for sale
+            List hex for sale
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="text-sm text-muted-foreground">
             Set your asking price. You can cancel or relist at any time before a buyer commits.

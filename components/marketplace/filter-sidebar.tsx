@@ -81,7 +81,7 @@ export function FilterSidebar({
           <Input
             value={state.search}
             onChange={(e) => set('search', e.target.value)}
-            placeholder="Search tiles…"
+            placeholder="Search hexes…"
             className="h-9 pl-8 text-sm"
           />
         </div>
@@ -158,7 +158,7 @@ export function FilterSidebar({
           step={1}
         />
         <div className="mt-2 text-xs text-muted-foreground">
-          Show tiles with{' '}
+          Show hexes with{' '}
           <span className="tabular-nums text-foreground">{state.decayMin}%</span>+ remaining
         </div>
       </FilterGroup>

@@ -23,7 +23,7 @@ import { ProfileVersionProvider } from '@/lib/use-user-profile';
  * `useUserProfile` consumer (this page, AppSidebar) to re-fetch.
  */
 export default function ProfilePage() {
-  const [tab, setTab] = useState<'tiles' | 'activity'>('tiles');
+  const [tab, setTab] = useState<'hexes' | 'activity'>('hexes');
   const [version, setVersion] = useState(0);
   const bump = useCallback(() => setVersion((v) => v + 1), []);
 
@@ -35,7 +35,7 @@ export default function ProfilePage() {
 
           <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
             <TabsList className="mb-6 h-auto rounded-none border-b border-border bg-transparent p-0">
-              {(['tiles', 'activity'] as const).map((t) => (
+              {(['hexes', 'activity'] as const).map((t) => (
                 <TabsTrigger
                   key={t}
                   value={t}
@@ -46,7 +46,7 @@ export default function ProfilePage() {
               ))}
             </TabsList>
 
-            <TabsContent value="tiles" className="mt-0">
+            <TabsContent value="hexes" className="mt-0">
               <TilesTab />
             </TabsContent>
             <TabsContent value="activity" className="mt-0">

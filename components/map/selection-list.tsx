@@ -66,7 +66,7 @@ export function SelectionList({
         <div className="flex-1" />
         <div className="-mx-5 border-t border-border px-5 pb-5 pt-4">
           <Button size="default" className="w-full font-medium" disabled>
-            Select at least one tile
+            Select at least one hex
           </Button>
         </div>
       </div>
@@ -150,7 +150,7 @@ export function SelectionList({
           {items.length > 20
             ? 'Max 20 per claim'
             : walletConnected
-            ? `Claim ${items.length} ${items.length === 1 ? 'tile' : 'tiles'}`
+            ? `Claim ${items.length} ${items.length === 1 ? 'hex' : 'hexes'}`
             : 'Connect wallet to claim'}
         </Button>
       </div>

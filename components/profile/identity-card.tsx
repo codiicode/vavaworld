@@ -149,7 +149,7 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
             )}
           </div>
           <div className="grid grid-cols-3 gap-6 sm:gap-8">
-            <SummaryStat label="Tiles" value={tiles ? String(tiles.length) : '—'} />
+            <SummaryStat label="Hexes" value={tiles ? String(tiles.length) : '—'} />
             <SummaryStat
               label="Spent"
               value={totalSpent !== null ? totalSpent.toFixed(3) : '—'}

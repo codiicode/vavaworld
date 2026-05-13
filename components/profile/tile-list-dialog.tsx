@@ -57,7 +57,7 @@ export function TileListDialog({
       <DialogContent className="sm:max-w-[440px]">
         <div className="space-y-1.5">
           <DialogPrimitive.Title className="text-lg font-semibold tracking-tight">
-            List tile for sale
+            List hex for sale
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="text-sm text-muted-foreground">
             {flagEmoji(location?.countryCode) || '🌐'} {place} · Tier {tile.tier}

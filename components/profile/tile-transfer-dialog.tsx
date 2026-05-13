@@ -107,7 +107,7 @@ export function TileTransferDialog({
       <DialogContent className="sm:max-w-[460px]">
         <div className="space-y-1.5">
           <DialogPrimitive.Title className="text-lg font-semibold tracking-tight">
-            Transfer tile
+            Transfer hex
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="text-sm text-muted-foreground">
             {flagEmoji(location?.countryCode) || '🌐'} {place} · Tier {tile.tier}
@@ -171,7 +171,7 @@ export function TileTransferDialog({
                 )}
                 {method !== 'wallet' && !error && (
                   <p className="mt-1.5 text-[11px] text-muted-foreground">
-                    Recipient claims the tile by signing in with this{' '}
+                    Recipient claims the hex by signing in with this{' '}
                     {method === 'x' ? 'X account' : 'email'}.
                   </p>
                 )}
@@ -200,13 +200,13 @@ export function TileTransferDialog({
               <p className="text-sm font-medium">Transfer queued</p>
               <p className="max-w-sm text-xs text-muted-foreground">
                 {method === 'wallet'
-                  ? 'The on-chain transfer instruction lands shortly — your tile will move to '
+                  ? 'The on-chain transfer instruction lands shortly — your hex will move to '
                   : 'We notified '}
                 <span className="font-mono text-foreground">
                   {method === 'wallet' ? `${value.slice(0, 4)}…${value.slice(-4)}` : value}
                 </span>
                 {method !== 'wallet'
-                  ? '. They claim the tile on sign-in.'
+                  ? '. They claim the hex on sign-in.'
                   : ' as soon as the program upgrade ships.'}
               </p>
             </div>

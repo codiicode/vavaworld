@@ -14,7 +14,7 @@ export default function PortfolioPage() {
         <BarChart3 size={28} className="text-muted-foreground" />
         <h1 className="text-lg font-semibold tracking-tight">Portfolio</h1>
         <p className="max-w-md text-sm text-muted-foreground">
-          Wallet overview is on the way — P&amp;L, tier breakdown, total tile
+          Wallet overview is on the way — P&amp;L, tier breakdown, total hex
           value, and recent claim activity. Check back soon.
         </p>
       </div>

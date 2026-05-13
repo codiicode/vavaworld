@@ -259,7 +259,7 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
               <path d="M12 5v14M5 12h14" />
             </svg>
           </span>
-          <span className="relative z-[1]">Zoom in to see tiles</span>
+          <span className="relative z-[1]">Zoom in to see hexes</span>
         </div>
       )}
     </>

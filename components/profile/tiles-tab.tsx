@@ -96,9 +96,9 @@ export function TilesTab() {
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="flex flex-col gap-3 border-b border-border px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-[15px] font-semibold tracking-tight">Your Tiles</h2>
+          <h2 className="text-[15px] font-semibold tracking-tight">Your Hexes</h2>
           <p className="text-xs text-muted-foreground tabular-nums">
-            {tiles ? `${tiles.length} ${tiles.length === 1 ? 'tile' : 'tiles'}` : '—'}
+            {tiles ? `${tiles.length} ${tiles.length === 1 ? 'hex' : 'hexes'}` : '—'}
             {totalCities > 0 && ` · ${totalCities} ${totalCities === 1 ? 'city' : 'cities'}`}
           </p>
         </div>
@@ -109,7 +109,7 @@ export function TilesTab() {
             onClick={refetch}
             disabled={loading}
             className="h-9 gap-1.5 px-3 text-xs"
-            aria-label="Refresh tiles"
+            aria-label="Refresh hexes"
           >
             <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
             Refresh
@@ -150,18 +150,18 @@ export function TilesTab() {
       </div>
 
       {loading && !tiles && (
-        <div className="px-5 py-12 text-center text-sm text-muted-foreground">Loading tiles…</div>
+        <div className="px-5 py-12 text-center text-sm text-muted-foreground">Loading hexes…</div>
       )}
 
       {!loading && tiles?.length === 0 && (
         <div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
           <Hexagon className="text-muted-foreground" size={28} />
-          <p className="text-sm text-muted-foreground">No tiles claimed yet.</p>
+          <p className="text-sm text-muted-foreground">No hexes claimed yet.</p>
           <Link
             href="/map"
             className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            Claim your first tile
+            Claim your first hex
           </Link>
         </div>
       )}
@@ -291,7 +291,7 @@ function TileRow({
             <button
               type="button"
               className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Tile actions"
+              aria-label="Hex actions"
               onClick={(e) => e.stopPropagation()}
             >
               <MoreHorizontal size={14} />

@@ -30,7 +30,7 @@ type TabId = 'selection' | 'my-tiles' | 'activity';
 
 const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
   { id: 'selection', label: 'Selection' },
-  { id: 'my-tiles', label: 'My Tiles' },
+  { id: 'my-tiles', label: 'My Hexes' },
   { id: 'activity', label: 'Activity' },
 ];
 
@@ -177,7 +177,7 @@ export function GlassRightPanel({
       {tab === 'my-tiles' && (
         <div className="relative z-[1] flex flex-1 flex-col">
           <p className="text-[13.5px] leading-[1.45] text-white/72">
-            Your owned tiles will appear here once you claim one.
+            Your owned hexes will appear here once you claim one.
           </p>
           <div className="flex-1" />
         </div>
@@ -319,12 +319,12 @@ function SelectionBody({
         }}
       >
         {empty
-          ? 'Select at least one tile'
+          ? 'Select at least one hex'
           : max
             ? 'Max 20 per claim'
             : !walletConnected
               ? 'Connect wallet to claim'
-              : `Claim ${count} ${count === 1 ? 'tile' : 'tiles'} · ${totalSol.toFixed(3)} SOL`}
+              : `Claim ${count} ${count === 1 ? 'hex' : 'hexes'} · ${totalSol.toFixed(3)} SOL`}
       </button>
     </>
   );

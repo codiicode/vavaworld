@@ -43,7 +43,7 @@ export default function ActivityPage() {
           <TableHeader className="sticky top-0 bg-background">
             <TableRow>
               <TableHead className="w-16">#</TableHead>
-              <TableHead>Tile</TableHead>
+              <TableHead>Hex</TableHead>
               <TableHead>From</TableHead>
               <TableHead />
               <TableHead>To</TableHead>

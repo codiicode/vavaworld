@@ -25,7 +25,7 @@ export function MyTilesList({ mapRef }: { mapRef: React.RefObject<MapRef | null>
   if (!connected) {
     return (
       <p className="text-sm leading-relaxed text-muted-foreground">
-        Connect a wallet to see your tiles.
+        Connect a wallet to see your hexes.
       </p>
     );
   }
@@ -39,7 +39,7 @@ export function MyTilesList({ mapRef }: { mapRef: React.RefObject<MapRef | null>
   if (!tiles || tiles.length === 0) {
     return (
       <p className="text-sm leading-relaxed text-muted-foreground">
-        No tiles claimed yet.
+        No hexes claimed yet.
       </p>
     );
   }

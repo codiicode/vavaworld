@@ -5,7 +5,7 @@ import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'VAVA',
-  description: 'Claim your tile on VAVAWORLD.',
+  description: 'Claim your hex on VAVAWORLD.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
