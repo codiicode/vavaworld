@@ -238,27 +238,28 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
       />
       {ready && !zoomedIn && (
         <div
-          className="absolute z-[6] pointer-events-none flex items-center gap-2 px-5 py-2.5"
+          className="glass glass--strong pointer-events-none absolute z-[6] flex items-center gap-2.5 px-[22px] py-3 text-white"
           style={{
             left: '50%',
-            bottom: '40px',
+            bottom: '28px',
             transform: 'translateX(-50%)',
-            background: 'rgba(255, 255, 255, 0.88)',
-            backdropFilter: 'blur(14px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(14px) saturate(140%)',
-            border: '1px solid var(--hairline)',
             borderRadius: 999,
-            fontFamily: "'Inter', sans-serif",
-            fontSize: '11px',
-            letterSpacing: '0.22em',
+            fontSize: '12.5px',
+            fontWeight: 700,
+            letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            color: 'var(--ink-2)',
             whiteSpace: 'nowrap',
-            fontWeight: 500,
           }}
         >
-          <span style={{ color: 'var(--signal)' }}>+</span>
-          Zoom in to see tiles
+          <span
+            className="relative z-[1] grid h-[22px] w-[22px] place-items-center rounded-full"
+            style={{ background: 'rgba(94,234,212,0.18)', color: 'var(--brand)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </span>
+          <span className="relative z-[1]">Zoom in to see tiles</span>
         </div>
       )}
     </>

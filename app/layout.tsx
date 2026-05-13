@@ -1,13 +1,7 @@
 import type { Metadata } from 'next';
-import { Inter_Tight } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 import { Providers } from './providers';
-
-const inter = Inter_Tight({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  weight: ['400', '500', '600', '700'],
-});
 
 export const metadata: Metadata = {
   title: 'VAVA',
@@ -16,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={GeistSans.variable}>
       <body className="font-sans">
         <Providers>{children}</Providers>
       </body>

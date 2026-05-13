@@ -1,14 +1,24 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
 import { AppSidebar } from '@/components/layout/app-sidebar';
+import { cn } from '@/lib/utils';
 
 /**
- * Shell for every routed page under (app)/ — left rail nav + scrolling main.
- * The root layout already provides <html>, <body>, and <Providers>.
+ * Shell for every routed page under (app)/. The sidebar is a fixed-positioned
+ * glass overlay so /map can bleed the map all the way under the gutters; other
+ * pages get auto-padding to clear the rail.
  */
 export default function AppGroupLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isMap = pathname?.startsWith('/map') ?? false;
+
   return (
-    <div className="flex h-screen">
+    <div className="relative h-screen overflow-hidden">
       <AppSidebar />
-      <main className="relative flex-1 overflow-auto">{children}</main>
+      <main className={cn('relative h-full', isMap ? '' : 'overflow-auto pl-[268px]')}>
+        {children}
+      </main>
     </div>
   );
 }

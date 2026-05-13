@@ -54,6 +54,31 @@
     --signal:      #1d5e95;
     --signal-soft: rgba(29, 94, 149, 0.18);
     --signal-deep: #0f2a4c;
+
+    /* ─────────────────────────────────────────────────────────
+       Glass system — canonical tokens from the design handoff
+       (handoff: VAVAWORLD — Premium Glass UI, balanced preset).
+       Used by .glass primitive + AppSidebar, /map overlays, etc.
+       ───────────────────────────────────────────────────────── */
+    --tint-r: 255; --tint-g: 255; --tint-b: 255;
+    --glass-alpha: 0.14;
+    --glass-alpha-2: 0.06;
+    --glass-blur: 28px;
+    --glass-sat: 170%;
+    --glass-border: rgba(255, 255, 255, 0.22);
+    --glass-highlight: rgba(255, 255, 255, 0.42);
+    --glass-shadow: 0 14px 40px rgba(8, 14, 28, 0.32), 0 2px 6px rgba(8, 14, 28, 0.18);
+    --glass-radius-lg: 22px;
+    --glass-radius-md: 16px;
+    --glass-radius-sm: 12px;
+    --glass-text: #ffffff;
+    --glass-text-dim: rgba(255, 255, 255, 0.82);
+    --glass-text-muted: rgba(255, 255, 255, 0.52);
+    --brand: #5eead4;
+    --brand-2: #38bdf8;
+
+    /* Tailwind `font-sans` reads --font-sans; Geist sets --font-geist-sans. Bridge. */
+    --font-sans: var(--font-geist-sans);
   }
 }
 
@@ -65,9 +90,84 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Linear-style: no decorative shadows. shadcn-default shadows on popovers/modals
-   are overridden so the whole surface stays flat. */
-* { box-shadow: none !important; }
+/* Linear-style: no decorative shadows by default. We selectively re-enable for
+   .glass surfaces below — depth is the whole point of that primitive. */
+* { box-shadow: none; }
+
+/* ─────────────────────────────────────────────────────────
+   Glass primitive (from design handoff).
+
+   Two intensity variants modify the same tokens. Rim-light ::before
+   gives the bright top edge that sells the effect. `.panel::after`
+   adds a soft inner shine — only large panels should opt in.
+   ───────────────────────────────────────────────────────── */
+.glass {
+  position: relative;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(var(--tint-r), var(--tint-g), var(--tint-b), calc(var(--glass-alpha) + 0.04)) 0%,
+      rgba(var(--tint-r), var(--tint-g), var(--tint-b), var(--glass-alpha-2)) 100%
+    );
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--glass-radius-lg);
+}
+
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    var(--glass-highlight) 0%,
+    rgba(255, 255, 255, 0.05) 40%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+.glass-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 60% at 50% -10%, rgba(255, 255, 255, 0.18), transparent 60%);
+  pointer-events: none;
+}
+
+.glass--strong {
+  --glass-alpha: 0.22;
+  --glass-alpha-2: 0.10;
+  --glass-blur: 32px;
+}
+
+.glass--inset {
+  --glass-alpha: 0.10;
+  --glass-alpha-2: 0.02;
+  --glass-blur: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 4px 14px rgba(8, 14, 28, 0.18);
+}
+
+.glass--cta {
+  --glass-alpha: 0.18;
+  --glass-alpha-2: 0.10;
+  background:
+    linear-gradient(135deg, rgba(94, 234, 212, 0.32), rgba(56, 189, 248, 0.22)),
+    rgba(255, 255, 255, 0.06);
+  color: #042f2e;
+}
 
 ::selection { background: hsl(var(--primary) / 0.3); color: hsl(var(--foreground)); }
 
