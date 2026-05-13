@@ -139,7 +139,7 @@ export function AppSidebar() {
         {wallet.ready && wallet.connected && (
           <Link
             href="/profile"
-            className="glass glass--inset flex items-center gap-3 rounded-[14px] px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
+            className="glass glass--inset relative flex items-center gap-3 rounded-[14px] px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
           >
             <div
               className="h-[34px] w-[34px] flex-none overflow-hidden rounded-[10px]"

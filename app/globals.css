@@ -105,7 +105,10 @@ body {
    adds a soft inner shine — only large panels should opt in.
    ───────────────────────────────────────────────────────── */
 .glass {
-  position: relative;
+  /* NOTE: position is intentionally NOT set here — it would override Tailwind's
+     `.fixed`/`.absolute` utilities (this file is loaded AFTER `@tailwind utilities`,
+     so equal-specificity wins by source order). Consumers must add a position
+     class themselves; the ::before rim-light needs the parent to be positioned. */
   background:
     linear-gradient(
       135deg,
