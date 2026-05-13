@@ -98,6 +98,19 @@
   ],
   "accounts": [
     {
+      "name": "Tile",
+      "discriminator": [
+        95,
+        45,
+        214,
+        228,
+        61,
+        172,
+        201,
+        208
+      ]
+    },
+    {
       "name": "TierCounter",
       "discriminator": [
         233,
@@ -159,6 +172,20 @@
     }
   ],
   "types": [
+    {
+      "name": "Tile",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "owner", "type": "pubkey" },
+          { "name": "h3_id", "type": "u64" },
+          { "name": "claimed_at", "type": "i64" },
+          { "name": "tier", "type": "u8" },
+          { "name": "price_paid", "type": "u64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
     {
       "name": "TierCounter",
       "type": {
