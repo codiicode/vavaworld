@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Activity,
+  BarChart3,
   CirclePlus,
   Map as MapIcon,
   Settings,
@@ -32,6 +33,7 @@ function gradientFromAddr(addr: string | null): string {
 type NavItem = { label: string; href: string; icon: typeof MapIcon };
 const NAV: ReadonlyArray<NavItem> = [
   { label: 'Map', href: '/map', icon: MapIcon },
+  { label: 'Portfolio', href: '/portfolio', icon: BarChart3 },
   { label: 'Profile', href: '/profile', icon: Wallet },
   { label: 'Marketplace', href: '/marketplace', icon: ShoppingBag },
   { label: 'Stake', href: '/stake', icon: CirclePlus },
