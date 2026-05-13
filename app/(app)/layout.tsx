@@ -16,7 +16,14 @@ export default function AppGroupLayout({ children }: { children: React.ReactNode
   return (
     <div className="relative h-screen overflow-hidden">
       <AppSidebar />
-      <main className={cn('relative h-full', isMap ? '' : 'overflow-auto pl-[268px]')}>
+      <main
+        className={cn(
+          'relative h-full',
+          isMap
+            ? ''
+            : 'ml-[268px] overflow-auto bg-background text-foreground',
+        )}
+      >
         {children}
       </main>
     </div>
