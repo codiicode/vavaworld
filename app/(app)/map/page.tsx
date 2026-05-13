@@ -44,6 +44,21 @@ export default function Page() {
         />
       </div>
 
+      {/* Dim layer — the design assumes a dark Mapbox style. Since we're keeping
+          the current (light) style, this overlay gives glass panels something
+          dark to be translucent over so the white text stays legible. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-[5]"
+        style={{
+          background: `
+            radial-gradient(120% 80% at 20% 0%, rgba(43,70,130,0.45), transparent 60%),
+            radial-gradient(100% 80% at 100% 100%, rgba(20,35,70,0.55), transparent 60%),
+            linear-gradient(180deg, rgba(8,14,28,0.42), rgba(8,14,28,0.58))
+          `,
+        }}
+      />
+
       {/* Search pill — slots between the left rail (ends at 250px) and the right
           panel (starts at right:18 with 320px width = 356px total). */}
       <div className="pointer-events-none absolute left-[250px] right-[356px] top-[18px] z-20 px-[18px]">
