@@ -1,22 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { classifyTier, haversineKm } from '../tier';
+import { classifyTier } from '../tier';
 
-describe('haversineKm', () => {
-  it('returns 0 for identical points', () => {
-    expect(haversineKm(40.7128, -74.0060, 40.7128, -74.0060)).toBeCloseTo(0, 3);
+describe('classifyTier (bbox-based, mirrors on-chain)', () => {
+  it('tier 1 inside NYC bbox', () => {
+    expect(classifyTier(40.75, -74.0)).toBe(1);
   });
-  it('NYC to LA ~3944 km', () => {
-    const d = haversineKm(40.7128, -74.0060, 34.0522, -118.2437);
-    expect(d).toBeGreaterThan(3900);
-    expect(d).toBeLessThan(4000);
+  it('tier 1 inside Stockholm bbox', () => {
+    expect(classifyTier(59.3293, 18.0686)).toBe(1);
   });
-});
-
-describe('classifyTier', () => {
-  it('tier 1 inside 50km of NYC', () => {
-    expect(classifyTier(40.75, -74.00)).toBe(1);
+  it('tier 1 short-circuits on Tokyo (first entry)', () => {
+    expect(classifyTier(35.6895, 139.6917)).toBe(1);
   });
-  it('tier 2 ~120km from NYC (offshore, away from cities)', () => {
+  it('tier 2 ~120km from NYC', () => {
     expect(classifyTier(41.5, -72.5)).toBe(2);
   });
   it('tier 3 mid-Pacific', () => {

@@ -1,28 +1,31 @@
-import { TOP_100_CITIES } from './cities';
+import { TIER1_LAT_DELTA_DEG, TIER2_LAT_DELTA_DEG, TOP_100_CITIES } from './cities';
 
 export type Tier = 1 | 2 | 3;
 
-const R_KM = 6371;
-const toRad = (d: number) => (d * Math.PI) / 180;
-
-export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-  return 2 * R_KM * Math.asin(Math.min(1, Math.sqrt(a)));
-}
-
+/**
+ * Geographic tier classifier — mirrors the on-chain bbox check in
+ * anchor/programs/tiles/src/tier.rs. Each city stores precomputed longitude
+ * deltas for the T1 (50 km) and T2 (200 km) radii so this can be a pure
+ * bbox compare (no haversine). Off-chain quotes must match the on-chain
+ * classification exactly or the slippage guard will reject the claim tx.
+ */
 export function classifyTier(lat: number, lng: number): Tier {
-  let min = Infinity;
   for (const c of TOP_100_CITIES) {
-    const d = haversineKm(lat, lng, c.lat, c.lng);
-    if (d < min) min = d;
-    if (min < 50) return 1;
+    if (
+      Math.abs(lat - c.lat) < TIER1_LAT_DELTA_DEG &&
+      Math.abs(lng - c.lng) < c.lngD1
+    ) {
+      return 1;
+    }
   }
-  if (min < 50) return 1;
-  if (min < 200) return 2;
+  for (const c of TOP_100_CITIES) {
+    if (
+      Math.abs(lat - c.lat) < TIER2_LAT_DELTA_DEG &&
+      Math.abs(lng - c.lng) < c.lngD2
+    ) {
+      return 2;
+    }
+  }
   return 3;
 }
 
