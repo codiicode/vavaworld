@@ -42,11 +42,11 @@ const NAV: ReadonlyArray<NavItem> = [
 ];
 
 /**
- * Global left rail — glass panel overlay. 232px wide, fixed positioning inside
- * an 18px gutter so the map can bleed under it on /map.
+ * Global left rail — light glass over the sky body bg.
  *
- * Design tokens are read from globals.css (`--glass-*`, `--brand`, etc.).
- * Active nav item gets the inset highlight + a teal→sky bar at the left edge.
+ * 232px wide, fixed inside an 18px gutter, so the map can bleed beneath it on
+ * /map. Dark text + hairline borders work against either backdrop because the
+ * panel itself is white-translucent enough to dominate locally.
  */
 export function AppSidebar() {
   const pathname = usePathname();
@@ -56,17 +56,25 @@ export function AppSidebar() {
 
   return (
     <aside
-      className="glass glass-panel fixed bottom-[18px] left-[18px] top-[18px] z-30 flex w-[232px] flex-col px-4 pb-4 pt-[22px]"
-      style={{ gap: 22 }}
+      className="fixed bottom-[18px] left-[18px] top-[18px] z-30 flex w-[232px] flex-col rounded-[22px] border border-white/60 px-4 pb-4 pt-[22px] text-foreground"
+      style={{
+        gap: 22,
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.62) 100%)',
+        backdropFilter: 'blur(22px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
+        boxShadow:
+          '0 18px 50px -20px rgba(8,14,28,0.18), inset 0 1px 0 rgba(255,255,255,0.65)',
+      }}
     >
       {/* Brand */}
-      <Link href="/" className="relative z-[1] flex items-center gap-3 px-1.5 py-0.5 text-white">
+      <Link href="/" className="flex items-center gap-3 px-1.5 py-0.5">
         <span
-          className="grid h-9 w-9 place-items-center rounded-[10px] border border-white/15"
+          className="grid h-9 w-9 place-items-center rounded-[10px] border border-foreground/10"
           style={{
             background:
-              'linear-gradient(135deg, rgba(94,234,212,0.25), rgba(56,189,248,0.12))',
-            color: 'var(--brand)',
+              'linear-gradient(135deg, rgba(94,234,212,0.30), rgba(56,189,248,0.18))',
+            color: '#0f766e',
           }}
         >
           <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden>
@@ -78,11 +86,13 @@ export function AppSidebar() {
             />
           </svg>
         </span>
-        <span className="text-[14px] font-bold tracking-[0.14em]">VAVAWORLD</span>
+        <span className="text-[14px] font-bold tracking-[0.14em] text-foreground">
+          VAVAWORLD
+        </span>
       </Link>
 
       {/* Primary nav */}
-      <nav className="relative z-[1] flex flex-1 flex-col gap-[2px]">
+      <nav className="flex flex-1 flex-col gap-[2px]">
         {NAV.map((item) => {
           const Icon = item.icon;
           const active =
@@ -94,19 +104,9 @@ export function AppSidebar() {
               className={cn(
                 'relative flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] font-medium leading-none transition-colors duration-150',
                 active
-                  ? 'text-white'
-                  : 'text-white/72 hover:bg-white/[0.06] hover:text-white',
+                  ? 'bg-foreground/[0.06] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]'
+                  : 'text-foreground/65 hover:bg-foreground/[0.04] hover:text-foreground',
               )}
-              style={
-                active
-                  ? {
-                      background:
-                        'linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))',
-                      boxShadow:
-                        'inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -1px 0 rgba(255,255,255,0.04)',
-                    }
-                  : undefined
-              }
             >
               <span className="grid w-[22px] place-items-center opacity-95">
                 <Icon size={20} strokeWidth={1.8} />
@@ -116,8 +116,8 @@ export function AppSidebar() {
                 <span
                   className="pointer-events-none absolute left-1 top-1/2 h-[18px] w-[3px] -translate-y-1/2 rounded-[2px]"
                   style={{
-                    background: 'linear-gradient(180deg, var(--brand), var(--brand-2))',
-                    boxShadow: '0 0 12px rgba(94, 234, 212, 0.7)',
+                    background: 'linear-gradient(180deg, #0ea5e9, #14b8a6)',
+                    boxShadow: '0 0 10px rgba(20, 184, 166, 0.55)',
                   }}
                 />
               )}
@@ -127,10 +127,10 @@ export function AppSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="relative z-[1] flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2.5">
         <Link
           href="/settings"
-          className="flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] font-medium leading-none text-white/52 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white"
+          className="flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] font-medium leading-none text-foreground/50 transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
         >
           <span className="grid w-[22px] place-items-center">
             <Settings size={20} strokeWidth={1.8} />
@@ -141,7 +141,11 @@ export function AppSidebar() {
         {wallet.ready && wallet.connected && (
           <Link
             href="/profile"
-            className="glass glass--inset relative flex items-center gap-3 rounded-[14px] px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
+            className="flex items-center gap-3 rounded-[14px] border border-white/55 px-3 py-2.5 transition-colors hover:bg-white/40"
+            style={{
+              background:
+                'linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.35))',
+            }}
           >
             <div
               className="h-[34px] w-[34px] flex-none overflow-hidden rounded-[10px]"
@@ -149,14 +153,14 @@ export function AppSidebar() {
                 background: profile.avatarUrl
                   ? `url(${profile.avatarUrl}) center/cover`
                   : gradientFromAddr(wallet.address),
-                boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.18)',
+                boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.7)',
               }}
             />
             <div className="flex min-w-0 flex-col">
-              <span className="truncate text-[13.5px] font-semibold leading-tight text-white">
+              <span className="truncate text-[13.5px] font-semibold leading-tight text-foreground">
                 {profile.username ? `@${profile.username}` : shortAddr(wallet.address ?? '')}
               </span>
-              <span className="truncate text-[11.5px] leading-tight tabular-nums text-white/52">
+              <span className="truncate text-[11.5px] leading-tight tabular-nums text-foreground/55">
                 {balance !== null ? `${balance.toFixed(3)} SOL` : '— SOL'}
               </span>
             </div>

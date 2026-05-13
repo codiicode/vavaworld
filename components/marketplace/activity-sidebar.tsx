@@ -13,18 +13,18 @@ import { mockActivity } from '@/lib/mock-marketplace';
  */
 export function ActivitySidebar() {
   return (
-    <aside className="flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-l border-white/10 bg-white/[0.02] text-white backdrop-blur-md">
+    <aside className="flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-l border-foreground/10 bg-white/50 text-foreground backdrop-blur-md">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+      <div className="flex items-center justify-between border-b border-foreground/10 px-5 py-4">
         <div>
-          <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/52">
+          <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/55">
             Live Activity
           </div>
           <div className="mt-0.5 text-sm font-semibold tracking-tight">Recent Sales</div>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-          <span className="text-[11px] text-white/52">Live</span>
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+          <span className="text-[11px] text-foreground/55">Live</span>
         </div>
       </div>
 
@@ -34,7 +34,7 @@ export function ActivitySidebar() {
           <Link
             key={a.id}
             href={`/marketplace/${a.id}`}
-            className="block cursor-pointer border-b border-white/[0.06] px-4 py-3 transition-colors hover:bg-white/[0.04]"
+            className="block cursor-pointer border-b border-foreground/[0.06] px-4 py-3 transition-colors hover:bg-foreground/[0.04]"
           >
             <div className="mb-1.5 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
@@ -43,10 +43,10 @@ export function ActivitySidebar() {
                   {a.city} · {a.neighborhood}
                 </span>
               </div>
-              <span className="text-[10px] tabular-nums text-white/52">{a.ago}</span>
+              <span className="text-[10px] tabular-nums text-foreground/55">{a.ago}</span>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-[11px] text-white/52">
+              <div className="flex items-center gap-1.5 text-[11px] text-foreground/55">
                 <span className="font-mono">{a.fromAddr}</span>
                 <ArrowRight size={10} />
                 <span className="font-mono">{a.toAddr}</span>
@@ -58,11 +58,10 @@ export function ActivitySidebar() {
       </div>
 
       {/* Footer link */}
-      <div className="border-t border-white/10 px-5 py-3">
+      <div className="border-t border-foreground/10 px-5 py-3">
         <Link
           href="/marketplace/activity"
-          className="text-[11px] font-medium hover:underline"
-          style={{ color: 'var(--brand)' }}
+          className="text-[11px] font-medium text-primary hover:underline"
         >
           View full activity →
         </Link>

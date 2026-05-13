@@ -93,11 +93,21 @@ export function TilesTab() {
   }, [tiles, locations]);
 
   return (
-    <div className="glass glass-panel relative overflow-hidden rounded-[22px]">
-      <div className="relative z-[1] flex flex-col gap-3 border-b border-white/10 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+    <div
+      className="overflow-hidden rounded-[18px] border border-white/60"
+      style={{
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.5) 100%)',
+        backdropFilter: 'blur(22px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
+        boxShadow:
+          '0 18px 50px -20px rgba(8,14,28,0.15), inset 0 1px 0 rgba(255,255,255,0.65)',
+      }}
+    >
+      <div className="flex flex-col gap-3 border-b border-foreground/10 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-[15px] font-semibold tracking-tight text-white">Your Hexes</h2>
-          <p className="text-xs text-white/52 tabular-nums">
+          <h2 className="text-[15px] font-semibold tracking-tight text-foreground">Your Hexes</h2>
+          <p className="text-xs text-foreground/55 tabular-nums">
             {tiles ? `${tiles.length} ${tiles.length === 1 ? 'hex' : 'hexes'}` : '—'}
             {totalCities > 0 && ` · ${totalCities} ${totalCities === 1 ? 'city' : 'cities'}`}
           </p>
@@ -108,23 +118,23 @@ export function TilesTab() {
             size="sm"
             onClick={refetch}
             disabled={loading}
-            className="h-9 gap-1.5 px-3 text-xs text-white/72 hover:bg-white/10 hover:text-white"
+            className="h-9 gap-1.5 px-3 text-xs text-foreground/65 hover:bg-foreground/[0.05] hover:text-foreground"
             aria-label="Refresh hexes"
           >
             <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
             Refresh
           </Button>
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/52" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by city or country…"
-              className="h-9 w-64 rounded-md border-white/15 bg-white/[0.04] pl-8 text-sm text-white placeholder:text-white/40"
+              className="h-9 w-64 rounded-md border-foreground/10 bg-white/60 pl-8 text-sm text-foreground placeholder:text-foreground/45"
             />
           </div>
           <Select value={tierFilter} onValueChange={setTierFilter}>
-            <SelectTrigger className="h-9 w-32 border-white/15 bg-white/[0.04] text-white">
+            <SelectTrigger className="h-9 w-32 border-foreground/10 bg-white/60 text-foreground">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -138,13 +148,13 @@ export function TilesTab() {
             type="single"
             value={view}
             onValueChange={(v) => v && setView(v as 'table' | 'grid')}
-            className="rounded-md border border-white/15 bg-white/[0.04] p-0.5"
+            className="rounded-md border border-foreground/10 bg-white/60 p-0.5"
           >
             <ToggleGroupItem
               value="table"
               size="sm"
               aria-label="Table view"
-              className="h-8 w-8 text-white/52 data-[state=on]:bg-white/10 data-[state=on]:text-white"
+              className="h-8 w-8 text-foreground/55 data-[state=on]:bg-foreground/10 data-[state=on]:text-foreground"
             >
               <List size={14} />
             </ToggleGroupItem>
@@ -152,7 +162,7 @@ export function TilesTab() {
               value="grid"
               size="sm"
               aria-label="Grid view"
-              className="h-8 w-8 text-white/52 data-[state=on]:bg-white/10 data-[state=on]:text-white"
+              className="h-8 w-8 text-foreground/55 data-[state=on]:bg-foreground/10 data-[state=on]:text-foreground"
             >
               <LayoutGrid size={14} />
             </ToggleGroupItem>
@@ -161,20 +171,23 @@ export function TilesTab() {
       </div>
 
       {loading && !tiles && (
-        <div className="relative z-[1] px-5 py-12 text-center text-sm text-white/52">Loading hexes…</div>
+        <div className="px-5 py-12 text-center text-sm text-foreground/55">Loading hexes…</div>
       )}
 
       {!loading && tiles?.length === 0 && (
-        <div className="relative z-[1] flex flex-col items-center gap-3 px-5 py-16 text-center">
-          <Hexagon className="text-white/40" size={28} />
-          <p className="text-sm text-white/72">No hexes claimed yet.</p>
+        <div className="flex flex-col items-center gap-3 px-5 py-20 text-center">
+          <Hexagon className="text-foreground/35" size={32} strokeWidth={1.6} />
+          <p className="text-sm text-foreground/65">No hexes claimed yet.</p>
           <Link
             href="/map"
-            className="inline-flex h-9 items-center rounded-md px-4 text-sm font-bold tracking-[0.02em]"
+            className="mt-1 inline-flex h-10 items-center rounded-[10px] px-5 text-sm font-semibold tracking-[0.01em] transition-colors hover:opacity-90"
             style={{
-              background: 'linear-gradient(135deg, rgba(94,234,212,0.32), rgba(56,189,248,0.22))',
-              border: '1px solid rgba(255,255,255,0.24)',
+              background:
+                'linear-gradient(135deg, rgba(94,234,212,0.65), rgba(56,189,248,0.55))',
+              border: '1px solid rgba(255,255,255,0.6)',
               color: '#042f2e',
+              boxShadow:
+                '0 6px 18px -8px rgba(20,184,166,0.5), inset 0 1px 0 rgba(255,255,255,0.6)',
             }}
           >
             Claim your first hex
@@ -183,9 +196,9 @@ export function TilesTab() {
       )}
 
       {!loading && tiles && tiles.length > 0 && view === 'table' && (
-        <div className="relative z-[1]">
+        <div>
           <Table>
-            <TableHeader className="[&_tr]:border-white/10 [&_th]:text-white/52">
+            <TableHeader className="[&_tr]:border-foreground/10 [&_th]:text-foreground/55">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>Location</TableHead>
@@ -220,13 +233,13 @@ export function TilesTab() {
       )}
 
       {tiles && tiles.length > 0 && (
-        <div className="relative z-[1] flex items-center justify-between border-t border-white/10 px-6 py-3">
-          <span className="text-xs tabular-nums text-white/52">
+        <div className="flex items-center justify-between border-t border-foreground/10 px-6 py-3">
+          <span className="text-xs tabular-nums text-foreground/55">
             Showing {start + 1}–{Math.min(start + PER_PAGE, filtered.length)} of {filtered.length}
           </span>
           <div className="flex items-center gap-1">
-            <Button size="sm" variant="outline" disabled className="border-white/15 bg-white/[0.04] text-white/52">Previous</Button>
-            <Button size="sm" variant="outline" disabled className="border-white/15 bg-white/[0.04] text-white/52">Next</Button>
+            <Button size="sm" variant="outline" disabled className="border-foreground/15 bg-white/40 text-foreground/55">Previous</Button>
+            <Button size="sm" variant="outline" disabled className="border-foreground/15 bg-white/40 text-foreground/55">Next</Button>
           </div>
         </div>
       )}
@@ -270,48 +283,45 @@ function TileRow({
     ? [loc.neighborhood, loc.countryName].filter(Boolean).join(' · ')
     : '—';
   return (
-    <TableRow className="h-14 border-white/10 hover:bg-white/[0.04]">
-      <TableCell className="tabular-nums text-white/40">
+    <TableRow className="h-14 border-foreground/10 hover:bg-foreground/[0.03]">
+      <TableCell className="tabular-nums text-foreground/40">
         {String(index).padStart(2, '0')}
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2.5">
           <span className="text-base leading-none">{flagEmoji(loc?.countryCode) || '🌐'}</span>
           <div className="flex flex-col">
-            <span className="text-sm font-medium leading-tight text-white">{title}</span>
-            <span className="mt-0.5 text-[11px] leading-tight text-white/52">
+            <span className="text-sm font-medium leading-tight text-foreground">{title}</span>
+            <span className="mt-0.5 text-[11px] leading-tight text-foreground/55">
               {subtitle}
             </span>
           </div>
         </div>
       </TableCell>
       <TableCell>
-        <span
-          className="rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider"
-          style={{ background: 'rgba(94,234,212,0.14)', color: 'var(--brand)' }}
-        >
+        <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary">
           T{t.tier}
         </span>
       </TableCell>
-      <TableCell className="hidden tabular-nums text-white/52 lg:table-cell">
+      <TableCell className="hidden tabular-nums text-foreground/55 lg:table-cell">
         {new Date(t.claimedAt * 1000).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })}
       </TableCell>
-      <TableCell className="hidden text-[11px] tabular-nums text-white/52 lg:table-cell">
+      <TableCell className="hidden text-[11px] tabular-nums text-foreground/55 lg:table-cell">
         {Math.abs(c.lat).toFixed(2)}°{c.lat >= 0 ? 'N' : 'S'},{' '}
         {Math.abs(c.lng).toFixed(2)}°{c.lng >= 0 ? 'E' : 'W'}
       </TableCell>
       <TableCell className="text-right">
-        <span className="text-sm font-medium tabular-nums text-white">
+        <span className="text-sm font-medium tabular-nums text-foreground">
           {(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(3)}
         </span>
-        <span className="ml-1 text-xs text-white/52">SOL</span>
+        <span className="ml-1 text-xs text-foreground/55">SOL</span>
       </TableCell>
       <TableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="rounded-md p-1.5 text-white/52 hover:bg-white/10 hover:text-white"
+              className="rounded-md p-1.5 text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground"
               aria-label="Hex actions"
               onClick={(e) => e.stopPropagation()}
             >
@@ -338,11 +348,11 @@ function TileCard({ tile: t, location: loc }: { tile: ClaimedTile; location: Hex
   return (
     <Link
       href={`/map#${t.h3}`}
-      className="group relative flex flex-col overflow-hidden rounded-[14px] border border-white/10 transition-colors hover:border-white/25"
+      className="group relative flex flex-col overflow-hidden rounded-[14px] border border-white/60 bg-white/55 transition-colors hover:border-white/80 hover:bg-white/70"
       style={{
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7)',
       }}
     >
       <div className="relative aspect-[3/2] overflow-hidden">
@@ -350,40 +360,33 @@ function TileCard({ tile: t, location: loc }: { tile: ClaimedTile; location: Hex
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(120% 80% at 50% 50%, rgba(94,234,212,0.10), transparent 60%), radial-gradient(60% 60% at 80% 20%, rgba(56,189,248,0.10), transparent 70%)',
+              'radial-gradient(120% 80% at 50% 50%, rgba(94,234,212,0.20), transparent 60%), radial-gradient(60% 60% at 80% 20%, rgba(56,189,248,0.20), transparent 70%)',
           }}
         />
         <div className="absolute inset-0 flex items-center justify-center">
-          <Hexagon className="text-[color:var(--brand)] opacity-40" size={56} strokeWidth={1.4} />
+          <Hexagon className="text-primary opacity-40" size={56} strokeWidth={1.4} />
         </div>
-        <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded border border-white/10 bg-black/40 px-2 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+        <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded border border-white/60 bg-white/75 px-2 py-1 text-[11px] font-medium text-foreground backdrop-blur-sm">
           <span>{flagEmoji(loc?.countryCode) || '🌐'}</span>
           <span className="max-w-[140px] truncate">
             {loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? '—'}
           </span>
         </div>
-        <span
-          className="absolute right-2 top-2 rounded border px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider"
-          style={{
-            borderColor: 'rgba(94,234,212,0.30)',
-            background: 'rgba(94,234,212,0.14)',
-            color: 'var(--brand)',
-          }}
-        >
+        <span className="absolute right-2 top-2 rounded border border-primary/30 bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary">
           T{t.tier}
         </span>
       </div>
-      <div className="border-t border-white/10 p-3">
-        <div className="truncate text-sm font-medium text-white">
+      <div className="border-t border-foreground/10 p-3">
+        <div className="truncate text-sm font-medium text-foreground">
           {loc?.neighborhood ?? loc?.place ?? '—'}
         </div>
-        <div className="mt-0.5 text-[11px] tabular-nums text-white/52">
+        <div className="mt-0.5 text-[11px] tabular-nums text-foreground/55">
           {Math.abs(c.lat).toFixed(3)}°{c.lat >= 0 ? 'N' : 'S'},{' '}
           {Math.abs(c.lng).toFixed(3)}°{c.lng >= 0 ? 'E' : 'W'}
         </div>
         <div className="mt-2.5 flex items-center justify-between">
-          <span className="text-xs text-white/52">Paid</span>
-          <span className="text-sm font-medium tabular-nums text-white">
+          <span className="text-xs text-foreground/55">Paid</span>
+          <span className="text-sm font-medium tabular-nums text-foreground">
             {(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(3)} SOL
           </span>
         </div>

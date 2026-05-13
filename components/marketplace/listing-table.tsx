@@ -60,8 +60,8 @@ export function ListingTable({
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Sort row */}
-      <div className="flex items-center justify-between border-b border-white/10 px-6 py-3">
-        <span className="text-xs tabular-nums text-white/52">
+      <div className="flex items-center justify-between border-b border-foreground/10 px-6 py-3">
+        <span className="text-xs tabular-nums text-foreground/55">
           Showing 1–{listings.length} of {totalCount.toLocaleString('en-US')}
         </span>
         <Select value={sort} onValueChange={(v) => onSortChange(v as SortKey)}>
@@ -81,7 +81,7 @@ export function ListingTable({
       {/* Table */}
       <div className="flex-1 overflow-y-auto">
         <Table>
-          <TableHeader className="sticky top-0 bg-[#0a0e1a]/95 backdrop-blur-md [&_th]:text-white/52">
+          <TableHeader className="sticky top-0 bg-white/85 backdrop-blur-md [&_th]:text-foreground/55">
             <TableRow>
               <TableHead className="w-12">#</TableHead>
               <TableHead>Location</TableHead>
@@ -98,10 +98,10 @@ export function ListingTable({
             {listings.map((l) => (
               <TableRow
                 key={l.id}
-                className="group h-14 cursor-pointer border-white/10 hover:bg-white/[0.04]"
+                className="group h-14 cursor-pointer border-foreground/10 hover:bg-foreground/[0.03]"
                 onClick={() => router.push(`/marketplace/${l.id}`)}
               >
-                <TableCell className="font-mono text-xs tabular-nums text-white/52">
+                <TableCell className="font-mono text-xs tabular-nums text-foreground/55">
                   {l.id}
                 </TableCell>
 
@@ -109,8 +109,8 @@ export function ListingTable({
                   <div className="flex items-center gap-2.5">
                     <span className="text-base leading-none">{flagEmoji(l.countryCode)}</span>
                     <div>
-                      <div className="text-sm font-medium leading-tight text-white">{l.city}</div>
-                      <div className="mt-0.5 text-[11px] leading-tight text-white/52">
+                      <div className="text-sm font-medium leading-tight text-foreground">{l.city}</div>
+                      <div className="mt-0.5 text-[11px] leading-tight text-foreground/55">
                         {l.neighborhood}
                       </div>
                     </div>
@@ -127,8 +127,8 @@ export function ListingTable({
                 </TableCell>
 
                 <TableCell className="text-right">
-                  <div className="text-sm font-semibold tabular-nums text-white">{l.price.toFixed(3)} SOL</div>
-                  <div className="text-[11px] tabular-nums text-white/52">
+                  <div className="text-sm font-semibold tabular-nums text-foreground">{l.price.toFixed(3)} SOL</div>
+                  <div className="text-[11px] tabular-nums text-foreground/55">
                     ${l.priceUsd}
                   </div>
                 </TableCell>
@@ -137,7 +137,7 @@ export function ListingTable({
                   <ChangeCell value={l.change24h} />
                 </TableCell>
 
-                <TableCell className="text-right text-sm tabular-nums text-white/52">
+                <TableCell className="text-right text-sm tabular-nums text-foreground/55">
                   {l.lastSale != null ? l.lastSale.toFixed(3) : '—'}
                 </TableCell>
 
@@ -145,7 +145,7 @@ export function ListingTable({
                   <DecayCell percent={l.decayPercent} />
                 </TableCell>
 
-                <TableCell className="text-[11px] text-white/52">{l.listedAgo}</TableCell>
+                <TableCell className="text-[11px] text-foreground/55">{l.listedAgo}</TableCell>
 
                 <TableCell className="w-20">
                   <Button
@@ -170,7 +170,7 @@ export function ListingTable({
 
 function ChangeCell({ value }: { value: number }) {
   if (value === 0) {
-    return <span className="text-sm tabular-nums text-white/52">—</span>;
+    return <span className="text-sm tabular-nums text-foreground/55">—</span>;
   }
   const positive = value > 0;
   return (
@@ -192,10 +192,10 @@ function DecayCell({ percent }: { percent: number }) {
     percent > 70 ? 'bg-emerald-500' : percent > 30 ? 'bg-amber-500' : 'bg-red-500';
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1 w-12 overflow-hidden rounded-full bg-white/10">
+      <div className="h-1 w-12 overflow-hidden rounded-full bg-foreground/10">
         <div className={cn('h-full rounded-full', color)} style={{ width: `${percent}%` }} />
       </div>
-      <span className="text-[11px] tabular-nums text-white/52">{percent}%</span>
+      <span className="text-[11px] tabular-nums text-foreground/55">{percent}%</span>
     </div>
   );
 }
