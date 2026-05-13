@@ -9,12 +9,12 @@ import { mockMarketStats } from '@/lib/mock-marketplace';
  */
 export function MarketHeader() {
   return (
-    <div className="flex items-center justify-between border-b border-border px-6 py-4">
+    <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
       <div>
-        <div className="mb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        <div className="mb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-white/52">
           Marketplace
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">All Listings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">All Listings</h1>
       </div>
 
       <div className="hidden items-center gap-6 md:flex">
@@ -30,10 +30,10 @@ export function MarketHeader() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+      <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-white/52">
         {label}
       </div>
-      <div className="text-base font-semibold tabular-nums tracking-tight">{value}</div>
+      <div className="text-base font-semibold tabular-nums tracking-tight text-white">{value}</div>
     </div>
   );
 }

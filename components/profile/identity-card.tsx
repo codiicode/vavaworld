@@ -59,8 +59,8 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
   };
 
   return (
-    <div className="mb-10 rounded-lg border border-border bg-card p-6">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="glass glass-panel relative overflow-hidden rounded-[22px] p-7">
+      <div className="relative z-[1] flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         {/* Left: avatar + name + addr */}
         <div className="flex items-center gap-5">
           <Avatar className="h-16 w-16">
@@ -75,7 +75,7 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold tracking-tight">{profile.displayName}</h1>
+              <h1 className="text-xl font-semibold tracking-tight text-white">{profile.displayName}</h1>
               {country && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -97,22 +97,22 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
             </div>
 
             {profile.bio && (
-              <p className="max-w-md text-sm leading-snug text-muted-foreground">
+              <p className="max-w-md text-sm leading-snug text-white/72">
                 {profile.bio}
               </p>
             )}
 
-            <div className="flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
+            <div className="flex items-center gap-3 text-xs text-white/60 tabular-nums">
               <button
                 type="button"
                 onClick={handleCopy}
-                className="group flex items-center gap-1.5 transition-colors hover:text-foreground"
+                className="group flex items-center gap-1.5 transition-colors hover:text-white"
                 aria-label="Copy wallet address"
               >
                 <span>{profile.walletAddress ? shortAddr(profile.walletAddress) : 'No wallet'}</span>
                 {profile.walletAddress &&
                   (copied ? (
-                    <Check size={12} className="text-emerald-600" />
+                    <Check size={12} className="text-[color:var(--brand)]" />
                   ) : (
                     <Copy size={12} className="opacity-60 group-hover:opacity-100" />
                   ))}
@@ -170,12 +170,12 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
 function SummaryStat({ label, value, unit }: { label: string; value: string; unit?: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+      <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/52">
         {label}
       </span>
       <div className="flex items-baseline gap-1">
-        <span className="text-lg font-semibold tabular-nums tracking-tight">{value}</span>
-        {unit && <span className="text-[11px] text-muted-foreground">{unit}</span>}
+        <span className="text-lg font-semibold tabular-nums tracking-tight text-white">{value}</span>
+        {unit && <span className="text-[11px] text-white/52">{unit}</span>}
       </div>
     </div>
   );

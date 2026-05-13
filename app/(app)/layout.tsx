@@ -19,9 +19,9 @@ export default function AppGroupLayout({ children }: { children: React.ReactNode
       <main
         className={cn(
           'relative h-full',
-          isMap
-            ? ''
-            : 'ml-[268px] overflow-auto bg-background text-foreground',
+          // Non-map routes: clear the sidebar but leave the dark body bg
+          // showing through so glass panels read against it consistently.
+          isMap ? '' : 'ml-[268px] overflow-auto text-white',
         )}
       >
         {children}
