@@ -95,7 +95,7 @@ export default function Page() {
       </div>
 
       {/* Dim layer — only on satellite (which is image-heavy and varied).
-          The streets style is already pale and reads fine without dimming. */}
+          Mapbox Standard is already pale and reads fine without dimming. */}
       {isSatellite && (
         <div
           aria-hidden

@@ -4,16 +4,17 @@ import { Map as MapIcon, Satellite } from 'lucide-react';
 
 export type MapStyleId =
   | 'mapbox://styles/mapbox/satellite-v9'
-  | 'mapbox://styles/mapbox/streets-v12';
+  | 'mapbox://styles/mapbox/standard';
 
-const STREETS: MapStyleId = 'mapbox://styles/mapbox/streets-v12';
+const STANDARD: MapStyleId = 'mapbox://styles/mapbox/standard';
 const SATELLITE: MapStyleId = 'mapbox://styles/mapbox/satellite-v9';
 
 /**
  * Glass pill button to the right of the search bar. Clicking it toggles the
- * underlying Mapbox style between satellite imagery and the streets style
- * (country borders, names, major-city labels — the Earth2-style political
- * view). The icon shown is the style you'd switch TO, not the current one.
+ * underlying Mapbox style between satellite imagery and Mapbox Standard —
+ * the political/streets view that ALSO renders 3D buildings and famous
+ * landmarks (Eiffel Tower, Burj Khalifa, etc.) when zoomed in. Globe
+ * projection on both styles. Icon shown = style you'd switch TO.
  */
 export function MapStyleToggle({
   value,
@@ -23,8 +24,8 @@ export function MapStyleToggle({
   onChange: (next: MapStyleId) => void;
 }) {
   const isSatellite = value === SATELLITE;
-  const next = isSatellite ? STREETS : SATELLITE;
-  const label = isSatellite ? 'Switch to streets view' : 'Switch to satellite view';
+  const next = isSatellite ? STANDARD : SATELLITE;
+  const label = isSatellite ? 'Switch to map view' : 'Switch to satellite view';
   return (
     <button
       type="button"
