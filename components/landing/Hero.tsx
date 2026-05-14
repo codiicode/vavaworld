@@ -20,8 +20,8 @@ export function Hero() {
           <span className="l-bar" />
         </span>
         <h1>
-          The oldest currency in human history.<br />
-          Now <em>digital.</em>
+          The oldest currency in <em>human history.</em><br />
+          Now digital.
         </h1>
         <div className="l-row">
           <p className="l-lead">
