@@ -20,7 +20,7 @@ export function SiteNav() {
     <nav className="l-site">
       <div className="l-nav-inner">
         <Link href="/" className="l-brand" aria-label="VAVAWORLD">
-          <span className="l-mark"><BrandMark color="#ffffff" size={26} /></span>
+          <span className="l-mark"><BrandMark color="#0a1a2e" size={26} /></span>
           <span className="l-name">Vavaworld</span>
         </Link>
 

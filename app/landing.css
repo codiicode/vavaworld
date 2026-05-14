@@ -73,35 +73,43 @@
 
 /* ── NAV ─────────────────────────────────── */
 .landing-root nav.l-site {
+  /* Liquid-glass top nav, floating with margin from edges — matches the
+     light-glass panels on /profile, /marketplace, AppSidebar. */
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 14px; left: 14px; right: 14px;
   z-index: 50;
-  background: rgba(245, 249, 253, 0.55);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.55) 100%);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.60);
+  box-shadow:
+    0 18px 50px -20px rgba(8, 14, 28, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 .landing-root .l-nav-inner {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 16px 36px;
+  padding: 14px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 32px;
 }
-.landing-root .l-brand { display: flex; align-items: center; gap: 14px; color: #fff; }
-.landing-root .l-brand.l-dark { color: var(--l-ink); }
-.landing-root .l-brand .l-mark { width: 26px; height: 26px; }
+/* Nav contents sit on the light-glass nav, so text is dark — matches the
+   foreground tokens we use elsewhere. */
+.landing-root nav.l-site .l-brand,
+.landing-root nav.l-site .l-brand .l-name { color: var(--l-ink); }
+.landing-root nav.l-site .l-brand .l-mark { width: 26px; height: 26px; }
+.landing-root .l-brand { display: flex; align-items: center; gap: 14px; }
 .landing-root .l-brand .l-name {
   font-family: "Inter", sans-serif;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: #fff;
 }
-.landing-root .l-brand.l-dark .l-name { color: var(--l-ink); }
 .landing-root .l-nav-links { display: flex; align-items: center; gap: 34px; }
 .landing-root .l-nav-links a {
   font-family: "Inter", sans-serif;
@@ -109,7 +117,7 @@
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.92);
+  color: rgba(10, 26, 46, 0.72);
   position: relative;
   padding: 6px 0;
   transition: color 0.2s;
@@ -119,14 +127,29 @@
   position: absolute;
   left: 0; right: 0; bottom: 0;
   height: 1px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--l-ink);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.25s ease;
 }
-.landing-root .l-nav-links a:hover { color: #fff; }
+.landing-root .l-nav-links a:hover { color: var(--l-ink); }
 .landing-root .l-nav-links a:hover::after { transform: scaleX(1); }
 .landing-root .l-nav-right { display: flex; align-items: center; gap: 12px; }
+
+/* Override the white-on-overlay button styles INSIDE the new light-glass nav. */
+.landing-root nav.l-site .l-btn-overlay-ghost {
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--l-ink);
+  border: 1px solid rgba(10, 26, 46, 0.18);
+}
+.landing-root nav.l-site .l-btn-overlay-ghost:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(10, 26, 46, 0.40);
+}
+.landing-root nav.l-site .l-btn-text {
+  color: rgba(10, 26, 46, 0.72);
+}
+.landing-root nav.l-site .l-btn-text:hover { color: var(--l-ink); }
 
 .landing-root .l-btn {
   display: inline-flex;
