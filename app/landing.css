@@ -136,18 +136,46 @@
 .landing-root .l-nav-links a:hover::after { transform: scaleX(1); }
 .landing-root .l-nav-right { display: flex; align-items: center; gap: 12px; }
 
-/* Override the white-on-overlay button styles INSIDE the new light-glass nav. */
+/* ─── Unified button system ─────────────────────────────────────
+   One primary CTA style used everywhere on the landing — matches
+   the "Claim your first hex" CTA on /profile + /marketplace. */
+.landing-root .l-btn-ghost,
+.landing-root .l-btn-overlay-ghost,
+.landing-root nav.l-site .l-btn-ghost,
 .landing-root nav.l-site .l-btn-overlay-ghost {
-  background: rgba(255, 255, 255, 0.55);
-  color: var(--l-ink);
-  border: 1px solid rgba(10, 26, 46, 0.18);
+  background:
+    linear-gradient(135deg, rgba(94, 234, 212, 0.65), rgba(56, 189, 248, 0.55));
+  color: #042f2e;
+  border: 1px solid rgba(255, 255, 255, 0.60);
+  box-shadow:
+    0 6px 18px -8px rgba(20, 184, 166, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  padding: 12px 22px;
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
+.landing-root .l-btn-ghost:hover,
+.landing-root .l-btn-overlay-ghost:hover,
+.landing-root nav.l-site .l-btn-ghost:hover,
 .landing-root nav.l-site .l-btn-overlay-ghost:hover {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(10, 26, 46, 0.40);
+  filter: brightness(1.05);
+  border-color: rgba(255, 255, 255, 0.85);
 }
+
+/* Text-only link (Log in) — matches ink token, no fill. */
 .landing-root nav.l-site .l-btn-text {
   color: rgba(10, 26, 46, 0.72);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 .landing-root nav.l-site .l-btn-text:hover { color: var(--l-ink); }
 
