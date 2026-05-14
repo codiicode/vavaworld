@@ -21,9 +21,16 @@ type Props = {
   setSelectedHexes: (s: Set<string>) => void;
   mapRef: React.MutableRefObject<MapRef | null>;
   refreshTilesRef?: React.MutableRefObject<((h3s: string[]) => void) | null>;
+  mapStyle?: string;
 };
 
-export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesRef }: Props) {
+export function MapView({
+  selectedHexes,
+  setSelectedHexes,
+  mapRef,
+  refreshTilesRef,
+  mapStyle = 'mapbox://styles/mapbox/satellite-v9',
+}: Props) {
   const [ready, setReady] = useState(false);
   const [visibleHexes, setVisibleHexes] = useState<string[]>([]);
   const [zoomedIn, setZoomedIn] = useState(false);
@@ -123,12 +130,12 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
     if (src) src.setData(buildFeatureCollection(visibleHexes));
   }, [ready, visibleHexes, buildFeatureCollection, mapRef]);
 
-  const onLoad = useCallback(() => {
+  // Idempotent: re-runs after a Mapbox style change (which wipes custom
+  // sources/layers) without throwing on the second add.
+  const installHexLayers = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
-
-    // Free up Shift+drag (Mapbox box-zoom) — we use Ctrl+drag for box-select instead
-    map.boxZoom.disable();
+    if (map.getSource(SOURCE_ID)) return;
 
     map.addSource(SOURCE_ID, {
       type: 'geojson',
@@ -171,6 +178,23 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
       source: SOURCE_ID,
       paint: { 'line-color': '#ffffff', 'line-width': 2.5 },
       filter: ['==', ['get', 'selected'], true],
+    });
+  }, [mapRef]);
+
+  const onLoad = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+
+    // Free up Shift+drag (Mapbox box-zoom) — we use Ctrl+drag for box-select instead
+    map.boxZoom.disable();
+
+    installHexLayers();
+
+    // When the user toggles map style, Mapbox wipes custom layers — re-add them
+    // and re-render the visible hexes once the new style finishes loading.
+    map.on('style.load', () => {
+      installHexLayers();
+      refreshHexes();
     });
 
     // ─── Paint-drag selection ────────────────────────────────────────
@@ -248,7 +272,7 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
 
     setReady(true);
     refreshHexes();
-  }, [mapRef, refreshHexes, setSelectedHexes]);
+  }, [mapRef, refreshHexes, setSelectedHexes, installHexLayers]);
 
   const onClick = useCallback(
     (e: MapMouseEvent) => {
@@ -328,7 +352,7 @@ export function MapView({ selectedHexes, setSelectedHexes, mapRef, refreshTilesR
         mapboxAccessToken={token}
         initialViewState={{ longitude: 13.405, latitude: 52.52, zoom: 10 }}
         style={{ position: 'absolute', inset: 0 }}
-        mapStyle="mapbox://styles/mapbox/satellite-v9"
+        mapStyle={mapStyle}
         onLoad={onLoad}
         onMoveEnd={refreshHexes}
         onClick={onClick}

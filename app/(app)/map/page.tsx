@@ -5,6 +5,7 @@ import type { MapRef } from 'react-map-gl/mapbox';
 import { MapView } from '@/components/MapView';
 import { GlassRightPanel } from '@/components/map/glass-right-panel';
 import { GlassSearchBar } from '@/components/map/glass-search-bar';
+import { MapStyleToggle, type MapStyleId } from '@/components/map/map-style-toggle';
 import { ClaimModal } from '@/components/ClaimModal';
 import { hexCenter } from '@/lib/h3-utils';
 
@@ -18,8 +19,13 @@ import { hexCenter } from '@/lib/h3-utils';
 export default function Page() {
   const [selectedHexes, setSelectedHexes] = useState<Set<string>>(new Set());
   const [showClaim, setShowClaim] = useState(false);
+  const [mapStyle, setMapStyle] = useState<MapStyleId>(
+    'mapbox://styles/mapbox/satellite-v9',
+  );
   const mapRef = useRef<MapRef | null>(null);
   const refreshTilesRef = useRef<((h3s: string[]) => void) | null>(null);
+
+  const isSatellite = mapStyle === 'mapbox://styles/mapbox/satellite-v9';
 
   const removeHex = (h3: string) => {
     const next = new Set(selectedHexes);
@@ -84,28 +90,34 @@ export default function Page() {
           setSelectedHexes={setSelectedHexes}
           mapRef={mapRef}
           refreshTilesRef={refreshTilesRef}
+          mapStyle={mapStyle}
         />
       </div>
 
-      {/* Dim layer — the design assumes a dark Mapbox style. Since we're keeping
-          the current (light) style, this overlay gives glass panels something
-          dark to be translucent over so the white text stays legible. */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 z-[5]"
-        style={{
-          background: `
-            radial-gradient(120% 80% at 20% 0%, rgba(43,70,130,0.45), transparent 60%),
-            radial-gradient(100% 80% at 100% 100%, rgba(20,35,70,0.55), transparent 60%),
-            linear-gradient(180deg, rgba(8,14,28,0.42), rgba(8,14,28,0.58))
-          `,
-        }}
-      />
+      {/* Dim layer — only on satellite (which is image-heavy and varied).
+          The streets style is already pale and reads fine without dimming. */}
+      {isSatellite && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 z-[5]"
+          style={{
+            background: `
+              radial-gradient(120% 80% at 20% 0%, rgba(43,70,130,0.45), transparent 60%),
+              radial-gradient(100% 80% at 100% 100%, rgba(20,35,70,0.55), transparent 60%),
+              linear-gradient(180deg, rgba(8,14,28,0.42), rgba(8,14,28,0.58))
+            `,
+          }}
+        />
+      )}
 
-      {/* Search pill — slots between the left rail (ends at 250px) and the right
-          panel (starts at right:18 with 320px width = 356px total). */}
-      <div className="pointer-events-none fixed left-[250px] right-[356px] top-[18px] z-20 px-[18px]">
-        <GlassSearchBar mapRef={mapRef} />
+      {/* Search pill + style toggle — search shrinks to make room for the
+          52px toggle. The container clears the left rail (250) and the right
+          panel (356), and pads its inner edges 18px. */}
+      <div className="pointer-events-none fixed left-[250px] right-[356px] top-[18px] z-20 flex items-center gap-3 px-[18px]">
+        <div className="min-w-0 flex-1">
+          <GlassSearchBar mapRef={mapRef} />
+        </div>
+        <MapStyleToggle value={mapStyle} onChange={setMapStyle} />
       </div>
 
       <GlassRightPanel
