@@ -353,6 +353,7 @@ export function MapView({
         initialViewState={{ longitude: 13.405, latitude: 52.52, zoom: 10 }}
         style={{ position: 'absolute', inset: 0 }}
         mapStyle={mapStyle}
+        projection={{ name: 'globe' }}
         onLoad={onLoad}
         onMoveEnd={refreshHexes}
         onClick={onClick}
