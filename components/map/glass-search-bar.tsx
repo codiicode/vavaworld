@@ -6,6 +6,33 @@ import type { MapRef } from 'react-map-gl/mapbox';
 import { searchPlaces, type Place } from '@/lib/geocoding';
 
 /**
+ * Parse a free-form coordinate string. Accepts:
+ *   "52.52, 13.405"          decimal pair
+ *   "52.52 13.405"           space-separated
+ *   "-23.55,-46.63"          negatives for south/west
+ *   "52.52°N 13.405°E"       with degree symbol + hemisphere
+ *   "52.52N, 13.405E"        hemisphere without °
+ *
+ * Returns null if it doesn't look like coords or is out of range.
+ */
+function parseCoords(input: string): { lat: number; lng: number } | null {
+  const re = /^\s*(-?\d+(?:\.\d+)?)\s*°?\s*([NSns])?\s*[,\s]+\s*(-?\d+(?:\.\d+)?)\s*°?\s*([EWew])?\s*$/;
+  const m = input.match(re);
+  if (!m) return null;
+  let lat = parseFloat(m[1]);
+  let lng = parseFloat(m[3]);
+  if (m[2]) lat = /[Ss]/.test(m[2]) ? -Math.abs(lat) : Math.abs(lat);
+  if (m[4]) lng = /[Ww]/.test(m[4]) ? -Math.abs(lng) : Math.abs(lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return { lat, lng };
+}
+
+function formatCoord(v: number, pos: 'N' | 'E', neg: 'S' | 'W'): string {
+  return `${Math.abs(v).toFixed(4)}°${v >= 0 ? pos : neg}`;
+}
+
+/**
  * Top-of-map glass pill search. Sits in the map column between the left rail
  * and the right panel; pill radius 999, height 52px. Same geocode + flyTo
  * behaviour as the previous SearchBar, restyled to the new design.
@@ -34,6 +61,24 @@ export function GlassSearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | nu
       setOpen(false);
       return;
     }
+
+    // If the input parses as a coordinate pair, skip the geocoder entirely
+    // and surface a synthetic "📍 …°N, …°E" result the user can pick to fly
+    // straight there. Useful for sharing precise hex locations.
+    const coords = parseCoords(q);
+    if (coords) {
+      const synthetic: Place = {
+        id: `coord:${coords.lat},${coords.lng}`,
+        name: `📍 ${formatCoord(coords.lat, 'N', 'S')}, ${formatCoord(coords.lng, 'E', 'W')}`,
+        lat: coords.lat,
+        lng: coords.lng,
+      };
+      setResults([synthetic]);
+      setOpen(true);
+      setActive(0);
+      return;
+    }
+
     debounceRef.current = window.setTimeout(async () => {
       const r = await searchPlaces(q, token);
       setResults(r);
