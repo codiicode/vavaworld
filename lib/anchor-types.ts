@@ -100,6 +100,56 @@ export type Tiles = {
           "type": "u8"
         }
       ]
+    },
+    {
+      "name": "transfer",
+      "discriminator": [
+        163,
+        52,
+        200,
+        231,
+        140,
+        3,
+        69,
+        186
+      ],
+      "accounts": [
+        {
+          "name": "tile",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  105,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "tile.h3_id",
+                "account": "tile"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": [
+            "tile"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "recipient",
+          "type": "pubkey"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -114,6 +164,19 @@ export type Tiles = {
         54,
         55,
         207
+      ]
+    },
+    {
+      "name": "tile",
+      "discriminator": [
+        95,
+        45,
+        214,
+        228,
+        61,
+        172,
+        201,
+        208
       ]
     }
   ],
@@ -162,6 +225,16 @@ export type Tiles = {
       "code": 6008,
       "name": "tierInvalid",
       "msg": "Tier value out of range"
+    },
+    {
+      "code": 6009,
+      "name": "notOwner",
+      "msg": "Signer is not the current owner of this tile"
+    },
+    {
+      "code": 6010,
+      "name": "invalidRecipient",
+      "msg": "Invalid transfer recipient"
     }
   ],
   "types": [
@@ -176,6 +249,38 @@ export type Tiles = {
           },
           {
             "name": "sold",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "tile",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "h3Id",
+            "type": "u64"
+          },
+          {
+            "name": "claimedAt",
+            "type": "i64"
+          },
+          {
+            "name": "tier",
+            "type": "u8"
+          },
+          {
+            "name": "pricePaid",
             "type": "u64"
           },
           {

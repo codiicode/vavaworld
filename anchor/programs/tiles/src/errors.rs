@@ -20,4 +20,8 @@ pub enum TilesError {
     InvalidH3,
     #[msg("Tier value out of range")]
     TierInvalid,
+    #[msg("Signer is not the current owner of this tile")]
+    NotOwner,
+    #[msg("Invalid transfer recipient")]
+    InvalidRecipient,
 }

@@ -3,14 +3,23 @@
 import { useState } from 'react';
 import { AtSign, Loader2, Mail, Wallet } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
+import { Program, type Idl } from '@coral-xyz/anchor';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { flagEmoji } from '@/lib/flag-emoji';
 import { cn } from '@/lib/utils';
+import { useActiveWallet } from '@/lib/active-wallet';
+import { tilePda } from '@/lib/tile-pda';
+import { getConnection, PROGRAM_ID } from '@/lib/anchor-client';
+import { dispatchClaimDone } from '@/lib/claim-events';
+import idl from '@/lib/anchor-idl.json';
+import type { Tiles } from '@/lib/anchor-types';
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
+
+const programIdPk = new PublicKey(PROGRAM_ID);
 
 type Method = 'wallet' | 'x' | 'email';
 
@@ -23,13 +32,11 @@ const METHODS: ReadonlyArray<{ id: Method; label: string; icon: typeof Wallet; p
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Three-tabbed transfer dialog. Wallet address does an on-chain handoff
- * (pending program upgrade — see TODO below). X handle / Email queue a
- * pending transfer the recipient claims by logging in with that identifier.
- *
- * For this MVP, every method records intent only and shows a confirmation —
- * the on-chain transfer instruction and the pending-transfer Supabase table
- * are next-pass work.
+ * Three-tabbed transfer dialog.
+ *  - Wallet address: real on-chain `transfer` instruction — the Tile PDA's
+ *    owner field is reassigned, signed by the current owner.
+ *  - X handle / Email: still queued-intent stubs (need a pending-transfer
+ *    backend the recipient claims on sign-in).
  */
 export function TileTransferDialog({
   tile,
@@ -42,6 +49,7 @@ export function TileTransferDialog({
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
+  const wallet = useActiveWallet();
   const [method, setMethod] = useState<Method>('wallet');
   const [value, setValue] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -92,9 +100,56 @@ export function TileTransferDialog({
     }
     setError(null);
     setSubmitting(true);
-    // TODO: wallet path needs a `transfer` instruction in the Anchor program.
-    // X / Email need a Supabase `pending_transfers` table keyed by handle/email
-    // that the recipient claims on next sign-in.
+
+    if (method === 'wallet') {
+      try {
+        if (!tile) throw new Error('No tile');
+        if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
+          throw new Error('Wallet not connected');
+        }
+        const recipient = new PublicKey(value.trim());
+        const connection = getConnection();
+        const program = new Program<Tiles>(idl as Idl, { connection });
+        const [tilePk] = tilePda(tile.h3, programIdPk);
+
+        const ix = await program.methods
+          .transfer(recipient)
+          .accounts({ tile: tilePk, owner: wallet.publicKey })
+          .instruction();
+
+        const { blockhash } = await connection.getLatestBlockhash('confirmed');
+        const tx = new Transaction({
+          feePayer: wallet.publicKey,
+          recentBlockhash: blockhash,
+        }).add(ix);
+
+        const sim = await connection.simulateTransaction(tx, undefined, [wallet.publicKey]);
+        if (sim.value.err) {
+          const logs = sim.value.logs ?? [];
+          const programLog = logs.find(
+            (l) =>
+              l.includes('AnchorError') ||
+              l.includes('failed:') ||
+              l.includes('Program log: Error'),
+          );
+          throw new Error(programLog ?? `Simulation rejected: ${JSON.stringify(sim.value.err)}`);
+        }
+
+        const sig = await wallet.signAndSendTransaction(tx);
+        await connection.confirmTransaction(sig, 'confirmed');
+
+        // The tile just left this wallet — make /profile + the sidebar refetch.
+        dispatchClaimDone({ h3s: [tile.h3], txSig: sig });
+        setSubmitting(false);
+        setDone(true);
+      } catch (e: unknown) {
+        setSubmitting(false);
+        setError(e instanceof Error ? e.message : String(e));
+      }
+      return;
+    }
+
+    // X / Email — no backend yet; record intent + show queued confirmation.
     await new Promise((r) => setTimeout(r, 800));
     setSubmitting(false);
     setDone(true);
@@ -197,17 +252,17 @@ export function TileTransferDialog({
               >
                 ✓
               </div>
-              <p className="text-sm font-medium">Transfer queued</p>
+              <p className="text-sm font-medium">
+                {method === 'wallet' ? 'Hex transferred' : 'Transfer queued'}
+              </p>
               <p className="max-w-sm text-xs text-muted-foreground">
-                {method === 'wallet'
-                  ? 'The on-chain transfer instruction lands shortly — your hex will move to '
-                  : 'We notified '}
+                {method === 'wallet' ? 'Ownership moved on-chain to ' : 'We notified '}
                 <span className="font-mono text-foreground">
                   {method === 'wallet' ? `${value.slice(0, 4)}…${value.slice(-4)}` : value}
                 </span>
                 {method !== 'wallet'
                   ? '. They claim the hex on sign-in.'
-                  : ' as soon as the program upgrade ships.'}
+                  : '. It no longer appears in your portfolio.'}
               </p>
             </div>
             <Button variant="outline" onClick={close} className="w-full">
