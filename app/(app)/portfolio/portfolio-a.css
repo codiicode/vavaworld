@@ -57,7 +57,7 @@
 .pf-stage .sky {
   position: absolute;
   inset: 0;
-  background: url("/assets/sky-bg.jpg") center/cover;
+  background: url("/sky-bg.jpg") center/cover;
   filter: saturate(1.08) brightness(1.02);
 }
 .pf-stage .sky::after {

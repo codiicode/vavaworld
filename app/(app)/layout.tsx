@@ -17,22 +17,31 @@ export default function AppGroupLayout({ children }: { children: React.ReactNode
   const isStandalone = pathname?.startsWith('/portfolio') ?? false;
 
   if (isStandalone) {
+    // /portfolio renders its own full-bleed .pf-stage (own sidebar + own sky).
     return <div className="relative h-screen overflow-hidden">{children}</div>;
   }
 
   return (
-    <div className="relative h-screen overflow-hidden">
-      <AppSidebar />
-      <main
-        className={cn(
-          'relative h-full',
-          // Non-map routes: clear the sidebar but leave the body sky bg
-          // showing through so glass panels read against it consistently.
-          isMap ? '' : 'ml-[268px] overflow-auto text-foreground',
-        )}
-      >
-        {children}
-      </main>
+    <div
+      className="relative min-h-screen w-full bg-cover bg-center bg-fixed"
+      style={{
+        // Shared sky photo behind every (app) page (sky-bg.jpg is the exact
+        // 360_F_98262429… stock image the brief referenced).
+        backgroundImage: "url('/sky-bg.jpg')",
+      }}
+    >
+      <div className="relative z-10 h-screen overflow-hidden">
+        <AppSidebar />
+        <main
+          className={cn(
+            'relative h-full',
+            // Non-map routes clear the fixed sidebar; /map bleeds full-width.
+            isMap ? '' : 'ml-[268px] overflow-auto text-foreground',
+          )}
+        >
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
