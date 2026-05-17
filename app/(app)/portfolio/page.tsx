@@ -169,7 +169,7 @@ function PfSidebar({ username, balance }: { username: string; balance: string })
   return (
     <aside className="glass panel sidebar">
       <Link href="/" className="sidebar__brand" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <BrandLogo size={32} />
+        <BrandLogo size={36} />
         <span className="sidebar__wordmark">VAVAWORLD</span>
       </Link>
       <nav className="sidebar__nav">
