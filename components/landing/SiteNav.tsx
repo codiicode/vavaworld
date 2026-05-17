@@ -34,7 +34,7 @@ export function SiteNav() {
         <div className="l-nav-right">
           {!wallet.ready && <span style={{ width: 200 }} />}
           {wallet.ready && wallet.connected && (
-            <Link href="/profile" className="l-btn l-btn-overlay-ghost">
+            <Link href="/profile" className="l-btn l-btn-profile">
               Profile
             </Link>
           )}
