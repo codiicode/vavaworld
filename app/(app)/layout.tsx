@@ -12,6 +12,13 @@ import { cn } from '@/lib/utils';
 export default function AppGroupLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isMap = pathname?.startsWith('/map') ?? false;
+  // /portfolio (Variant A) is a full-bleed standalone page with its OWN
+  // sidebar — skip the shared AppSidebar + padding entirely there.
+  const isStandalone = pathname?.startsWith('/portfolio') ?? false;
+
+  if (isStandalone) {
+    return <div className="relative h-screen overflow-hidden">{children}</div>;
+  }
 
   return (
     <div className="relative h-screen overflow-hidden">
