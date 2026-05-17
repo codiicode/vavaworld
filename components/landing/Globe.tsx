@@ -9,7 +9,7 @@ import { CITIES, type City } from './landing-cities';
 
 /**
  * Orthographic globe rendered to canvas at 1400x1400 (downscaled by CSS).
- * Auto-rotates ~5°/sec when idle; drag to spin; pause on hover.
+ * Auto-rotates ~5°/sec continuously; drag nudges it on top of the spin.
  * Draws cubic-bezier arcs between random city pairs (the `arcQueue` in the reference).
  */
 type WorldTopo = Topology<{ land: GeometryCollection; countries: GeometryCollection }>;
@@ -49,10 +49,8 @@ export function Globe() {
     const path = d3.geoPath(projection, ctx);
 
     let lambda = 0;
-    let mouseInside = false;
     let dragging = false;
     let dragLast: { x: number; y: number } | null = null;
-    let lastUserAction = 0;
     const TILT = -14;
 
     type Arc = { a: City; b: City; t: number; dur: number };
@@ -189,31 +187,24 @@ export function Globe() {
     function loop(t: number) {
       const dt = (t - last) / 1000;
       last = t;
-      const sinceUser = t - lastUserAction;
-      if (!mouseInside && !dragging && sinceUser > 1500) {
-        lambda = (lambda + dt * 5) % 360;
-      }
+      // Always auto-rotate — hover/idle no longer pauses the globe. Drag still
+      // nudges it on top of the continuous spin.
+      lambda = (lambda + dt * 5) % 360;
       drawScene(dt);
       raf = requestAnimationFrame(loop);
     }
     raf = requestAnimationFrame(loop);
 
-    const onEnter = () => { mouseInside = true; };
-    const onLeave = () => { mouseInside = false; dragging = false; };
     const onDown = (e: MouseEvent) => {
       dragging = true;
       dragLast = { x: e.clientX, y: e.clientY };
-      lastUserAction = performance.now();
     };
     const onUp = () => { dragging = false; };
     const onMove = (e: MouseEvent) => {
       if (!dragging || !dragLast) return;
       lambda = (lambda + (e.clientX - dragLast.x) * 0.4) % 360;
       dragLast = { x: e.clientX, y: e.clientY };
-      lastUserAction = performance.now();
     };
-    wrap.addEventListener('mouseenter', onEnter);
-    wrap.addEventListener('mouseleave', onLeave);
     wrap.addEventListener('mousedown', onDown);
     window.addEventListener('mouseup', onUp);
     window.addEventListener('mousemove', onMove);
@@ -221,8 +212,6 @@ export function Globe() {
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
-      wrap.removeEventListener('mouseenter', onEnter);
-      wrap.removeEventListener('mouseleave', onLeave);
       wrap.removeEventListener('mousedown', onDown);
       window.removeEventListener('mouseup', onUp);
       window.removeEventListener('mousemove', onMove);
