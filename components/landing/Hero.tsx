@@ -14,11 +14,6 @@ export function Hero() {
       <div className="l-vignette" />
       <div className="l-grain" />
       <div className="l-copy">
-        <span className="l-eyebrow">
-          <span className="l-dot" />
-          <span>A quiet division of the earth</span>
-          <span className="l-bar" />
-        </span>
         <h1>
           The oldest currency in <em>human history.</em><br />
           Now digital.

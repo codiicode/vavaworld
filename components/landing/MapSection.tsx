@@ -18,7 +18,6 @@ export function MapSection() {
     <section className="l-map-sec" id="map">
       <div className="l-map-inner">
         <div className="l-map-text">
-          <div className="l-eyebrow-text">i — The map</div>
           <h2>
             The world,<br />
             at <em>true scale.</em>

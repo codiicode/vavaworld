@@ -71,7 +71,6 @@ export function Register() {
             <h2>The <em>register.</em></h2>
             <p className="l-sub">A plain ledger of every cell taken, listed, and passed on — amended hourly.</p>
           </div>
-          <span className="l-num">ii — register</span>
         </div>
 
         <div className="l-reg-grid">

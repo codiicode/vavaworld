@@ -41,8 +41,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="l-foot-bottom">
-        <span>© MMXXVI &nbsp;·&nbsp; Stockholm</span>
-        <span><em>set in Garamond — drawn against a clear sky</em></span>
+        <span>© 2026 &nbsp;·&nbsp; Stockholm</span>
       </div>
     </footer>
   );
