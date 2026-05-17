@@ -93,17 +93,7 @@ export function TilesTab() {
   }, [tiles, locations]);
 
   return (
-    <div
-      className="overflow-hidden rounded-[18px] border border-white/60"
-      style={{
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.5) 100%)',
-        backdropFilter: 'blur(22px) saturate(140%)',
-        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
-        boxShadow:
-          '0 18px 50px -20px rgba(8,14,28,0.15), inset 0 1px 0 rgba(255,255,255,0.65)',
-      }}
-    >
+    <div className="overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md">
       <div className="flex flex-col gap-3 border-b border-foreground/10 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h2 className="text-[15px] font-semibold tracking-tight text-foreground">Your Hexes</h2>
@@ -348,12 +338,7 @@ function TileCard({ tile: t, location: loc }: { tile: ClaimedTile; location: Hex
   return (
     <Link
       href={`/map#${t.h3}`}
-      className="group relative flex flex-col overflow-hidden rounded-[14px] border border-white/60 bg-white/55 transition-colors hover:border-white/80 hover:bg-white/70"
-      style={{
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7)',
-      }}
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md transition-colors hover:bg-white/40"
     >
       <div className="relative aspect-[3/2] overflow-hidden">
         <div
@@ -366,7 +351,7 @@ function TileCard({ tile: t, location: loc }: { tile: ClaimedTile; location: Hex
         <div className="absolute inset-0 flex items-center justify-center">
           <Hexagon className="text-primary opacity-40" size={56} strokeWidth={1.4} />
         </div>
-        <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded border border-white/60 bg-white/75 px-2 py-1 text-[11px] font-medium text-foreground backdrop-blur-sm">
+        <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded-md border border-white/40 bg-white/30 px-2 py-1 text-[11px] font-medium text-foreground backdrop-blur-md">
           <span>{flagEmoji(loc?.countryCode) || '🌐'}</span>
           <span className="max-w-[140px] truncate">
             {loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? '—'}

@@ -59,17 +59,7 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
   };
 
   return (
-    <div
-      className="mb-8 overflow-hidden rounded-[18px] border border-white/60 p-7"
-      style={{
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.55) 100%)',
-        backdropFilter: 'blur(22px) saturate(140%)',
-        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
-        boxShadow:
-          '0 18px 50px -20px rgba(8,14,28,0.15), inset 0 1px 0 rgba(255,255,255,0.65)',
-      }}
-    >
+    <div className="mb-8 overflow-hidden rounded-2xl border border-white/40 bg-white/30 p-7 backdrop-blur-md">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         {/* Left: avatar + name + addr */}
         <div className="flex items-center gap-5">

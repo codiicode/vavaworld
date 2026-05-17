@@ -60,7 +60,7 @@ export function ListingTable({
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Sort row */}
-      <div className="flex items-center justify-between border-b border-foreground/10 px-6 py-3">
+      <div className="flex items-center justify-between border-b border-white/30 px-6 py-3">
         <span className="text-xs tabular-nums text-foreground/55">
           Showing 1–{listings.length} of {totalCount.toLocaleString('en-US')}
         </span>
@@ -81,7 +81,7 @@ export function ListingTable({
       {/* Table */}
       <div className="flex-1 overflow-y-auto">
         <Table>
-          <TableHeader className="sticky top-0 bg-white/85 backdrop-blur-md [&_th]:text-foreground/55">
+          <TableHeader className="sticky top-0 bg-white/30 backdrop-blur-md [&_th]:text-foreground/55">
             <TableRow>
               <TableHead className="w-12">#</TableHead>
               <TableHead>Location</TableHead>
@@ -98,7 +98,7 @@ export function ListingTable({
             {listings.map((l) => (
               <TableRow
                 key={l.id}
-                className="group h-14 cursor-pointer border-foreground/10 hover:bg-foreground/[0.03]"
+                className="group h-14 cursor-pointer border-white/30 hover:bg-white/40"
                 onClick={() => router.push(`/marketplace/${l.id}`)}
               >
                 <TableCell className="font-mono text-xs tabular-nums text-foreground/55">

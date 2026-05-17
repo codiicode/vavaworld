@@ -9,7 +9,7 @@ import { mockMarketStats } from '@/lib/mock-marketplace';
  */
 export function MarketHeader() {
   return (
-    <div className="flex items-center justify-between border-b border-foreground/10 px-6 py-4">
+    <div className="flex items-center justify-between border-b border-white/30 px-6 py-4">
       <div>
         <div className="mb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/55">
           Marketplace

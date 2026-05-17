@@ -36,7 +36,7 @@ export function QuickChips({
   onViewChange: (next: ViewMode) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-foreground/10 px-6 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/30 px-6 py-3">
       <div className="flex flex-wrap items-center gap-2">
         {CHIPS.map((c) => {
           const isActive = c.id === active;
@@ -50,7 +50,7 @@ export function QuickChips({
                 'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                 isActive
                   ? 'border-primary/30 bg-primary/10 text-primary'
-                  : 'border-foreground/10 bg-white/40 text-foreground/65 hover:border-foreground/20 hover:text-foreground',
+                  : 'border-white/30 bg-white/40 text-foreground/65 hover:border-foreground/20 hover:text-foreground',
               )}
             >
               {Icon && <Icon size={12} />}

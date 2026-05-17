@@ -73,9 +73,9 @@ export function FilterSidebar({
   const reset = () => onChange(defaultFilterState);
 
   return (
-    <aside className="flex h-full w-60 flex-shrink-0 flex-col overflow-y-auto border-r border-foreground/10 bg-white/50 text-foreground backdrop-blur-md">
+    <aside className="flex h-full w-60 flex-shrink-0 flex-col overflow-y-auto border-r border-white/40 bg-white/30 text-foreground backdrop-blur-md">
       {/* Search */}
-      <div className="border-b border-foreground/10 p-4">
+      <div className="border-b border-white/30 p-4">
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/55" />
           <Input
@@ -219,7 +219,7 @@ export function FilterSidebar({
 
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="border-b border-foreground/10 p-4">
+    <div className="border-b border-white/30 p-4">
       <div className="mb-3 text-[10px] font-medium uppercase tracking-[0.08em] text-foreground/55">
         {label}
       </div>

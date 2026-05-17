@@ -13,9 +13,9 @@ import { mockActivity } from '@/lib/mock-marketplace';
  */
 export function ActivitySidebar() {
   return (
-    <aside className="flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-l border-foreground/10 bg-white/50 text-foreground backdrop-blur-md">
+    <aside className="flex h-full w-[300px] flex-shrink-0 flex-col overflow-y-auto border-l border-white/30 bg-white/30 text-foreground backdrop-blur-md">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-foreground/10 px-5 py-4">
+      <div className="flex items-center justify-between border-b border-white/30 px-5 py-4">
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/55">
             Live Activity
@@ -58,7 +58,7 @@ export function ActivitySidebar() {
       </div>
 
       {/* Footer link */}
-      <div className="border-t border-foreground/10 px-5 py-3">
+      <div className="border-t border-white/30 px-5 py-3">
         <Link
           href="/marketplace/activity"
           className="text-[11px] font-medium text-primary hover:underline"
