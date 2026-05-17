@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BrandMark } from './BrandMark';
+import { BrandLogo } from '@/components/brand-logo';
 
 export function SiteFooter() {
   return (
@@ -7,7 +7,7 @@ export function SiteFooter() {
       <div className="l-foot-inner">
         <div className="l-foot-brand">
           <div className="l-brand l-dark">
-            <span className="l-mark"><BrandMark color="#1d5e95" size={26} /></span>
+            <span className="l-mark"><BrandLogo size={30} /></span>
             <span className="l-name">Vavaworld</span>
           </div>
           <p>A permanent record of the earth, divided by hand into one hundred million parts.</p>

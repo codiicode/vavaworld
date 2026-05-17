@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import './portfolio-a.css';
+import { BrandLogo } from '@/components/brand-logo';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
@@ -168,7 +169,7 @@ function PfSidebar({ username, balance }: { username: string; balance: string })
   return (
     <aside className="glass panel sidebar">
       <Link href="/" className="sidebar__brand" style={{ textDecoration: 'none', color: 'inherit' }}>
-        <span className="sidebar__logo">{PI.logo}</span>
+        <BrandLogo size={32} />
         <span className="sidebar__wordmark">VAVAWORLD</span>
       </Link>
       <nav className="sidebar__nav">

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { BrandLogo } from '@/components/brand-logo';
 import {
   Activity,
   BarChart3,
@@ -72,23 +73,7 @@ export function AppSidebar() {
     >
       {/* Brand */}
       <Link href="/" className="flex items-center gap-3 px-1.5 py-0.5">
-        <span
-          className="grid h-9 w-9 place-items-center rounded-[10px] border border-foreground/10"
-          style={{
-            background:
-              'linear-gradient(135deg, rgba(94,234,212,0.30), rgba(56,189,248,0.18))',
-            color: '#0f766e',
-          }}
-        >
-          <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden>
-            <path
-              d="M16 3 27.3 9.5v13L16 29 4.7 22.5v-13L16 3Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
+        <BrandLogo size={34} />
         <span className="text-[14px] font-bold tracking-[0.14em] text-foreground">
           VAVAWORLD
         </span>
