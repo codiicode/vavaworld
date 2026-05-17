@@ -56,15 +56,18 @@ export function AppSidebar() {
 
   return (
     <aside
-      className="fixed bottom-[18px] left-[18px] top-[18px] z-30 flex w-[232px] flex-col rounded-[22px] border border-white/60 px-4 pb-4 pt-[22px] text-foreground"
+      className="fixed bottom-[18px] left-[18px] top-[18px] z-30 flex w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground"
       style={{
         gap: 22,
+        // Same translucent recipe as the portfolio .glass/.panel so the sky
+        // background reads through instead of a near-white panel.
         background:
-          'linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.62) 100%)',
-        backdropFilter: 'blur(22px) saturate(140%)',
-        WebkitBackdropFilter: 'blur(22px) saturate(140%)',
+          'linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.08) 100%)',
+        backdropFilter: 'blur(30px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+        border: '1px solid rgba(255,255,255,0.45)',
         boxShadow:
-          '0 18px 50px -20px rgba(8,14,28,0.18), inset 0 1px 0 rgba(255,255,255,0.65)',
+          '0 18px 50px rgba(40,80,150,0.22), 0 2px 8px rgba(40,80,150,0.12), inset 0 1px 0 rgba(255,255,255,0.65)',
       }}
     >
       {/* Brand */}
@@ -141,10 +144,16 @@ export function AppSidebar() {
         {wallet.ready && wallet.connected && (
           <Link
             href="/profile"
-            className="flex items-center gap-3 rounded-[14px] border border-white/55 px-3 py-2.5 transition-colors hover:bg-white/40"
+            className="flex items-center gap-3 rounded-[14px] px-3 py-2.5 transition-colors hover:brightness-105"
             style={{
+              // Matches the portfolio .glass--inset user-card (more see-through).
               background:
-                'linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.35))',
+                'linear-gradient(135deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.04) 100%)',
+              border: '1px solid rgba(255,255,255,0.45)',
+              boxShadow:
+                'inset 0 1px 0 rgba(255,255,255,0.45), 0 4px 14px rgba(40,80,150,0.10)',
+              backdropFilter: 'blur(18px)',
+              WebkitBackdropFilter: 'blur(18px)',
             }}
           >
             <div
