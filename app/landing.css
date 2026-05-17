@@ -101,8 +101,15 @@
    foreground tokens we use elsewhere. */
 .landing-root nav.l-site .l-brand,
 .landing-root nav.l-site .l-brand .l-name { color: var(--l-ink); }
-.landing-root nav.l-site .l-brand .l-mark { width: 26px; height: 26px; }
 .landing-root .l-brand { display: flex; align-items: center; gap: 14px; }
+/* Wrap the logo so its inline-block baseline gap can't shift it; the flex
+   box centres on the wordmark cap-height. */
+.landing-root .l-brand .l-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
 .landing-root .l-brand .l-name {
   font-family: "Inter", sans-serif;
   font-size: 14px;
