@@ -26,8 +26,8 @@ export function SiteNav() {
 
         <div className="l-nav-links">
           <Link href="/map">Buy land</Link>
-          <Link href="/map">Marketplace</Link>
-          <Link href="/map">Leaderboard</Link>
+          <Link href="/marketplace">Marketplace</Link>
+          <Link href="/leaderboard">Leaderboard</Link>
           <a href="#how">How it works</a>
         </div>
 

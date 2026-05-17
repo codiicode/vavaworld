@@ -16,8 +16,8 @@ export function SiteFooter() {
           <h4>Work</h4>
           <ul>
             <li><Link href="/map">Buy land</Link></li>
-            <li><Link href="/map">Marketplace</Link></li>
-            <li><Link href="/map">Leaderboard</Link></li>
+            <li><Link href="/marketplace">Marketplace</Link></li>
+            <li><Link href="/leaderboard">Leaderboard</Link></li>
             <li><a href="#how">How it works</a></li>
           </ul>
         </div>
@@ -27,7 +27,7 @@ export function SiteFooter() {
             <li><a href="#how">Notes</a></li>
             <li><a href="#how">Letter</a></li>
             <li><a href="#how">Press</a></li>
-            <li><a href="#map">Atlas</a></li>
+            <li><Link href="/map">Atlas</Link></li>
           </ul>
         </div>
         <div className="l-foot-col">
