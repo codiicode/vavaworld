@@ -9,7 +9,7 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { hexCenter } from '@/lib/h3-utils';
 import { useUserTiles } from '@/lib/use-user-tiles';
 import { useHexLocations } from '@/lib/use-hex-locations';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 
 export function MyTilesList({ mapRef }: { mapRef: React.RefObject<MapRef | null> }) {
   const { connected } = useActiveWallet();
@@ -57,7 +57,6 @@ export function MyTilesList({ mapRef }: { mapRef: React.RefObject<MapRef | null>
         <div className="flex flex-col">
           {tiles.map((t) => {
             const loc = locations.get(t.h3);
-            const flag = flagEmoji(loc?.countryCode);
             const title = loc?.neighborhood ?? loc?.place ?? loc?.countryName ?? 'Locating…';
             const c = hexCenter(t.h3);
             return (
@@ -68,7 +67,7 @@ export function MyTilesList({ mapRef }: { mapRef: React.RefObject<MapRef | null>
                 className="group -mx-2 flex cursor-pointer items-center justify-between rounded-md px-2 py-2.5 text-left transition-colors hover:bg-muted/50"
               >
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="text-sm leading-none">{flag || '🌐'}</span>
+                  <Flag code={loc?.countryCode} size={15} />
                   <div className="flex min-w-0 flex-col">
                     <span className="truncate text-sm font-medium leading-tight">{title}</span>
                     <span className="mt-0.5 text-[11px] leading-tight tabular-nums text-muted-foreground">

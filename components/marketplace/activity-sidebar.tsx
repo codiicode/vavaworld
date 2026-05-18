@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import { mockActivity } from '@/lib/mock-marketplace';
 
 /**
@@ -38,7 +38,7 @@ export function ActivitySidebar() {
           >
             <div className="mb-1.5 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm leading-none">{flagEmoji(a.countryCode)}</span>
+                <Flag code={a.countryCode} size={15} />
                 <span className="text-sm font-medium">
                   {a.city} · {a.neighborhood}
                 </span>

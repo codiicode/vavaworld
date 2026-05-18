@@ -5,7 +5,7 @@ import { AtSign, Check, Copy } from 'lucide-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import { findCountry } from '@/lib/countries';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
@@ -79,7 +79,7 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
               {country && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="text-base leading-none">{flagEmoji(country.code)}</span>
+                    <Flag code={country.code} size={15} />
                   </TooltipTrigger>
                   <TooltipContent>{country.name}</TooltipContent>
                 </Tooltip>

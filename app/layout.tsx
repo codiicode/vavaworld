@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import './globals.css';
+import 'flag-icons/css/flag-icons.min.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {

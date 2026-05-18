@@ -11,7 +11,8 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
+import { findCountry } from '@/lib/countries';
 import { mockCountryCounts } from '@/lib/mock-marketplace';
 import { cn } from '@/lib/utils';
 
@@ -51,8 +52,8 @@ export function CountryFilter({
               key={code}
               className="inline-flex items-center gap-1 rounded bg-muted px-2 py-1 text-xs"
             >
-              <span>{flagEmoji(code)}</span>
-              <span className="uppercase">{code}</span>
+              <Flag code={code} size={15} />
+              <span>{findCountry(code)?.name ?? code.toUpperCase()}</span>
               <button
                 type="button"
                 onClick={() => toggle(code)}
@@ -94,7 +95,7 @@ export function CountryFilter({
                       className="flex items-center justify-between gap-2"
                     >
                       <span className="flex items-center gap-2">
-                        <span className="text-base leading-none">{flagEmoji(c.code)}</span>
+                        <Flag code={c.code} size={15} />
                         <span className="text-sm">{c.name}</span>
                       </span>
                       <span className="flex items-center gap-2">

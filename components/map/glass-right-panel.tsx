@@ -11,7 +11,7 @@ import { useHexLocations } from '@/lib/use-hex-locations';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { quoteBatch, quoteOne } from '@/lib/quote';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import { cn } from '@/lib/utils';
 
 function shortAddr(addr: string): string {
@@ -257,7 +257,6 @@ function SelectionBody({
           <div className="-mx-1 flex max-h-[280px] flex-col overflow-y-auto">
             {items.map((it, i) => {
               const loc = locations.get(it.h3);
-              const flag = flagEmoji(loc?.countryCode);
               const title = loc?.neighborhood ?? loc?.place ?? loc?.countryName ?? 'Locating…';
               return (
                 <div
@@ -265,7 +264,7 @@ function SelectionBody({
                   className="group flex items-center justify-between rounded-md px-1 py-2 transition-colors hover:bg-white/[0.04]"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <span className="text-sm leading-none">{flag || '🌐'}</span>
+                    <Flag code={loc?.countryCode} size={16} />
                     <div className="flex min-w-0 flex-col">
                       <span className="truncate text-[13px] font-medium leading-tight text-white">
                         {title}

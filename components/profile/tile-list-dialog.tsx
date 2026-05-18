@@ -7,7 +7,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
@@ -59,8 +59,8 @@ export function TileListDialog({
           <DialogPrimitive.Title className="text-lg font-semibold tracking-tight">
             List hex for sale
           </DialogPrimitive.Title>
-          <DialogPrimitive.Description className="text-sm text-muted-foreground">
-            {flagEmoji(location?.countryCode) || '🌐'} {place} · Tier {tile.tier}
+          <DialogPrimitive.Description className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Flag code={location?.countryCode} size={14} /> {place} · Tier {tile.tier}
           </DialogPrimitive.Description>
         </div>
 

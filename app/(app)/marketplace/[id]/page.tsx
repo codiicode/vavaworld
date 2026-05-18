@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { BuyDialog } from '@/components/marketplace/buy-dialog';
 import { ListTileDialog } from '@/components/marketplace/list-tile-dialog';
 import { mockActivity, mockListings } from '@/lib/mock-marketplace';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import { cn } from '@/lib/utils';
 
 /**
@@ -56,7 +56,7 @@ export default function TileDetailPage() {
               <Hexagon className="text-primary/30" size={120} />
             </div>
             <div className="absolute left-3 top-3 flex items-center gap-2 rounded-md bg-background/90 px-2.5 py-1.5 text-sm font-medium backdrop-blur-sm">
-              <span className="text-base leading-none">{flagEmoji(listing.countryCode)}</span>
+              <Flag code={listing.countryCode} size={16} />
               <span>{listing.city}</span>
               <span className="text-muted-foreground">·</span>
               <span className="text-muted-foreground">{listing.neighborhood}</span>

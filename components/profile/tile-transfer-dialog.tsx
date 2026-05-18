@@ -8,7 +8,7 @@ import { Program, type Idl } from '@coral-xyz/anchor';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import { cn } from '@/lib/utils';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { tilePda } from '@/lib/tile-pda';
@@ -164,8 +164,8 @@ export function TileTransferDialog({
           <DialogPrimitive.Title className="text-lg font-semibold tracking-tight">
             Transfer hex
           </DialogPrimitive.Title>
-          <DialogPrimitive.Description className="text-sm text-muted-foreground">
-            {flagEmoji(location?.countryCode) || '🌐'} {place} · Tier {tile.tier}
+          <DialogPrimitive.Description className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Flag code={location?.countryCode} size={14} /> {place} · Tier {tile.tier}
           </DialogPrimitive.Description>
         </div>
 

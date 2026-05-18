@@ -37,7 +37,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import { hexCenter } from '@/lib/h3-utils';
 import { useUserTiles } from '@/lib/use-user-tiles';
 import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
@@ -279,7 +279,7 @@ function TileRow({
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2.5">
-          <span className="text-base leading-none">{flagEmoji(loc?.countryCode) || '🌐'}</span>
+          <Flag code={loc?.countryCode} size={15} />
           <div className="flex flex-col">
             <span className="text-sm font-medium leading-tight text-foreground">{title}</span>
             <span className="mt-0.5 text-[11px] leading-tight text-foreground/55">
@@ -352,7 +352,7 @@ function TileCard({ tile: t, location: loc }: { tile: ClaimedTile; location: Hex
           <Hexagon className="text-primary opacity-40" size={56} strokeWidth={1.4} />
         </div>
         <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded-md border border-white/40 bg-white/30 px-2 py-1 text-[11px] font-medium text-foreground backdrop-blur-md">
-          <span>{flagEmoji(loc?.countryCode) || '🌐'}</span>
+          <Flag code={loc?.countryCode} size={15} />
           <span className="max-w-[140px] truncate">
             {loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? '—'}
           </span>

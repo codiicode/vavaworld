@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { RankBadge } from './rank-badge';
+import { Flag } from '@/components/flag';
 import type { LeaderboardEntry } from '@/lib/mock-leaderboard';
 
 /**
@@ -41,7 +42,7 @@ export function PodiumCard({
             )}
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-xs text-foreground/60">
-            <span>{entry.countryFlag}</span>
+            <Flag code={entry.country} size={20} />
             <span className="tabular-nums">
               {entry.hexes.toLocaleString()} hexes
             </span>

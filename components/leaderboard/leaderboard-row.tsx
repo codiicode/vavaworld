@@ -2,6 +2,7 @@ import { Check, TrendingDown, TrendingUp } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { Flag } from '@/components/flag';
 import type { LeaderboardEntry } from '@/lib/mock-leaderboard';
 
 export function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
@@ -31,7 +32,7 @@ export function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
       </TableCell>
 
       <TableCell className="w-16 text-center">
-        <span className="text-xl leading-none">{entry.countryFlag}</span>
+        <Flag code={entry.country} size={18} className="mx-auto" />
       </TableCell>
 
       <TableCell className="text-right">

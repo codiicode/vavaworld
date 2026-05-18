@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Flag } from '@/components/flag';
 
 export type SortKey = 'hexes' | 'volume' | 'value' | 'countries';
 export type FilterKey =
@@ -14,26 +15,26 @@ export type FilterKey =
   | 'es' | 'br' | 'cn' | 'in' | 'au' | 'ca' | 'nl' | 'pt' | 'no' | 'dk' | 'fi';
 
 const COUNTRY_OPTIONS: ReadonlyArray<{ value: FilterKey; label: string }> = [
-  { value: 'worldwide', label: '🌍 Worldwide' },
-  { value: 'se', label: '🇸🇪 Sweden' },
-  { value: 'jp', label: '🇯🇵 Japan' },
-  { value: 'de', label: '🇩🇪 Germany' },
-  { value: 'us', label: '🇺🇸 United States' },
-  { value: 'kr', label: '🇰🇷 South Korea' },
-  { value: 'gb', label: '🇬🇧 United Kingdom' },
-  { value: 'fr', label: '🇫🇷 France' },
-  { value: 'it', label: '🇮🇹 Italy' },
-  { value: 'es', label: '🇪🇸 Spain' },
-  { value: 'br', label: '🇧🇷 Brazil' },
-  { value: 'cn', label: '🇨🇳 China' },
-  { value: 'in', label: '🇮🇳 India' },
-  { value: 'au', label: '🇦🇺 Australia' },
-  { value: 'ca', label: '🇨🇦 Canada' },
-  { value: 'nl', label: '🇳🇱 Netherlands' },
-  { value: 'pt', label: '🇵🇹 Portugal' },
-  { value: 'no', label: '🇳🇴 Norway' },
-  { value: 'dk', label: '🇩🇰 Denmark' },
-  { value: 'fi', label: '🇫🇮 Finland' },
+  { value: 'worldwide', label: 'Worldwide' },
+  { value: 'se', label: 'Sweden' },
+  { value: 'jp', label: 'Japan' },
+  { value: 'de', label: 'Germany' },
+  { value: 'us', label: 'United States' },
+  { value: 'kr', label: 'South Korea' },
+  { value: 'gb', label: 'United Kingdom' },
+  { value: 'fr', label: 'France' },
+  { value: 'it', label: 'Italy' },
+  { value: 'es', label: 'Spain' },
+  { value: 'br', label: 'Brazil' },
+  { value: 'cn', label: 'China' },
+  { value: 'in', label: 'India' },
+  { value: 'au', label: 'Australia' },
+  { value: 'ca', label: 'Canada' },
+  { value: 'nl', label: 'Netherlands' },
+  { value: 'pt', label: 'Portugal' },
+  { value: 'no', label: 'Norway' },
+  { value: 'dk', label: 'Denmark' },
+  { value: 'fi', label: 'Finland' },
 ];
 
 const TRIGGER =
@@ -81,7 +82,10 @@ export function LeaderboardFilters({
           <SelectContent className={CONTENT}>
             {COUNTRY_OPTIONS.map((o) => (
               <SelectItem key={o.value} value={o.value}>
-                {o.label}
+                <span className="flex items-center gap-2">
+                  {o.value !== 'worldwide' && <Flag code={o.value} size={14} />}
+                  {o.label}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>

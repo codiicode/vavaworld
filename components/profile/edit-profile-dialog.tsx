@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { COUNTRIES, findCountry } from '@/lib/countries';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import {
   upsertProfile,
   uploadAvatar,
@@ -292,7 +292,7 @@ function CountryPicker({
         >
           {selected ? (
             <span className="flex items-center gap-2">
-              <span className="text-base leading-none">{flagEmoji(selected.code)}</span>
+              <Flag code={selected.code} size={15} />
               <span>{selected.name}</span>
             </span>
           ) : (
@@ -356,7 +356,7 @@ function CountryPicker({
                   )}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="text-base leading-none">{flagEmoji(c.code)}</span>
+                    <Flag code={c.code} size={15} />
                     <span>{c.name}</span>
                   </span>
                   {isSelected && <Check size={12} className="text-primary" />}

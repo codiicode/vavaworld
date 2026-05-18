@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import type { Listing } from '@/lib/mock-marketplace';
 
 /**
@@ -42,7 +42,7 @@ export function BuyDialog({
 
         <div className="space-y-4">
           <div className="flex items-center gap-3 rounded-md border border-border bg-muted/40 p-3">
-            <span className="text-2xl leading-none">{flagEmoji(listing.countryCode)}</span>
+            <Flag code={listing.countryCode} size={22} />
             <div className="flex-1">
               <div className="text-sm font-medium">{listing.city}</div>
               <div className="text-xs text-muted-foreground">{listing.neighborhood}</div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useReverseGeocode } from '@/lib/use-reverse-geocode';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 
 /**
  * Region context: the viewport-centre's place name + country flag.
@@ -25,7 +25,6 @@ export function SidebarRegion({
   if (!active) return null;
 
   const display = region?.display ?? 'Locating…';
-  const flag = flagEmoji(region?.countryCode);
 
   return (
     <div className="border-b border-border px-5 py-4">
@@ -33,7 +32,7 @@ export function SidebarRegion({
         Viewing
       </div>
       <div className="flex items-center gap-2">
-        {flag && <span className="text-base leading-none">{flag}</span>}
+        <Flag code={region?.countryCode} size={16} />
         <h2 className="truncate text-[17px] font-semibold tracking-tight">{display}</h2>
       </div>
     </div>

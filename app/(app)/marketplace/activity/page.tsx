@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { mockActivity } from '@/lib/mock-marketplace';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 
 /**
  * Full activity log — the "see more" target from the right-rail mini-feed.
@@ -59,7 +59,7 @@ export default function ActivityPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2.5">
-                    <span className="text-base leading-none">{flagEmoji(a.countryCode)}</span>
+                    <Flag code={a.countryCode} size={15} />
                     <div>
                       <div className="text-sm font-medium leading-tight">{a.city}</div>
                       <div className="mt-0.5 text-[11px] leading-tight text-muted-foreground">

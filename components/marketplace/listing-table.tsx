@@ -18,7 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import type { Listing } from '@/lib/mock-marketplace';
 import { cn } from '@/lib/utils';
 
@@ -107,7 +107,7 @@ export function ListingTable({
 
                 <TableCell>
                   <div className="flex items-center gap-2.5">
-                    <span className="text-base leading-none">{flagEmoji(l.countryCode)}</span>
+                    <Flag code={l.countryCode} size={15} />
                     <div>
                       <div className="text-sm font-medium leading-tight text-foreground">{l.city}</div>
                       <div className="mt-0.5 text-[11px] leading-tight text-foreground/55">

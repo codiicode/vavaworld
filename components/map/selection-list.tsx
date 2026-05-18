@@ -9,7 +9,7 @@ import { classifyTier } from '@/lib/tier';
 import { quoteBatch, quoteOne } from '@/lib/quote';
 import { useCounters } from '@/lib/use-counters';
 import { useHexLocations } from '@/lib/use-hex-locations';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 
 function fmtCoord(value: number, posAxis: 'N' | 'E', negAxis: 'S' | 'W'): string {
   const axis = value >= 0 ? posAxis : negAxis;
@@ -86,7 +86,6 @@ export function SelectionList({
         <div className="flex flex-col">
           {items.map((it, i) => {
             const loc = locations.get(it.h3);
-            const flag = flagEmoji(loc?.countryCode);
             const title = loc?.neighborhood ?? loc?.place ?? loc?.countryName ?? 'Locating…';
             return (
               <div
@@ -94,7 +93,7 @@ export function SelectionList({
                 className="group -mx-2 flex cursor-pointer items-center justify-between rounded-md px-2 py-2.5 transition-colors hover:bg-muted/50"
               >
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <span className="text-sm leading-none">{flag || '🌐'}</span>
+                  <Flag code={loc?.countryCode} size={15} />
                   <div className="flex min-w-0 flex-col">
                     <span className="truncate text-sm font-medium leading-tight">{title}</span>
                     <span className="mt-0.5 text-[11px] leading-tight tabular-nums text-muted-foreground">

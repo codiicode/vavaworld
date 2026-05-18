@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Hexagon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import type { Listing } from '@/lib/mock-marketplace';
 
 /**
@@ -35,7 +35,7 @@ export function ListingGrid({
               <Hexagon className="text-primary/40" size={64} />
             </div>
             <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-background/90 px-2 py-1 text-[11px] font-medium backdrop-blur-sm">
-              <span>{flagEmoji(l.countryCode)}</span>
+              <Flag code={l.countryCode} size={15} />
               <span>{l.city}</span>
             </div>
             <span className="absolute right-2 top-2 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary">
