@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ActivitySidebar } from '@/components/marketplace/activity-sidebar';
 import { BuyDialog } from '@/components/marketplace/buy-dialog';
 import { EmptyState } from '@/components/marketplace/empty-state';
 import {
@@ -16,9 +15,9 @@ import { QuickChips, type QuickFilter, type ViewMode } from '@/components/market
 import { mockListings, type Listing } from '@/lib/mock-marketplace';
 
 /**
- * Marketplace landing — three-column shell.
+ * Marketplace landing — two-column shell.
  *
- *  240px FilterSidebar │ flexible main │ 300px ActivitySidebar (≥1280px)
+ *  240px FilterSidebar │ flexible main
  *
  * Filtering and sorting happen client-side against the mock dataset. When the
  * indexer lands, this whole page becomes a data-shape wrapper around the same
@@ -124,10 +123,6 @@ export default function MarketplacePage() {
           <ListingGrid listings={visible} onBuy={setBuyTarget} />
         )}
       </section>
-
-      <div className="hidden xl:block">
-        <ActivitySidebar />
-      </div>
 
       <BuyDialog
         listing={buyTarget}
