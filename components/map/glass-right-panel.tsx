@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, Flame, X } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
@@ -27,12 +27,10 @@ function gradientFromAddr(addr: string | null): string {
   return `linear-gradient(135deg, hsl(${h1} 70% 60%) 0%, hsl(${h2} 70% 50%) 100%)`;
 }
 
-type TabId = 'selection' | 'my-tiles' | 'activity';
+type TabId = 'selection';
 
 const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
   { id: 'selection', label: 'Selection' },
-  { id: 'my-tiles', label: 'My Hexes' },
-  { id: 'activity', label: 'Activity' },
 ];
 
 /**
@@ -175,41 +173,6 @@ export function GlassRightPanel({
         />
       )}
 
-      {tab === 'my-tiles' && (
-        <div className="relative z-[1] flex flex-1 flex-col">
-          <p className="text-[13.5px] leading-[1.45] text-white/72">
-            Your owned hexes will appear here once you claim one.
-          </p>
-          <div className="flex-1" />
-        </div>
-      )}
-
-      {tab === 'activity' && (
-        <div className="relative z-[1] flex flex-1 flex-col">
-          <p className="text-[13.5px] leading-[1.45] text-white/72">
-            Live activity feed coming soon.
-          </p>
-          <div className="flex-1" />
-        </div>
-      )}
-
-      {/* Hot nearby — always at bottom */}
-      <div className="relative z-[1] glass glass--inset rounded-[16px] px-[14px] pb-3 pt-[14px]">
-        <div className="flex items-center gap-2">
-          <span
-            className="grid h-[22px] w-[22px] place-items-center rounded-full"
-            style={{ background: 'rgba(251, 191, 36, 0.14)', color: '#fbbf24' }}
-          >
-            <Flame size={14} strokeWidth={1.8} />
-          </span>
-          <span className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-white">
-            Hot Nearby
-          </span>
-        </div>
-        <p className="mt-1.5 text-[12.5px] text-white/52">
-          Live activity feed coming soon.
-        </p>
-      </div>
     </aside>
   );
 }
