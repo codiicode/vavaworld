@@ -12,7 +12,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { COUNTRIES, findCountry } from '@/lib/countries';
 import { Flag } from '@/components/flag';
 import {
@@ -333,7 +332,7 @@ function CountryPicker({
             className="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
           />
         </div>
-        <ScrollArea className="max-h-72">
+        <div className="max-h-72 overflow-y-auto overscroll-contain">
           <div className="p-1">
             {filtered.length === 0 && (
               <p className="px-3 py-6 text-center text-xs text-muted-foreground">
@@ -364,7 +363,7 @@ function CountryPicker({
               );
             })}
           </div>
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
