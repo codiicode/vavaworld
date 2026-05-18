@@ -153,15 +153,50 @@ export function Globe() {
       ctx.strokeStyle = 'rgba(29,94,149,0.55)';
       ctx.stroke();
 
+      // Supporting cities — small dots, arc endpoints.
       CITIES.forEach((c) => {
-        if (!isVisible(c.lon, c.lat)) return;
+        if (c.major || !isVisible(c.lon, c.lat)) return;
         const p = projection([c.lon, c.lat]);
         if (!p) return;
         ctx.beginPath();
-        ctx.arc(p[0], p[1], 2.2, 0, Math.PI * 2);
-        ctx.fillStyle = DEEP;
+        ctx.arc(p[0], p[1], 2.6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(29,94,149,0.55)';
         ctx.fill();
       });
+
+      // Major world cities — ringed marker + label, drawn on top.
+      ctx.font = '600 25px "Inter", system-ui, sans-serif';
+      ctx.textBaseline = 'middle';
+      CITIES.forEach((c) => {
+        if (!c.major || !isVisible(c.lon, c.lat)) return;
+        const p = projection([c.lon, c.lat]);
+        if (!p) return;
+        const [x, y] = p;
+        ctx.beginPath();
+        ctx.arc(x, y, 9, 0, Math.PI * 2);
+        ctx.lineWidth = 1.6;
+        ctx.strokeStyle = 'rgba(29,94,149,0.5)';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, 4.4, 0, Math.PI * 2);
+        ctx.fillStyle = DEEP;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, y, 1.7, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        // Flip the label to the inner side near the right limb so it
+        // doesn't run off the visible hemisphere.
+        const left = x > cx;
+        ctx.textAlign = left ? 'right' : 'left';
+        const lx = x + (left ? -14 : 14);
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+        ctx.strokeText(c.name, lx, y);
+        ctx.fillStyle = DEEP;
+        ctx.fillText(c.name, lx, y);
+      });
+      ctx.textAlign = 'left';
 
       for (let i = arcQueue.length - 1; i >= 0; i--) {
         const arc = arcQueue[i];
