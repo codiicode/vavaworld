@@ -12,6 +12,7 @@ import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { quoteBatch, quoteOne } from '@/lib/quote';
 import { Flag } from '@/components/flag';
+import { HexPricingCard } from '@/components/map/hex-pricing-card';
 import { cn } from '@/lib/utils';
 
 function shortAddr(addr: string): string {
@@ -248,6 +249,8 @@ function SelectionBody({
             {count} / 20
           </span>
         </div>
+
+        {!empty && <HexPricingCard h3={items[0]?.h3 ?? null} />}
 
         {empty ? (
           <p className="text-[13.5px] leading-[1.45] text-white/72">

@@ -16,6 +16,10 @@ const LINE_LAYER = 'h3-grid-line';
 const CLAIMED_LAYER = 'h3-grid-claimed';
 const SELECTED_LAYER = 'h3-grid-selected';
 
+const AGG_SOURCE = 'country-agg';
+const AGG_CIRCLE = 'country-agg-circle';
+const AGG_LABEL = 'country-agg-label';
+
 type Props = {
   selectedHexes: Set<string>;
   setSelectedHexes: (s: Set<string>) => void;
@@ -37,6 +41,7 @@ export function MapView({
   const { tiles, refresh } = useTiles(visibleHexes);
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const aggFetchedAt = useRef(0);
 
   // Latest selectedHexes / visibleHexes / tiles tracked in refs so the
   // mousedown / mousemove handlers we attach in onLoad can rebuild the
@@ -96,18 +101,57 @@ export function MapView({
     [tiles, selectedHexes],
   );
 
-  // Hide the hex grid entirely below this zoom — at world-view zoom the
-  // hex count balloons and viewport-batched RPC calls become slow.
-  // Only render hexes when zoomed in enough that they're meaningful.
-  const MIN_ZOOM_FOR_HEXES = 14;
+  // Only render individual hexes at zoom >= 13. Below that the hex count
+  // balloons, so we show a country-level aggregate layer (name, claim
+  // count, current floor) instead.
+  const MIN_ZOOM_FOR_HEXES = 13;
+
+  // Country aggregate: claimed countries as labelled points (name, floor,
+  // claim count). Throttled to once per 10s while zoomed out.
+  const loadAgg = useCallback(async () => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+    const now = Date.now();
+    if (now - aggFetchedAt.current < 10000) return;
+    aggFetchedAt.current = now;
+    try {
+      const r = await fetch('/api/countries', { cache: 'no-store' });
+      const j = await r.json();
+      const feats = (j.countries ?? [])
+        .filter((c: { centroid: [number, number] | null }) => c.centroid)
+        .map(
+          (c: {
+            iso: string;
+            name: string;
+            claimCount: number;
+            floor: number;
+            centroid: [number, number];
+          }) => ({
+            type: 'Feature' as const,
+            geometry: { type: 'Point' as const, coordinates: c.centroid },
+            properties: {
+              label: `${c.name}\n$${c.floor.toFixed(3)} · ${c.claimCount.toLocaleString('en-US')} claims`,
+            },
+          }),
+        );
+      const src = map.getSource(AGG_SOURCE) as GeoJSONSource | undefined;
+      if (src) src.setData({ type: 'FeatureCollection', features: feats });
+    } catch {
+      /* offline ok */
+    }
+  }, [mapRef]);
 
   const refreshHexes = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
     const isZoomedIn = map.getZoom() >= MIN_ZOOM_FOR_HEXES;
     setZoomedIn(isZoomedIn);
+    const aggVis = isZoomedIn ? 'none' : 'visible';
+    if (map.getLayer(AGG_CIRCLE)) map.setLayoutProperty(AGG_CIRCLE, 'visibility', aggVis);
+    if (map.getLayer(AGG_LABEL)) map.setLayoutProperty(AGG_LABEL, 'visibility', aggVis);
     if (!isZoomedIn) {
       setVisibleHexes([]);
+      void loadAgg();
       return;
     }
     const b = map.getBounds();
@@ -120,7 +164,7 @@ export function MapView({
     ];
     const ids = hexesForBounds(bbox);
     setVisibleHexes(ids);
-  }, [mapRef]);
+  }, [mapRef, loadAgg]);
 
   // Keep source data in sync with visible / tiles / selection
   useEffect(() => {
@@ -178,6 +222,43 @@ export function MapView({
       source: SOURCE_ID,
       paint: { 'line-color': '#ffffff', 'line-width': 2.5 },
       filter: ['==', ['get', 'selected'], true],
+    });
+
+    // Country-level aggregate (shown only when zoomed out, see refreshHexes).
+    map.addSource(AGG_SOURCE, {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+    map.addLayer({
+      id: AGG_CIRCLE,
+      type: 'circle',
+      source: AGG_SOURCE,
+      layout: { visibility: 'none' },
+      paint: {
+        'circle-radius': 6,
+        'circle-color': '#14b8a6',
+        'circle-opacity': 0.9,
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 1.5,
+      },
+    });
+    map.addLayer({
+      id: AGG_LABEL,
+      type: 'symbol',
+      source: AGG_SOURCE,
+      layout: {
+        visibility: 'none',
+        'text-field': ['get', 'label'],
+        'text-size': 12,
+        'text-offset': [0, 1.1],
+        'text-anchor': 'top',
+        'text-allow-overlap': false,
+      },
+      paint: {
+        'text-color': '#ffffff',
+        'text-halo-color': 'rgba(8,14,28,0.85)',
+        'text-halo-width': 1.4,
+      },
     });
   }, [mapRef]);
 
