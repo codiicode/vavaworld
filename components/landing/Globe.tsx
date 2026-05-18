@@ -10,7 +10,7 @@ import { CITIES, type City } from './landing-cities';
 /**
  * Orthographic globe rendered to canvas at 1400x1400 (downscaled by CSS).
  * Auto-rotates ~5°/sec continuously; drag nudges it on top of the spin.
- * Draws cubic-bezier arcs between random city pairs (the `arcQueue` in the reference).
+ * Draws great-circle paths between random visible city pairs (the `arcQueue`).
  */
 type WorldTopo = Topology<{ land: GeometryCollection; countries: GeometryCollection }>;
 
@@ -75,41 +75,39 @@ export function Globe() {
 
     function drawArc(a: City, b: City, prog: number) {
       if (!ctx) return;
-      if (!isVisible(a.lon, a.lat) && !isVisible(b.lon, b.lat)) return;
-      const midLL = d3.geoInterpolate([a.lon, a.lat], [b.lon, b.lat])(0.5) as [number, number];
-      const chord = d3.geoDistance([a.lon, a.lat], [b.lon, b.lat]);
-      const lift = Math.min(0.55, chord * 0.42);
-      const pA = projection([a.lon, a.lat]);
-      const pB = projection([b.lon, b.lat]);
-      const pM = projection(midLL);
-      if (!pA || !pB || !pM) return;
-      let dx = pM[0] - cx;
-      let dy = pM[1] - cy;
-      const dl = Math.hypot(dx, dy) || 1;
-      dx /= dl;
-      dy /= dl;
-      const lm: [number, number] = [pM[0] + dx * lift * radius, pM[1] + dy * lift * radius];
-      const steps = Math.max(2, Math.floor(60 * prog));
+      // Both endpoints must be on the near hemisphere, otherwise the line
+      // has no business being drawn at all.
+      if (!isVisible(a.lon, a.lat) || !isVisible(b.lon, b.lat)) return;
+      // Trace the great-circle path that hugs the surface from dot to dot.
+      // Sampling per-point and skipping anything on the far side keeps the
+      // line on the sphere — no screen-space bezier ballooning into the sky.
+      const interp = d3.geoInterpolate([a.lon, a.lat], [b.lon, b.lat]);
+      const N = 80;
+      const end = Math.max(1, Math.floor(N * prog));
       ctx.lineWidth = 1.6;
       ctx.strokeStyle = 'rgba(29,94,149,0.78)';
       ctx.beginPath();
-      for (let i = 0; i <= steps; i++) {
-        const t = i / 60;
-        const u = 1 - t;
-        const x = u * u * pA[0] + 2 * u * t * lm[0] + t * t * pB[0];
-        const y = u * u * pA[1] + 2 * u * t * lm[1] + t * t * pB[1];
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      let penDown = false;
+      for (let i = 0; i <= end; i++) {
+        const [lon, lat] = interp(i / N);
+        if (!isVisible(lon, lat)) { penDown = false; continue; }
+        const p = projection([lon, lat]);
+        if (!p) { penDown = false; continue; }
+        if (!penDown) { ctx.moveTo(p[0], p[1]); penDown = true; }
+        else ctx.lineTo(p[0], p[1]);
       }
       ctx.stroke();
       if (prog < 1) {
-        const t = prog;
-        const u = 1 - t;
-        const px = u * u * pA[0] + 2 * u * t * lm[0] + t * t * pB[0];
-        const py = u * u * pA[1] + 2 * u * t * lm[1] + t * t * pB[1];
-        ctx.beginPath();
-        ctx.arc(px, py, 5, 0, Math.PI * 2);
-        ctx.fillStyle = DEEP;
-        ctx.fill();
+        const [lon, lat] = interp(prog);
+        if (isVisible(lon, lat)) {
+          const ph = projection([lon, lat]);
+          if (ph) {
+            ctx.beginPath();
+            ctx.arc(ph[0], ph[1], 4, 0, Math.PI * 2);
+            ctx.fillStyle = DEEP;
+            ctx.fill();
+          }
+        }
       }
     }
 
