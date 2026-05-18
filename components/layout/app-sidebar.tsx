@@ -6,7 +6,6 @@ import { BrandLogo } from '@/components/brand-logo';
 import {
   Activity,
   BarChart3,
-  CirclePlus,
   Globe,
   Map as MapIcon,
   Settings,
@@ -39,7 +38,6 @@ const NAV: ReadonlyArray<NavItem> = [
   { label: 'Profile', href: '/profile', icon: Wallet },
   { label: 'Marketplace', href: '/marketplace', icon: ShoppingBag },
   { label: 'Nations', href: '/nations', icon: Globe },
-  { label: 'Stake', href: '/stake', icon: CirclePlus },
   { label: 'Activity', href: '/activity', icon: Activity },
   { label: 'Leaderboard', href: '/leaderboard', icon: Trophy },
 ];
