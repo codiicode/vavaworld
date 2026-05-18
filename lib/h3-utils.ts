@@ -1,7 +1,7 @@
 import { polygonToCells, cellToBoundary, cellToLatLng } from 'h3-js';
 import type { Feature, Polygon } from 'geojson';
 
-export const HEX_RES = 11 as const;
+export const HEX_RES = 12 as const;
 const SAFETY_CAP = 20000;
 
 export type Bbox = [west: number, south: number, east: number, north: number];
@@ -16,7 +16,8 @@ export function hexesForBounds(bbox: Bbox, res: number = HEX_RES): string[] {
     [n, w],
     [s, w],
   ];
-  // At res 10 a worldwide box is millions of cells — clamp resolution to keep result tractable.
+  // A wide box at the target res is millions of cells — clamp resolution down
+  // for large viewports to keep the result tractable.
   const effectiveRes = estimateSafeRes(bbox, res);
   const cells = polygonToCells([ring], effectiveRes);
   return cells.length > SAFETY_CAP ? cells.slice(0, SAFETY_CAP) : cells;
