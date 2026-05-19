@@ -32,6 +32,7 @@ export function LeaderboardTable({ rows }: { rows: LeaderboardEntry[] }) {
             <TableHead className={TH}>Player</TableHead>
             <TableHead className={`${TH} w-16 text-center`}>Country</TableHead>
             <TableHead className={`${TH} text-right`}>Hexes</TableHead>
+            <TableHead className={`${TH} text-right`}>$VAVA Bonded</TableHead>
             <TableHead className={`${TH} text-right`}>Value</TableHead>
             <TableHead className={`${TH} text-right`}>24h Volume</TableHead>
           </TableRow>

@@ -29,6 +29,8 @@ export default function LeaderboardPage() {
           return b.valueSOL - a.valueSOL;
         case 'countries':
           return b.countries - a.countries;
+        case 'bonded':
+          return b.bonded - a.bonded;
         case 'hexes':
         default:
           return b.hexes - a.hexes;

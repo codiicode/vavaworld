@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/select';
 import { Flag } from '@/components/flag';
 
-export type SortKey = 'hexes' | 'volume' | 'value' | 'countries';
+export type SortKey = 'hexes' | 'volume' | 'value' | 'countries' | 'bonded';
 export type FilterKey =
   | 'worldwide' | 'se' | 'jp' | 'de' | 'us' | 'kr' | 'gb' | 'fr' | 'it'
   | 'es' | 'br' | 'cn' | 'in' | 'au' | 'ca' | 'nl' | 'pt' | 'no' | 'dk' | 'fi';
@@ -64,6 +64,7 @@ export function LeaderboardFilters({
           </SelectTrigger>
           <SelectContent className={CONTENT}>
             <SelectItem value="hexes">Most Hexes</SelectItem>
+            <SelectItem value="bonded">Most $VAVA Bonded</SelectItem>
             <SelectItem value="volume">Trading Volume (24h)</SelectItem>
             <SelectItem value="value">Portfolio Value</SelectItem>
             <SelectItem value="countries">Most Countries</SelectItem>

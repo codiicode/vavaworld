@@ -12,6 +12,7 @@ export interface LeaderboardEntry {
   valueUSD: number;
   volume24h: number;
   countries: number;
+  bonded: number; // $VAVA bonded
   verified: boolean;
 }
 
@@ -58,6 +59,8 @@ function build(): LeaderboardEntry[] {
     const valueSOL = Math.round((520 * Math.pow(0.40, t) + (0.5 - r()) * 8) * 10) / 10;
     const valueUSD = Math.round(valueSOL * 152);
     const vol = Math.round((r() * 60 - 18) * 10) / 10; // ~70% positive
+    // Bonded $VAVA: rank 1 ≈ 3.2M, rank 50 ≈ ~60k — smooth decay + jitter.
+    const bonded = Math.round((3_200_000 * Math.pow(0.34, t) + (0.5 - r()) * 50_000) / 1000) * 1000;
     const country = COUNTRIES[i % COUNTRIES.length];
     out.push({
       rank,
@@ -72,6 +75,7 @@ function build(): LeaderboardEntry[] {
       valueUSD,
       volume24h: vol,
       countries: Math.max(1, Math.round(38 * Math.pow(0.5, t) + r() * 3)),
+      bonded: Math.max(50_000, bonded),
       verified: r() > 0.45,
     });
   }

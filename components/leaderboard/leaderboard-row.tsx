@@ -42,6 +42,12 @@ export function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
       </TableCell>
 
       <TableCell className="text-right">
+        <span className="text-sm font-semibold tabular-nums">
+          {entry.bonded.toLocaleString()}
+        </span>
+      </TableCell>
+
+      <TableCell className="text-right">
         <div className="text-sm font-semibold tabular-nums">
           {entry.valueSOL} SOL
         </div>
