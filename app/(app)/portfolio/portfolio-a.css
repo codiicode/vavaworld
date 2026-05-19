@@ -54,32 +54,15 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/* Plain sky-bg.jpg — NO filter, NO overlay, NO orbs — so the background is
+   pixel-identical to /profile, /marketplace and every other (app) page. */
 .pf-stage .sky {
   position: absolute;
   inset: 0;
   background: url("/sky-bg.jpg") center/cover;
-  filter: saturate(1.08) brightness(1.02);
-}
-.pf-stage .sky::after {
-  content: "";
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(120% 70% at 20% 0%, rgba(255,255,255,0.18), transparent 55%),
-    radial-gradient(100% 80% at 100% 100%, rgba(56, 132, 200, 0.22), transparent 60%),
-    linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(140, 190, 230, 0.12) 100%);
 }
 
-.pf-stage .sky-orbs { position: absolute; inset: 0; pointer-events: none; }
-.pf-stage .sky-orbs span {
-  position: absolute; display: block; border-radius: 999px;
-  filter: blur(40px); opacity: 0.55;
-}
-.pf-stage .sky-orbs span:nth-child(1) { width: 520px; height: 520px; left: -120px; top: -160px;
-  background: radial-gradient(circle, rgba(255,255,255,0.7), transparent 70%); }
-.pf-stage .sky-orbs span:nth-child(2) { width: 380px; height: 380px; right: 8%; top: 35%;
-  background: radial-gradient(circle, rgba(186, 230, 253, 0.65), transparent 70%); }
-.pf-stage .sky-orbs span:nth-child(3) { width: 600px; height: 600px; right: -180px; bottom: -200px;
-  background: radial-gradient(circle, rgba(125, 211, 252, 0.45), transparent 70%); }
+.pf-stage .sky-orbs { display: none; }
 
 /* ─── Glass primitive (REQUIRED: 4 layers — base + ::before rim + ::after shine) ─── */
 .pf-stage .glass {
