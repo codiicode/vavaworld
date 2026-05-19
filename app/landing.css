@@ -112,10 +112,10 @@
   line-height: 0;
 }
 .landing-root .l-brand .l-name {
-  font-family: "Inter", sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.32em;
+  font-family: "Wide Latin", "Abril Fatface", Georgia, serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .landing-root .l-nav-links { display: flex; align-items: center; gap: 34px; }
