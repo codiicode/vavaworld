@@ -149,7 +149,7 @@
   border: 1px solid rgba(255,255,255,0.5);
   color: var(--brand-deep);
 }
-.pf-stage .sidebar__wordmark { font-weight: 700; letter-spacing: 0.14em; font-size: 14px; }
+.pf-stage .sidebar__wordmark { font-weight: 700; letter-spacing: 0.14em; font-size: 14px; color: #fff; }
 .pf-stage .sidebar__nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 
 .pf-stage .nav-item {

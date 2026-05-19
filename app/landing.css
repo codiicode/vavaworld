@@ -99,7 +99,9 @@
 }
 /* Brand sits next to the white transparent mark, so the wordmark is white. */
 .landing-root nav.l-site .l-brand,
-.landing-root nav.l-site .l-brand .l-name { color: #fff; }
+.landing-root nav.l-site .l-brand .l-name,
+.landing-root .l-foot-brand .l-brand,
+.landing-root .l-foot-brand .l-brand .l-name { color: #fff; }
 .landing-root .l-brand { display: flex; align-items: center; gap: 14px; }
 /* Wrap the logo so its inline-block baseline gap can't shift it; the flex
    box centres on the wordmark cap-height. */

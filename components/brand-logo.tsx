@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 /**
- * VAVAWORLD sphere mark (public/vava-mark.png).
+ * VAVAWORLD mark — white, alpha-transparent PNG (public/logga transparent.png).
  *
- * Background-free, alpha-transparent PNG cut tight to the sphere — only the
- * blue hexagons, no white/grey backdrop. Rendered `contain` in a square box so
- * it sits cleanly on any surface (sky bg, light glass, dark footer).
+ * Background-free, cut tight to the mark — no backdrop. Rendered `contain` in a
+ * square box so it sits cleanly on any surface. Used globally (landing nav +
+ * footer, app sidebar, portfolio sidebar).
  */
 export function BrandLogo({
   size = 28,
@@ -15,7 +15,7 @@ export function BrandLogo({
 }) {
   return (
     <img
-      src="/vava-mark.png"
+      src="/logga transparent.png"
       alt="VAVAWORLD"
       width={size}
       height={size}
