@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useActiveWallet } from '@/lib/active-wallet';
-import { BrandLogo } from '@/components/brand-logo';
 
 /**
  * Fixed glassy top nav. CTAs change based on session state:
@@ -20,7 +19,16 @@ export function SiteNav() {
     <nav className="l-site">
       <div className="l-nav-inner">
         <Link href="/" className="l-brand" aria-label="VAVAWORLD">
-          <span className="l-mark"><BrandLogo size={34} /></span>
+          <span className="l-mark">
+            {/* White transparent mark — landing nav only. */}
+            <img
+              src="/logga transparent.png"
+              alt="VAVAWORLD"
+              width={34}
+              height={34}
+              style={{ width: 34, height: 34, objectFit: 'contain', display: 'block' }}
+            />
+          </span>
           <span className="l-name">Vavaworld</span>
         </Link>
 
