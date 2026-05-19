@@ -4,6 +4,16 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import './portfolio-a.css';
+import {
+  Activity as ActivityIcon,
+  BarChart3,
+  Globe,
+  Map as MapIcon,
+  Settings as SettingsIcon,
+  ShoppingBag,
+  Trophy,
+  Wallet,
+} from 'lucide-react';
 import { BrandLogo } from '@/components/brand-logo';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
@@ -60,14 +70,21 @@ const PI = {
   ),
 };
 
-const NAV: ReadonlyArray<{ id: string; label: string; href: string; icon: React.ReactNode }> = [
-  { id: 'map', label: 'Map', href: '/map', icon: PI.map },
-  { id: 'portfolio', label: 'Portfolio', href: '/portfolio', icon: PI.portfolio },
-  { id: 'profile', label: 'Profile', href: '/profile', icon: PI.profile },
-  { id: 'market', label: 'Marketplace', href: '/marketplace', icon: PI.market },
-  { id: 'nations', label: 'Nations', href: '/nations', icon: PI.globe },
-  { id: 'activity', label: 'Activity', href: '/activity', icon: PI.activity },
-  { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', icon: PI.trophy },
+// Same lucide icon set as the global AppSidebar so symbols never change
+// between /portfolio and the rest of the app.
+const NAV: ReadonlyArray<{
+  id: string;
+  label: string;
+  href: string;
+  Icon: typeof MapIcon;
+}> = [
+  { id: 'map', label: 'Map', href: '/map', Icon: MapIcon },
+  { id: 'portfolio', label: 'Portfolio', href: '/portfolio', Icon: BarChart3 },
+  { id: 'profile', label: 'Profile', href: '/profile', Icon: Wallet },
+  { id: 'market', label: 'Marketplace', href: '/marketplace', Icon: ShoppingBag },
+  { id: 'nations', label: 'Nations', href: '/nations', Icon: Globe },
+  { id: 'activity', label: 'Activity', href: '/activity', Icon: ActivityIcon },
+  { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', Icon: Trophy },
 ];
 
 function shortAddr(a: string | null): string {
@@ -173,21 +190,28 @@ function PfSidebar({ username, balance }: { username: string; balance: string })
         <span className="sidebar__wordmark">VAVAWORLD</span>
       </Link>
       <nav className="sidebar__nav">
-        {NAV.map((it) => (
-          <Link
-            key={it.id}
-            className={'nav-item' + (it.id === 'portfolio' ? ' is-active' : '')}
-            href={it.href}
-          >
-            <span className="nav-item__icon">{it.icon}</span>
-            <span>{it.label}</span>
-            {it.id === 'portfolio' && <span className="nav-item__bar" />}
-          </Link>
-        ))}
+        {NAV.map((it) => {
+          const Icon = it.Icon;
+          return (
+            <Link
+              key={it.id}
+              className={'nav-item' + (it.id === 'portfolio' ? ' is-active' : '')}
+              href={it.href}
+            >
+              <span className="nav-item__icon">
+                <Icon size={20} strokeWidth={1.8} />
+              </span>
+              <span>{it.label}</span>
+              {it.id === 'portfolio' && <span className="nav-item__bar" />}
+            </Link>
+          );
+        })}
       </nav>
       <div className="sidebar__foot">
         <Link className="nav-item nav-item--quiet" href="/settings">
-          <span className="nav-item__icon">{PI.settings}</span>
+          <span className="nav-item__icon">
+            <SettingsIcon size={20} strokeWidth={1.8} />
+          </span>
           <span>Settings</span>
         </Link>
         <Link
