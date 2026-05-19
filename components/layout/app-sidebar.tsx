@@ -75,7 +75,7 @@ export function AppSidebar() {
       <Link href="/" className="flex items-center gap-3 px-1.5 py-0.5">
         <BrandLogo size={38} />
         <span
-          className="text-[15px] tracking-[0.02em] text-white"
+          className="text-[11px] tracking-[0.02em] text-white"
           style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
         >
           VAVAWORLD
