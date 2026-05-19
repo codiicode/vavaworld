@@ -20,13 +20,13 @@ const PI = {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>
   ),
   portfolio: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="6" width="18" height="14" rx="2" /><path d="M8 6V4h8v2" /><path d="M3 12h18" /></svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M18 17V9" /><path d="M13 17V5" /><path d="M8 17v-3" /></svg>
   ),
   market: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9 5 4h14l2 5" /><path d="M4 9h16v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9Z" /><path d="M9 13h6" /></svg>
   ),
-  stake: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8" /><path d="M9 12h6M12 9v6" /></svg>
+  globe: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z" /></svg>
   ),
   activity: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4" /></svg>
@@ -65,7 +65,7 @@ const NAV: ReadonlyArray<{ id: string; label: string; href: string; icon: React.
   { id: 'portfolio', label: 'Portfolio', href: '/portfolio', icon: PI.portfolio },
   { id: 'profile', label: 'Profile', href: '/profile', icon: PI.profile },
   { id: 'market', label: 'Marketplace', href: '/marketplace', icon: PI.market },
-  { id: 'stake', label: 'Stake', href: '/stake', icon: PI.stake },
+  { id: 'nations', label: 'Nations', href: '/nations', icon: PI.globe },
   { id: 'activity', label: 'Activity', href: '/activity', icon: PI.activity },
   { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', icon: PI.trophy },
 ];
