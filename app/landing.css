@@ -3,15 +3,6 @@
    Hand-off design by Claude Design, recreated as React components.
    ───────────────────────────────────────────────────────── */
 
-/* Self-hosted display face for the landing brand wordmark only. */
-@font-face {
-  font-family: "StretchPro";
-  src: url("/fonts/StretchPro.otf") format("opentype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 .landing-root {
   --l-sky-pale:  #eaf4fc;
   --l-sky-mist:  #cfe5f6;

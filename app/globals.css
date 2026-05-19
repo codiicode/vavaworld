@@ -2,6 +2,15 @@
 @import 'mapbox-gl/dist/mapbox-gl.css';
 @import '@solana/wallet-adapter-react-ui/styles.css';
 
+/* Self-hosted display face for the brand wordmark (used site-wide). */
+@font-face {
+  font-family: "StretchPro";
+  src: url("/fonts/StretchPro.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
