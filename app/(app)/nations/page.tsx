@@ -16,7 +16,7 @@ import { NATIONS, sortNations, type NationSort } from '@/lib/mock-nations';
 const SORT_LABELS: Record<NationSort, string> = {
   claims: 'Most Claims',
   floor: 'Highest Floor',
-  bonded: 'Most Bonded VAVA',
+  bonded: 'Most Bonded $VAVA',
   bonders: 'Most Bonders',
 };
 

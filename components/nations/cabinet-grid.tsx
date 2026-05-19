@@ -44,7 +44,7 @@ export function CabinetGrid({ nation }: { nation: Nation }) {
               </div>
               <div className="mt-3 border-t border-white/30 pt-3">
                 <div className="text-sm font-bold tabular-nums text-foreground">
-                  {fmtInt(m.bondedVava)} VAVA
+                  {fmtInt(m.bondedVava)} $VAVA
                 </div>
                 <div className="mt-0.5 text-xs tabular-nums text-foreground/55">
                   {fmtUsd(m.monthlyUsd)} / month

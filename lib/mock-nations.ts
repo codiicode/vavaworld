@@ -104,12 +104,12 @@ function buildActivity(rnd: () => number, name: string): ActivityEvent[] {
     if (r < 0.45) {
       out.push({
         id: `${name}-a${i}`, kind: 'bond', ago,
-        parts: [{ t: u(), b: true }, { t: ' bonded ' }, { t: `${fmtInt(Math.floor(rnd() * 90000 + 10000))} VAVA`, b: true }, { t: ` to a hex in ${city()}` }],
+        parts: [{ t: u(), b: true }, { t: ' bonded ' }, { t: `${fmtInt(Math.floor(rnd() * 90000 + 10000))} $VAVA`, b: true }, { t: ` to a hex in ${city()}` }],
       });
     } else if (r < 0.6) {
       out.push({
         id: `${name}-a${i}`, kind: 'presidency', ago,
-        parts: [{ t: 'Presidency takeover: ' }, { t: u(), b: true }, { t: ' overthrew ' }, { t: u(), b: true }, { t: ' with ' }, { t: `${fmtInt(Math.floor(rnd() * 1_000_000 + 2_000_000))} VAVA`, b: true }],
+        parts: [{ t: 'Presidency takeover: ' }, { t: u(), b: true }, { t: ' overthrew ' }, { t: u(), b: true }, { t: ' with ' }, { t: `${fmtInt(Math.floor(rnd() * 1_000_000 + 2_000_000))} $VAVA`, b: true }],
       });
     } else if (r < 0.8) {
       out.push({

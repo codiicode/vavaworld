@@ -5,7 +5,7 @@ import 'flag-icons/css/flag-icons.min.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'VAVA',
+  title: '$VAVA',
   description: 'Claim your hex on VAVAWORLD.',
 };
 

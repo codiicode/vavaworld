@@ -25,7 +25,7 @@ export function CountryHeaderCard({ nation }: { nation: Nation }) {
         <div className="grid grid-cols-2 gap-x-10 gap-y-4 sm:grid-cols-4">
           <Metric label="Floor" value={fmtUsd3(nation.floor)} />
           <Metric label="Claims" value={fmtInt(nation.claims)} />
-          <Metric label="Bonded VAVA" value={fmtCompact(nation.bondedVava)} />
+          <Metric label="Bonded $VAVA" value={fmtCompact(nation.bondedVava)} />
           <Metric label="Bonders" value={fmtInt(nation.bonders)} />
         </div>
       </div>

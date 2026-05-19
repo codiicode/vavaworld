@@ -48,7 +48,7 @@ export function NationsTable({
             <TableHead className={TH}>President</TableHead>
             <TableHead className={`${TH} text-right`}>Floor</TableHead>
             <TableHead className={`${TH} text-right`}>Claims</TableHead>
-            <TableHead className={`${TH} text-right`}>Bonded VAVA</TableHead>
+            <TableHead className={`${TH} text-right`}>Bonded $VAVA</TableHead>
             <TableHead className={`${TH} text-right`}>Bonders</TableHead>
           </TableRow>
         </TableHeader>

@@ -18,13 +18,13 @@ export function YourPositionCard({ nation }: { nation: Nation }) {
 
       <div className="grid grid-cols-2 gap-x-10 gap-y-4 sm:grid-cols-4">
         <Stat label="Rank" value={`#${u.rank} of ${fmtInt(u.of)}`} />
-        <Stat label="Bonded" value={`${fmtInt(u.bondedVava)} VAVA`} />
+        <Stat label="Bonded" value={`${fmtInt(u.bondedVava)} $VAVA`} />
         <Stat label="Monthly yield" value={`$${u.monthlyUsd.toFixed(2)}`} />
         <Stat label="Your hexes here" value={fmtInt(u.hexesHere)} />
       </div>
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <Button onClick={() => setOpen(true)}>Bond more VAVA</Button>
+        <Button onClick={() => setOpen(true)}>Bond more $VAVA</Button>
         <Button variant="outline" asChild>
           <Link href="/profile">View my hexes</Link>
         </Button>

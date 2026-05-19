@@ -51,7 +51,7 @@ export function PresidentHeroCard({ nation }: { nation: Nation }) {
 
           <div className="md:text-right">
             <div className="text-2xl font-bold tabular-nums text-foreground">
-              {fmtInt(p.bondedVava)} VAVA
+              {fmtInt(p.bondedVava)} $VAVA
             </div>
             <div className="mt-0.5 text-sm tabular-nums text-foreground/55">
               ≈ {fmtUsd(p.bondedVava * VAVA_USD)}
