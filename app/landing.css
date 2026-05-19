@@ -3,6 +3,15 @@
    Hand-off design by Claude Design, recreated as React components.
    ───────────────────────────────────────────────────────── */
 
+/* Self-hosted display face for the landing brand wordmark only. */
+@font-face {
+  font-family: "StretchPro";
+  src: url("/fonts/StretchPro.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 .landing-root {
   --l-sky-pale:  #eaf4fc;
   --l-sky-mist:  #cfe5f6;
@@ -112,10 +121,10 @@
   line-height: 0;
 }
 .landing-root .l-brand .l-name {
-  font-family: "Wide Latin", "Abril Fatface", Georgia, serif;
-  font-size: 15px;
+  font-family: "StretchPro", "Abril Fatface", Georgia, serif;
+  font-size: 12px;
   font-weight: 400;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 .landing-root .l-nav-links { display: flex; align-items: center; gap: 34px; }
