@@ -58,7 +58,7 @@ export function SelectionList({
           <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
             Selected
           </span>
-          <span className="text-xs tabular-nums text-muted-foreground">0 / 20</span>
+          <span className="text-xs tabular-nums text-muted-foreground">0 / 1000</span>
         </div>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Click a hex to select. Shift-click to add more. Ctrl-drag for an area.
@@ -79,7 +79,7 @@ export function SelectionList({
         <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
           Selected
         </span>
-        <span className="text-xs tabular-nums text-muted-foreground">{items.length} / 20</span>
+        <span className="text-xs tabular-nums text-muted-foreground">{items.length} / 1000</span>
       </div>
 
       <ScrollArea className="max-h-[280px]">
@@ -143,11 +143,11 @@ export function SelectionList({
         <Button
           size="default"
           className="w-full font-medium"
-          disabled={!walletConnected || items.length > 20}
+          disabled={!walletConnected || items.length > 1000}
           onClick={onClaim}
         >
-          {items.length > 20
-            ? 'Max 20 per claim'
+          {items.length > 1000
+            ? 'Max 1000 per claim'
             : walletConnected
             ? `Claim ${items.length} ${items.length === 1 ? 'hex' : 'hexes'}`
             : 'Connect wallet to claim'}

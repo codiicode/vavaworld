@@ -199,7 +199,7 @@ function SelectionBody({
   walletConnected: boolean;
 }) {
   const empty = count === 0;
-  const max = count > 20;
+  const max = count > 1000;
 
   return (
     <>
@@ -209,7 +209,7 @@ function SelectionBody({
             Selected
           </span>
           <span className="text-xs tabular-nums tracking-[0.04em] text-white/52">
-            {count} / 20
+            {count} / 1000
           </span>
         </div>
 
@@ -286,7 +286,7 @@ function SelectionBody({
         {empty
           ? 'Select at least one hex'
           : max
-            ? 'Max 20 per claim'
+            ? 'Max 1000 per claim'
             : !walletConnected
               ? 'Connect wallet to claim'
               : `Claim ${count} ${count === 1 ? 'hex' : 'hexes'} · ${totalSol.toFixed(3)} SOL`}
