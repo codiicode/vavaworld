@@ -88,8 +88,6 @@ export function ListingTable({
               <TableHead className="w-20">Tier</TableHead>
               <TableHead className="w-32 text-right">Price</TableHead>
               <TableHead className="w-24">24h</TableHead>
-              <TableHead className="w-24 text-right">Last sale</TableHead>
-              <TableHead className="w-32">Decay</TableHead>
               <TableHead className="w-20">Listed</TableHead>
               <TableHead className="w-24" />
             </TableRow>
@@ -137,14 +135,6 @@ export function ListingTable({
                   <ChangeCell value={l.change24h} />
                 </TableCell>
 
-                <TableCell className="text-right text-sm tabular-nums text-foreground/55">
-                  {l.lastSale != null ? l.lastSale.toFixed(3) : '—'}
-                </TableCell>
-
-                <TableCell>
-                  <DecayCell percent={l.decayPercent} />
-                </TableCell>
-
                 <TableCell className="text-[11px] text-foreground/55">{l.listedAgo}</TableCell>
 
                 <TableCell className="w-20">
@@ -183,19 +173,6 @@ function ChangeCell({ value }: { value: number }) {
       {positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
       {positive ? '+' : ''}
       {value.toFixed(1)}%
-    </div>
-  );
-}
-
-function DecayCell({ percent }: { percent: number }) {
-  const color =
-    percent > 70 ? 'bg-emerald-500' : percent > 30 ? 'bg-amber-500' : 'bg-red-500';
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-1 w-12 overflow-hidden rounded-full bg-foreground/10">
-        <div className={cn('h-full rounded-full', color)} style={{ width: `${percent}%` }} />
-      </div>
-      <span className="text-[11px] tabular-nums text-foreground/55">{percent}%</span>
     </div>
   );
 }
