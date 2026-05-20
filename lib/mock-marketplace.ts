@@ -33,11 +33,12 @@ export type Listing = {
   isIconic?: boolean;
 };
 
-const SELLERS = [
-  '0xA4B2…82F1', '0x8C73…19BD', '0xF4E1…5A72', '0x1A9C…4D87',
-  '0x6B22…91FE', '0x33D8…7762', '0x9012…BBA4', '0xDEAD…BEEF',
-  '0x4422…0011', '0xCAFE…BABE', '0x7700…5511', '0x9988…AABB',
-];
+import { MOCK_USERS } from './mock-users';
+
+// Index-keyed addresses, kept in sync with MOCK_USERS so any reference to a
+// seller/buyer in this file resolves to a real user we can render with the
+// shared UserLink (username if present, address otherwise).
+const SELLERS = MOCK_USERS.map((u) => u.addr);
 
 // Intentionally varied: rich/poor cities, Tier 1/2/3 mix, mix of price moves
 const RAW: Array<Omit<Listing, 'id' | 'priceUsd' | 'sellerAddr'> & { sellerIdx: number }> = [

@@ -9,6 +9,7 @@ import { BuyDialog } from '@/components/marketplace/buy-dialog';
 import { ListTileDialog } from '@/components/marketplace/list-tile-dialog';
 import { mockActivity, mockListings } from '@/lib/mock-marketplace';
 import { Flag } from '@/components/flag';
+import { UserLink } from '@/components/user-link';
 import { cn } from '@/lib/utils';
 
 /**
@@ -89,7 +90,7 @@ export default function TileDetailPage() {
               <span className="font-mono text-[11px] text-muted-foreground">{listing.h3}</span>
             </Fact>
             <Fact label="Seller">
-              <span className="font-mono text-xs">{listing.sellerAddr}</span>
+              <UserLink addr={listing.sellerAddr} />
             </Fact>
           </div>
         </div>
@@ -157,9 +158,9 @@ export default function TileDetailPage() {
                   className="flex items-center justify-between px-4 py-2.5 text-sm"
                 >
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="font-mono">{h.fromAddr}</span>
+                    <UserLink addr={h.fromAddr} />
                     <ArrowRight size={10} />
-                    <span className="font-mono">{h.toAddr}</span>
+                    <UserLink addr={h.toAddr} />
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-semibold tabular-nums">{h.price.toFixed(3)} SOL</span>

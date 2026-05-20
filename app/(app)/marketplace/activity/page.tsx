@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { mockActivity } from '@/lib/mock-marketplace';
 import { Flag } from '@/components/flag';
+import { UserLink } from '@/components/user-link';
 
 /**
  * Full activity log — the "see more" target from the right-rail mini-feed.
@@ -68,11 +69,11 @@ export default function ActivityPage() {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-xs">{a.fromAddr}</TableCell>
+                <TableCell><UserLink addr={a.fromAddr} /></TableCell>
                 <TableCell className="w-6 text-muted-foreground">
                   <ArrowRight size={12} />
                 </TableCell>
-                <TableCell className="font-mono text-xs">{a.toAddr}</TableCell>
+                <TableCell><UserLink addr={a.toAddr} /></TableCell>
                 <TableCell className="text-right text-sm font-semibold tabular-nums">
                   {a.price.toFixed(3)} SOL
                 </TableCell>

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Check, TrendingDown, TrendingUp } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TableCell, TableRow } from '@/components/ui/table';
@@ -21,9 +22,12 @@ export function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
             </AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-sm font-medium">
+            <Link
+              href={`/u/${encodeURIComponent(entry.username.replace(/^@/, ''))}`}
+              className="truncate text-sm font-medium underline-offset-2 hover:underline"
+            >
               @{entry.username.replace(/^@/, '')}
-            </span>
+            </Link>
             {entry.verified && (
               <Check className="h-3.5 w-3.5 flex-shrink-0 text-emerald-500" />
             )}

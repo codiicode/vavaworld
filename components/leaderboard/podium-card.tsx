@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -17,10 +18,12 @@ export function PodiumCard({
   className?: string;
 }) {
   const rank = entry.rank as 1 | 2 | 3;
+  const handle = entry.username.replace(/^@/, '');
   return (
-    <div
+    <Link
+      href={`/u/${encodeURIComponent(handle)}`}
       className={cn(
-        'relative cursor-pointer rounded-2xl border border-white/40 bg-white/30 p-5 backdrop-blur-md transition-colors hover:bg-white/40',
+        'relative block cursor-pointer rounded-2xl border border-white/40 bg-white/30 p-5 backdrop-blur-md transition-colors hover:bg-white/40',
         className,
       )}
     >
@@ -68,6 +71,6 @@ export function PodiumCard({
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

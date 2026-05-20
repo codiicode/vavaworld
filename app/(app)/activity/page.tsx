@@ -19,6 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Flag } from '@/components/flag';
+import { UserLink } from '@/components/user-link';
 import { cn } from '@/lib/utils';
 import { mockActivity, type ActivityItem } from '@/lib/mock-marketplace';
 
@@ -135,14 +136,14 @@ export default function ActivityPage() {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-xs text-foreground/75">
-                  {a.fromAddr}
+                <TableCell>
+                  <UserLink addr={a.fromAddr} />
                 </TableCell>
                 <TableCell className="text-foreground/40">
                   <ArrowRight size={12} />
                 </TableCell>
-                <TableCell className="font-mono text-xs text-foreground/75">
-                  {a.toAddr}
+                <TableCell>
+                  <UserLink addr={a.toAddr} />
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold tabular-nums">
                   {a.price.toFixed(3)} SOL
