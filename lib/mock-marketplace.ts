@@ -119,9 +119,12 @@ export type ActivityItem = {
   price: number;
   /** Pre-formatted "X" relative time (no unit needed for UI) */
   ago: string;
+  /** Event type — every on-chain sale is both a buy and a sell; we tag
+   *  the row from the perspective most interesting in the feed. */
+  action: 'buy' | 'sell';
 };
 
-const ACT_BASE: Array<Omit<ActivityItem, 'id' | 'fromAddr' | 'toAddr' | 'ago'> & { agoMin: number }> = [
+const ACT_BASE: Array<Omit<ActivityItem, 'id' | 'fromAddr' | 'toAddr' | 'ago' | 'action'> & { agoMin: number }> = [
   { countryCode: 'jp', city: 'Tokyo', neighborhood: 'Shibuya', price: 0.92, agoMin: 2 },
   { countryCode: 'fr', city: 'Paris', neighborhood: 'Le Marais', price: 0.72, agoMin: 5 },
   { countryCode: 'us', city: 'New York', neighborhood: 'Brooklyn', price: 0.61, agoMin: 8 },
@@ -166,6 +169,8 @@ export const mockActivity: ReadonlyArray<ActivityItem> = ACT_BASE.map((b, i) => 
   fromAddr: SELLERS[i % SELLERS.length],
   toAddr: SELLERS[(i + 4) % SELLERS.length],
   ago: fmtAgo(b.agoMin),
+  // Deterministic alternation so SSR matches CSR — no random per render.
+  action: i % 2 === 0 ? 'buy' : 'sell',
 }));
 
 // ──────────────────────────────────────────────────────────
