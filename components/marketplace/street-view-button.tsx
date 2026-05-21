@@ -1,9 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Camera, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+
+// Browser-only WebGL viewer — never server-render it.
+const MapillaryViewer = dynamic(
+  () => import('./mapillary-viewer').then((m) => m.MapillaryViewer),
+  { ssr: false },
+);
 
 type Coverage =
   | { status: 'idle' }
@@ -14,8 +21,8 @@ type Coverage =
 
 /**
  * Mapillary street-view trigger. Queries the Graph API for the closest image
- * within ~75m of the hex's center; if one exists, the button activates and
- * the dialog embeds the Mapillary viewer iframe at that image.
+ * within 50m of the hex's center; if one exists, the button activates and the
+ * dialog mounts the interactive MapillaryViewer at that image.
  *
  * Free, no billing required — but coverage is patchy: great in cities,
  * thin/empty outside urban centers or popular routes.
@@ -107,19 +114,16 @@ export function StreetViewButton({
             </h2>
           </div>
           <div className="aspect-video w-full bg-black">
-            {isReady && (
-              <iframe
-                title={`Mapillary street view at ${label}`}
-                src={`https://www.mapillary.com/embed?image_key=${encodeURIComponent(
-                  coverage.imageKey,
-                )}&style=photo`}
-                className="h-full w-full border-0"
-                allowFullScreen
+            {open && isReady && (
+              <MapillaryViewer
+                imageId={coverage.imageKey}
+                accessToken={process.env.NEXT_PUBLIC_MAPILLARY_TOKEN as string}
               />
             )}
           </div>
           <div className="border-t border-border px-5 py-2.5 text-[11px] text-muted-foreground">
-            Imagery © Mapillary contributors. Coverage is crowd-sourced and
+            Drag to look around · click the arrows to move along the street.
+            Imagery © Mapillary contributors — coverage is crowd-sourced and
             may be older than the satellite tile above.
           </div>
         </DialogContent>

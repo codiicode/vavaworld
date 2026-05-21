@@ -48,6 +48,7 @@
     "h3-js": "^4.4.0",
     "lucide-react": "^1.14.0",
     "mapbox-gl": "^3.23.1",
+    "mapillary-js": "^4.1.2",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
