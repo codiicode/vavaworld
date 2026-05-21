@@ -45,8 +45,10 @@ export function StreetViewButton({
 
     const url = new URL('https://graph.mapillary.com/images');
     url.searchParams.set('fields', 'id');
-    url.searchParams.set('closeto', `${lng},${lat}`);
-    url.searchParams.set('radius', '75');
+    // Graph API: radius requires separate lat/lng (not `closeto`) and caps at 50 m.
+    url.searchParams.set('lat', String(lat));
+    url.searchParams.set('lng', String(lng));
+    url.searchParams.set('radius', '50');
     url.searchParams.set('limit', '1');
     url.searchParams.set('access_token', token);
 
@@ -86,7 +88,7 @@ export function StreetViewButton({
             ? 'Open Mapillary street view at this hex'
             : isLoading
               ? 'Checking street-view coverage…'
-              : 'No street view available within ~75 m of this hex'
+              : 'No street view available within ~50 m of this hex'
         }
       >
         {isLoading ? (
