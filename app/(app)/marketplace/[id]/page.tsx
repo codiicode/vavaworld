@@ -11,6 +11,7 @@ import { StreetViewButton } from '@/components/marketplace/street-view-button';
 import { mockActivity, mockListings } from '@/lib/mock-marketplace';
 import { Flag } from '@/components/flag';
 import { UserLink } from '@/components/user-link';
+import { hexStaticMapUrl } from '@/lib/static-map';
 import { cn } from '@/lib/utils';
 
 /**
@@ -35,6 +36,9 @@ export default function TileDetailPage() {
         ? 'bg-amber-500'
         : 'bg-red-500';
 
+  // Zoomed-in satellite shot of the tile with its hex outlined.
+  const mapImg = hexStaticMapUrl({ lat: listing.lat, lng: listing.lng });
+
   // Synthesize a recent-history feed for this tile from the global activity
   const history = mockActivity.slice(0, 6);
 
@@ -56,9 +60,18 @@ export default function TileDetailPage() {
         {/* Preview + key facts */}
         <div className="space-y-4">
           <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-border bg-muted">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Hexagon className="text-primary/30" size={120} />
-            </div>
+            {mapImg ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={mapImg}
+                alt={`Satellite view of ${listing.city} · ${listing.neighborhood}`}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Hexagon className="text-primary/30" size={120} />
+              </div>
+            )}
             <div className="absolute left-3 top-3 flex items-center gap-2 rounded-md bg-background/90 px-2.5 py-1.5 text-sm font-medium backdrop-blur-sm">
               <Flag code={listing.countryCode} size={16} />
               <span>{listing.city}</span>
