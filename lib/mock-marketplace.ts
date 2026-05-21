@@ -31,6 +31,10 @@ export type Listing = {
   isAuction?: boolean;
   /** Iconic location flag (Eiffel, Statue of Liberty, etc.) */
   isIconic?: boolean;
+  /** ISO-8601 UTC timestamp the hex was first claimed on-chain. */
+  claimedAt: string;
+  /** 1-indexed global claim order — the Nth hex ever claimed. */
+  claimSequence: number;
 };
 
 import { MOCK_USERS } from './mock-users';
@@ -41,7 +45,7 @@ import { MOCK_USERS } from './mock-users';
 const SELLERS = MOCK_USERS.map((u) => u.addr);
 
 // Intentionally varied: rich/poor cities, Tier 1/2/3 mix, mix of price moves
-const RAW: Array<Omit<Listing, 'id' | 'priceUsd' | 'sellerAddr'> & { sellerIdx: number }> = [
+const RAW: Array<Omit<Listing, 'id' | 'priceUsd' | 'sellerAddr' | 'claimedAt' | 'claimSequence'> & { sellerIdx: number }> = [
   { h3: '8b2840a0a0a0001', countryCode: 'se', city: 'Stockholm', neighborhood: 'Östermalm', lat: 59.336, lng: 18.077, tier: 1, price: 0.84, change24h: 12.4, lastSale: 0.72, decayPercent: 85, listedAgo: '2h ago', sellerIdx: 0, isIconic: false },
   { h3: '8b2840a0a0a0002', countryCode: 'jp', city: 'Tokyo', neighborhood: 'Shibuya', lat: 35.659, lng: 139.700, tier: 1, price: 0.92, change24h: 8.1, lastSale: 0.85, decayPercent: 73, listedAgo: '4h ago', sellerIdx: 1, isIconic: true },
   { h3: '8b2840a0a0a0003', countryCode: 'de', city: 'Berlin', neighborhood: 'Kreuzberg', lat: 52.499, lng: 13.403, tier: 2, price: 0.18, change24h: -3.2, lastSale: 0.19, decayPercent: 41, listedAgo: '6h ago', sellerIdx: 2 },
@@ -64,6 +68,25 @@ const RAW: Array<Omit<Listing, 'id' | 'priceUsd' | 'sellerAddr'> & { sellerIdx: 
   { h3: '8b2840a0a0a0014', countryCode: 'is', city: 'Reykjavík', neighborhood: 'Miðborg', lat: 64.146, lng: -21.942, tier: 3, price: 0.004, change24h: 0, lastSale: null, decayPercent: 12, listedAgo: '3d ago', sellerIdx: 7 },
 ];
 
+// Deterministic claim-time generator. SSR and CSR must agree so we don't
+// flash a different timestamp on hydration. Same input → same output.
+// We seed a synthetic global "claim sequence" so each listing shows a unique
+// stable Nth-claimed-ever number; the timestamp walks backward from a fixed
+// frozen "now" so the most recent rows are minutes-old and older rows are
+// weeks/months old, matching the listedAgo strings already used in the UI.
+const FROZEN_NOW_MS = Date.parse('2026-05-21T18:30:00Z');
+
+function makeClaimMeta(counter: number): { claimedAt: string; claimSequence: number } {
+  // Pseudo-random but deterministic from counter — gives each tile a unique
+  // sequence in the 1..50_000 range and a backwards-walking timestamp.
+  const seqJitter = ((counter * 2654435761) >>> 0) % 1000;
+  const claimSequence = counter * 379 + 11_421 + seqJitter;
+  // Walk back in minutes — newer counters = more recent.
+  const minutesAgo = counter * 47 + (seqJitter % 360);
+  const claimedAt = new Date(FROZEN_NOW_MS - minutesAgo * 60_000).toISOString();
+  return { claimedAt, claimSequence };
+}
+
 // Build the rest by replicating + permuting so we hit ~50 with varied prices.
 function buildListings(): Listing[] {
   const out: Listing[] = [];
@@ -76,6 +99,7 @@ function buildListings(): Listing[] {
       id: String(counter).padStart(2, '0'),
       sellerAddr: SELLERS[r.sellerIdx % SELLERS.length],
       priceUsd: Math.round(r.price * 150),
+      ...makeClaimMeta(counter),
     });
   }
   // 30 more derived rows — shift price by tier and rotate cities
@@ -99,6 +123,7 @@ function buildListings(): Listing[] {
       listedAgo: ago,
       sellerAddr: SELLERS[(counter + 3) % SELLERS.length],
       lastSale: base.lastSale != null ? +(base.lastSale * (0.9 + Math.random() * 0.3)).toFixed(3) : null,
+      ...makeClaimMeta(counter),
     });
   }
   return out;

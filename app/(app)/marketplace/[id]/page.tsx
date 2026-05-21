@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Hexagon, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock, Hexagon, TrendingDown, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BuyDialog } from '@/components/marketplace/buy-dialog';
 import { ListTileDialog } from '@/components/marketplace/list-tile-dialog';
@@ -48,6 +48,8 @@ export default function TileDetailPage() {
           Back to marketplace
         </Link>
       </div>
+
+      <ClaimStamp claimedAt={listing.claimedAt} sequence={listing.claimSequence} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
         {/* Preview + key facts */}
@@ -192,6 +194,45 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
         {label}
       </div>
       <div className="mt-1">{children}</div>
+    </div>
+  );
+}
+
+/**
+ * Permanent provenance line. Format:
+ *   Claimed at 3:47:21 PM UTC, May 21, 2026 — Hex #18,632 ever claimed.
+ *
+ * Renders deterministically in en-US/UTC so SSR and CSR agree.
+ */
+function ClaimStamp({ claimedAt, sequence }: { claimedAt: string; sequence: number }) {
+  const date = new Date(claimedAt);
+  const time = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    timeZone: 'UTC',
+  });
+  const day = date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+  return (
+    <div className="flex items-center gap-2.5 rounded-2xl border border-white/40 bg-white/30 px-4 py-2.5 text-sm text-foreground/80 backdrop-blur-md">
+      <Clock size={14} strokeWidth={1.6} className="flex-shrink-0 text-foreground/55" />
+      <span>
+        <span className="text-foreground/55">Claimed at </span>
+        <span className="font-medium tabular-nums text-foreground">{time} UTC</span>
+        <span className="text-foreground/55">, {day}</span>
+        <span className="px-2 text-foreground/30">—</span>
+        <span className="text-foreground/55">Hex </span>
+        <span className="font-semibold tabular-nums text-foreground">
+          #{sequence.toLocaleString('en-US')}
+        </span>
+        <span className="text-foreground/55"> ever claimed.</span>
+      </span>
     </div>
   );
 }
