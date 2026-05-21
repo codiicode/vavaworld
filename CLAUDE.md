@@ -1,0 +1,165 @@
+# VAVA / vavaworld.fun / $VAVA
+
+Tile-claiming Solana dApp. Full-screen Mapbox satellite map, H3 res-9 hex
+overlay (~201 m edge). Users claim tiles by paying SOL; planned $VAVA SPL
+token used for bonding (locked-up VAVA per claim).
+
+**Repo:** `C:\Users\User\Desktop\tomorrowland`
+**Live:** https://vavaworld.fun (alias of https://vavaworld.vercel.app)
+
+## How the user works with you
+
+- **Respond in Swedish.** All conversation, status updates, commit subjects
+  in English (industry norm), code/comments in English.
+- **No Claude co-author trailer in commits.** Single-author commits only.
+- **Build → screenshot/HTML-verify → commit → deploy → alias → live-verify
+  → report.** Don't ship without confirming the change is actually visible
+  live. The user has caught regressions before because of this.
+- **Don't ask multi-choice planning questions for small changes.** Make the
+  reasonable call and ship. Surface anything load-bearing in the final
+  Swedish summary so they can redirect.
+- The user is moving fast and iterating on UX. Optimize for visible progress
+  per turn.
+
+## Stack
+
+| Layer | Tech |
+|---|---|
+| Framework | Next.js 14 (App Router), TypeScript strict, React 18 |
+| Styling | Tailwind + shadcn/ui (Radix primitives in `components/ui/`) |
+| Map | Mapbox GL + `react-map-gl/mapbox` v8, satellite-v9 style |
+| Geo | h3-js 4 (resolution 9) |
+| Chain | Solana **devnet**, Anchor 1.0.2 program at `anchor/programs/tiles` |
+| Wallet | Privy (`@privy-io/react-auth`) embedded wallet + Phantom/Solflare/Backpack via wallet-adapter |
+| Off-chain data | Supabase (`@supabase/supabase-js`) — profiles, claim_hex pricing fn, etc. |
+| Charts | Recharts |
+| Icons | lucide-react |
+| Tests | Vitest (`lib/__tests__/`) |
+| Deploy | Vercel (`vavaworld` project, owner `leo-jankovics-projects`) |
+
+`vercel.json` pins `installCommand: "npm install --legacy-peer-deps"` —
+respect that when reproducing installs locally.
+
+## Routes (all under `app/(app)/`)
+
+| Path | Purpose |
+|---|---|
+| `/` | Landing page (separate layout, `app/landing.css`, has its own nav `components/landing/SiteNav.tsx`) |
+| `/map` | Full-bleed Mapbox map. Right panel = `glass-right-panel.tsx`. Map sidebar = global `AppSidebar` |
+| `/marketplace` | Hex listings table + filter sidebar. Detail at `/marketplace/[id]` |
+| `/marketplace/activity` | Legacy back-link target from marketplace (still wired) |
+| `/activity` | Site-wide live buy/sell feed (matches /leaderboard styling) |
+| `/leaderboard` | Top holders. Filters: hexes / bonded / volume / value / countries |
+| `/profile` | YOUR profile (reads connected wallet via `useUserProfile`) |
+| `/u/[handle]` | Public profile for ANY user. Resolves username OR address. Renders stub for unknown handles so links never 404 |
+| `/portfolio` | Standalone full-bleed page (own sidebar `PfSidebar`, NOT shared `AppSidebar`). Detected via `isStandalone` in `app/(app)/layout.tsx` |
+| `/nations` + `/nations/[iso]` | Country pages (no Cabinet section — removed; President kept) |
+| `/api/claim` `/api/countries` `/api/hex-floor` | Server routes |
+
+## Design system
+
+- **Background:** shared `public/sky-bg.jpg` rendered by `app/(app)/layout.tsx`. Every (app) page inherits it. The /portfolio page used to layer a `filter: saturate()` + gradient overlay + glowing orbs — that's been REMOVED so the background is pixel-identical across pages. **Don't re-introduce per-page sky effects.**
+- **Glass cards:** `rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md`. This is the single canonical recipe — reuse it.
+- **Headings:** 3xl semibold tracking-tight; eyebrow above heading is `text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60`.
+- **Sidebar wordmark** font is `StretchPro` (self-hosted at `public/fonts/StretchPro.otf`, declared in `app/globals.css`). Landing wordmark is 15px, app sidebar wordmark is 11px white. The font fallback chain is `"StretchPro", "Abril Fatface", Georgia, serif`.
+- **Logo:** `public/logga transparent.png` (white transparent). Used globally via `components/brand-logo.tsx`. No backgrounds.
+- **Flags:** Always use the `<Flag>` SVG component (`components/flag.tsx`). **Never emoji flags** — they break on Windows.
+- **App sidebar:** `components/layout/app-sidebar.tsx` is the SOURCE OF TRUTH for nav items + icons. The standalone `/portfolio` page has its own `PfSidebar` that MUST mirror it 1:1 (same lucide icons, same labels). Order: Map / Portfolio / Profile / Marketplace / Nations / Activity / Leaderboard. The portfolio nav icon is `BarChart3`, NOT a briefcase.
+
+## Conventions
+
+- **Token name:** Always `$VAVA` site-wide (never bare "VAVA token"). Title in `app/layout.tsx` is `$VAVA`.
+- **User references:** Show `@username` when set, fall back to wallet address. Always a link to `/u/[handle]`. Use `<UserLink addr={...} username={...} />` from `components/user-link.tsx`. Single source of truth for mock users is `lib/mock-users.ts` (`MOCK_USERS`); `mock-marketplace.ts` derives `SELLERS` from it.
+- **Mock data:** `lib/mock-leaderboard.ts`, `lib/mock-marketplace.ts`, `lib/mock-nations.ts`, `lib/mock-users.ts`. Most UI is mock-driven today; real data lands when the indexer ships.
+- **Pricing:** Per-country PRIMARY claims are off-chain via Supabase `claim_hex` function — NOT the on-chain tier curve. The on-chain curve is for the bonding-curve resale path. Don't conflate.
+- **Comments:** Don't write WHAT comments. Only WHY when non-obvious (constraint, invariant, workaround). No "added for X" / "used by Y" references — those rot.
+
+## On-chain (`anchor/programs/tiles`)
+
+- Program ID (devnet): `GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt`
+- `constants.rs`:
+  - `MAX_TILES_PER_TX = 20` — **hard cap on-chain.** UI displays `1000` but a single TX with >20 reverts with `h3_ids length out of range [1,20]`. Batching in `ClaimModal` is NOT implemented yet. If user asks to actually claim >20, build client-side batching that splits into N TX of ≤20.
+  - Pricing tiers T1/T2/T3 with bonding-curve increments.
+  - 102 cities table for the on-chain tier classifier (integer bbox, not haversine).
+- Compute budget limit ~1.4M CU + TX size 1232 B means a single claim can realistically never exceed ~25–40 tiles regardless of program changes.
+
+## Environment vars (`.env.local`)
+
+```
+NEXT_PUBLIC_MAPBOX_TOKEN=pk....
+NEXT_PUBLIC_RPC_URL=https://api.devnet.solana.com
+NEXT_PUBLIC_PROGRAM_ID=GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt
+NEXT_PUBLIC_TREASURY=<devnet wallet>
+NEXT_PUBLIC_PRIVY_APP_ID=<privy id>
+NEXT_PUBLIC_SUPABASE_URL=<supabase project url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
+```
+
+`.env.local.example` has the public ones; Supabase keys aren't checked in.
+
+## Deploy flow (memorize this)
+
+Vercel is wired manually — no git auto-deploy. After committing:
+
+```bash
+# 1. Deploy
+npx vercel --prod --yes
+
+# 2. Find the resulting URL (or grab from output)
+npx vercel ls vavaworld --prod   # top row is freshest
+
+# 3. Alias the deploy to the production hostname
+npx vercel alias set vavaworld-<hash>-leo-jankovics-projects.vercel.app vavaworld.vercel.app
+
+# 4. Verify live
+curl -fsS https://vavaworld.vercel.app/<route> | grep <some-string-you-just-changed>
+```
+
+Project name on Vercel: `vavaworld` (owner `leo-jankovics-projects`). Custom domain `vavaworld.fun` aliases to the same.
+
+## Local dev
+
+```bash
+npm install --legacy-peer-deps     # vercel.json pins this
+npm run dev                        # localhost:3000
+npm run build                      # full type-check + lint
+npm test                           # vitest, hits lib/__tests__
+```
+
+For headless screenshot verification before deploy: write a temp `.shot.js`
+using CDP (Chrome at `C:/Program Files/Google/Chrome/Application/chrome.exe`)
+INSIDE the project dir so `require('ws')` resolves from `node_modules`.
+Clean up `.shot.js` + `.*.png` before committing.
+
+## Frequent gotchas
+
+- **Edit tool requires Read first** in the same session — Read the file before editing or the edit fails.
+- **`next start` on a busy port** → `EADDRINUSE`. Kill via PowerShell:
+  `Get-NetTCPConnection -LocalPort <p> | % { Stop-Process -Id $_.OwningProcess -Force }`
+- **Emoji flags break on Windows** → always `<Flag code="se" />`.
+- **`/fast` mode is OFF by default** — user opted out (billed at premium $30/$150 per Mtok, outside the subscription). Don't toggle it on.
+- **/portfolio is standalone** — don't add the global `AppSidebar` there; it gets `isStandalone` treatment in `app/(app)/layout.tsx` and renders its own `PfSidebar`. When changing sidebars, change BOTH so they stay 1:1.
+- **Mock vs on-chain:** When you raise a UI cap (like the map's 20→1000 claim cap), check whether on-chain enforces it independently and surface the mismatch to the user.
+
+## Working in parallel with multiple Claude windows
+
+The user runs multiple Claude Code windows. To stay out of each other's way:
+
+```bash
+# From the main repo:
+git worktree add ../tomorrowland-<feature> <branch-name>
+```
+
+Then launch a Claude Code session in `../tomorrowland-<feature>`. Both
+windows read this CLAUDE.md + the user's auto-memory, but edit isolated
+working trees. Existing worktree dir: `.claude/worktrees`.
+
+## What lives where
+
+- `app/` — routes (App Router). `(app)/` is the auth-gated group with shared layout.
+- `components/` — feature folders (`map/`, `marketplace/`, `leaderboard/`, `nations/`, `profile/`, `landing/`) + global ones at top level (`brand-logo`, `flag`, `user-link`, `ClaimModal`, etc.) + `ui/` for shadcn primitives.
+- `lib/` — utilities, hooks (`use-*.ts`), Solana client wiring (`anchor-client.ts`, `anchor-idl.json`, `tile-pda.ts`), Supabase clients (`supabase.ts` client / `supabase-server.ts` server), pricing/quote logic, mock datasets, geo helpers (`h3-utils`, `cities`, `geocoding`, `tier`).
+- `anchor/programs/tiles/` — on-chain Rust program.
+- `docs/superpowers/` — house docs.
+- `public/` — static assets (logo, sky bg, fonts, etc.).
+- `types/` — global TS type augments.
