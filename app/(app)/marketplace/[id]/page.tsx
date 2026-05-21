@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Clock, Hexagon, TrendingDown, TrendingUp } from 
 import { Button } from '@/components/ui/button';
 import { BuyDialog } from '@/components/marketplace/buy-dialog';
 import { ListTileDialog } from '@/components/marketplace/list-tile-dialog';
+import { StreetViewButton } from '@/components/marketplace/street-view-button';
 import { mockActivity, mockListings } from '@/lib/mock-marketplace';
 import { Flag } from '@/components/flag';
 import { UserLink } from '@/components/user-link';
@@ -137,13 +138,18 @@ export default function TileDetailPage() {
               </div>
             </div>
 
-            <div className="mt-5 flex gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
               <Button className="flex-1" onClick={() => setBuyOpen(true)}>
                 Buy now
               </Button>
               <Button variant="outline" onClick={() => setListOpen(true)}>
                 Make offer
               </Button>
+              <StreetViewButton
+                lat={listing.lat}
+                lng={listing.lng}
+                label={`${listing.city} · ${listing.neighborhood}`}
+              />
             </div>
           </div>
 
