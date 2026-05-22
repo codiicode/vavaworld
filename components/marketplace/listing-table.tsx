@@ -36,8 +36,8 @@ const SORT_LABELS: Record<SortKey, string> = {
  * Default view of the marketplace — dense data table with sticky header.
  *
  * Designed for fast scanning: tabular-nums on every number, color-coded
- * 24h delta, decay bar that lets you eyeball health at a glance, and a
- * "Buy" button that only reveals on row hover so the table stays calm.
+ * 24h delta, and a "Buy" button that only reveals on row hover so the
+ * table stays calm.
  *
  * Clicking a row routes to /marketplace/[id] (the Buy button stops propagation
  * so it doesn't navigate the user away from their cart-style intent).

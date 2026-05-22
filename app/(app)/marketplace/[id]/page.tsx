@@ -29,12 +29,6 @@ export default function TileDetailPage() {
   if (!listing) notFound();
 
   const positive = listing.change24h > 0;
-  const decayColor =
-    listing.decayPercent > 70
-      ? 'bg-emerald-500'
-      : listing.decayPercent > 30
-        ? 'bg-amber-500'
-        : 'bg-red-500';
 
   // Zoomed-in satellite shot of the tile with its hex outlined.
   const mapImg = hexStaticMapUrl({ lat: listing.lat, lng: listing.lng });
@@ -83,20 +77,7 @@ export default function TileDetailPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Fact label="Decay">
-              <div className="flex items-center gap-2">
-                <div className="h-1 w-12 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={cn('h-full rounded-full', decayColor)}
-                    style={{ width: `${listing.decayPercent}%` }}
-                  />
-                </div>
-                <span className="text-sm font-medium tabular-nums">
-                  {listing.decayPercent}%
-                </span>
-              </div>
-            </Fact>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Fact label="Coordinates">
               <span className="text-xs tabular-nums">
                 {listing.lat.toFixed(3)}, {listing.lng.toFixed(3)}

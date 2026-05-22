@@ -21,8 +21,6 @@ export type Listing = {
   change24h: number;
   /** Last sale price for this exact tile (SOL), null if never sold */
   lastSale: number | null;
-  /** Decay health %, 0-100 */
-  decayPercent: number;
   /** Pre-formatted "X ago" string for UI; ordering is intent, not real time */
   listedAgo: string;
   /** Truncated 0xABCD…7890 seller address */
@@ -46,26 +44,26 @@ const SELLERS = MOCK_USERS.map((u) => u.addr);
 
 // Intentionally varied: rich/poor cities, Tier 1/2/3 mix, mix of price moves
 const RAW: Array<Omit<Listing, 'id' | 'priceUsd' | 'sellerAddr' | 'claimedAt' | 'claimSequence'> & { sellerIdx: number }> = [
-  { h3: '8b2840a0a0a0001', countryCode: 'se', city: 'Stockholm', neighborhood: 'Östermalm', lat: 59.336, lng: 18.077, tier: 1, price: 0.84, change24h: 12.4, lastSale: 0.72, decayPercent: 85, listedAgo: '2h ago', sellerIdx: 0, isIconic: false },
-  { h3: '8b2840a0a0a0002', countryCode: 'jp', city: 'Tokyo', neighborhood: 'Shibuya', lat: 35.659, lng: 139.700, tier: 1, price: 0.92, change24h: 8.1, lastSale: 0.85, decayPercent: 73, listedAgo: '4h ago', sellerIdx: 1, isIconic: true },
-  { h3: '8b2840a0a0a0003', countryCode: 'de', city: 'Berlin', neighborhood: 'Kreuzberg', lat: 52.499, lng: 13.403, tier: 2, price: 0.18, change24h: -3.2, lastSale: 0.19, decayPercent: 41, listedAgo: '6h ago', sellerIdx: 2 },
-  { h3: '8b2840a0a0a0004', countryCode: 'us', city: 'New York', neighborhood: 'Brooklyn', lat: 40.679, lng: -73.952, tier: 1, price: 0.61, change24h: 22.7, lastSale: 0.50, decayPercent: 76, listedAgo: '12m ago', sellerIdx: 3 },
-  { h3: '8b2840a0a0a0005', countryCode: 'fr', city: 'Paris', neighborhood: 'Le Marais', lat: 48.857, lng: 2.359, tier: 1, price: 0.72, change24h: -1.4, lastSale: 0.74, decayPercent: 91, listedAgo: '1h ago', sellerIdx: 4, isIconic: true },
-  { h3: '8b2840a0a0a0006', countryCode: 'gb', city: 'London', neighborhood: 'Shoreditch', lat: 51.524, lng: -0.078, tier: 1, price: 0.55, change24h: 5.2, lastSale: 0.52, decayPercent: 62, listedAgo: '8h ago', sellerIdx: 5, isAuction: true },
-  { h3: '8b2840a0a0a0007', countryCode: 'br', city: 'São Paulo', neighborhood: 'Vila Madalena', lat: -23.547, lng: -46.690, tier: 2, price: 0.09, change24h: 18.0, lastSale: 0.075, decayPercent: 38, listedAgo: '32m ago', sellerIdx: 6 },
-  { h3: '8b2840a0a0a0008', countryCode: 'au', city: 'Sydney', neighborhood: 'Surry Hills', lat: -33.886, lng: 151.211, tier: 1, price: 0.48, change24h: -4.8, lastSale: 0.51, decayPercent: 67, listedAgo: '1d ago', sellerIdx: 7 },
-  { h3: '8b2840a0a0a0009', countryCode: 'kr', city: 'Seoul', neighborhood: 'Gangnam', lat: 37.498, lng: 127.027, tier: 1, price: 0.66, change24h: 14.2, lastSale: 0.58, decayPercent: 80, listedAgo: '3h ago', sellerIdx: 8 },
-  { h3: '8b2840a0a0a000a', countryCode: 'it', city: 'Rome', neighborhood: 'Trastevere', lat: 41.889, lng: 12.470, tier: 2, price: 0.14, change24h: 2.1, lastSale: 0.13, decayPercent: 55, listedAgo: '5h ago', sellerIdx: 9, isIconic: true },
-  { h3: '8b2840a0a0a000b', countryCode: 'pt', city: 'Lisbon', neighborhood: 'Alfama', lat: 38.711, lng: -9.130, tier: 2, price: 0.11, change24h: -7.5, lastSale: 0.12, decayPercent: 23, listedAgo: '9h ago', sellerIdx: 10 },
-  { h3: '8b2840a0a0a000c', countryCode: 'nl', city: 'Amsterdam', neighborhood: 'Jordaan', lat: 52.378, lng: 4.880, tier: 1, price: 0.42, change24h: 6.0, lastSale: 0.40, decayPercent: 71, listedAgo: '2h ago', sellerIdx: 11 },
-  { h3: '8b2840a0a0a000d', countryCode: 'jp', city: 'Tokyo', neighborhood: 'Shimokitazawa', lat: 35.660, lng: 139.668, tier: 2, price: 0.21, change24h: 9.3, lastSale: 0.18, decayPercent: 49, listedAgo: '47m ago', sellerIdx: 0 },
-  { h3: '8b2840a0a0a000e', countryCode: 'us', city: 'Los Angeles', neighborhood: 'Venice', lat: 33.985, lng: -118.469, tier: 1, price: 0.79, change24h: -2.0, lastSale: 0.81, decayPercent: 84, listedAgo: '15h ago', sellerIdx: 1, isIconic: true },
-  { h3: '8b2840a0a0a000f', countryCode: 'mx', city: 'Mexico City', neighborhood: 'Roma Norte', lat: 19.418, lng: -99.165, tier: 2, price: 0.07, change24h: 33.3, lastSale: 0.05, decayPercent: 28, listedAgo: '4m ago', sellerIdx: 2 },
-  { h3: '8b2840a0a0a0010', countryCode: 'sg', city: 'Singapore', neighborhood: 'Tiong Bahru', lat: 1.286, lng: 103.832, tier: 2, price: 0.13, change24h: -1.2, lastSale: 0.13, decayPercent: 52, listedAgo: '7h ago', sellerIdx: 3 },
-  { h3: '8b2840a0a0a0011', countryCode: 'ca', city: 'Toronto', neighborhood: 'Kensington', lat: 43.654, lng: -79.401, tier: 2, price: 0.09, change24h: 4.7, lastSale: 0.08, decayPercent: 44, listedAgo: '11h ago', sellerIdx: 4 },
-  { h3: '8b2840a0a0a0012', countryCode: 'es', city: 'Barcelona', neighborhood: 'Gràcia', lat: 41.402, lng: 2.155, tier: 1, price: 0.34, change24h: 11.5, lastSale: 0.30, decayPercent: 69, listedAgo: '40m ago', sellerIdx: 5 },
-  { h3: '8b2840a0a0a0013', countryCode: 'tr', city: 'Istanbul', neighborhood: 'Karaköy', lat: 41.024, lng: 28.974, tier: 2, price: 0.06, change24h: -10.4, lastSale: 0.07, decayPercent: 19, listedAgo: '1d ago', sellerIdx: 6 },
-  { h3: '8b2840a0a0a0014', countryCode: 'is', city: 'Reykjavík', neighborhood: 'Miðborg', lat: 64.146, lng: -21.942, tier: 3, price: 0.004, change24h: 0, lastSale: null, decayPercent: 12, listedAgo: '3d ago', sellerIdx: 7 },
+  { h3: '8b2840a0a0a0001', countryCode: 'se', city: 'Stockholm', neighborhood: 'Östermalm', lat: 59.336, lng: 18.077, tier: 1, price: 0.84, change24h: 12.4, lastSale: 0.72, listedAgo: '2h ago', sellerIdx: 0, isIconic: false },
+  { h3: '8b2840a0a0a0002', countryCode: 'jp', city: 'Tokyo', neighborhood: 'Shibuya', lat: 35.659, lng: 139.700, tier: 1, price: 0.92, change24h: 8.1, lastSale: 0.85, listedAgo: '4h ago', sellerIdx: 1, isIconic: true },
+  { h3: '8b2840a0a0a0003', countryCode: 'de', city: 'Berlin', neighborhood: 'Kreuzberg', lat: 52.499, lng: 13.403, tier: 2, price: 0.18, change24h: -3.2, lastSale: 0.19, listedAgo: '6h ago', sellerIdx: 2 },
+  { h3: '8b2840a0a0a0004', countryCode: 'us', city: 'New York', neighborhood: 'Brooklyn', lat: 40.679, lng: -73.952, tier: 1, price: 0.61, change24h: 22.7, lastSale: 0.50, listedAgo: '12m ago', sellerIdx: 3 },
+  { h3: '8b2840a0a0a0005', countryCode: 'fr', city: 'Paris', neighborhood: 'Le Marais', lat: 48.857, lng: 2.359, tier: 1, price: 0.72, change24h: -1.4, lastSale: 0.74, listedAgo: '1h ago', sellerIdx: 4, isIconic: true },
+  { h3: '8b2840a0a0a0006', countryCode: 'gb', city: 'London', neighborhood: 'Shoreditch', lat: 51.524, lng: -0.078, tier: 1, price: 0.55, change24h: 5.2, lastSale: 0.52, listedAgo: '8h ago', sellerIdx: 5, isAuction: true },
+  { h3: '8b2840a0a0a0007', countryCode: 'br', city: 'São Paulo', neighborhood: 'Vila Madalena', lat: -23.547, lng: -46.690, tier: 2, price: 0.09, change24h: 18.0, lastSale: 0.075, listedAgo: '32m ago', sellerIdx: 6 },
+  { h3: '8b2840a0a0a0008', countryCode: 'au', city: 'Sydney', neighborhood: 'Surry Hills', lat: -33.886, lng: 151.211, tier: 1, price: 0.48, change24h: -4.8, lastSale: 0.51, listedAgo: '1d ago', sellerIdx: 7 },
+  { h3: '8b2840a0a0a0009', countryCode: 'kr', city: 'Seoul', neighborhood: 'Gangnam', lat: 37.498, lng: 127.027, tier: 1, price: 0.66, change24h: 14.2, lastSale: 0.58, listedAgo: '3h ago', sellerIdx: 8 },
+  { h3: '8b2840a0a0a000a', countryCode: 'it', city: 'Rome', neighborhood: 'Trastevere', lat: 41.889, lng: 12.470, tier: 2, price: 0.14, change24h: 2.1, lastSale: 0.13, listedAgo: '5h ago', sellerIdx: 9, isIconic: true },
+  { h3: '8b2840a0a0a000b', countryCode: 'pt', city: 'Lisbon', neighborhood: 'Alfama', lat: 38.711, lng: -9.130, tier: 2, price: 0.11, change24h: -7.5, lastSale: 0.12, listedAgo: '9h ago', sellerIdx: 10 },
+  { h3: '8b2840a0a0a000c', countryCode: 'nl', city: 'Amsterdam', neighborhood: 'Jordaan', lat: 52.378, lng: 4.880, tier: 1, price: 0.42, change24h: 6.0, lastSale: 0.40, listedAgo: '2h ago', sellerIdx: 11 },
+  { h3: '8b2840a0a0a000d', countryCode: 'jp', city: 'Tokyo', neighborhood: 'Shimokitazawa', lat: 35.660, lng: 139.668, tier: 2, price: 0.21, change24h: 9.3, lastSale: 0.18, listedAgo: '47m ago', sellerIdx: 0 },
+  { h3: '8b2840a0a0a000e', countryCode: 'us', city: 'Los Angeles', neighborhood: 'Venice', lat: 33.985, lng: -118.469, tier: 1, price: 0.79, change24h: -2.0, lastSale: 0.81, listedAgo: '15h ago', sellerIdx: 1, isIconic: true },
+  { h3: '8b2840a0a0a000f', countryCode: 'mx', city: 'Mexico City', neighborhood: 'Roma Norte', lat: 19.418, lng: -99.165, tier: 2, price: 0.07, change24h: 33.3, lastSale: 0.05, listedAgo: '4m ago', sellerIdx: 2 },
+  { h3: '8b2840a0a0a0010', countryCode: 'sg', city: 'Singapore', neighborhood: 'Tiong Bahru', lat: 1.286, lng: 103.832, tier: 2, price: 0.13, change24h: -1.2, lastSale: 0.13, listedAgo: '7h ago', sellerIdx: 3 },
+  { h3: '8b2840a0a0a0011', countryCode: 'ca', city: 'Toronto', neighborhood: 'Kensington', lat: 43.654, lng: -79.401, tier: 2, price: 0.09, change24h: 4.7, lastSale: 0.08, listedAgo: '11h ago', sellerIdx: 4 },
+  { h3: '8b2840a0a0a0012', countryCode: 'es', city: 'Barcelona', neighborhood: 'Gràcia', lat: 41.402, lng: 2.155, tier: 1, price: 0.34, change24h: 11.5, lastSale: 0.30, listedAgo: '40m ago', sellerIdx: 5 },
+  { h3: '8b2840a0a0a0013', countryCode: 'tr', city: 'Istanbul', neighborhood: 'Karaköy', lat: 41.024, lng: 28.974, tier: 2, price: 0.06, change24h: -10.4, lastSale: 0.07, listedAgo: '1d ago', sellerIdx: 6 },
+  { h3: '8b2840a0a0a0014', countryCode: 'is', city: 'Reykjavík', neighborhood: 'Miðborg', lat: 64.146, lng: -21.942, tier: 3, price: 0.004, change24h: 0, lastSale: null, listedAgo: '3d ago', sellerIdx: 7 },
 ];
 
 // Deterministic claim-time generator. SSR and CSR must agree so we don't
@@ -108,7 +106,6 @@ function buildListings(): Listing[] {
     counter += 1;
     const priceMultiplier = base.tier === 1 ? 0.85 + Math.random() * 0.4 : base.tier === 2 ? 0.7 + Math.random() * 0.6 : 0.5 + Math.random() * 0.8;
     const change = (Math.random() * 30 - 12);  // -12..18
-    const decay = Math.floor(Math.random() * 95) + 5;
     const agoMins = Math.floor(Math.random() * 1440);
     const ago = agoMins < 60 ? `${agoMins}m ago` : agoMins < 1440 ? `${Math.floor(agoMins / 60)}h ago` : `${Math.floor(agoMins / 1440)}d ago`;
     const newPrice = Math.max(0.001, +(base.price * priceMultiplier).toFixed(3));
@@ -119,7 +116,6 @@ function buildListings(): Listing[] {
       price: newPrice,
       priceUsd: Math.round(newPrice * 150),
       change24h: +change.toFixed(1),
-      decayPercent: decay,
       listedAgo: ago,
       sellerAddr: SELLERS[(counter + 3) % SELLERS.length],
       lastSale: base.lastSale != null ? +(base.lastSale * (0.9 + Math.random() * 0.3)).toFixed(3) : null,

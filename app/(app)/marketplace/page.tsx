@@ -66,9 +66,6 @@ export default function MarketplacePage() {
       xs = xs.filter((l) => filters.countries.includes(l.countryCode));
     }
 
-    // Decay
-    xs = xs.filter((l) => l.decayPercent >= filters.decayMin);
-
     // Status
     if (filters.status === 'auction') xs = xs.filter((l) => l.isAuction);
     // listed and reserve-met both pass everything for now (mock data)

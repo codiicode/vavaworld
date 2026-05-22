@@ -14,8 +14,7 @@ export function EmptyState({ onReset }: { onReset: () => void }) {
       <SearchX className="text-muted-foreground" size={28} />
       <p className="text-sm font-medium">No listings match your filters</p>
       <p className="max-w-sm text-xs text-muted-foreground">
-        Try widening the price range, dropping a country, or lowering the decay
-        threshold.
+        Try widening the price range or dropping a country.
       </p>
       <Button variant="outline" size="sm" onClick={onReset} className="mt-1">
         Reset filters

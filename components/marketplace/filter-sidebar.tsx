@@ -16,7 +16,6 @@ export type FilterState = {
   priceMin: number;
   priceMax: number;
   countries: ReadonlyArray<string>;
-  decayMin: number;
   status: StatusValue;
   iconic: boolean;
   newOnly: boolean;
@@ -29,7 +28,6 @@ export const defaultFilterState: FilterState = {
   priceMin: 0,
   priceMax: 10,
   countries: [],
-  decayMin: 0,
   status: 'listed',
   iconic: false,
   newOnly: false,
@@ -146,21 +144,6 @@ export function FilterSidebar({
           selected={state.countries}
           onChange={(next) => set('countries', next)}
         />
-      </FilterGroup>
-
-      {/* Decay */}
-      <FilterGroup label="Decay">
-        <Slider
-          value={[state.decayMin]}
-          onValueChange={([v]) => set('decayMin', v)}
-          min={0}
-          max={100}
-          step={1}
-        />
-        <div className="mt-2 text-xs text-foreground/55">
-          Show hexes with{' '}
-          <span className="tabular-nums text-foreground">{state.decayMin}%</span>+ remaining
-        </div>
       </FilterGroup>
 
       {/* Status */}
