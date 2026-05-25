@@ -443,3 +443,41 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 .pf-stage .sidebar.panel::after { content: none; }
+
+/* ─── Mobile (<768px): the fixed 3-column dashboard can't fit a phone
+   (232px + 280px side columns alone exceed the viewport). Stack everything
+   into one scrollable column; the global MobileNav handles navigation so the
+   in-page sidebar is hidden. ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .pf-stage {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pf-stage .shell {
+    height: auto;
+    min-height: 100%;
+    padding: 70px 14px 28px; /* top clears the 56px MobileNav bar */
+  }
+  .pf-stage.va .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  /* In-page sidebar replaced by the global mobile drawer */
+  .pf-stage .sidebar { display: none; }
+  /* Let each section grow to its content instead of being squeezed + clipped */
+  .pf-stage.va .va-main { grid-template-rows: auto; min-height: 0; }
+  .pf-stage.va .welcome { grid-template-columns: 1fr; gap: 10px; }
+  .pf-stage.va .welcome__search { min-width: 0; width: 100%; }
+  .pf-stage.va .kpis { grid-template-columns: 1fr; }
+  .pf-stage.va .bottom { grid-template-columns: 1fr; }
+  .pf-stage.va .rail { grid-template-rows: auto auto; }
+  /* Drop the second progress bar ("Performance") so the holdings row fits */
+  .pf-stage.va .holdings__head,
+  .pf-stage.va .holdings__row {
+    grid-template-columns: 28px 1.5fr 1fr 0.7fr 54px;
+  }
+  .pf-stage.va .holdings__head > :nth-child(4),
+  .pf-stage.va .holdings__row > :nth-child(4) {
+    display: none;
+  }
+}

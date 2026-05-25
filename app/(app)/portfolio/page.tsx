@@ -409,7 +409,7 @@ export default function PortfolioPage() {
             <div className="holdings__head">
               <span>#</span><span>Hex</span><span>Maturity</span><span>Performance</span><span style={{ textAlign: 'right' }}>ROI</span><span></span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto' }}>
               {derived.holdings.length === 0 && (
                 <div className="holdings__row" style={{ color: 'var(--text-muted)' }}>
                   <span />
