@@ -22,7 +22,14 @@ import { useUserTiles } from '@/lib/use-user-tiles';
 import { useCounters } from '@/lib/use-counters';
 import { useHexLocations } from '@/lib/use-hex-locations';
 import { quoteOne } from '@/lib/quote';
+import { Flag } from '@/components/flag';
 import type { ClaimedTile } from '@/types/tile';
+
+// Display the portfolio in USD (chain-agnostic). Same ~$150/SOL convention the
+// marketplace already uses for its priceUsd field.
+const SOL_USD = 150;
+const fmtUsd = (n: number) =>
+  n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /* ── Inline SVG icon set (verbatim from handoff, stroke-width 1.8) ───────── */
 const PI = {
@@ -273,6 +280,7 @@ export default function PortfolioPage() {
         return {
           id: String(i + 1).padStart(2, '0'),
           name: place,
+          code: loc?.countryCode ?? null,
           tier: tierName(t.tier),
           roi: `${roi >= 0 ? '+' : ''}${(roi * 100).toFixed(0)}%`,
           maturity,
@@ -280,22 +288,25 @@ export default function PortfolioPage() {
       });
 
     // Regions — group all holdings by country, % of portfolio.
-    const byCountry = new Map<string, number>();
+    const byCountry = new Map<string, { count: number; code: string | null }>();
     for (const t of list) {
       const loc = locations.get(t.h3);
-      const key = loc?.countryName ?? 'Unmapped';
-      byCountry.set(key, (byCountry.get(key) ?? 0) + 1);
+      const name = loc?.countryName ?? 'Unmapped';
+      const prev = byCountry.get(name);
+      byCountry.set(name, {
+        count: (prev?.count ?? 0) + 1,
+        code: loc?.countryCode ?? prev?.code ?? null,
+      });
     }
     const total = list.length || 1;
-    const regionColors = ['#0ea5e9', '#22d3ee', '#0369a1', '#7dd3fc'];
     const regions = [...byCountry.entries()]
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 4)
-      .map(([name, n], i) => ({
+      .map(([name, { count, code }]) => ({
         name,
-        count: n,
-        pct: Math.round((n / total) * 100),
-        color: regionColors[i % regionColors.length],
+        code,
+        count,
+        pct: Math.round((count / total) * 100),
       }));
 
     // Activity — most recent 3 claims (real, no indexer needed).
@@ -307,7 +318,7 @@ export default function PortfolioPage() {
         const place = loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? 'a hex';
         return {
           tag: 'Claimed',
-          note: `${place} · ${(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(3)} SOL`,
+          note: `${place} · $${fmtUsd((Number(t.pricePaid) / LAMPORTS_PER_SOL) * SOL_USD)}`,
           t: timeAgo(t.claimedAt),
         };
       });
@@ -342,7 +353,7 @@ export default function PortfolioPage() {
   const username = profile.username
     ? `@${profile.username}`
     : shortAddr(wallet.address);
-  const balanceLabel = balance !== null ? `${balance.toFixed(3)} SOL` : '— SOL';
+  const balanceLabel = balance !== null ? `$${fmtUsd(balance * SOL_USD)}` : '$—';
 
   return (
     <div className="pf-stage va">
@@ -369,7 +380,7 @@ export default function PortfolioPage() {
           <div className="kpis">
             <div className="glass panel kpi">
               <div className="kpi__icon">{PI.coin}</div>
-              <div className="kpi__big num"><span className="currency">◎</span>{derived.value.toFixed(3)}</div>
+              <div className="kpi__big num"><span className="currency">$</span>{fmtUsd(derived.value * SOL_USD)}</div>
               <div className="kpi__label">Total Portfolio Value</div>
               <div className="kpi__delta">
                 {derived.roiPct >= 0 ? '+' : ''}{derived.roiPct.toFixed(0)}% vs spent
@@ -416,7 +427,7 @@ export default function PortfolioPage() {
                 <div className="holdings__row" key={h.id}>
                   <span className="holdings__idx">{h.id}</span>
                   <div className="holdings__name">
-                    <div className="holdings__flag" />
+                    <Flag code={h.code} size={20} />
                     <div>
                       <b>{h.name}</b>
                       <span>{h.tier}</span>
@@ -436,7 +447,8 @@ export default function PortfolioPage() {
             <div className="glass panel earnings">
               <div className="eyebrow">Total Return</div>
               <div className="earnings__big num">
-                <span className="currency">◎</span>{derived.retSol.toFixed(3)}
+                {derived.retSol < 0 ? '−' : ''}
+                <span className="currency">$</span>{fmtUsd(Math.abs(derived.retSol) * SOL_USD)}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
                 <span className="chip chip--brand" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -475,7 +487,7 @@ export default function PortfolioPage() {
             <h3 className="h3">Top Regions</h3>
             {derived.regions.length === 0 && (
               <div className="region-row">
-                <div className="region-row__flag" />
+                <Flag size={18} />
                 <div>
                   <div className="region-row__name">No regions yet</div>
                   <div className="region-row__sub">0 hexes</div>
@@ -485,7 +497,7 @@ export default function PortfolioPage() {
             )}
             {derived.regions.map((r) => (
               <div className="region-row" key={r.name}>
-                <div className="region-row__flag" style={{ background: `linear-gradient(135deg, ${r.color}, #1d4ed8)` }} />
+                <Flag code={r.code} size={18} />
                 <div>
                   <div className="region-row__name">{r.name}</div>
                   <div className="region-row__sub">{r.count} {r.count === 1 ? 'hex' : 'hexes'}</div>
