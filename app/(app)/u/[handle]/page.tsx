@@ -24,7 +24,7 @@ export default function PublicProfilePage() {
   const display = user.username ? `@${user.username}` : user.addr;
 
   return (
-    <div className="mx-auto max-w-[1000px] px-8 py-10">
+    <div className="mx-auto max-w-[1000px] px-4 py-6 md:px-8 md:py-10">
       <Link
         href="/leaderboard"
         className="mb-6 inline-flex items-center gap-1.5 text-xs text-foreground/60 transition-colors hover:text-foreground"

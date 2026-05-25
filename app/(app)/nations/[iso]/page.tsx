@@ -12,7 +12,7 @@ export default function CountryPage({ params }: { params: { iso: string } }) {
   if (!nation) notFound();
 
   return (
-    <div className="mx-auto max-w-7xl px-8 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
       <Link
         href="/nations"
         className="mb-5 inline-flex items-center gap-1.5 text-sm text-foreground/60 transition-colors hover:text-foreground"

@@ -75,7 +75,7 @@ export function GlassRightPanel({
 
   return (
     <aside
-      className="glass glass-panel fixed bottom-[18px] right-[18px] top-[18px] z-30 flex w-[320px] flex-col px-5 pb-[22px] pt-5"
+      className="glass glass-panel fixed z-30 flex flex-col px-5 pb-[22px] pt-5 inset-x-0 bottom-0 max-h-[64vh] overflow-y-auto md:inset-x-auto md:bottom-[18px] md:right-[18px] md:top-[18px] md:max-h-none md:w-[320px] md:overflow-visible"
       style={{ gap: 20 }}
     >
       {/* Wallet chip */}

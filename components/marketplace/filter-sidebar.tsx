@@ -71,7 +71,7 @@ export function FilterSidebar({
   const reset = () => onChange(defaultFilterState);
 
   return (
-    <aside className="flex h-full w-60 flex-shrink-0 flex-col overflow-y-auto border-r border-white/40 bg-white/30 text-foreground backdrop-blur-md">
+    <aside className="hidden h-full w-60 flex-shrink-0 flex-col overflow-y-auto border-r border-white/40 bg-white/30 text-foreground backdrop-blur-md md:flex">
       {/* Search */}
       <div className="border-b border-white/30 p-4">
         <div className="relative">

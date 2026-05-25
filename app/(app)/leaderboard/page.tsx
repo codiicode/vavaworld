@@ -45,7 +45,7 @@ export default function LeaderboardPage() {
   const tableRows = list.slice(3);
 
   return (
-    <div className="mx-auto max-w-7xl px-8 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
       <LeaderboardHeader />
 
       <LeaderboardFilters
@@ -56,7 +56,7 @@ export default function LeaderboardPage() {
       />
 
       {podium.length > 0 && (
-        <div className="mb-6 grid grid-cols-3 items-end gap-4">
+        <div className="mb-6 grid grid-cols-1 items-end gap-4 sm:grid-cols-3">
           {/* Rank 2 — left */}
           <div>{podium[1] && <PodiumCard entry={podium[1]} />}</div>
           {/* Rank 1 — middle, slightly larger */}

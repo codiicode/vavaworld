@@ -43,7 +43,7 @@ export default function NationsPage() {
   const rest = list.slice(3);
 
   return (
-    <div className="mx-auto max-w-7xl px-8 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
       <div className="mb-8">
         <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
           Governance
