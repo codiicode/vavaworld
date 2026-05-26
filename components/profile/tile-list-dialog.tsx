@@ -118,6 +118,20 @@ export function TileListDialog({
                   setSubmitting(true);
                   setError(null);
                   try {
+                    // Lazy-mirror the hex into Supabase before listing. The
+                    // on-chain claim happened via the Anchor program and may
+                    // not have hit the `hexes` table yet (or at all for old
+                    // claims). 409 = already mirrored → safe to proceed.
+                    const mirror = await fetch('/api/claim', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ h3: tile.h3, owner: wallet.address }),
+                    });
+                    if (!mirror.ok && mirror.status !== 409) {
+                      const j = await mirror.json().catch(() => ({} as { error?: string }));
+                      throw new Error(j.error ?? 'Could not register hex');
+                    }
+
                     await createListing({
                       h3: tile.h3,
                       seller: wallet.address,

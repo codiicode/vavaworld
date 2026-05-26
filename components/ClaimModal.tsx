@@ -136,6 +136,18 @@ export function ClaimModal({
         lastSig = sig;
         const justClaimed = batch.map((b) => b.h3);
         succeeded.push(...justClaimed);
+
+        // Mirror into Supabase so the off-chain `hexes` table has a row that
+        // marketplace listings (FK on h3_id) can reference. Fire-and-forget —
+        // if it fails, the lazy mirror in tile-list-dialog catches it.
+        for (const h3 of justClaimed) {
+          fetch('/api/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ h3, owner: wallet.publicKey.toBase58() }),
+          }).catch(() => {});
+        }
+
         // Fire per-batch so /profile + counters update progressively, not just
         // at the end. Each batch is a separate "property" in the grouped view
         // because Postgres now() advances per batch insert.
