@@ -206,8 +206,8 @@
 .landing-root .l-btn-ghost:hover { background: #fff; }
 .landing-root .l-btn-overlay-ghost {
   background: rgba(255, 255, 255, 0.10);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  color: rgba(10, 26, 46, 0.72);
+  border: 1px solid rgba(10, 26, 46, 0.22);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   font-family: "Inter", sans-serif;
@@ -217,7 +217,11 @@
   text-transform: uppercase;
   padding: 11px 22px;
 }
-.landing-root .l-btn-overlay-ghost:hover { background: rgba(255, 255, 255, 0.22); border-color: #fff; }
+.landing-root .l-btn-overlay-ghost:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--l-ink);
+  border-color: rgba(10, 26, 46, 0.40);
+}
 
 /* Profile pill — same liquid-glass fill as the nav itself, just outlined so
    it reads as a button, with the same ink text colour as the nav links. */
