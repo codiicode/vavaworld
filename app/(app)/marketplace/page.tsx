@@ -20,6 +20,14 @@ import {
   type Listing,
   type Tier,
 } from '@/lib/mock-marketplace';
+import {
+  useActiveListings,
+  useListingsVersion,
+  type DbListing,
+} from '@/lib/supabase-listings';
+import { hexCenter } from '@/lib/h3-utils';
+import { useHexLocations } from '@/lib/use-hex-locations';
+import { classifyTier } from '@/lib/tier';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc' | 'trending';
 
@@ -52,8 +60,25 @@ export default function MarketplacePage() {
   const [tier, setTier] = useState<'all' | Tier>('all');
   const [sort, setSort] = useState<SortKey>('newest');
 
+  // Real listings from Supabase, refetched whenever someone lists/cancels.
+  const version = useListingsVersion();
+  const { listings: dbListings } = useActiveListings(version);
+  const dbHexSet = useMemo(
+    () => new Set(dbListings.map((l) => l.h3_id)),
+    [dbListings],
+  );
+  const dbLocations = useHexLocations(dbHexSet);
+  const realListings = useMemo(
+    () => dbListings.map((l) => toListing(l, dbLocations)),
+    [dbListings, dbLocations],
+  );
+  const allListings = useMemo<ReadonlyArray<Listing>>(
+    () => [...realListings, ...mockListings],
+    [realListings],
+  );
+
   const visible = useMemo(() => {
-    let xs: ReadonlyArray<Listing> = mockListings;
+    let xs: ReadonlyArray<Listing> = allListings;
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -80,7 +105,7 @@ export default function MarketplacePage() {
           return rankAgo(a.listedAgo) - rankAgo(b.listedAgo);
       }
     });
-  }, [search, country, tier, sort]);
+  }, [allListings, search, country, tier, sort]);
 
   const reset = () => {
     setSearch('');
@@ -184,7 +209,8 @@ export default function MarketplacePage() {
         <span className="tabular-nums">
           {visible.length === 0
             ? 'No listings match these filters'
-            : `Showing ${visible.length} of ${mockListings.length.toLocaleString('en-US')}`}
+            : `Showing ${visible.length} of ${allListings.length.toLocaleString('en-US')}`}
+          {realListings.length > 0 && ` · ${realListings.length} live`}
         </span>
         {(search || country !== 'all' || tier !== 'all') && (
           <button
@@ -220,6 +246,46 @@ function Stat({ label, value }: { label: string; value: string }) {
       </div>
     </div>
   );
+}
+
+/** Adapt a real DB listing into the same Listing shape the grid renders. */
+function toListing(
+  l: DbListing,
+  locations: Map<string, ReturnType<typeof useHexLocations> extends Map<string, infer V> ? V : never>,
+): Listing {
+  const c = hexCenter(l.h3_id);
+  const loc = locations.get(l.h3_id);
+  const tier = classifyTier(c.lat, c.lng);
+  const price = Number(l.price_sol);
+  return {
+    id: l.id, // UUID — used as the route segment on /marketplace/[id]
+    h3: l.h3_id,
+    countryCode: (loc?.countryCode ?? 'un').toLowerCase(),
+    city: loc?.place ?? loc?.countryName ?? '—',
+    neighborhood: loc?.neighborhood ?? loc?.place ?? '—',
+    lat: c.lat,
+    lng: c.lng,
+    tier,
+    price,
+    priceUsd: Math.round(price * 150),
+    change24h: 0,
+    lastSale: null,
+    listedAgo: formatAgo(l.listed_at),
+    sellerAddr: l.seller,
+    claimedAt: l.listed_at,
+    claimSequence: 0,
+  };
+}
+
+function formatAgo(iso: string): string {
+  const then = new Date(iso).getTime();
+  const mins = Math.max(0, Math.floor((Date.now() - then) / 60_000));
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
 function rankAgo(s: string): number {

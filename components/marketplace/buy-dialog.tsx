@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Info } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,8 +8,10 @@ import { Flag } from '@/components/flag';
 import type { Listing } from '@/lib/mock-marketplace';
 
 /**
- * Confirmation dialog before the on-chain buy. UI only at this stage — the
- * actual swap/transfer hooks land alongside the secondary-market program.
+ * Honest "buy is coming" dialog. The on-chain secondary-market program isn't
+ * deployed yet, so we can't actually transfer the hex + escrow SOL — and we
+ * refuse to fake it. When the contract ships, this dialog becomes the real
+ * confirm step.
  */
 export function BuyDialog({
   listing,
@@ -21,8 +22,6 @@ export function BuyDialog({
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
-  const [submitting, setSubmitting] = useState(false);
-
   if (!listing) return null;
 
   const fee = listing.price * 0.025;
@@ -33,10 +32,10 @@ export function BuyDialog({
       <DialogContent className="sm:max-w-[420px]">
         <div className="space-y-1.5">
           <DialogPrimitive.Title className="text-lg font-semibold tracking-tight">
-            Confirm purchase
+            Buying is coming soon
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="text-sm text-muted-foreground">
-            You&apos;re about to claim this hex from its current holder.
+            Listings are live. Secondary-market settlement ships next.
           </DialogPrimitive.Description>
         </div>
 
@@ -59,23 +58,21 @@ export function BuyDialog({
               <Row label="Total" value={`${total.toFixed(4)} SOL`} bold />
             </div>
           </dl>
+
+          <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-900">
+            <Info size={14} className="mt-0.5 flex-shrink-0" />
+            <p className="leading-relaxed">
+              The on-chain secondary-market program isn&apos;t deployed yet, so
+              we can&apos;t escrow SOL or transfer ownership atomically. Rather
+              than fake it, we&apos;re holding off — buys go live with the
+              contract.
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button
-            disabled={submitting}
-            onClick={async () => {
-              setSubmitting(true);
-              await new Promise((r) => setTimeout(r, 900));
-              setSubmitting(false);
-              onOpenChange(false);
-            }}
-          >
-            {submitting && <Loader2 className="mr-2 animate-spin" size={14} />}
-            Confirm purchase
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Got it
           </Button>
         </div>
       </DialogContent>

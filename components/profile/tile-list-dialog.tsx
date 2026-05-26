@@ -8,6 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Flag } from '@/components/flag';
+import { useActiveWallet } from '@/lib/active-wallet';
+import {
+  createListing,
+  dispatchListingsChanged,
+} from '@/lib/supabase-listings';
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
@@ -33,6 +38,8 @@ export function TileListDialog({
   const [price, setPrice] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const wallet = useActiveWallet();
 
   if (!tile) return null;
 
@@ -49,6 +56,7 @@ export function TileListDialog({
     window.setTimeout(() => {
       setPrice('');
       setDone(false);
+      setError(null);
     }, 200);
   };
 
@@ -88,6 +96,12 @@ export function TileListDialog({
                 <Row label="Marketplace fee (2.5%)" value={`${fee.toFixed(4)} SOL`} />
                 <Row label="You receive" value={`${proceeds.toFixed(4)} SOL`} bold />
               </dl>
+
+              {error && (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {error}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -95,13 +109,27 @@ export function TileListDialog({
                 Cancel
               </Button>
               <Button
-                disabled={!valid || submitting}
+                disabled={!valid || submitting || !wallet.address}
                 onClick={async () => {
+                  if (!wallet.address) {
+                    setError('Connect your wallet first');
+                    return;
+                  }
                   setSubmitting(true);
-                  // Marketplace program not on-chain yet — record intent locally.
-                  await new Promise((r) => setTimeout(r, 700));
-                  setSubmitting(false);
-                  setDone(true);
+                  setError(null);
+                  try {
+                    await createListing({
+                      h3: tile.h3,
+                      seller: wallet.address,
+                      priceSol: numeric,
+                    });
+                    dispatchListingsChanged();
+                    setDone(true);
+                  } catch (e: unknown) {
+                    setError(e instanceof Error ? e.message : 'List failed');
+                  } finally {
+                    setSubmitting(false);
+                  }
                 }}
               >
                 {submitting && <Loader2 className="mr-2 animate-spin" size={14} />}
@@ -118,11 +146,12 @@ export function TileListDialog({
               >
                 ✓
               </div>
-              <p className="text-sm font-medium">Listing queued</p>
+              <p className="text-sm font-medium">Listed</p>
               <p className="max-w-sm text-xs text-muted-foreground">
-                The secondary marketplace launches soon — your listing at{' '}
-                <span className="tabular-nums text-foreground">{numeric.toFixed(3)} SOL</span>{' '}
-                will go live the moment trading opens.
+                Your hex is live in the marketplace at{' '}
+                <span className="tabular-nums text-foreground">{numeric.toFixed(3)} SOL</span>.
+                On-chain settlement happens when the marketplace contract ships;
+                until then the listing is held off-chain.
               </p>
             </div>
             <Button variant="outline" onClick={close} className="w-full">
