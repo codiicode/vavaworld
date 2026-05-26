@@ -31,7 +31,18 @@ const monoNum: React.CSSProperties = {
   fontFeatureSettings: '"tnum"',
 };
 
-type State = 'review' | 'signing' | 'confirmed' | 'error';
+type State = 'review' | 'signing' | 'confirmed' | 'partial' | 'error';
+
+// Each claim ix burns ~550K CUs per tile on BPF and a TX caps at 1.4M, so
+// the practical multi-tile batch is 2. Anything bigger needs the on-chain
+// classifier optimised; until then we chunk client-side.
+const CLAIM_CHUNK_SIZE = 2;
+
+function chunk<T>(arr: ReadonlyArray<T>, size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
 
 export function ClaimModal({
   selectedHexes,
@@ -47,6 +58,11 @@ export function ClaimModal({
   const [state, setState] = useState<State>('review');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [txSig, setTxSig] = useState<string>('');
+  const [progress, setProgress] = useState<{
+    current: number;
+    total: number;
+    succeeded: string[];
+  } | null>(null);
 
   const items = Array.from(selectedHexes).map((h3) => {
     const c = hexCenter(h3);
@@ -54,7 +70,9 @@ export function ClaimModal({
   });
   const totalLamports = quoteBatch(items, counters);
   const totalSol = Number(totalLamports) / LAMPORTS_PER_SOL;
-  const expectedMax = (totalLamports * 102n) / 100n;
+
+  const batches = chunk(items, CLAIM_CHUNK_SIZE);
+  const totalBatches = batches.length;
 
   const handleConfirm = async () => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
@@ -63,65 +81,83 @@ export function ClaimModal({
       return;
     }
     setState('signing');
-    try {
-      const connection = getConnection();
-      const program = new Program<Tiles>(idl as Idl, { connection });
-      const h3Bns = items.map((it) => new BN(BigInt('0x' + it.h3).toString()));
-      const tilePdas = items.map((it) => tilePda(it.h3, programIdPk)[0]);
+    setProgress({ current: 0, total: totalBatches, succeeded: [] });
 
-      const ix = await program.methods
-        .claim(h3Bns, new BN(expectedMax.toString()))
-        .accounts({
-          claimer: wallet.publicKey,
-          t1Counter: counterPda(1, programIdPk)[0],
-          t2Counter: counterPda(2, programIdPk)[0],
-          t3Counter: counterPda(3, programIdPk)[0],
+    const connection = getConnection();
+    const program = new Program<Tiles>(idl as Idl, { connection });
+    const succeeded: string[] = [];
+    let lastSig = '';
+
+    // Sequential — Solana fee payer + nonce ordering would race if we sent in
+    // parallel. Each batch ≤ CLAIM_CHUNK_SIZE so we stay under the CU cap.
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+      setProgress({ current: i + 1, total: totalBatches, succeeded: [...succeeded] });
+      try {
+        const batchLamports = quoteBatch(batch, counters);
+        const batchExpectedMax = (batchLamports * 102n) / 100n;
+
+        const h3Bns = batch.map((it) => new BN(BigInt('0x' + it.h3).toString()));
+        const tilePdas = batch.map((it) => tilePda(it.h3, programIdPk)[0]);
+
+        const ix = await program.methods
+          .claim(h3Bns, new BN(batchExpectedMax.toString()))
+          .accounts({
+            claimer: wallet.publicKey,
+            t1Counter: counterPda(1, programIdPk)[0],
+            t2Counter: counterPda(2, programIdPk)[0],
+            t3Counter: counterPda(3, programIdPk)[0],
+          })
+          .remainingAccounts(
+            tilePdas.map((p) => ({ pubkey: p, isWritable: true, isSigner: false })),
+          )
+          .instruction();
+
+        const { blockhash } = await connection.getLatestBlockhash('confirmed');
+        const tx = new Transaction({
+          feePayer: wallet.publicKey,
+          recentBlockhash: blockhash,
         })
-        .remainingAccounts(
-          tilePdas.map((p) => ({ pubkey: p, isWritable: true, isSigner: false })),
-        )
-        .instruction();
+          .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 }))
+          .add(ix);
 
-      const { blockhash } = await connection.getLatestBlockhash('confirmed');
-      // The claim instruction's tier classifier walks 102 cities with libm-based
-      // haversine and burns ~550K CUs per tile on BPF. Solana's per-tx max is
-      // 1.4M CUs, so we cap there. Single-tile claims will work; multi-tile
-      // batches >2 are not feasible without optimising the on-chain classifier
-      // (e.g. coarse spatial pre-filter before haversine).
-      const computeUnits = 1_400_000;
-      const tx = new Transaction({
-        feePayer: wallet.publicKey,
-        recentBlockhash: blockhash,
-      })
-        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnits }))
-        .add(ix);
+        const sim = await connection.simulateTransaction(tx, undefined, [wallet.publicKey]);
+        if (sim.value.err) {
+          const logs = sim.value.logs ?? [];
+          const programLog = logs.find((l) =>
+            l.includes('AnchorError') || l.includes('failed:') || l.includes('Program log: Error'),
+          );
+          const friendly = programLog ?? `Simulation rejected: ${JSON.stringify(sim.value.err)}`;
+          throw new Error(friendly + (logs.length ? '\n\nFull logs:\n' + logs.join('\n') : ''));
+        }
 
-      // Simulate before sending — if the program rejects, we get the on-chain logs
-      // (Anchor custom errors, account constraint failures, etc.) and can show them
-      // instead of the opaque "simulation failed" message Privy bubbles up.
-      const sim = await connection.simulateTransaction(tx, undefined, [wallet.publicKey]);
-      if (sim.value.err) {
-        const logs = sim.value.logs ?? [];
-        const programLog = logs.find((l) => l.includes('AnchorError') || l.includes('failed:') || l.includes('Program log: Error'));
-        const friendly = programLog ?? `Simulation rejected: ${JSON.stringify(sim.value.err)}`;
-        console.error('[claim] simulation failed', { err: sim.value.err, logs });
-        throw new Error(friendly + (logs.length ? '\n\nFull logs:\n' + logs.join('\n') : ''));
+        const sig = await wallet.signAndSendTransaction(tx);
+        await connection.confirmTransaction(sig, 'confirmed');
+        lastSig = sig;
+        const justClaimed = batch.map((b) => b.h3);
+        succeeded.push(...justClaimed);
+        // Fire per-batch so /profile + counters update progressively, not just
+        // at the end. Each batch is a separate "property" in the grouped view
+        // because Postgres now() advances per batch insert.
+        dispatchClaimDone({ h3s: justClaimed, txSig: sig });
+        setProgress({ current: i + 1, total: totalBatches, succeeded: [...succeeded] });
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        setErrorMsg(
+          succeeded.length > 0
+            ? `Stopped at batch ${i + 1}/${totalBatches} (${succeeded.length} hexes claimed before this failed):\n\n${msg}`
+            : msg,
+        );
+        setTxSig(lastSig);
+        setState(succeeded.length > 0 ? 'partial' : 'error');
+        if (succeeded.length > 0) onConfirmed(succeeded);
+        return;
       }
-
-      const sig = await wallet.signAndSendTransaction(tx);
-      await connection.confirmTransaction(sig, 'confirmed');
-
-      setTxSig(sig);
-      setState('confirmed');
-      const h3List = items.map((it) => it.h3);
-      onConfirmed(h3List);
-      // Broadcast so /profile + balance + counters refetch immediately even
-      // though they live in separate hook trees.
-      dispatchClaimDone({ h3s: h3List, txSig: sig });
-    } catch (e: unknown) {
-      setState('error');
-      setErrorMsg(e instanceof Error ? e.message : String(e));
     }
+
+    setTxSig(lastSig);
+    setState('confirmed');
+    onConfirmed(succeeded);
   };
 
   const primaryBtn: React.CSSProperties = {
@@ -193,6 +229,21 @@ export function ClaimModal({
                 </li>
               ))}
             </ul>
+            {totalBatches > 1 && (
+              <div
+                className="mb-4 rounded-md px-3 py-2.5 text-[11.5px] leading-relaxed"
+                style={{
+                  background: 'rgba(245, 158, 11, 0.10)',
+                  border: '1px solid rgba(245, 158, 11, 0.30)',
+                  color: '#78350f',
+                }}
+              >
+                Big batch — sent as <b>{totalBatches} transactions</b> of up to{' '}
+                {CLAIM_CHUNK_SIZE} hexes each (the on-chain tier classifier&apos;s
+                compute budget caps a single TX). Don&apos;t close this window
+                until it&apos;s done.
+              </div>
+            )}
             <div className="flex items-baseline justify-between mb-7">
               <span style={uiLabel}>Estimated total</span>
               <span
@@ -240,7 +291,7 @@ export function ClaimModal({
         )}
 
         {state === 'signing' && (
-          <div className="py-12 text-center flex flex-col items-center gap-3">
+          <div className="py-10 text-center flex flex-col items-center gap-3">
             <div
               className="w-2 h-2 rounded-full"
               style={{
@@ -248,7 +299,31 @@ export function ClaimModal({
                 animation: 'pulse 1.6s ease-in-out infinite',
               }}
             />
-            <span style={uiLabel}>Signing transaction…</span>
+            <span style={uiLabel}>
+              {progress && progress.total > 1
+                ? `Claiming batch ${progress.current}/${progress.total}…`
+                : 'Signing transaction…'}
+            </span>
+            {progress && progress.total > 1 && (
+              <>
+                <div
+                  className="mt-2 h-1.5 w-56 overflow-hidden rounded-full"
+                  style={{ background: 'rgba(0,0,0,0.08)' }}
+                >
+                  <div
+                    style={{
+                      width: `${(progress.succeeded.length / items.length) * 100}%`,
+                      height: '100%',
+                      background: 'var(--signal)',
+                      transition: 'width 220ms ease-out',
+                    }}
+                  />
+                </div>
+                <span style={{ ...monoNum, color: 'var(--dim)' }}>
+                  {progress.succeeded.length} / {items.length} hexes claimed
+                </span>
+              </>
+            )}
             <style jsx>{`
               @keyframes pulse {
                 0%, 100% { opacity: 1; transform: scale(1); }
@@ -286,6 +361,45 @@ export function ClaimModal({
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink)')}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
             >
+              Close
+            </button>
+          </>
+        )}
+
+        {state === 'partial' && (
+          <>
+            <div className="py-4 mb-4">
+              <div style={{ ...uiLabel, color: '#b45309', marginBottom: '10px' }}>
+                Partially claimed
+              </div>
+              <div style={{ ...monoNum, color: 'var(--ink)', marginBottom: '12px' }}>
+                {progress?.succeeded.length ?? 0} of {items.length} hexes claimed before stopping.
+              </div>
+              <pre
+                className="whitespace-pre-wrap overflow-y-auto"
+                style={{
+                  maxHeight: 200,
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '11px',
+                  color: 'var(--ink-2)',
+                  lineHeight: 1.5,
+                }}
+              >
+                {errorMsg}
+              </pre>
+              {txSig && (
+                <a
+                  href={`https://solscan.io/tx/${txSig}?cluster=devnet`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block"
+                  style={{ ...uiLabel, color: 'var(--signal)', textDecoration: 'underline' }}
+                >
+                  Last successful tx →
+                </a>
+              )}
+            </div>
+            <button onClick={onClose} className="w-full py-3 transition-colors" style={ghostBtn}>
               Close
             </button>
           </>

@@ -442,13 +442,22 @@ function ClaimedHexView({
 
       <div className="relative z-[1] flex-1" />
 
-      <Link
-        href={`/u/${encodeURIComponent(tile.owner)}`}
-        className="glass relative z-[1] flex h-[52px] items-center justify-center rounded-[14px] text-[14px] font-semibold tracking-[0.02em] text-white transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0"
-        style={{ border: '1px solid rgba(255,255,255,0.24)' }}
-      >
-        View owner profile
-      </Link>
+      <div className="relative z-[1] grid grid-cols-2 gap-2">
+        <Link
+          href={`/h/${encodeURIComponent(item.h3)}`}
+          className="glass flex h-[52px] items-center justify-center rounded-[14px] text-[13.5px] font-semibold tracking-[0.02em] text-white transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0"
+          style={{ border: '1px solid rgba(255,255,255,0.24)' }}
+        >
+          Hex details
+        </Link>
+        <Link
+          href={`/u/${encodeURIComponent(tile.owner)}`}
+          className="glass flex h-[52px] items-center justify-center rounded-[14px] text-[13.5px] font-semibold tracking-[0.02em] text-white transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0"
+          style={{ border: '1px solid rgba(255,255,255,0.24)' }}
+        >
+          Owner
+        </Link>
+      </div>
     </>
   );
 }
