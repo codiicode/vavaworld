@@ -56,12 +56,12 @@ export default function LeaderboardPage() {
       />
 
       {podium.length > 0 && (
-        <div className="mb-6 flex flex-col gap-4">
+        <div className="mb-4 flex flex-col gap-2.5">
           {/* #1 — hero, full width */}
           {podium[0] && <PodiumCard entry={podium[0]} variant="gold" />}
           {/* #2 + #3 — side by side, #2 wider so size hierarchy is obvious */}
           {(podium[1] || podium[2]) && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[3fr_2fr]">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[3fr_2fr]">
               {podium[1] && <PodiumCard entry={podium[1]} variant="silver" />}
               {podium[2] && <PodiumCard entry={podium[2]} variant="bronze" />}
             </div>

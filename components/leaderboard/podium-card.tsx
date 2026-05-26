@@ -60,10 +60,11 @@ export function PodiumCard({
   const isSilver = variant === 'silver';
 
   // Each variant gets its own scale of paddings, avatars, type.
-  const pad = isGold ? 'p-7 md:p-8' : isSilver ? 'p-5' : 'p-4';
-  const avatarSize = isGold ? 'h-20 w-20 text-xl' : isSilver ? 'h-14 w-14 text-base' : 'h-11 w-11 text-sm';
-  const nameSize = isGold ? 'text-2xl md:text-3xl' : isSilver ? 'text-lg' : 'text-base';
-  const hexesSize = isGold ? 'text-sm' : 'text-xs';
+  // Trimmed so the rest of the leaderboard is visible without scrolling.
+  const pad = isGold ? 'p-4 md:p-5' : isSilver ? 'p-3.5' : 'p-3';
+  const avatarSize = isGold ? 'h-14 w-14 text-base' : isSilver ? 'h-11 w-11 text-sm' : 'h-9 w-9 text-xs';
+  const nameSize = isGold ? 'text-xl md:text-2xl' : isSilver ? 'text-base' : 'text-sm';
+  const hexesSize = isGold ? 'text-xs' : 'text-[11px]';
 
   return (
     <Link
@@ -78,12 +79,12 @@ export function PodiumCard({
       style={{ boxShadow: v.shadow }}
     >
       {/* Rank chip + label */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="mb-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
           <div
             className={cn(
               'grid place-items-center rounded-full font-bold leading-none',
-              isGold ? 'h-10 w-10 text-base' : isSilver ? 'h-8 w-8 text-sm' : 'h-7 w-7 text-xs',
+              isGold ? 'h-8 w-8 text-sm' : isSilver ? 'h-7 w-7 text-xs' : 'h-6 w-6 text-[11px]',
               v.chip,
             )}
           >
@@ -91,18 +92,18 @@ export function PodiumCard({
           </div>
           <span
             className={cn(
-              'text-[10px] font-semibold uppercase tracking-[0.12em]',
+              'text-[9.5px] font-semibold uppercase tracking-[0.12em]',
               v.labelColor,
             )}
           >
             {v.label}
           </span>
         </div>
-        {isGold && <Crown size={18} strokeWidth={1.8} className="text-amber-500" />}
+        {isGold && <Crown size={15} strokeWidth={1.8} className="text-amber-500" />}
       </div>
 
       {/* Avatar + handle */}
-      <div className={cn('mb-5 flex items-center', isGold ? 'gap-5' : 'gap-3')}>
+      <div className={cn('mb-3 flex items-center', isGold ? 'gap-3.5' : 'gap-2.5')}>
         <Avatar className={cn(avatarSize, 'ring-2 ring-white/70 flex-shrink-0')}>
           <AvatarFallback className="bg-primary/20 font-semibold text-primary">
             {initial}
@@ -114,11 +115,11 @@ export function PodiumCard({
               @{handle}
             </span>
             {entry.verified && (
-              <Check className={cn('flex-shrink-0 text-emerald-500', isGold ? 'h-5 w-5' : 'h-3.5 w-3.5')} />
+              <Check className={cn('flex-shrink-0 text-emerald-500', isGold ? 'h-4 w-4' : 'h-3 w-3')} />
             )}
           </div>
-          <div className={cn('mt-1 flex items-center gap-2 text-foreground/65', hexesSize)}>
-            <Flag code={entry.country} size={isGold ? 20 : 16} />
+          <div className={cn('mt-0.5 flex items-center gap-1.5 text-foreground/65', hexesSize)}>
+            <Flag code={entry.country} size={isGold ? 16 : 13} />
             <span className="tabular-nums font-medium">
               {entry.hexes.toLocaleString()} hexes
             </span>
@@ -129,7 +130,7 @@ export function PodiumCard({
       {/* Stats — gold gets 3, silver gets 2, bronze gets 1 */}
       <div
         className={cn(
-          'grid gap-3 border-t border-white/40 pt-4',
+          'grid gap-2.5 border-t border-white/40 pt-2.5',
           isGold ? 'grid-cols-3' : isSilver ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
@@ -151,7 +152,7 @@ function Stat({ label, value, big }: { label: string; value: string; big?: boole
       <div
         className={cn(
           'mb-0.5 uppercase tracking-wider text-foreground/55',
-          big ? 'text-[10.5px]' : 'text-[10px]',
+          big ? 'text-[10px]' : 'text-[9.5px]',
         )}
       >
         {label}
@@ -159,7 +160,7 @@ function Stat({ label, value, big }: { label: string; value: string; big?: boole
       <div
         className={cn(
           'font-semibold tabular-nums text-foreground',
-          big ? 'text-base' : 'text-sm',
+          big ? 'text-sm' : 'text-[12.5px]',
         )}
       >
         {value}
