@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Hexagon,
   LayoutGrid,
@@ -227,7 +228,7 @@ export function TilesTab() {
       {!loading && tiles && tiles.length > 0 && view === 'grid' && (
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {pageGroups.map((g) => (
-            <GroupCard key={g.key} group={g} />
+            <GroupCard key={g.key} group={g} onAction={openDialog} />
           ))}
         </div>
       )}
@@ -362,7 +363,14 @@ function GroupRow({
   );
 }
 
-function GroupCard({ group: g }: { group: TileGroup }) {
+function GroupCard({
+  group: g,
+  onAction,
+}: {
+  group: TileGroup;
+  onAction: (kind: DialogKind, tile: ClaimedTile) => void;
+}) {
+  const router = useRouter();
   const img = hexStaticMapUrl({
     lat: g.centerLat,
     lng: g.centerLng,
@@ -373,9 +381,9 @@ function GroupCard({ group: g }: { group: TileGroup }) {
   const firstTile = g.tiles[0];
   const isSingle = g.tiles.length === 1;
   return (
-    <Link
-      href={`/map#${firstTile.h3}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md transition-colors hover:bg-white/40"
+    <div
+      onClick={() => router.push(`/h/${encodeURIComponent(firstTile.h3)}`)}
+      className="group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md transition-colors hover:bg-white/40"
     >
       <div className="relative aspect-[3/2] overflow-hidden">
         {img ? (
@@ -417,14 +425,49 @@ function GroupCard({ group: g }: { group: TileGroup }) {
         </span>
       </div>
       <div className="border-t border-foreground/10 p-3">
-        <div className="truncate text-sm font-medium text-foreground">
-          {isSingle
-            ? g.neighborhood ?? g.citiesLabel
-            : `${g.tiles.length} hexes in ${g.countryName ?? g.citiesLabel}`}
-        </div>
-        <div className="mt-0.5 text-[11px] tabular-nums text-foreground/55">
-          {Math.abs(g.centerLat).toFixed(3)}°{g.centerLat >= 0 ? 'N' : 'S'},{' '}
-          {Math.abs(g.centerLng).toFixed(3)}°{g.centerLng >= 0 ? 'E' : 'W'}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium text-foreground">
+              {isSingle
+                ? g.neighborhood ?? g.citiesLabel
+                : `${g.tiles.length} hexes in ${g.countryName ?? g.citiesLabel}`}
+            </div>
+            <div className="mt-0.5 text-[11px] tabular-nums text-foreground/55">
+              {Math.abs(g.centerLat).toFixed(3)}°{g.centerLat >= 0 ? 'N' : 'S'},{' '}
+              {Math.abs(g.centerLng).toFixed(3)}°{g.centerLng >= 0 ? 'E' : 'W'}
+            </div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                className="rounded-md p-1.5 text-foreground/60 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+                aria-label="Property actions"
+              >
+                <MoreHorizontal size={16} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-48"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DropdownMenuItem asChild>
+                <Link href={`/map#${firstTile.h3}`}>View on map</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onAction('list', firstTile)}>
+                List for sale{!isSingle && ' (first hex)'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onAction('transfer', firstTile)}>
+                Transfer{!isSingle && ' (first hex)'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => onAction('details', firstTile)}>
+                Details
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="mt-2.5 flex items-center justify-between">
           <span className="text-xs text-foreground/55">
@@ -435,6 +478,6 @@ function GroupCard({ group: g }: { group: TileGroup }) {
           </span>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
