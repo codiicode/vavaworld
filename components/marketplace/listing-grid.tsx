@@ -1,78 +1,85 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { Hexagon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import { Flag } from '@/components/flag';
+import { hexStaticMapUrl } from '@/lib/static-map';
+import { cn } from '@/lib/utils';
 import type { Listing } from '@/lib/mock-marketplace';
 
 /**
- * Grid view alternative to the table. 3-4 columns of card-shaped previews,
- * each with a hex placeholder where a Mapbox static image will eventually go.
- *
- * Same row hover discipline as the table — Buy reveals on hover, click-through
- * routes to the detail page.
+ * Minimal listing card grid. Each card is a glass tile with a satellite
+ * preview of the actual hex on top, then a thin info bar (city · neighborhood,
+ * tier chip, price, 24h delta). Matches the visual vibe of the other (app)
+ * pages — same rounded-2xl + bg-white/30 + backdrop-blur recipe.
  */
-export function ListingGrid({
-  listings,
-  onBuy,
-}: {
-  listings: ReadonlyArray<Listing>;
-  onBuy: (listing: Listing) => void;
-}) {
-  const router = useRouter();
+export function ListingGrid({ listings }: { listings: ReadonlyArray<Listing> }) {
   return (
-    <div className="grid grid-cols-2 gap-3 overflow-y-auto p-6 md:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {listings.map((l) => (
-        <div
-          key={l.id}
-          onClick={() => router.push(`/marketplace/${l.id}`)}
-          className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-foreground/20"
-        >
-          {/* Preview area — hex placeholder until Mapbox static images land */}
-          <div className="relative aspect-[4/3] bg-muted">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Hexagon className="text-primary/40" size={64} />
-            </div>
-            <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-background/90 px-2 py-1 text-[11px] font-medium backdrop-blur-sm">
-              <Flag code={l.countryCode} size={15} />
-              <span>{l.city}</span>
-            </div>
-            <span className="absolute right-2 top-2 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary">
-              T{l.tier}
-            </span>
-          </div>
+        <ListingCard key={l.id} listing={l} />
+      ))}
+    </div>
+  );
+}
 
-          <div className="space-y-2 p-3">
-            <div>
-              <div className="truncate text-sm font-medium">{l.neighborhood}</div>
-              <div className="text-[11px] tabular-nums text-muted-foreground">
-                {Math.abs(l.lat).toFixed(3)}°{l.lat >= 0 ? 'N' : 'S'},{' '}
-                {Math.abs(l.lng).toFixed(3)}°{l.lng >= 0 ? 'E' : 'W'}
-              </div>
-            </div>
+function ListingCard({ listing: l }: { listing: Listing }) {
+  const img = hexStaticMapUrl({ lat: l.lat, lng: l.lng, width: 480, height: 320, zoom: 17 });
+  const positive = l.change24h > 0;
+  return (
+    <Link
+      href={`/marketplace/${l.id}`}
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md transition-colors hover:bg-white/40"
+    >
+      <div className="relative aspect-[3/2] overflow-hidden bg-foreground/[0.04]">
+        {img && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={img}
+            alt={`Satellite view of ${l.city} · ${l.neighborhood}`}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+        )}
+        <span className="absolute right-2 top-2 rounded border border-primary/30 bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary backdrop-blur-sm">
+          T{l.tier}
+        </span>
+      </div>
 
-            <div className="flex items-center justify-between border-t border-border pt-2">
-              <div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Price
-                </div>
-                <div className="text-sm font-semibold tabular-nums">{l.price.toFixed(3)} SOL</div>
-              </div>
-              <Button
-                size="sm"
-                className="h-7 text-xs opacity-0 transition-opacity group-hover:opacity-100"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBuy(l);
-                }}
-              >
-                Buy
-              </Button>
+      <div className="flex flex-col gap-2 p-3">
+        <div className="flex items-center gap-2">
+          <Flag code={l.countryCode} size={15} />
+          <div className="min-w-0">
+            <div className="truncate text-sm font-medium leading-tight text-foreground">
+              {l.city}
+            </div>
+            <div className="mt-0.5 truncate text-[11px] leading-tight text-foreground/55">
+              {l.neighborhood}
             </div>
           </div>
         </div>
-      ))}
-    </div>
+
+        <div className="mt-1 flex items-baseline justify-between border-t border-white/30 pt-2">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-sm font-semibold tabular-nums text-foreground">
+              {l.price.toFixed(3)}
+            </span>
+            <span className="text-[11px] text-foreground/55">SOL</span>
+          </div>
+          {l.change24h !== 0 && (
+            <span
+              className={cn(
+                'inline-flex items-center gap-0.5 text-[11px] tabular-nums',
+                positive ? 'text-emerald-600' : 'text-red-600',
+              )}
+            >
+              {positive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+              {positive ? '+' : ''}
+              {l.change24h.toFixed(1)}%
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }

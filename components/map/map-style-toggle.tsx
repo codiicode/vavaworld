@@ -3,11 +3,12 @@
 import { Map as MapIcon, Satellite } from 'lucide-react';
 
 export type MapStyleId =
-  | 'mapbox://styles/mapbox/satellite-v9'
+  | 'mapbox://styles/mapbox/satellite-streets-v12'
   | 'mapbox://styles/mapbox/standard';
 
 const STANDARD: MapStyleId = 'mapbox://styles/mapbox/standard';
-const SATELLITE: MapStyleId = 'mapbox://styles/mapbox/satellite-v9';
+// satellite-streets keeps the satellite imagery + overlays street/place labels.
+const SATELLITE: MapStyleId = 'mapbox://styles/mapbox/satellite-streets-v12';
 
 /**
  * Glass pill button to the right of the search bar. Clicking it toggles the

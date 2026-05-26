@@ -6,6 +6,7 @@ import { MapView } from '@/components/MapView';
 import { GlassRightPanel } from '@/components/map/glass-right-panel';
 import { GlassSearchBar } from '@/components/map/glass-search-bar';
 import { MapStyleToggle, type MapStyleId } from '@/components/map/map-style-toggle';
+import { MapZoomControls } from '@/components/map/map-zoom-controls';
 import { ClaimModal } from '@/components/ClaimModal';
 import { hexCenter } from '@/lib/h3-utils';
 
@@ -20,12 +21,12 @@ export default function Page() {
   const [selectedHexes, setSelectedHexes] = useState<Set<string>>(new Set());
   const [showClaim, setShowClaim] = useState(false);
   const [mapStyle, setMapStyle] = useState<MapStyleId>(
-    'mapbox://styles/mapbox/satellite-v9',
+    'mapbox://styles/mapbox/satellite-streets-v12',
   );
   const mapRef = useRef<MapRef | null>(null);
   const refreshTilesRef = useRef<((h3s: string[]) => void) | null>(null);
 
-  const isSatellite = mapStyle === 'mapbox://styles/mapbox/satellite-v9';
+  const isSatellite = mapStyle === 'mapbox://styles/mapbox/satellite-streets-v12';
 
   const removeHex = (h3: string) => {
     const next = new Set(selectedHexes);
@@ -125,6 +126,8 @@ export default function Page() {
         onRemoveHex={removeHex}
         onClaim={() => setShowClaim(true)}
       />
+
+      <MapZoomControls mapRef={mapRef} />
 
       {showClaim && (
         <ClaimModal

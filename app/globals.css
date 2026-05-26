@@ -264,3 +264,31 @@ body {
 .wallet-adapter-dropdown-list-item {
   font-family: 'Inter', sans-serif !important;
 }
+
+/* ─────────────────────────────────────────────────────────
+   Custom scrollbars — site-wide. Matches the glass/sky vibe:
+   thin, semi-transparent track + brand-tinted thumb that
+   darkens on hover. Firefox uses scrollbar-* properties;
+   WebKit gets the ::-webkit pseudo-elements.
+   ───────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 184, 166, 0.55) rgba(255, 255, 255, 0.18);
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(94, 234, 212, 0.55), rgba(14, 165, 233, 0.55));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(94, 234, 212, 0.85), rgba(14, 165, 233, 0.85));
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+*::-webkit-scrollbar-corner { background: transparent; }

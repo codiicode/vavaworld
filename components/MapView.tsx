@@ -33,7 +33,7 @@ export function MapView({
   setSelectedHexes,
   mapRef,
   refreshTilesRef,
-  mapStyle = 'mapbox://styles/mapbox/satellite-v9',
+  mapStyle = 'mapbox://styles/mapbox/satellite-streets-v12',
 }: Props) {
   const [ready, setReady] = useState(false);
   const [visibleHexes, setVisibleHexes] = useState<string[]>([]);

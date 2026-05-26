@@ -1,50 +1,62 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { BuyDialog } from '@/components/marketplace/buy-dialog';
-import { EmptyState } from '@/components/marketplace/empty-state';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import {
-  FilterSidebar,
-  defaultFilterState,
-  type FilterState,
-} from '@/components/marketplace/filter-sidebar';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Flag } from '@/components/flag';
 import { ListingGrid } from '@/components/marketplace/listing-grid';
-import { ListingTable, type SortKey } from '@/components/marketplace/listing-table';
-import { MarketHeader } from '@/components/marketplace/market-header';
-import { QuickChips, type QuickFilter, type ViewMode } from '@/components/marketplace/quick-chips';
-import { mockListings, type Listing } from '@/lib/mock-marketplace';
+import {
+  mockChipCounts,
+  mockCountryCounts,
+  mockListings,
+  mockMarketStats,
+  type Listing,
+  type Tier,
+} from '@/lib/mock-marketplace';
+
+type SortKey = 'newest' | 'price-asc' | 'price-desc' | 'trending';
+
+const SORT_LABELS: Record<SortKey, string> = {
+  newest: 'Newest',
+  'price-asc': 'Price: Low → High',
+  'price-desc': 'Price: High → Low',
+  trending: 'Trending',
+};
+
+const TIER_OPTIONS: ReadonlyArray<{ value: 'all' | Tier; label: string }> = [
+  { value: 'all', label: 'All tiers' },
+  { value: 1, label: 'Tier 1' },
+  { value: 2, label: 'Tier 2' },
+  { value: 3, label: 'Tier 3' },
+];
+
+const TRIGGER =
+  'bg-white/40 backdrop-blur-md border-white/40 h-11 rounded-xl text-foreground';
+const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40';
 
 /**
- * Marketplace landing — two-column shell.
- *
- *  240px FilterSidebar │ flexible main
- *
- * Filtering and sorting happen client-side against the mock dataset. When the
- * indexer lands, this whole page becomes a data-shape wrapper around the same
- * components.
+ * Marketplace — minimal, glass-card grid matching the leaderboard / profile vibe.
+ * Filters live in a single top row (search · country · tier · sort) instead of a
+ * dense side rail; listings render as satellite-preview tiles.
  */
 export default function MarketplacePage() {
-  const [filters, setFilters] = useState<FilterState>(defaultFilterState);
-  const [chip, setChip] = useState<QuickFilter>('buy-now');
-  const [view, setView] = useState<ViewMode>('table');
+  const [search, setSearch] = useState('');
+  const [country, setCountry] = useState<'all' | string>('all');
+  const [tier, setTier] = useState<'all' | Tier>('all');
   const [sort, setSort] = useState<SortKey>('newest');
-  const [buyTarget, setBuyTarget] = useState<Listing | null>(null);
 
   const visible = useMemo(() => {
     let xs: ReadonlyArray<Listing> = mockListings;
 
-    // Quick-chip narrows first (cheapest filter)
-    if (chip === 'auctions') xs = xs.filter((l) => l.isAuction);
-    if (chip === 'new24h') {
-      xs = xs.filter((l) => l.listedAgo.endsWith('m ago') || l.listedAgo.endsWith('h ago'));
-    }
-    if (chip === 'price-drop') xs = xs.filter((l) => l.change24h < -3);
-    if (chip === 'ending-soon') xs = xs.filter((l) => l.isAuction);
-    if (chip === 'whale-watch') xs = xs.filter((l) => l.price >= 0.7);
-
-    // Search
-    if (filters.search.trim()) {
-      const q = filters.search.toLowerCase();
+    if (search.trim()) {
+      const q = search.toLowerCase();
       xs = xs.filter(
         (l) =>
           l.city.toLowerCase().includes(q) ||
@@ -52,34 +64,10 @@ export default function MarketplacePage() {
           l.countryCode.toLowerCase().includes(q),
       );
     }
+    if (country !== 'all') xs = xs.filter((l) => l.countryCode === country);
+    if (tier !== 'all') xs = xs.filter((l) => l.tier === tier);
 
-    // Tier
-    if (filters.tiers.length > 0) {
-      xs = xs.filter((l) => filters.tiers.includes(l.tier));
-    }
-
-    // Price
-    xs = xs.filter((l) => l.price >= filters.priceMin && l.price <= filters.priceMax);
-
-    // Country
-    if (filters.countries.length > 0) {
-      xs = xs.filter((l) => filters.countries.includes(l.countryCode));
-    }
-
-    // Status
-    if (filters.status === 'auction') xs = xs.filter((l) => l.isAuction);
-    // listed and reserve-met both pass everything for now (mock data)
-
-    // Special
-    if (filters.iconic) xs = xs.filter((l) => l.isIconic);
-    if (filters.newOnly) {
-      xs = xs.filter((l) => l.listedAgo.endsWith('m ago') || l.listedAgo.endsWith('h ago'));
-    }
-    if (filters.whaleOnly) xs = xs.filter((l) => l.price >= 0.6);
-
-    // Sort
-    const sorted = [...xs];
-    sorted.sort((a, b) => {
+    return [...xs].sort((a, b) => {
       switch (sort) {
         case 'price-asc':
           return a.price - b.price;
@@ -87,45 +75,149 @@ export default function MarketplacePage() {
           return b.price - a.price;
         case 'trending':
           return b.change24h - a.change24h;
-        case 'ending':
-          return Number(b.isAuction) - Number(a.isAuction);
         case 'newest':
         default:
-          // mins ago first, then hours, then days — listedAgo is pre-formatted
           return rankAgo(a.listedAgo) - rankAgo(b.listedAgo);
       }
     });
-    return sorted;
-  }, [filters, chip, sort]);
+  }, [search, country, tier, sort]);
+
+  const reset = () => {
+    setSearch('');
+    setCountry('all');
+    setTier('all');
+    setSort('newest');
+  };
 
   return (
-    <div className="flex h-full">
-      <FilterSidebar state={filters} onChange={setFilters} />
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
+      {/* Header */}
+      <div className="mb-6 flex items-end justify-between">
+        <div>
+          <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
+            Market
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            Marketplace
+          </h1>
+          <p className="mt-1 text-sm text-foreground/70">
+            Buy and sell hexes across vavaworld
+          </p>
+        </div>
+      </div>
 
-      <section className="flex flex-1 flex-col overflow-hidden">
-        <MarketHeader />
-        <QuickChips active={chip} onChange={setChip} view={view} onViewChange={setView} />
+      {/* Stat strip */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Floor" value={`${mockMarketStats.floor.toFixed(3)} SOL`} />
+        <Stat label="Volume (24h)" value={`${mockMarketStats.volume24h} SOL`} />
+        <Stat
+          label="Listed"
+          value={mockMarketStats.listedCount.toLocaleString('en-US')}
+        />
+        <Stat
+          label="Sales (24h)"
+          value={mockChipCounts.new24h.toLocaleString('en-US')}
+        />
+      </div>
 
-        {visible.length === 0 ? (
-          <EmptyState onReset={() => setFilters(defaultFilterState)} />
-        ) : view === 'table' ? (
-          <ListingTable
-            listings={visible}
-            totalCount={mockListings.length}
-            sort={sort}
-            onSortChange={setSort}
-            onBuy={setBuyTarget}
+      {/* Filter row */}
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+        <div className="relative">
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground/55"
           />
-        ) : (
-          <ListingGrid listings={visible} onBuy={setBuyTarget} />
-        )}
-      </section>
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search city, neighborhood, country…"
+            className={`${TRIGGER} pl-9`}
+          />
+        </div>
+        <Select value={country} onValueChange={(v) => setCountry(v)}>
+          <SelectTrigger className={`${TRIGGER} sm:w-44`}>
+            <SelectValue placeholder="Country" />
+          </SelectTrigger>
+          <SelectContent className={CONTENT}>
+            <SelectItem value="all">All countries</SelectItem>
+            {mockCountryCounts.map((c) => (
+              <SelectItem key={c.code} value={c.code}>
+                <span className="flex items-center gap-2">
+                  <Flag code={c.code} size={14} />
+                  {c.name}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={String(tier)}
+          onValueChange={(v) => setTier(v === 'all' ? 'all' : (Number(v) as Tier))}
+        >
+          <SelectTrigger className={`${TRIGGER} sm:w-32`}>
+            <SelectValue placeholder="Tier" />
+          </SelectTrigger>
+          <SelectContent className={CONTENT}>
+            {TIER_OPTIONS.map((o) => (
+              <SelectItem key={String(o.value)} value={String(o.value)}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+          <SelectTrigger className={`${TRIGGER} sm:w-40`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className={CONTENT}>
+            {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+              <SelectItem key={k} value={k}>
+                {SORT_LABELS[k]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <BuyDialog
-        listing={buyTarget}
-        open={buyTarget !== null}
-        onOpenChange={(open) => !open && setBuyTarget(null)}
-      />
+      {/* Count */}
+      <div className="mb-4 flex items-center justify-between text-xs text-foreground/60">
+        <span className="tabular-nums">
+          {visible.length === 0
+            ? 'No listings match these filters'
+            : `Showing ${visible.length} of ${mockListings.length.toLocaleString('en-US')}`}
+        </span>
+        {(search || country !== 'all' || tier !== 'all') && (
+          <button
+            type="button"
+            onClick={reset}
+            className="font-medium text-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+          >
+            Reset filters
+          </button>
+        )}
+      </div>
+
+      {/* Grid */}
+      {visible.length === 0 ? (
+        <div className="rounded-2xl border border-white/40 bg-white/30 px-6 py-20 text-center text-sm text-foreground/60 backdrop-blur-md">
+          Try widening the search, dropping the tier, or picking a different country.
+        </div>
+      ) : (
+        <ListingGrid listings={visible} />
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/40 bg-white/30 px-4 py-3 backdrop-blur-md">
+      <div className="text-[10.5px] font-medium uppercase tracking-[0.08em] text-foreground/60">
+        {label}
+      </div>
+      <div className="mt-1 text-lg font-semibold tabular-nums tracking-tight text-foreground">
+        {value}
+      </div>
     </div>
   );
 }

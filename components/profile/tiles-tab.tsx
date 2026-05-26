@@ -39,6 +39,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Flag } from '@/components/flag';
 import { hexCenter } from '@/lib/h3-utils';
+import { hexStaticMapUrl } from '@/lib/static-map';
 import { useUserTiles } from '@/lib/use-user-tiles';
 import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
 import type { ClaimedTile } from '@/types/tile';
@@ -52,7 +53,7 @@ type DialogState = { kind: DialogKind; tile: ClaimedTile } | null;
 const PER_PAGE = 10;
 
 export function TilesTab() {
-  const [view, setView] = useState<'table' | 'grid'>('table');
+  const [view, setView] = useState<'table' | 'grid'>('grid');
   const [search, setSearch] = useState('');
   const [tierFilter, setTierFilter] = useState<string>('all');
   const [page] = useState(1);
@@ -335,22 +336,35 @@ function TileRow({
 
 function TileCard({ tile: t, location: loc }: { tile: ClaimedTile; location: HexLocation | null }) {
   const c = hexCenter(t.h3);
+  const img = hexStaticMapUrl({ lat: c.lat, lng: c.lng, width: 480, height: 320, zoom: 17 });
   return (
     <Link
       href={`/map#${t.h3}`}
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md transition-colors hover:bg-white/40"
     >
       <div className="relative aspect-[3/2] overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(120% 80% at 50% 50%, rgba(94,234,212,0.20), transparent 60%), radial-gradient(60% 60% at 80% 20%, rgba(56,189,248,0.20), transparent 70%)',
-          }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Hexagon className="text-primary opacity-40" size={56} strokeWidth={1.4} />
-        </div>
+        {img ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={img}
+            alt={`Satellite view of ${loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? 'this hex'}`}
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+        ) : (
+          <>
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'radial-gradient(120% 80% at 50% 50%, rgba(94,234,212,0.20), transparent 60%), radial-gradient(60% 60% at 80% 20%, rgba(56,189,248,0.20), transparent 70%)',
+              }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Hexagon className="text-primary opacity-40" size={56} strokeWidth={1.4} />
+            </div>
+          </>
+        )}
         <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded-md border border-white/40 bg-white/30 px-2 py-1 text-[11px] font-medium text-foreground backdrop-blur-md">
           <Flag code={loc?.countryCode} size={15} />
           <span className="max-w-[140px] truncate">

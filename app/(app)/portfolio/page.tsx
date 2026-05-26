@@ -368,7 +368,7 @@ export default function PortfolioPage() {
           <header className="glass panel welcome">
             <div>
               <div className="welcome__hello">Hi {username} 👋</div>
-              <div className="welcome__sub">Welcome back to your VAVAWORLD portfolio.</div>
+              <div className="welcome__sub">Welcome back to your VAVA portfolio.</div>
             </div>
             <Link href="/map" className="welcome__search">
               <span style={{ display: 'grid', placeItems: 'center' }}>{PI.search}</span>
