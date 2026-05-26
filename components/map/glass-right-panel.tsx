@@ -1,19 +1,22 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { CheckCircle2, ChevronDown, ExternalLink, X } from 'lucide-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { useCounters } from '@/lib/use-counters';
-import { useHexLocations } from '@/lib/use-hex-locations';
+import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
+import { useTiles } from '@/lib/use-tiles';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
-import { quoteBatch, quoteOne } from '@/lib/quote';
+import { quoteOne } from '@/lib/quote';
 import { Flag } from '@/components/flag';
 import { HexPricingCard } from '@/components/map/hex-pricing-card';
 import { cn } from '@/lib/utils';
+import type { ClaimedTile } from '@/types/tile';
 
 function shortAddr(addr: string): string {
   if (!addr) return '—';
@@ -57,6 +60,18 @@ export function GlassRightPanel({
   const counters = useCounters();
   const locations = useHexLocations(selectedHexes);
 
+  // Find out which of the selected hexes are already claimed (on-chain PDA hit).
+  const selectedArr = useMemo(() => Array.from(selectedHexes), [selectedHexes]);
+  const { tiles: claimedCache } = useTiles(selectedArr);
+  const claimedTiles = useMemo(() => {
+    const m = new Map<string, ClaimedTile>();
+    for (const h of selectedArr) {
+      const t = claimedCache.get(h);
+      if (t) m.set(h, t);
+    }
+    return m;
+  }, [selectedArr, claimedCache]);
+
   const items = Array.from(selectedHexes).map((h3) => {
     const c = hexCenter(h3);
     return { h3, lat: c.lat, lng: c.lng, tier: classifyTier(c.lat, c.lng) };
@@ -70,7 +85,6 @@ export function GlassRightPanel({
     return Number(quoteOne(it.tier, sold)) / LAMPORTS_PER_SOL;
   });
 
-  const totalSol = Number(quoteBatch(items, counters)) / LAMPORTS_PER_SOL;
   const count = items.length;
 
   return (
@@ -161,16 +175,25 @@ export function GlassRightPanel({
 
       {/* Tab body */}
       {tab === 'selection' && (
-        <SelectionBody
-          count={count}
-          items={items}
-          perItemSol={perItemSol}
-          totalSol={totalSol}
-          locations={locations}
-          onRemove={onRemoveHex}
-          onClaim={onClaim}
-          walletConnected={wallet.connected}
-        />
+        count === 1 && claimedTiles.has(items[0]!.h3) ? (
+          <ClaimedHexView
+            tile={claimedTiles.get(items[0]!.h3)!}
+            item={items[0]!}
+            location={locations.get(items[0]!.h3) ?? null}
+            onClear={() => onRemoveHex(items[0]!.h3)}
+          />
+        ) : (
+          <SelectionBody
+            count={count}
+            items={items}
+            perItemSol={perItemSol}
+            locations={locations}
+            claimedTiles={claimedTiles}
+            onRemove={onRemoveHex}
+            onClaim={onClaim}
+            walletConnected={wallet.connected}
+          />
+        )
       )}
 
     </aside>
@@ -183,8 +206,8 @@ function SelectionBody({
   count,
   items,
   perItemSol,
-  totalSol,
   locations,
+  claimedTiles,
   onRemove,
   onClaim,
   walletConnected,
@@ -192,14 +215,21 @@ function SelectionBody({
   count: number;
   items: ReadonlyArray<Item>;
   perItemSol: ReadonlyArray<number>;
-  totalSol: number;
   locations: ReturnType<typeof useHexLocations>;
+  claimedTiles: Map<string, ClaimedTile>;
   onRemove: (h3: string) => void;
   onClaim: () => void;
   walletConnected: boolean;
 }) {
   const empty = count === 0;
   const max = count > 1000;
+  const claimedCount = items.reduce((s, it) => (claimedTiles.has(it.h3) ? s + 1 : s), 0);
+  const claimableCount = count - claimedCount;
+  const claimableTotalSol = items.reduce(
+    (s, it, i) => (claimedTiles.has(it.h3) ? s : s + perItemSol[i]),
+    0,
+  );
+  const allClaimed = !empty && claimableCount === 0;
 
   return (
     <>
@@ -220,53 +250,70 @@ function SelectionBody({
             Click a hex to select. Shift-click to add more. Ctrl-drag for an area.
           </p>
         ) : (
-          <div className="-mx-1 flex max-h-[280px] flex-col overflow-y-auto">
-            {items.map((it, i) => {
-              const loc = locations.get(it.h3);
-              const title = loc?.neighborhood ?? loc?.place ?? loc?.countryName ?? 'Locating…';
-              return (
-                <div
-                  key={it.h3}
-                  className="group flex items-center justify-between rounded-md px-1 py-2 transition-colors hover:bg-white/[0.04]"
-                >
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <Flag code={loc?.countryCode} size={16} />
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-[13px] font-medium leading-tight text-white">
-                        {title}
+          <>
+            {claimedCount > 0 && (
+              <div className="rounded-md border border-amber-400/30 bg-amber-400/10 px-2.5 py-2 text-[11.5px] leading-relaxed text-amber-100">
+                {claimedCount} of {count} already claimed — those can&apos;t be bought.
+              </div>
+            )}
+            <div className="-mx-1 flex max-h-[280px] flex-col overflow-y-auto">
+              {items.map((it, i) => {
+                const loc = locations.get(it.h3);
+                const title = loc?.neighborhood ?? loc?.place ?? loc?.countryName ?? 'Locating…';
+                const isClaimed = claimedTiles.has(it.h3);
+                return (
+                  <div
+                    key={it.h3}
+                    className={cn(
+                      'group flex items-center justify-between rounded-md px-1 py-2 transition-colors hover:bg-white/[0.04]',
+                      isClaimed && 'opacity-60',
+                    )}
+                  >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <Flag code={loc?.countryCode} size={16} />
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate text-[13px] font-medium leading-tight text-white">
+                          {title}
+                        </span>
+                        <span className="mt-0.5 truncate text-[10.5px] leading-tight tabular-nums text-white/52">
+                          {Math.abs(it.lat).toFixed(3)}°{it.lat >= 0 ? 'N' : 'S'},{' '}
+                          {Math.abs(it.lng).toFixed(3)}°{it.lng >= 0 ? 'E' : 'W'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      <span
+                        className="rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider"
+                        style={{ background: 'rgba(94, 234, 212, 0.16)', color: 'var(--brand)' }}
+                      >
+                        T{it.tier}
                       </span>
-                      <span className="mt-0.5 truncate text-[10.5px] leading-tight tabular-nums text-white/52">
-                        {Math.abs(it.lat).toFixed(3)}°{it.lat >= 0 ? 'N' : 'S'},{' '}
-                        {Math.abs(it.lng).toFixed(3)}°{it.lng >= 0 ? 'E' : 'W'}
-                      </span>
+                      {isClaimed ? (
+                        <span className="text-[11px] font-medium uppercase tracking-wider text-amber-200">
+                          Claimed
+                        </span>
+                      ) : (
+                        <span className="text-[12.5px] font-medium tabular-nums text-white">
+                          {perItemSol[i].toFixed(2)}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemove(it.h3);
+                        }}
+                        className="text-white/52 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
+                        aria-label="Remove"
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
-                    <span
-                      className="rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider"
-                      style={{ background: 'rgba(94, 234, 212, 0.16)', color: 'var(--brand)' }}
-                    >
-                      T{it.tier}
-                    </span>
-                    <span className="text-[12.5px] font-medium tabular-nums text-white">
-                      {perItemSol[i].toFixed(2)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRemove(it.h3);
-                      }}
-                      className="text-white/52 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
-                      aria-label="Remove"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
@@ -274,8 +321,8 @@ function SelectionBody({
 
       <button
         type="button"
-        onClick={empty || max || !walletConnected ? undefined : onClaim}
-        disabled={empty || max || !walletConnected}
+        onClick={empty || max || allClaimed || !walletConnected ? undefined : onClaim}
+        disabled={empty || max || allClaimed || !walletConnected}
         className="glass glass--cta relative z-[1] flex h-[52px] items-center justify-center rounded-[14px] text-[14px] font-bold tracking-[0.04em] transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         style={{
           border: '1px solid rgba(255,255,255,0.24)',
@@ -287,10 +334,133 @@ function SelectionBody({
           ? 'Select at least one hex'
           : max
             ? 'Max 1000 per claim'
-            : !walletConnected
-              ? 'Connect wallet to claim'
-              : `Claim ${count} ${count === 1 ? 'hex' : 'hexes'} · ${totalSol.toFixed(3)} SOL`}
+            : allClaimed
+              ? 'All selected are already claimed'
+              : !walletConnected
+                ? 'Connect wallet to claim'
+                : `Claim ${claimableCount} ${claimableCount === 1 ? 'hex' : 'hexes'} · ${claimableTotalSol.toFixed(3)} SOL`}
       </button>
     </>
   );
+}
+
+/** Detail view shown when a single already-claimed hex is selected. */
+function ClaimedHexView({
+  tile,
+  item,
+  location,
+  onClear,
+}: {
+  tile: ClaimedTile;
+  item: Item;
+  location: HexLocation | null;
+  onClear: () => void;
+}) {
+  const title = location?.neighborhood ?? location?.place ?? location?.countryName ?? 'This hex';
+  const paidSol = Number(tile.pricePaid) / LAMPORTS_PER_SOL;
+  const ageMs = Date.now() - tile.claimedAt * 1000;
+  const ago = formatAgo(ageMs);
+  const ownerShort = shortAddr(tile.owner);
+
+  return (
+    <>
+      <div className="relative z-[1] flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-amber-200">
+            Already claimed
+          </span>
+          <button
+            type="button"
+            onClick={onClear}
+            className="rounded-md p-1 text-white/52 transition-colors hover:bg-white/[0.06] hover:text-white"
+            aria-label="Clear selection"
+          >
+            <X size={14} />
+          </button>
+        </div>
+
+        <div
+          className="flex flex-col gap-3 rounded-[14px] border border-amber-400/30 bg-amber-400/10 p-3.5"
+          style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)' }}
+        >
+          <div className="flex items-start gap-2.5">
+            <Flag code={location?.countryCode} size={18} />
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[15px] font-semibold leading-tight text-white">
+                {title}
+              </div>
+              <div className="mt-0.5 truncate text-[11px] leading-tight tabular-nums text-white/60">
+                {Math.abs(item.lat).toFixed(3)}°{item.lat >= 0 ? 'N' : 'S'},{' '}
+                {Math.abs(item.lng).toFixed(3)}°{item.lng >= 0 ? 'E' : 'W'}
+              </div>
+            </div>
+            <span
+              className="rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider"
+              style={{ background: 'rgba(94, 234, 212, 0.16)', color: 'var(--brand)' }}
+            >
+              T{tile.tier}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 border-t border-white/15 pt-3 text-[11px]">
+            <div>
+              <div className="uppercase tracking-wider text-white/52">Owner</div>
+              <Link
+                href={`/u/${encodeURIComponent(tile.owner)}`}
+                className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-white transition-colors hover:text-amber-200"
+              >
+                <span className="font-mono">{ownerShort}</span>
+                <ExternalLink size={11} />
+              </Link>
+            </div>
+            <div>
+              <div className="uppercase tracking-wider text-white/52">Claimed</div>
+              <div className="mt-0.5 text-[12.5px] font-medium text-white">{ago}</div>
+            </div>
+            <div>
+              <div className="uppercase tracking-wider text-white/52">Paid</div>
+              <div className="mt-0.5 text-[12.5px] font-medium tabular-nums text-white">
+                {paidSol.toFixed(3)} SOL
+              </div>
+            </div>
+            <div>
+              <div className="uppercase tracking-wider text-white/52">Status</div>
+              <div className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-emerald-300">
+                <CheckCircle2 size={12} />
+                Owned
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-[12.5px] leading-relaxed text-white/60">
+          This hex isn&apos;t available to claim. Visit the owner&apos;s profile
+          to see their other properties — if they list it for sale, it&apos;ll
+          appear on the marketplace.
+        </p>
+      </div>
+
+      <div className="relative z-[1] flex-1" />
+
+      <Link
+        href={`/u/${encodeURIComponent(tile.owner)}`}
+        className="glass relative z-[1] flex h-[52px] items-center justify-center rounded-[14px] text-[14px] font-semibold tracking-[0.02em] text-white transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0"
+        style={{ border: '1px solid rgba(255,255,255,0.24)' }}
+      >
+        View owner profile
+      </Link>
+    </>
+  );
+}
+
+function formatAgo(ms: number): string {
+  const mins = Math.max(0, Math.floor(ms / 60_000));
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
 }
