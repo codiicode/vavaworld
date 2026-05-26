@@ -14,6 +14,7 @@ const SOURCE_ID = 'h3-grid';
 const FILL_LAYER = 'h3-grid-fill';
 const LINE_LAYER = 'h3-grid-line';
 const CLAIMED_LAYER = 'h3-grid-claimed';
+const SELECTED_FILL_LAYER = 'h3-grid-selected-fill';
 const SELECTED_LAYER = 'h3-grid-selected';
 
 const AGG_SOURCE = 'country-agg';
@@ -210,6 +211,19 @@ export function MapView({
         'fill-opacity': ['case', ['get', 'claimed'], 0.55, 0.0],
       },
     });
+    // Selected hexes light up with a brand-teal fill before the outline grid
+    // is drawn, so the whole cell glows instead of just the edge.
+    map.addLayer({
+      id: SELECTED_FILL_LAYER,
+      type: 'fill',
+      source: SOURCE_ID,
+      paint: {
+        'fill-color': '#5eead4',
+        'fill-opacity': 0.55,
+        'fill-outline-color': '#5eead4',
+      },
+      filter: ['==', ['get', 'selected'], true],
+    });
     map.addLayer({
       id: LINE_LAYER,
       type: 'line',
@@ -220,7 +234,11 @@ export function MapView({
       id: SELECTED_LAYER,
       type: 'line',
       source: SOURCE_ID,
-      paint: { 'line-color': '#ffffff', 'line-width': 2.5 },
+      paint: {
+        'line-color': '#ffffff',
+        'line-width': 3,
+        'line-opacity': 0.95,
+      },
       filter: ['==', ['get', 'selected'], true],
     });
 
