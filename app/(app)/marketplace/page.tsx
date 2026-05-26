@@ -14,12 +14,12 @@ import { Flag } from '@/components/flag';
 import { ListingGrid } from '@/components/marketplace/listing-grid';
 import {
   mockChipCounts,
-  mockCountryCounts,
   mockListings,
   mockMarketStats,
   type Listing,
   type Tier,
 } from '@/lib/mock-marketplace';
+import { COUNTRIES } from '@/lib/countries';
 import {
   useActiveListings,
   useListingsVersion,
@@ -165,7 +165,7 @@ export default function MarketplacePage() {
           </SelectTrigger>
           <SelectContent className={CONTENT}>
             <SelectItem value="all">All countries</SelectItem>
-            {mockCountryCounts.map((c) => (
+            {COUNTRIES.map((c) => (
               <SelectItem key={c.code} value={c.code}>
                 <span className="flex items-center gap-2">
                   <Flag code={c.code} size={14} />

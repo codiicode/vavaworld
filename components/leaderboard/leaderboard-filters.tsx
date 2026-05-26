@@ -8,33 +8,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Flag } from '@/components/flag';
+import { COUNTRIES } from '@/lib/countries';
 
 export type SortKey = 'hexes' | 'volume' | 'value' | 'countries' | 'bonded';
-export type FilterKey =
-  | 'worldwide' | 'se' | 'jp' | 'de' | 'us' | 'kr' | 'gb' | 'fr' | 'it'
-  | 'es' | 'br' | 'cn' | 'in' | 'au' | 'ca' | 'nl' | 'pt' | 'no' | 'dk' | 'fi';
+/** ISO 3166-1 alpha-2 country code, or 'worldwide' for the all-countries view. */
+export type FilterKey = 'worldwide' | string;
 
+// Full ISO list (249 entries) + worldwide sentinel — every country picker on
+// the site should read from this so a user is never told "your country doesn't
+// exist" just because we forgot to add it.
 const COUNTRY_OPTIONS: ReadonlyArray<{ value: FilterKey; label: string }> = [
   { value: 'worldwide', label: 'Worldwide' },
-  { value: 'se', label: 'Sweden' },
-  { value: 'jp', label: 'Japan' },
-  { value: 'de', label: 'Germany' },
-  { value: 'us', label: 'United States' },
-  { value: 'kr', label: 'South Korea' },
-  { value: 'gb', label: 'United Kingdom' },
-  { value: 'fr', label: 'France' },
-  { value: 'it', label: 'Italy' },
-  { value: 'es', label: 'Spain' },
-  { value: 'br', label: 'Brazil' },
-  { value: 'cn', label: 'China' },
-  { value: 'in', label: 'India' },
-  { value: 'au', label: 'Australia' },
-  { value: 'ca', label: 'Canada' },
-  { value: 'nl', label: 'Netherlands' },
-  { value: 'pt', label: 'Portugal' },
-  { value: 'no', label: 'Norway' },
-  { value: 'dk', label: 'Denmark' },
-  { value: 'fi', label: 'Finland' },
+  ...COUNTRIES.map((c) => ({ value: c.code, label: c.name })),
 ];
 
 const TRIGGER =
