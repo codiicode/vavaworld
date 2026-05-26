@@ -149,46 +149,6 @@ function AreaChart({
   );
 }
 
-function ProjectionChart() {
-  const real = [180, 210, 260, 250, 300, 340, 320, 380, 410, 460, 440, 500];
-  const proj = [null, null, null, null, null, null, null, 380, 420, 470, 510, 560];
-  const w = 600;
-  const h = 170;
-  const max = 600;
-  const min = 100;
-  const rng = max - min;
-  const dx = w / (real.length - 1);
-  const toY = (v: number) => h - ((v - min) / rng) * (h - 14) - 7;
-  const dReal = real.map((v, i) => `${i === 0 ? 'M' : 'L'}${i * dx},${toY(v)}`).join(' ');
-  const fillReal = `${dReal} L${w},${h} L0,${h} Z`;
-  const projPts = proj
-    .map((v, i) => (v == null ? null : ([i * dx, toY(v)] as const)))
-    .filter((p): p is readonly [number, number] => p != null);
-  const dProj = projPts.map(([x, y], i) => (i === 0 ? `M${x},${y}` : `L${x},${y}`)).join(' ');
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
-      <defs>
-        <linearGradient id="pc-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(56,189,248,0.55)" />
-          <stop offset="100%" stopColor="rgba(56,189,248,0)" />
-        </linearGradient>
-      </defs>
-      {[100, 200, 300, 400, 500].map((v, i) => {
-        const y = toY(v);
-        return (
-          <g key={i}>
-            <line x1="0" x2={w} y1={y} y2={y} stroke="rgba(11,31,58,0.10)" strokeWidth="1" strokeDasharray="2 4" />
-            <text x="0" y={y - 3} fontSize="10" fill="rgba(11,31,58,0.5)">{v}</text>
-          </g>
-        );
-      })}
-      <path d={fillReal} fill="url(#pc-fill)" />
-      <path d={dReal} fill="none" stroke="var(--brand)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={dProj} fill="none" stroke="var(--brand-deep)" strokeWidth="2.4" strokeDasharray="5 5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 /* ───────── Sidebar ───────── */
 function PfSidebar({ username, balance }: { username: string; balance: string }) {
   return (
@@ -482,23 +442,6 @@ export default function PortfolioPage() {
               </div>
             </div>
 
-            <div className="glass panel projection">
-              <div className="projection__head">
-                <h2 className="h2">Projection</h2>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <span className="chip">1M</span>
-                  <span className="chip">3M</span>
-                  <span className="chip chip--brand">1Y</span>
-                </div>
-              </div>
-              <div className="projection__chart">
-                <ProjectionChart />
-              </div>
-              <div className="projection__legend">
-                <span><i style={{ background: 'var(--brand)' }} /> Actual</span>
-                <span><i style={{ background: 'var(--brand-deep)', boxShadow: 'inset 0 0 0 1px var(--brand-deep)' }} /> Projected</span>
-              </div>
-            </div>
           </div>
         </div>
 
