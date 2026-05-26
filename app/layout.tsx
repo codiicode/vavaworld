@@ -1,6 +1,15 @@
 import type { Metadata } from 'next';
-import { GeistSans } from 'geist/font/sans';
+import { Manrope } from 'next/font/google';
 import './globals.css';
+
+// Soft, modern grotesk — chain-agnostic, free, very close in feel to
+// Neue Haas Grotesk / Söhne. Variable font so weights 300-800 are one file.
+const manrope = Manrope({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+});
 import 'flag-icons/css/flag-icons.min.css';
 import { Providers } from './providers';
 
@@ -34,8 +43,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={GeistSans.variable}>
-      <body className="font-sans">
+    <html lang="en" className={manrope.variable}>
+      <body className="font-sans antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

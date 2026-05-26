@@ -95,25 +95,25 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                'relative flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] font-medium leading-none transition-colors duration-150',
+                'relative flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] leading-none transition-colors duration-150',
                 active
-                  ? 'bg-foreground/[0.06] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]'
-                  : 'text-foreground/65 hover:bg-foreground/[0.04] hover:text-foreground',
+                  ? 'font-semibold text-white shadow-[0_8px_24px_-12px_rgba(20,184,166,0.65)]'
+                  : 'font-medium text-foreground/70 hover:bg-foreground/[0.04] hover:text-foreground',
               )}
+              style={
+                active
+                  ? {
+                      background:
+                        'linear-gradient(135deg, rgba(14,165,233,0.92) 0%, rgba(20,184,166,0.92) 100%)',
+                      border: '1px solid rgba(255,255,255,0.30)',
+                    }
+                  : undefined
+              }
             >
               <span className="grid w-[22px] place-items-center opacity-95">
                 <Icon size={20} strokeWidth={1.8} />
               </span>
               <span>{item.label}</span>
-              {active && (
-                <span
-                  className="pointer-events-none absolute left-1 top-1/2 h-[18px] w-[3px] -translate-y-1/2 rounded-[2px]"
-                  style={{
-                    background: 'linear-gradient(180deg, #0ea5e9, #14b8a6)',
-                    boxShadow: '0 0 10px rgba(20, 184, 166, 0.55)',
-                  }}
-                />
-              )}
             </Link>
           );
         })}

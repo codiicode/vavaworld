@@ -292,3 +292,26 @@ body {
   border: 2px solid transparent;
 }
 *::-webkit-scrollbar-corner { background: transparent; }
+
+/* ─────────────────────────────────────────────────────────
+   Typography defaults — soft grotesk (Manrope) tightened
+   slightly for the dashboard feel. Headings get tighter
+   letter-spacing and leading; body gets a relaxed 1.5 leading.
+   ───────────────────────────────────────────────────────── */
+body {
+  font-feature-settings: "ss01", "ss02", "cv11";
+  letter-spacing: -0.005em;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+h1, h2, h3, h4 { letter-spacing: -0.022em; }
+h1 { line-height: 1.1; }
+h2 { line-height: 1.2; }
+h3, h4 { line-height: 1.25; }
+
+/* Bump the shadcn muted-foreground so it actually passes WCAG AA
+   against the white-translucent glass cards over the sky bg
+   (was a too-light grey that read blue-on-blue in places). */
+:root { --muted-foreground: 215 22% 28%; }
