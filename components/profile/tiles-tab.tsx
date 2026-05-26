@@ -5,12 +5,12 @@ import Link from 'next/link';
 import {
   Hexagon,
   LayoutGrid,
+  Layers,
   List,
   MoreHorizontal,
   RefreshCw,
   Search,
 } from 'lucide-react';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -38,10 +38,10 @@ import {
 } from '@/components/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Flag } from '@/components/flag';
-import { hexCenter } from '@/lib/h3-utils';
 import { hexStaticMapUrl } from '@/lib/static-map';
+import { groupTilesByClaim, type TileGroup } from '@/lib/tile-groups';
 import { useUserTiles } from '@/lib/use-user-tiles';
-import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
+import { useHexLocations } from '@/lib/use-hex-locations';
 import type { ClaimedTile } from '@/types/tile';
 import { TileDetailsDialog } from './tile-details-dialog';
 import { TileListDialog } from './tile-list-dialog';
@@ -65,7 +65,7 @@ export function TilesTab() {
   const openDialog = (kind: DialogKind, tile: ClaimedTile) => setDialog({ kind, tile });
   const dialogLocation = dialog ? locations.get(dialog.tile.h3) ?? null : null;
 
-  const filtered = useMemo(() => {
+  const filteredTiles = useMemo(() => {
     if (!tiles) return [];
     return tiles.filter((t) => {
       if (tierFilter !== 'all' && String(t.tier) !== tierFilter) return false;
@@ -82,8 +82,15 @@ export function TilesTab() {
     });
   }, [tiles, search, tierFilter, locations]);
 
+  // Group hexes by claim transaction — 50 hexes bought in one tx render as one
+  // "property" card / row, not 50 copies of the same purchase.
+  const groups = useMemo(
+    () => groupTilesByClaim(filteredTiles, locations),
+    [filteredTiles, locations],
+  );
+
   const start = (page - 1) * PER_PAGE;
-  const pageTiles = filtered.slice(start, start + PER_PAGE);
+  const pageGroups = groups.slice(start, start + PER_PAGE);
   const totalCities = useMemo(() => {
     const s = new Set<string>();
     tiles?.forEach((t) => {
@@ -92,6 +99,7 @@ export function TilesTab() {
     });
     return s.size;
   }, [tiles, locations]);
+  const totalProperties = groups.length;
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md">
@@ -99,7 +107,9 @@ export function TilesTab() {
         <div>
           <h2 className="text-[15px] font-semibold tracking-tight text-foreground">Your Hexes</h2>
           <p className="text-xs text-foreground/55 tabular-nums">
-            {tiles ? `${tiles.length} ${tiles.length === 1 ? 'hex' : 'hexes'}` : '—'}
+            {tiles
+              ? `${tiles.length} ${tiles.length === 1 ? 'hex' : 'hexes'} · ${totalProperties} ${totalProperties === 1 ? 'property' : 'properties'}`
+              : '—'}
             {totalCities > 0 && ` · ${totalCities} ${totalCities === 1 ? 'city' : 'cities'}`}
           </p>
         </div>
@@ -192,7 +202,7 @@ export function TilesTab() {
             <TableHeader className="[&_tr]:border-foreground/10 [&_th]:text-foreground/55">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead>Location</TableHead>
+                <TableHead>Property</TableHead>
                 <TableHead className="w-[80px]">Tier</TableHead>
                 <TableHead className="hidden w-[110px] lg:table-cell">Claimed</TableHead>
                 <TableHead className="hidden w-[140px] lg:table-cell">Coordinates</TableHead>
@@ -201,12 +211,11 @@ export function TilesTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pageTiles.map((t, i) => (
-                <TileRow
-                  key={t.h3}
-                  tile={t}
+              {pageGroups.map((g, i) => (
+                <GroupRow
+                  key={g.key}
+                  group={g}
                   index={start + i + 1}
-                  location={locations.get(t.h3) ?? null}
                   onAction={openDialog}
                 />
               ))}
@@ -217,8 +226,8 @@ export function TilesTab() {
 
       {!loading && tiles && tiles.length > 0 && view === 'grid' && (
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {pageTiles.map((t) => (
-            <TileCard key={t.h3} tile={t} location={locations.get(t.h3) ?? null} />
+          {pageGroups.map((g) => (
+            <GroupCard key={g.key} group={g} />
           ))}
         </div>
       )}
@@ -226,7 +235,7 @@ export function TilesTab() {
       {tiles && tiles.length > 0 && (
         <div className="flex items-center justify-between border-t border-foreground/10 px-6 py-3">
           <span className="text-xs tabular-nums text-foreground/55">
-            Showing {start + 1}–{Math.min(start + PER_PAGE, filtered.length)} of {filtered.length}
+            Showing {start + 1}–{Math.min(start + PER_PAGE, groups.length)} of {groups.length}
           </span>
           <div className="flex items-center gap-1">
             <Button size="sm" variant="outline" disabled className="border-foreground/15 bg-white/40 text-foreground/55">Previous</Button>
@@ -257,22 +266,23 @@ export function TilesTab() {
   );
 }
 
-function TileRow({
-  tile: t,
+function GroupRow({
+  group: g,
   index,
-  location: loc,
   onAction,
 }: {
-  tile: ClaimedTile;
+  group: TileGroup;
   index: number;
-  location: HexLocation | null;
   onAction: (kind: DialogKind, tile: ClaimedTile) => void;
 }) {
-  const c = hexCenter(t.h3);
-  const title = loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? 'Locating…';
-  const subtitle = loc
-    ? [loc.neighborhood, loc.countryName].filter(Boolean).join(' · ')
-    : '—';
+  const isSingle = g.tiles.length === 1;
+  const title = isSingle
+    ? g.neighborhood ?? g.citiesLabel ?? g.countryName ?? 'Locating…'
+    : g.citiesLabel;
+  const subtitle = isSingle
+    ? [g.citiesLabel, g.countryName].filter(Boolean).join(' · ')
+    : `${g.tiles.length} hexes${g.countryName ? ` · ${g.countryName}` : ''}`;
+  const firstTile = g.tiles[0];
   return (
     <TableRow className="h-14 border-foreground/10 hover:bg-foreground/[0.03]">
       <TableCell className="tabular-nums text-foreground/40">
@@ -280,30 +290,38 @@ function TileRow({
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2.5">
-          <Flag code={loc?.countryCode} size={15} />
-          <div className="flex flex-col">
-            <span className="text-sm font-medium leading-tight text-foreground">{title}</span>
-            <span className="mt-0.5 text-[11px] leading-tight text-foreground/55">
+          <Flag code={g.countryCode} size={15} />
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-medium leading-tight text-foreground">
+              {title}
+            </span>
+            <span className="mt-0.5 truncate text-[11px] leading-tight text-foreground/55">
               {subtitle}
             </span>
           </div>
+          {!isSingle && (
+            <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+              <Layers size={10} />
+              {g.tiles.length}
+            </span>
+          )}
         </div>
       </TableCell>
       <TableCell>
         <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary">
-          T{t.tier}
+          T{g.representativeTier}
         </span>
       </TableCell>
       <TableCell className="hidden tabular-nums text-foreground/55 lg:table-cell">
-        {new Date(t.claimedAt * 1000).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })}
+        {new Date(g.claimedAt * 1000).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })}
       </TableCell>
       <TableCell className="hidden text-[11px] tabular-nums text-foreground/55 lg:table-cell">
-        {Math.abs(c.lat).toFixed(2)}°{c.lat >= 0 ? 'N' : 'S'},{' '}
-        {Math.abs(c.lng).toFixed(2)}°{c.lng >= 0 ? 'E' : 'W'}
+        {Math.abs(g.centerLat).toFixed(2)}°{g.centerLat >= 0 ? 'N' : 'S'},{' '}
+        {Math.abs(g.centerLng).toFixed(2)}°{g.centerLng >= 0 ? 'E' : 'W'}
       </TableCell>
       <TableCell className="text-right">
         <span className="text-sm font-medium tabular-nums text-foreground">
-          {(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(3)}
+          {g.totalSol.toFixed(3)}
         </span>
         <span className="ml-1 text-xs text-foreground/55">SOL</span>
       </TableCell>
@@ -313,7 +331,7 @@ function TileRow({
             <button
               type="button"
               className="rounded-md p-1.5 text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground"
-              aria-label="Hex actions"
+              aria-label="Property actions"
               onClick={(e) => e.stopPropagation()}
             >
               <MoreHorizontal size={14} />
@@ -321,12 +339,22 @@ function TileRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
             <DropdownMenuItem asChild>
-              <Link href={`/map#${t.h3}`}>View on map</Link>
+              <Link href={`/map#${firstTile.h3}`}>View on map</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onAction('list', t)}>List for sale</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => onAction('transfer', t)}>Transfer</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => onAction('details', t)}>Details</DropdownMenuItem>
+            {isSingle && (
+              <>
+                <DropdownMenuItem onSelect={() => onAction('list', firstTile)}>
+                  List for sale
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => onAction('transfer', firstTile)}>
+                  Transfer
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => onAction('details', firstTile)}>
+                  Details
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
@@ -334,12 +362,19 @@ function TileRow({
   );
 }
 
-function TileCard({ tile: t, location: loc }: { tile: ClaimedTile; location: HexLocation | null }) {
-  const c = hexCenter(t.h3);
-  const img = hexStaticMapUrl({ lat: c.lat, lng: c.lng, width: 480, height: 320, zoom: 17 });
+function GroupCard({ group: g }: { group: TileGroup }) {
+  const img = hexStaticMapUrl({
+    lat: g.centerLat,
+    lng: g.centerLng,
+    width: 480,
+    height: 320,
+    zoom: g.zoom,
+  });
+  const firstTile = g.tiles[0];
+  const isSingle = g.tiles.length === 1;
   return (
     <Link
-      href={`/map#${t.h3}`}
+      href={`/map#${firstTile.h3}`}
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md transition-colors hover:bg-white/40"
     >
       <div className="relative aspect-[3/2] overflow-hidden">
@@ -347,7 +382,7 @@ function TileCard({ tile: t, location: loc }: { tile: ClaimedTile; location: Hex
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={img}
-            alt={`Satellite view of ${loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? 'this hex'}`}
+            alt={`Satellite view of ${g.citiesLabel}`}
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             loading="lazy"
           />
@@ -366,27 +401,37 @@ function TileCard({ tile: t, location: loc }: { tile: ClaimedTile; location: Hex
           </>
         )}
         <div className="absolute left-2 top-2 flex items-center gap-1.5 rounded-md border border-white/40 bg-white/30 px-2 py-1 text-[11px] font-medium text-foreground backdrop-blur-md">
-          <Flag code={loc?.countryCode} size={15} />
-          <span className="max-w-[140px] truncate">
-            {loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? '—'}
-          </span>
+          <Flag code={g.countryCode} size={15} />
+          <span className="max-w-[160px] truncate">{g.citiesLabel}</span>
         </div>
-        <span className="absolute right-2 top-2 rounded border border-primary/30 bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary">
-          T{t.tier}
+        <span className="absolute right-2 top-2 flex items-center gap-1.5">
+          {!isSingle && (
+            <span className="inline-flex items-center gap-1 rounded-md border border-white/40 bg-white/30 px-2 py-1 text-[11px] font-semibold text-foreground backdrop-blur-md">
+              <Layers size={11} strokeWidth={2} />
+              {g.tiles.length} hexes
+            </span>
+          )}
+          <span className="rounded border border-primary/30 bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary backdrop-blur-md">
+            T{g.representativeTier}
+          </span>
         </span>
       </div>
       <div className="border-t border-foreground/10 p-3">
         <div className="truncate text-sm font-medium text-foreground">
-          {loc?.neighborhood ?? loc?.place ?? '—'}
+          {isSingle
+            ? g.neighborhood ?? g.citiesLabel
+            : `${g.tiles.length} hexes in ${g.countryName ?? g.citiesLabel}`}
         </div>
         <div className="mt-0.5 text-[11px] tabular-nums text-foreground/55">
-          {Math.abs(c.lat).toFixed(3)}°{c.lat >= 0 ? 'N' : 'S'},{' '}
-          {Math.abs(c.lng).toFixed(3)}°{c.lng >= 0 ? 'E' : 'W'}
+          {Math.abs(g.centerLat).toFixed(3)}°{g.centerLat >= 0 ? 'N' : 'S'},{' '}
+          {Math.abs(g.centerLng).toFixed(3)}°{g.centerLng >= 0 ? 'E' : 'W'}
         </div>
         <div className="mt-2.5 flex items-center justify-between">
-          <span className="text-xs text-foreground/55">Paid</span>
+          <span className="text-xs text-foreground/55">
+            {isSingle ? 'Paid' : 'Total paid'}
+          </span>
           <span className="text-sm font-medium tabular-nums text-foreground">
-            {(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(3)} SOL
+            {g.totalSol.toFixed(3)} SOL
           </span>
         </div>
       </div>

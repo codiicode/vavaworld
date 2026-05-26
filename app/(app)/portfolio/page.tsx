@@ -22,6 +22,7 @@ import { useUserTiles } from '@/lib/use-user-tiles';
 import { useCounters } from '@/lib/use-counters';
 import { useHexLocations } from '@/lib/use-hex-locations';
 import { quoteOne } from '@/lib/quote';
+import { groupTilesByClaim } from '@/lib/tile-groups';
 import { Flag } from '@/components/flag';
 import type { ClaimedTile } from '@/types/tile';
 
@@ -263,29 +264,33 @@ export default function PortfolioPage() {
     const monthAgo = now - 30 * 86400;
     const claimedThisMonth = list.filter((t) => t.claimedAt >= monthAgo).length;
 
-    // Holdings rows — sorted newest first, top 4 for the dashboard table.
-    const holdings = [...list]
-      .sort((a, b) => b.claimedAt - a.claimedAt)
-      .slice(0, 4)
-      .map((t, i) => {
-        const loc = locations.get(t.h3);
-        const place =
-          loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? 'Locating…';
-        const cur = Number(quoteOne(t.tier, counters[t.tier]));
-        const paid = Number(t.pricePaid);
-        const roi = paid > 0 ? (cur - paid) / paid : 0;
-        // "maturity" = how long held, capped at 90d → a real signal.
-        const ageDays = (now - t.claimedAt) / 86400;
-        const maturity = Math.min(1, Math.max(0.06, ageDays / 90));
-        return {
-          id: String(i + 1).padStart(2, '0'),
-          name: place,
-          code: loc?.countryCode ?? null,
-          tier: tierName(t.tier),
-          roi: `${roi >= 0 ? '+' : ''}${(roi * 100).toFixed(0)}%`,
-          maturity,
-        };
-      });
+    // Holdings rows — one row per "property" (all hexes claimed in the same
+    // transaction collapsed into one), sorted newest first, top 4.
+    const tileGroups = groupTilesByClaim(list, locations);
+    const holdings = tileGroups.slice(0, 4).map((g, i) => {
+      const tilesCount = g.tiles.length;
+      const isSingle = tilesCount === 1;
+      const cur = g.tiles.reduce(
+        (s, t) => s + Number(quoteOne(t.tier, counters[t.tier])),
+        0,
+      );
+      const paid = g.tiles.reduce((s, t) => s + Number(t.pricePaid), 0);
+      const roi = paid > 0 ? (cur - paid) / paid : 0;
+      const ageDays = (now - g.claimedAt) / 86400;
+      const maturity = Math.min(1, Math.max(0.06, ageDays / 90));
+      const baseName = isSingle
+        ? g.neighborhood ?? g.citiesLabel ?? g.countryName ?? 'Locating…'
+        : g.citiesLabel;
+      return {
+        id: String(i + 1).padStart(2, '0'),
+        name: baseName,
+        code: g.countryCode,
+        tier: tierName(g.representativeTier),
+        roi: `${roi >= 0 ? '+' : ''}${(roi * 100).toFixed(0)}%`,
+        maturity,
+        count: tilesCount,
+      };
+    });
 
     // Regions — group all holdings by country, % of portfolio.
     const byCountry = new Map<string, { count: number; code: string | null }>();
@@ -309,19 +314,16 @@ export default function PortfolioPage() {
         pct: Math.round((count / total) * 100),
       }));
 
-    // Activity — most recent 3 claims (real, no indexer needed).
-    const activity = [...list]
-      .sort((a, b) => b.claimedAt - a.claimedAt)
-      .slice(0, 3)
-      .map((t) => {
-        const loc = locations.get(t.h3);
-        const place = loc?.place ?? loc?.neighborhood ?? loc?.countryName ?? 'a hex';
-        return {
-          tag: 'Claimed',
-          note: `${place} · $${fmtUsd((Number(t.pricePaid) / LAMPORTS_PER_SOL) * SOL_USD)}`,
-          t: timeAgo(t.claimedAt),
-        };
-      });
+    // Activity — most recent 3 properties (a 50-hex claim = 1 entry).
+    const activity = tileGroups.slice(0, 3).map((g) => {
+      const place = g.neighborhood ?? g.citiesLabel ?? g.countryName ?? 'a hex';
+      const tag = g.tiles.length > 1 ? `Claimed ×${g.tiles.length}` : 'Claimed';
+      return {
+        tag,
+        note: `${place} · $${fmtUsd(g.totalSol * SOL_USD)}`,
+        t: timeAgo(g.claimedAt),
+      };
+    });
 
     // 12-pt cumulative-spend series for the area chart (falls back to a
     // representative shape if the user has very few claims).
@@ -407,7 +409,7 @@ export default function PortfolioPage() {
               <Link href="/profile" className="btn-glass">View all</Link>
             </div>
             <div className="holdings__head">
-              <span>#</span><span>Hex</span><span>Maturity</span><span>Performance</span><span style={{ textAlign: 'right' }}>ROI</span><span></span>
+              <span>#</span><span>Property</span><span>Maturity</span><span>Performance</span><span style={{ textAlign: 'right' }}>ROI</span><span></span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto' }}>
               {derived.holdings.length === 0 && (
@@ -429,7 +431,26 @@ export default function PortfolioPage() {
                   <div className="holdings__name">
                     <Flag code={h.code} size={20} />
                     <div>
-                      <b>{h.name}</b>
+                      <b>
+                        {h.name}
+                        {h.count > 1 && (
+                          <span
+                            style={{
+                              marginLeft: 6,
+                              padding: '1px 6px',
+                              borderRadius: 999,
+                              fontSize: 10,
+                              fontWeight: 600,
+                              color: 'var(--brand)',
+                              background: 'rgba(94,234,212,0.15)',
+                              border: '1px solid rgba(94,234,212,0.35)',
+                              verticalAlign: 'middle',
+                            }}
+                          >
+                            {h.count} hexes
+                          </span>
+                        )}
+                      </b>
                       <span>{h.tier}</span>
                     </div>
                   </div>
