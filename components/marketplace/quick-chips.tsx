@@ -1,6 +1,15 @@
 'use client';
 
-import { Clock, Eye, Hammer, LayoutGrid, List, Sparkles, TrendingDown } from 'lucide-react';
+import {
+  Clock,
+  Eye,
+  Hammer,
+  LayoutGrid,
+  List,
+  SlidersHorizontal,
+  Sparkles,
+  TrendingDown,
+} from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { mockChipCounts } from '@/lib/mock-marketplace';
 import { cn } from '@/lib/utils';
@@ -29,15 +38,28 @@ export function QuickChips({
   onChange,
   view,
   onViewChange,
+  onOpenFilters,
 }: {
   active: QuickFilter;
   onChange: (next: QuickFilter) => void;
   view: ViewMode;
   onViewChange: (next: ViewMode) => void;
+  onOpenFilters?: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/30 px-6 py-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex items-center gap-3 border-b border-white/30 px-3 py-3 md:flex-wrap md:justify-between md:px-6">
+      {onOpenFilters && (
+        <button
+          type="button"
+          onClick={onOpenFilters}
+          aria-label="Open filters"
+          className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border border-white/40 bg-white/50 px-3 py-1.5 text-xs font-medium text-foreground/80 backdrop-blur md:hidden"
+        >
+          <SlidersHorizontal size={13} />
+          Filters
+        </button>
+      )}
+      <div className="flex flex-1 items-center gap-2 overflow-x-auto pb-1 md:flex-none md:flex-wrap md:overflow-visible md:pb-0">
         {CHIPS.map((c) => {
           const isActive = c.id === active;
           const Icon = c.icon;
@@ -47,7 +69,7 @@ export function QuickChips({
               type="button"
               onClick={() => onChange(c.id)}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                'inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                 isActive
                   ? 'border-primary/30 bg-primary/10 text-primary'
                   : 'border-white/30 bg-white/40 text-foreground/65 hover:border-foreground/20 hover:text-foreground',
@@ -65,6 +87,7 @@ export function QuickChips({
         type="single"
         value={view}
         onValueChange={(v) => v && onViewChange(v as ViewMode)}
+        className="hidden flex-shrink-0 md:flex"
       >
         <ToggleGroupItem value="table" size="sm" aria-label="Table view">
           <List size={14} />

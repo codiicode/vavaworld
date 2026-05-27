@@ -57,7 +57,7 @@ export function AppSidebar() {
 
   return (
     <aside
-      className="fixed bottom-[18px] left-[18px] top-[18px] z-30 flex w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground"
+      className="fixed bottom-[18px] left-[18px] top-[18px] z-30 hidden w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground md:flex"
       style={{
         gap: 22,
         // Same translucent recipe as the portfolio .glass/.panel so the sky

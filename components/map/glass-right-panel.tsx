@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronDown, Flame, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ChevronDown, ChevronUp, Flame, X } from 'lucide-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
@@ -52,11 +52,31 @@ export function GlassRightPanel({
   onClaim: () => void;
 }) {
   const [tab, setTab] = useState<TabId>('selection');
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { balance } = useWalletBalance(wallet.publicKey);
   const counters = useCounters();
   const locations = useHexLocations(selectedHexes);
+
+  // Track viewport width so the panel can flip between fixed right rail
+  // (desktop) and a collapsible bottom sheet (mobile).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  // Auto-expand the mobile sheet when the user selects a hex so the claim CTA
+  // is immediately visible. Collapse again when the selection is cleared.
+  useEffect(() => {
+    if (!isMobile) return;
+    if (selectedHexes.size > 0) setMobileExpanded(true);
+  }, [selectedHexes, isMobile]);
 
   const items = Array.from(selectedHexes).map((h3) => {
     const c = hexCenter(h3);
@@ -74,11 +94,29 @@ export function GlassRightPanel({
   const totalSol = Number(quoteBatch(items, counters)) / LAMPORTS_PER_SOL;
   const count = items.length;
 
+  const mobileSheetClass = isMobile
+    ? `glass-right-panel--mobile-sheet${!mobileExpanded ? ' glass-right-panel--mobile-collapsed' : ''}`
+    : '';
+
   return (
     <aside
-      className="glass glass-panel fixed bottom-[18px] right-[18px] top-[18px] z-30 flex w-[320px] flex-col px-5 pb-[22px] pt-5"
+      className={cn(
+        'glass glass-panel fixed bottom-[18px] right-[18px] top-[18px] z-30 flex w-[320px] flex-col px-5 pb-[22px] pt-5 transition-[max-height]',
+        mobileSheetClass,
+      )}
       style={{ gap: 20 }}
     >
+      {isMobile && (
+        <button
+          type="button"
+          onClick={() => setMobileExpanded((v) => !v)}
+          aria-label={mobileExpanded ? 'Collapse panel' : 'Expand panel'}
+          className="absolute right-3 top-3 z-[2] grid h-9 w-9 place-items-center rounded-full bg-white/14 text-white/80"
+          style={{ border: '1px solid rgba(255,255,255,0.22)' }}
+        >
+          {mobileExpanded ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+        </button>
+      )}
       {/* Wallet chip */}
       <div
         className="relative z-[1] flex items-center gap-3 rounded-[16px] px-3 py-2"

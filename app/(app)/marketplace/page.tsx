@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivitySidebar } from '@/components/marketplace/activity-sidebar';
 import { BuyDialog } from '@/components/marketplace/buy-dialog';
 import { EmptyState } from '@/components/marketplace/empty-state';
 import {
   FilterSidebar,
+  MobileFilterDrawer,
   defaultFilterState,
   type FilterState,
 } from '@/components/marketplace/filter-sidebar';
@@ -30,6 +31,21 @@ export default function MarketplacePage() {
   const [view, setView] = useState<ViewMode>('table');
   const [sort, setSort] = useState<SortKey>('newest');
   const [buyTarget, setBuyTarget] = useState<Listing | null>(null);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Force grid view on mobile — the 9-column table doesn't fit on a phone
+  // and horizontal scroll there reads as a bug.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  const effectiveView: ViewMode = isMobile ? 'grid' : view;
 
   const visible = useMemo(() => {
     let xs: ReadonlyArray<Listing> = mockListings;
@@ -106,13 +122,19 @@ export default function MarketplacePage() {
     <div className="flex h-full">
       <FilterSidebar state={filters} onChange={setFilters} />
 
-      <section className="flex flex-1 flex-col overflow-hidden">
+      <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <MarketHeader />
-        <QuickChips active={chip} onChange={setChip} view={view} onViewChange={setView} />
+        <QuickChips
+          active={chip}
+          onChange={setChip}
+          view={view}
+          onViewChange={setView}
+          onOpenFilters={() => setMobileFiltersOpen(true)}
+        />
 
         {visible.length === 0 ? (
           <EmptyState onReset={() => setFilters(defaultFilterState)} />
-        ) : view === 'table' ? (
+        ) : effectiveView === 'table' ? (
           <ListingTable
             listings={visible}
             totalCount={mockListings.length}
@@ -128,6 +150,13 @@ export default function MarketplacePage() {
       <div className="hidden xl:block">
         <ActivitySidebar />
       </div>
+
+      <MobileFilterDrawer
+        open={mobileFiltersOpen}
+        onOpenChange={setMobileFiltersOpen}
+        state={filters}
+        onChange={setFilters}
+      />
 
       <BuyDialog
         listing={buyTarget}

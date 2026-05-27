@@ -460,3 +460,64 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 .pf-stage .sidebar.panel::after { content: none; }
+
+/* ─── Mobile (< 768px) ────────────────────────────────────────────
+   - Hide the in-page sidebar + right rail (the shared MobileNav at the
+     app shell takes over for navigation).
+   - Switch the shell to a single scrollable column, clearing the top
+     and bottom bars via safe-area padding.
+   - Stack KPI / bottom / table rows for narrow screens. */
+@media (max-width: 767px) {
+  .pf-stage .shell,
+  .pf-stage.va .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    height: auto;
+    min-height: 100%;
+    padding: 12px;
+    gap: 12px;
+    padding-top: calc(56px + var(--safe-top, 0px) + 12px);
+    padding-bottom: calc(60px + var(--safe-bottom, 0px) + 12px);
+  }
+  .pf-stage { overflow-y: auto; overflow-x: hidden; height: 100dvh; }
+  .pf-stage .sidebar { display: none !important; }
+  .pf-stage.va .rail { display: none !important; }
+
+  .pf-stage.va .welcome {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 10px;
+  }
+  .pf-stage.va .welcome__search { min-width: 0; width: 100%; }
+  .pf-stage.va .welcome__hello { font-size: 18px; }
+
+  .pf-stage.va .kpis { grid-template-columns: 1fr; gap: 10px; }
+  .pf-stage.va .kpi { padding: 14px 16px; }
+  .pf-stage.va .kpi__big { font-size: 24px; }
+
+  .pf-stage.va .bottom { grid-template-columns: 1fr; gap: 10px; }
+  .pf-stage.va .earnings { padding: 14px 16px; }
+  .pf-stage.va .earnings__big { font-size: 24px; }
+  .pf-stage.va .projection { padding: 14px 16px; }
+
+  /* Holdings — turn the dense 6-col table into a 2-row card per holding so
+     every cell fits on a phone: top row is idx + name + chip, bottom row is
+     the two bars + ROI. */
+  .pf-stage.va .holdings { padding: 12px; gap: 6px; min-height: 0; }
+  .pf-stage.va .holdings__head { display: none; }
+  .pf-stage.va .holdings__row {
+    grid-template-columns: 28px 1fr 1fr 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "idx name name name chip"
+      "idx bar1 bar2 roi  roi";
+    gap: 8px 10px;
+    padding: 10px 6px;
+  }
+  .pf-stage.va .holdings__row > .holdings__idx  { grid-area: idx; align-self: center; }
+  .pf-stage.va .holdings__row > .holdings__name { grid-area: name; }
+  .pf-stage.va .holdings__row > :nth-child(3)   { grid-area: bar1; align-self: center; }
+  .pf-stage.va .holdings__row > :nth-child(4)   { grid-area: bar2; align-self: center; }
+  .pf-stage.va .holdings__row > :nth-child(5)   { grid-area: roi; font-size: 13px; }
+  .pf-stage.va .holdings__row > :nth-child(6)   { grid-area: chip; justify-self: end; }
+}
