@@ -1,11 +1,13 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { useEffect } from 'react';
+import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { mockTierCounts, type Tier } from '@/lib/mock-marketplace';
+import { cn } from '@/lib/utils';
 import { CountryFilter } from './country-filter';
 
 export type StatusValue = 'listed' | 'auction' | 'reserve-met';
@@ -58,9 +60,13 @@ const STATUSES: ReadonlyArray<{ id: StatusValue; label: string }> = [
 export function FilterSidebar({
   state,
   onChange,
+  mobileOpen = false,
+  onMobileClose,
 }: {
   state: FilterState;
   onChange: (next: FilterState) => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }) {
   const set = <K extends keyof FilterState>(key: K, value: FilterState[K]) =>
     onChange({ ...state, [key]: value });
@@ -72,8 +78,51 @@ export function FilterSidebar({
 
   const reset = () => onChange(defaultFilterState);
 
+  // Lock body scroll while the mobile drawer is open.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
   return (
-    <aside className="flex h-full w-60 flex-shrink-0 flex-col overflow-y-auto border-r border-white/40 bg-white/30 text-foreground backdrop-blur-md">
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          aria-hidden
+          onClick={onMobileClose}
+          className="fixed inset-0 z-[40] bg-black/30 backdrop-blur-sm md:hidden"
+        />
+      )}
+      <aside
+        className={cn(
+          'flex h-full w-60 flex-shrink-0 flex-col overflow-y-auto border-r border-white/40 bg-white/30 text-foreground backdrop-blur-md transition-transform duration-200 ease-out',
+          // On mobile this is a fixed-position off-canvas drawer.
+          'fixed inset-y-0 left-0 z-[41]',
+          !mobileOpen && 'max-md:-translate-x-full',
+          // At md+ it returns to the normal flex column layout.
+          'md:static md:translate-x-0',
+        )}
+      >
+        {/* Mobile header with close button */}
+        <div className="flex items-center justify-between border-b border-white/30 px-4 py-3 md:hidden">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground/65">
+            Filters
+          </span>
+          <button
+            type="button"
+            aria-label="Close filters"
+            onClick={onMobileClose}
+            className="grid h-9 w-9 place-items-center rounded-lg text-foreground/70 hover:bg-foreground/[0.06]"
+          >
+            <X size={18} />
+          </button>
+        </div>
       {/* Search */}
       <div className="border-b border-white/30 p-4">
         <div className="relative">
@@ -213,7 +262,8 @@ export function FilterSidebar({
           Reset filters
         </Button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 

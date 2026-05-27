@@ -16,16 +16,18 @@ export function LeaderboardTable({ rows }: { rows: LeaderboardEntry[] }) {
   const last = rows[rows.length - 1]?.rank ?? 0;
   return (
     <div className="overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md">
-      <div className="flex items-center justify-between border-b border-white/30 px-6 py-4">
+      <div className="flex flex-col gap-1 border-b border-white/30 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6 md:py-4">
         <h2 className="text-base font-semibold tracking-tight">All Rankings</h2>
-        <span className="text-xs tabular-nums text-foreground/60">
+        <span className="text-[11px] tabular-nums text-foreground/60 md:text-xs">
           {rows.length > 0
             ? `Showing ${first}–${last} of ${TOTAL_HOLDERS.toLocaleString()} holders`
             : `No holders match this filter`}
         </span>
       </div>
 
-      <Table>
+      {/* Horizontal scroll on mobile keeps all 6 cols legible without cramming. */}
+      <div className="overflow-x-auto">
+        <Table>
         <TableHeader>
           <TableRow className="border-white/30 hover:bg-transparent">
             <TableHead className={`${TH} w-16`}>Rank</TableHead>
@@ -41,7 +43,8 @@ export function LeaderboardTable({ rows }: { rows: LeaderboardEntry[] }) {
             <LeaderboardRow key={e.rank} entry={e} />
           ))}
         </TableBody>
-      </Table>
+        </Table>
+      </div>
     </div>
   );
 }

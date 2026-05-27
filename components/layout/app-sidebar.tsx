@@ -48,16 +48,39 @@ const NAV: ReadonlyArray<NavItem> = [
  * 232px wide, fixed inside an 18px gutter, so the map can bleed beneath it on
  * /map. Dark text + hairline borders work against either backdrop because the
  * panel itself is white-translucent enough to dominate locally.
+ *
+ * Mobile (<md): same component, same visual recipe — it just lives off-screen
+ * by default and slides in from the left when `mobileOpen` is true. The parent
+ * `(app)/layout.tsx` owns the open state and renders a backdrop alongside.
  */
-export function AppSidebar() {
+export function AppSidebar({
+  mobileOpen = false,
+  onMobileClose,
+}: {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+} = {}) {
   const pathname = usePathname();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { balance } = useWalletBalance(wallet.publicKey);
 
+  // Auto-close the mobile drawer on route change.
+  // We rely on pathname changing to trigger this via React's render cycle;
+  // the parent will pass a stable onMobileClose.
+  // (No useEffect — onMobileClose is called by Link clicks inline.)
+
   return (
     <aside
-      className="fixed bottom-[18px] left-[18px] top-[18px] z-30 flex w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground"
+      className={cn(
+        'fixed z-30 flex w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground transition-transform duration-200 ease-out',
+        // Desktop: pinned inside an 18px gutter, full vertical strip.
+        'md:bottom-[18px] md:left-[18px] md:top-[18px] md:translate-x-0',
+        // Mobile: slide-in from the left. Off-screen by default (-110% of own
+        // width covers the gutter too); slides to left:14 when mobileOpen.
+        'bottom-3 left-3 top-3',
+        !mobileOpen && 'max-md:-translate-x-[260px]',
+      )}
       style={{
         gap: 22,
         // Same translucent recipe as the portfolio .glass/.panel so the sky
@@ -69,6 +92,14 @@ export function AppSidebar() {
         border: '1px solid rgba(255,255,255,0.45)',
         boxShadow:
           '0 18px 50px rgba(40,80,150,0.22), 0 2px 8px rgba(40,80,150,0.12), inset 0 1px 0 rgba(255,255,255,0.65)',
+      }}
+      onClick={(e) => {
+        // Close the drawer when a child <Link> inside it is clicked. We do
+        // this on the bubble-up rather than per-link to keep the existing
+        // markup unchanged.
+        if (onMobileClose && (e.target as HTMLElement).closest('a')) {
+          onMobileClose();
+        }
       }}
     >
       {/* Brand */}

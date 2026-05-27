@@ -83,6 +83,52 @@
 }
 
 html, body { height: 100%; }
+
+/* iOS safe-area exposed as CSS vars so non-Tailwind components can read them. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* iOS auto-zooms on form fields below 16px. Force 16px at mobile widths
+   without touching desktop label sizes. */
+@media (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* /map search rail — desktop pins it at top:18px between the rails. Mobile
+   drops it just under the floating top bar (top:14 = 12px gutter + 54px bar +
+   8px breathing room ≈ 74px from the viewport top). */
+.map-search-rail {
+  top: 74px;
+}
+@media (min-width: 768px) {
+  .map-search-rail {
+    top: 18px;
+  }
+}
+
+/* /map right panel — at md+ it's the existing 320px right rail.
+   On mobile we keep `.glass .glass-panel` styling intact (dark glass on the
+   map) and reposition into a bottom sheet that floats above the bottom edge.
+   The component itself adds this class when the viewport is narrow. */
+.glass-right-panel--mobile-sheet {
+  top: auto !important;
+  left: 12px !important;
+  right: 12px !important;
+  bottom: 12px !important;
+  width: auto !important;
+  max-height: 56vh;
+}
+.glass-right-panel--mobile-collapsed {
+  /* Just enough room for the drag handle + the wallet chip + tabs — the user
+     can still see who's logged in and tap "Selection" to expand. */
+  max-height: 132px !important;
+  overflow: hidden !important;
+}
+
 body {
   /* Sky photo backdrop — glass panels float on top with white-translucent
      backgrounds and dark text. Map page overrides with mapbox + dim overlay. */

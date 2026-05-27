@@ -43,7 +43,7 @@ export default function LeaderboardPage() {
   const tableRows = list.slice(3);
 
   return (
-    <div className="mx-auto max-w-7xl px-8 py-8">
+    <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 md:px-8 md:py-8">
       <LeaderboardHeader />
 
       <LeaderboardFilters
@@ -54,13 +54,13 @@ export default function LeaderboardPage() {
       />
 
       {podium.length > 0 && (
-        <div className="mb-6 grid grid-cols-3 items-end gap-4">
-          {/* Rank 2 — left */}
-          <div>{podium[1] && <PodiumCard entry={podium[1]} />}</div>
-          {/* Rank 1 — middle, slightly larger */}
-          <div>{podium[0] && <PodiumCard entry={podium[0]} className="z-10 scale-105" />}</div>
-          {/* Rank 3 — right */}
-          <div>{podium[2] && <PodiumCard entry={podium[2]} />}</div>
+        <div className="mb-6 grid grid-cols-1 items-end gap-3 sm:grid-cols-3 sm:gap-4">
+          {/* Mobile: #1 on top, then 2, then 3. Desktop: 2 — 1 (scaled up) — 3. */}
+          <div className="order-1 sm:order-2">
+            {podium[0] && <PodiumCard entry={podium[0]} className="sm:z-10 sm:scale-105" />}
+          </div>
+          <div className="order-2 sm:order-1">{podium[1] && <PodiumCard entry={podium[1]} />}</div>
+          <div className="order-3">{podium[2] && <PodiumCard entry={podium[2]} />}</div>
         </div>
       )}
 

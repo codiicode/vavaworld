@@ -154,7 +154,7 @@ export function ClaimModal({
       }}
     >
       <div
-        className="w-[460px] p-8"
+        className="w-[calc(100vw-32px)] max-w-[460px] max-h-[calc(100dvh-32px)] overflow-y-auto p-5 sm:p-8"
         style={{
           background: 'rgba(255, 255, 255, 0.92)',
           backdropFilter: 'blur(14px) saturate(140%)',
