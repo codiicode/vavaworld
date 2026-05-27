@@ -33,7 +33,7 @@ export function MapStyleToggle({
       onClick={() => onChange(next)}
       aria-label={label}
       title={label}
-      className="glass pointer-events-auto relative grid h-[52px] w-[52px] flex-none place-items-center rounded-full text-white/80 transition-colors hover:text-white"
+      className="glass pointer-events-auto relative grid h-11 w-11 flex-none place-items-center rounded-full text-white/80 transition-colors hover:text-white"
     >
       <span className="relative z-[1]">
         {isSatellite ? <MapIcon size={20} strokeWidth={1.8} /> : <Satellite size={20} strokeWidth={1.8} />}
