@@ -69,7 +69,7 @@ export default function TileDetailPage() {
 
   if (resolving) {
     return (
-      <div className="mx-auto flex max-w-7xl items-center justify-center px-8 py-20 text-foreground/55">
+      <div className="mx-auto flex max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] items-center justify-center px-8 py-20 text-foreground/55">
         <Loader2 className="mr-2 animate-spin" size={16} />
         Loading listing…
       </div>
@@ -85,7 +85,7 @@ export default function TileDetailPage() {
     isReal && wallet.address != null && wallet.address === listing.sellerAddr;
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
+    <div className="mx-auto flex max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
       <div>
         <Link
           href="/marketplace"

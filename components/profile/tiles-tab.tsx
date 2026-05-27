@@ -374,8 +374,8 @@ function GroupCard({
   const img = hexStaticMapUrl({
     lat: g.centerLat,
     lng: g.centerLng,
-    width: 480,
-    height: 320,
+    width: 640,
+    height: 420,
     zoom: g.zoom,
   });
   const firstTile = g.tiles[0];

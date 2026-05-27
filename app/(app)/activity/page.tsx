@@ -43,7 +43,7 @@ export default function ActivityPage() {
   const volume = mockActivity.reduce((s, a) => s + a.price, 0);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
+    <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
       <div className="mb-8 flex items-end justify-between">
         <div>
           <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">

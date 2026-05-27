@@ -26,7 +26,7 @@ export default function ProfilePage() {
   return (
     <ProfileVersionProvider value={version}>
       <TooltipProvider delayDuration={200}>
-        <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-8">
+        <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
           <IdentityCard onSavedBumpVersion={bump} />
 
           <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
