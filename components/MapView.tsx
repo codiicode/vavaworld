@@ -2,13 +2,54 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Map, { type MapRef, type MapMouseEvent } from 'react-map-gl/mapbox';
-import type { FeatureCollection, Polygon } from 'geojson';
+import type { Feature, FeatureCollection, Polygon, Position } from 'geojson';
 import type { GeoJSONSource } from 'mapbox-gl';
 import { hexCenter, hexToFeature, hexesForBounds } from '@/lib/h3-utils';
-import { TIER_FILL, classifyTier } from '@/lib/tier';
+import { TIER_FILL, type Tier, classifyTier } from '@/lib/tier';
 import { useTiles } from '@/lib/use-tiles';
 import { ownerColor } from '@/lib/owner-color';
 import { PublicKey } from '@solana/web3.js';
+
+// Per-hex geometry/tier cache. h3 IDs are deterministic so coords + center +
+// tier never change for a given cell — compute once, reuse across every
+// refreshHexes pass. Without this, panning 2 000+ visible hexes re-runs
+// cellToBoundary + cellToLatLng + a 200-entry city loop for every single one
+// on every move event, which is the bulk of the visible "buffer" delay.
+type HexMeta = { coords: Position[]; lat: number; lng: number; tier: Tier };
+const hexMetaCache: globalThis.Map<string, HexMeta> = new globalThis.Map();
+function getHexMeta(h3: string): HexMeta {
+  let m = hexMetaCache.get(h3);
+  if (!m) {
+    const f = hexToFeature(h3);
+    const ring = (f.geometry.coordinates[0] ?? []) as Position[];
+    const c = hexCenter(h3);
+    m = { coords: ring, lat: c.lat, lng: c.lng, tier: classifyTier(c.lat, c.lng) };
+    hexMetaCache.set(h3, m);
+  }
+  return m;
+}
+
+// PublicKey.toBytes + base58 parse is the second-most expensive per-tile op.
+// The color is purely a function of the address string, so memoize per owner.
+const ownerColorCache: globalThis.Map<string, string> = new globalThis.Map();
+function getOwnerColor(addr: string): string {
+  let c = ownerColorCache.get(addr);
+  if (!c) {
+    c = ownerColor(new PublicKey(addr));
+    ownerColorCache.set(addr, c);
+  }
+  return c;
+}
+
+// Cheap reference-equality check so we skip React state updates when the
+// viewport produced exactly the same hex set (common during the dozens of
+// rAF ticks fired by a single pan/zoom gesture).
+function sameViewport(a: string[], b: string[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
 
 const SOURCE_ID = 'h3-grid';
 const FILL_LAYER = 'h3-grid-fill';
@@ -86,15 +127,18 @@ export function MapView({
     (ids: string[]): FeatureCollection<Polygon> => ({
       type: 'FeatureCollection',
       features: ids.map((id) => {
-        const f = hexToFeature(id);
-        const c = hexCenter(id);
+        const m = getHexMeta(id);
         const claimed = tiles.get(id);
-        f.properties = {
-          ...f.properties,
-          tier: classifyTier(c.lat, c.lng),
-          claimed: !!claimed,
-          ownerColor: claimed ? ownerColor(new PublicKey(claimed.owner)) : null,
-          selected: selectedHexes.has(id),
+        const f: Feature<Polygon> = {
+          type: 'Feature',
+          geometry: { type: 'Polygon', coordinates: [m.coords] },
+          properties: {
+            h3: id,
+            tier: m.tier,
+            claimed: !!claimed,
+            ownerColor: claimed ? getOwnerColor(claimed.owner) : null,
+            selected: selectedHexes.has(id),
+          },
         };
         return f;
       }),
@@ -164,8 +208,22 @@ export function MapView({
       b.getNorth(),
     ];
     const ids = hexesForBounds(bbox);
-    setVisibleHexes(ids);
+    setVisibleHexes((prev) => (sameViewport(prev, ids) ? prev : ids));
   }, [mapRef, loadAgg]);
+
+  // rAF-batched refresh so move/zoom gestures paint hexes progressively
+  // (every animation frame) instead of waiting for moveend, which is what
+  // made the page feel like it was "buffering". A pending flag dedupes
+  // multiple events inside the same frame down to a single refresh.
+  const refreshScheduledRef = useRef(false);
+  const scheduleRefresh = useCallback(() => {
+    if (refreshScheduledRef.current) return;
+    refreshScheduledRef.current = true;
+    requestAnimationFrame(() => {
+      refreshScheduledRef.current = false;
+      refreshHexes();
+    });
+  }, [refreshHexes]);
 
   // Keep source data in sync with visible / tiles / selection
   useEffect(() => {
@@ -337,15 +395,18 @@ export function MapView({
       const merged = new Set(selectedRef.current);
       for (const h of p.hexes) merged.add(h);
       const features = visibleRef.current.map((id) => {
-        const f = hexToFeature(id);
-        const c = hexCenter(id);
+        const m = getHexMeta(id);
         const claimed = tilesRef.current.get(id);
-        f.properties = {
-          ...f.properties,
-          tier: classifyTier(c.lat, c.lng),
-          claimed: !!claimed,
-          ownerColor: claimed ? ownerColor(new PublicKey(claimed.owner)) : null,
-          selected: merged.has(id),
+        const f: Feature<Polygon> = {
+          type: 'Feature',
+          geometry: { type: 'Polygon', coordinates: [m.coords] },
+          properties: {
+            h3: id,
+            tier: m.tier,
+            claimed: !!claimed,
+            ownerColor: claimed ? getOwnerColor(claimed.owner) : null,
+            selected: merged.has(id),
+          },
         };
         return f;
       });
@@ -454,6 +515,7 @@ export function MapView({
         mapStyle={mapStyle}
         projection={{ name: 'globe' }}
         onLoad={onLoad}
+        onMove={scheduleRefresh}
         onMoveEnd={refreshHexes}
         onClick={onClick}
         interactiveLayerIds={[FILL_LAYER, CLAIMED_LAYER]}

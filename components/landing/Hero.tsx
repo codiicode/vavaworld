@@ -1,12 +1,22 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { HeroParticles } from './HeroParticles';
 
 export function Hero() {
   return (
     <section className="l-hero">
-      <div className="l-bg" />
+      <div className="l-bg">
+        <Image
+          src="/hero-astronaut.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          quality={85}
+        />
+      </div>
       <div className="l-glow-pulse" />
       <div className="l-haze" />
       <HeroParticles />
