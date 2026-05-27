@@ -30,10 +30,10 @@ export function MapZoomControls({
     const m = map();
     if (!m) return;
     const c = m.getCenter();
-    m.flyTo({ center: [c.lng, c.lat], zoom: closeZoom, duration: 1200, essential: true });
+    m.flyTo({ center: [c.lng, c.lat], zoom: closeZoom, duration: 600, essential: true });
   };
-  const zoomIn = () => map()?.zoomIn({ duration: 250 });
-  const zoomOut = () => map()?.zoomOut({ duration: 250 });
+  const zoomIn = () => map()?.zoomIn({ duration: 120 });
+  const zoomOut = () => map()?.zoomOut({ duration: 120 });
 
   return (
     <div

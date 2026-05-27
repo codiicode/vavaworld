@@ -146,10 +146,10 @@ export function MapView({
     [tiles, selectedHexes],
   );
 
-  // Only render individual hexes at zoom >= 13. Below that the hex count
-  // balloons, so we show a country-level aggregate layer (name, claim
-  // count, current floor) instead.
-  const MIN_ZOOM_FOR_HEXES = 13;
+  // Only render individual hexes at zoom >= 14. Below that the cell count in
+  // the viewport balloons (~4× at z13 vs z14) and the per-frame rebuild on
+  // pan/zoom stops feeling instant. The fly-close button still targets z17.
+  const MIN_ZOOM_FOR_HEXES = 14;
 
   // Country aggregate: claimed countries as labelled points (name, floor,
   // claim count). Throttled to once per 10s while zoomed out.
@@ -211,19 +211,27 @@ export function MapView({
     setVisibleHexes((prev) => (sameViewport(prev, ids) ? prev : ids));
   }, [mapRef, loadAgg]);
 
-  // rAF-batched refresh so move/zoom gestures paint hexes progressively
-  // (every animation frame) instead of waiting for moveend, which is what
-  // made the page feel like it was "buffering". A pending flag dedupes
-  // multiple events inside the same frame down to a single refresh.
-  const refreshScheduledRef = useRef(false);
+  // Throttle in-flight refreshes during continuous pan/zoom to ~10 fps. The
+  // GeoJSON-rebuild + setData round trip is the most expensive thing on the
+  // main thread; 60-fps rAF was saturating it and made the gesture feel
+  // sluggish. 100 ms still reads as live (the user sees ~10 progressive
+  // updates over a one-second zoom), and onMoveEnd always fires a final
+  // refresh against the precise stopping bounds.
+  const refreshScheduledRef = useRef<number | null>(null);
   const scheduleRefresh = useCallback(() => {
-    if (refreshScheduledRef.current) return;
-    refreshScheduledRef.current = true;
-    requestAnimationFrame(() => {
-      refreshScheduledRef.current = false;
+    if (refreshScheduledRef.current != null) return;
+    refreshScheduledRef.current = window.setTimeout(() => {
+      refreshScheduledRef.current = null;
       refreshHexes();
-    });
+    }, 100);
   }, [refreshHexes]);
+  useEffect(() => {
+    return () => {
+      if (refreshScheduledRef.current != null) {
+        window.clearTimeout(refreshScheduledRef.current);
+      }
+    };
+  }, []);
 
   // Keep source data in sync with visible / tiles / selection
   useEffect(() => {
