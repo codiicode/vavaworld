@@ -37,7 +37,7 @@ export default function TileDetailPage() {
   const history = mockActivity.slice(0, 6);
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-3 py-4 md:gap-6 md:px-6 md:py-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-6">
       <div>
         <Link
           href="/marketplace"

@@ -22,7 +22,7 @@ export function ListingGrid({
 }) {
   const router = useRouter();
   return (
-    <div className="grid grid-cols-1 gap-3 overflow-y-auto p-3 sm:grid-cols-2 md:grid-cols-3 md:p-6 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 overflow-y-auto p-6 md:grid-cols-3 xl:grid-cols-4">
       {listings.map((l) => (
         <div
           key={l.id}
@@ -61,7 +61,7 @@ export function ListingGrid({
               </div>
               <Button
                 size="sm"
-                className="h-8 text-xs md:h-7 md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
+                className="h-7 text-xs opacity-0 transition-opacity group-hover:opacity-100"
                 onClick={(e) => {
                   e.stopPropagation();
                   onBuy(l);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, Flame, X } from 'lucide-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useActiveWallet } from '@/lib/active-wallet';
@@ -52,30 +52,11 @@ export function GlassRightPanel({
   onClaim: () => void;
 }) {
   const [tab, setTab] = useState<TabId>('selection');
-  const [isMobile, setIsMobile] = useState(false);
-  const [mobileExpanded, setMobileExpanded] = useState(false);
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { balance } = useWalletBalance(wallet.publicKey);
   const counters = useCounters();
   const locations = useHexLocations(selectedHexes);
-
-  // Track viewport width: at md+ the panel is a right rail; below it becomes
-  // a bottom sheet anchored to the bottom edge.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 767px)');
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  // Auto-expand the bottom sheet when the user picks a hex so the Claim CTA
-  // appears without an extra tap.
-  useEffect(() => {
-    if (isMobile && selectedHexes.size > 0) setMobileExpanded(true);
-  }, [selectedHexes, isMobile]);
 
   const items = Array.from(selectedHexes).map((h3) => {
     const c = hexCenter(h3);
@@ -93,36 +74,11 @@ export function GlassRightPanel({
   const totalSol = Number(quoteBatch(items, counters)) / LAMPORTS_PER_SOL;
   const count = items.length;
 
-  const mobileSheetClass = isMobile
-    ? `glass-right-panel--mobile-sheet${!mobileExpanded ? ' glass-right-panel--mobile-collapsed' : ''}`
-    : '';
-
   return (
     <aside
-      className={cn(
-        'glass glass-panel fixed bottom-[18px] right-[18px] top-[18px] z-30 flex w-[320px] flex-col px-5 pb-[22px] pt-5 transition-[max-height] duration-200',
-        mobileSheetClass,
-        // Make room at the top on mobile for the drag handle.
-        isMobile && 'pt-[18px]',
-      )}
+      className="glass glass-panel fixed bottom-[18px] right-[18px] top-[18px] z-30 flex w-[320px] flex-col px-5 pb-[22px] pt-5"
       style={{ gap: 20 }}
     >
-      {/* Mobile drag handle — tap to expand/collapse the bottom sheet. The
-          iOS-style pill at the top center is the standard affordance and
-          avoids competing with the wallet chip's disconnect button. */}
-      {isMobile && (
-        <button
-          type="button"
-          onClick={() => setMobileExpanded((v) => !v)}
-          aria-label={mobileExpanded ? 'Collapse panel' : 'Expand panel'}
-          className="absolute left-1/2 top-2 z-[2] flex h-4 w-16 -translate-x-1/2 items-center justify-center"
-        >
-          <span
-            className="block h-1 w-9 rounded-full"
-            style={{ background: 'rgba(255,255,255,0.45)' }}
-          />
-        </button>
-      )}
       {/* Wallet chip */}
       <div
         className="relative z-[1] flex items-center gap-3 rounded-[16px] px-3 py-2"

@@ -111,10 +111,9 @@ export default function Page() {
       )}
 
       {/* Search pill + style toggle — search shrinks to make room for the
-          52px toggle. On desktop the container clears the left rail (250) and
-          the right panel (356); on mobile both rails collapse so the pill
-          sits just below the floating top bar between the screen edges. */}
-      <div className="map-search-rail pointer-events-none fixed left-0 right-0 z-20 flex items-center gap-2 px-3 md:left-[250px] md:right-[356px] md:gap-3 md:px-[18px]">
+          52px toggle. The container clears the left rail (250) and the right
+          panel (356), and pads its inner edges 18px. */}
+      <div className="pointer-events-none fixed left-[250px] right-[356px] top-[18px] z-20 flex items-center gap-3 px-[18px]">
         <div className="min-w-0 flex-1">
           <GlassSearchBar mapRef={mapRef} />
         </div>

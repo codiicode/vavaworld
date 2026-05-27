@@ -21,7 +21,7 @@ import { flagEmoji } from '@/lib/flag-emoji';
 export default function ActivityPage() {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-border px-3 py-3 md:px-6 md:py-4">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
         <div>
           <Link
             href="/marketplace"
@@ -30,7 +30,7 @@ export default function ActivityPage() {
             <ArrowLeft size={12} />
             Back to marketplace
           </Link>
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Activity</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Activity</h1>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
@@ -38,8 +38,7 @@ export default function ActivityPage() {
         </div>
       </div>
 
-      {/* Mobile: horizontal scroll so the 7-column trade log stays legible. */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-y-auto">
         <Table>
           <TableHeader className="sticky top-0 bg-background">
             <TableRow>

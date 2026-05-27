@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivitySidebar } from '@/components/marketplace/activity-sidebar';
 import { BuyDialog } from '@/components/marketplace/buy-dialog';
 import { EmptyState } from '@/components/marketplace/empty-state';
@@ -30,21 +30,6 @@ export default function MarketplacePage() {
   const [view, setView] = useState<ViewMode>('table');
   const [sort, setSort] = useState<SortKey>('newest');
   const [buyTarget, setBuyTarget] = useState<Listing | null>(null);
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Watch viewport. On mobile we force grid view (the 9-col table doesn't fit)
-  // and reveal the "Filters" button that opens the off-canvas drawer.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 767px)');
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-
-  const effectiveView: ViewMode = isMobile ? 'grid' : view;
 
   const visible = useMemo(() => {
     let xs: ReadonlyArray<Listing> = mockListings;
@@ -119,29 +104,15 @@ export default function MarketplacePage() {
 
   return (
     <div className="flex h-full">
-      {/* Single instance: at md+ FilterSidebar sits in this flex flow as a
-          240px left column; below md its aside switches to `fixed` and slides
-          off-canvas, toggled by the Filters button in QuickChips. */}
-      <FilterSidebar
-        state={filters}
-        onChange={setFilters}
-        mobileOpen={filterDrawerOpen}
-        onMobileClose={() => setFilterDrawerOpen(false)}
-      />
+      <FilterSidebar state={filters} onChange={setFilters} />
 
-      <section className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <section className="flex flex-1 flex-col overflow-hidden">
         <MarketHeader />
-        <QuickChips
-          active={chip}
-          onChange={setChip}
-          view={view}
-          onViewChange={setView}
-          onOpenFilters={() => setFilterDrawerOpen(true)}
-        />
+        <QuickChips active={chip} onChange={setChip} view={view} onViewChange={setView} />
 
         {visible.length === 0 ? (
           <EmptyState onReset={() => setFilters(defaultFilterState)} />
-        ) : effectiveView === 'table' ? (
+        ) : view === 'table' ? (
           <ListingTable
             listings={visible}
             totalCount={mockListings.length}
