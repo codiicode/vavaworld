@@ -98,10 +98,10 @@
   gap: 32px;
   font-family: var(--font-manrope), "Inter", sans-serif;
 }
-/* Defensive: every text node inside the nav inherits Geist Mono, *except*
-   the brand wordmark which has its own explicit StretchPro declaration. */
+/* Defensive: every text node inside the nav inherits Inter, *except* the
+   brand wordmark which has its own explicit StretchPro declaration. */
 .landing-root nav.l-site :not(.l-name) {
-  font-family: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-family: var(--font-manrope), "Inter", sans-serif;
 }
 /* Brand sits next to the white transparent mark, so the wordmark is white. */
 .landing-root nav.l-site .l-brand,
@@ -126,10 +126,10 @@
 }
 .landing-root .l-nav-links { display: flex; align-items: center; gap: 34px; }
 .landing-root .l-nav-links a {
-  font-family: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
-  font-size: 12px;
+  font-family: var(--font-manrope), "Inter", sans-serif;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.10em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(10, 26, 46, 0.72);
   position: relative;
@@ -181,10 +181,10 @@
 /* Text-only link (Log in) — matches ink token, no fill. */
 .landing-root nav.l-site .l-btn-text {
   color: rgba(10, 26, 46, 0.72);
-  font-family: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
-  font-size: 12px;
+  font-family: var(--font-manrope), "Inter", sans-serif;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.10em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 .landing-root nav.l-site .l-btn-text:hover { color: var(--l-ink); }
@@ -216,10 +216,10 @@
   border: 1px solid rgba(10, 26, 46, 0.22);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  font-family: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
-  font-size: 12px;
+  font-family: var(--font-manrope), "Inter", sans-serif;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.10em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   padding: 11px 22px;
 }
