@@ -83,24 +83,6 @@
 }
 
 html, body { height: 100%; }
-
-/* iOS Safari respects the keyboard / address bar — give every layout the option
-   to fill the visible viewport instead of the larger 100vh that overflows. */
-:root {
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-left: env(safe-area-inset-left, 0px);
-  --safe-right: env(safe-area-inset-right, 0px);
-}
-
-/* Prevent iOS auto-zoom on input focus — anything <16px triggers it. Keep
-   visually-small fields by overriding font-size on the field but not the label. */
-@media (max-width: 767px) {
-  input, select, textarea {
-    font-size: 16px !important;
-  }
-}
-
 body {
   /* Sky photo backdrop — glass panels float on top with white-translucent
      backgrounds and dark text. Map page overrides with mapbox + dim overlay. */
@@ -202,37 +184,6 @@ body {
 
 .mono { font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim); font-feature-settings: 'tnum'; }
 .serif { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 400; }
-
-/* /map search rail — sit below the mobile top bar on phones, restore the
-   classic top:18px placement at md+. Tailwind doesn't have a mobile-only top
-   utility for a calc() with env(), so we do it in CSS. */
-.map-search-rail {
-  top: calc(56px + var(--safe-top) + 8px);
-}
-@media (min-width: 768px) {
-  .map-search-rail {
-    top: 18px;
-  }
-}
-
-/* /map right panel — desktop is a fixed right rail; mobile becomes a bottom
-   sheet that floats above the tab bar. The .glass-right-panel--mobile-sheet
-   class is added by the component itself; we keep all positioning here so
-   the inline width:320px etc. doesn't have to fight us. */
-.glass-right-panel--mobile-sheet {
-  /* The component sets bottom/top/right via fixed positions; on mobile we
-     reset them so it can attach to the bottom and span the viewport width. */
-  top: auto !important;
-  left: 12px !important;
-  right: 12px !important;
-  bottom: calc(60px + var(--safe-bottom) + 12px) !important;
-  width: auto !important;
-  max-height: 60vh;
-}
-.glass-right-panel--mobile-collapsed {
-  max-height: 78px !important;
-  overflow: hidden !important;
-}
 
 /* Mapbox attribution toned down */
 .mapboxgl-ctrl-attrib, .mapboxgl-ctrl-logo { opacity: 0.5; }

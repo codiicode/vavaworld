@@ -9,18 +9,15 @@ import { mockMarketStats } from '@/lib/mock-marketplace';
  */
 export function MarketHeader() {
   return (
-    <div className="flex flex-col gap-3 border-b border-white/30 px-3 py-3 md:flex-row md:items-center md:justify-between md:px-6 md:py-4">
+    <div className="flex items-center justify-between border-b border-white/30 px-6 py-4">
       <div>
-        <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.08em] text-foreground/55 md:text-[11px]">
+        <div className="mb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/55">
           Marketplace
         </div>
-        <h1 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
-          All Listings
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">All Listings</h1>
       </div>
 
-      {/* Stats: 2-up grid on mobile, 4-up flex row on desktop. */}
-      <div className="grid grid-cols-2 gap-3 md:flex md:items-center md:gap-6">
+      <div className="hidden items-center gap-6 md:flex">
         <Stat label="Floor" value={`${mockMarketStats.floor.toFixed(3)} SOL`} />
         <Stat label="24h Volume" value={`${mockMarketStats.volume24h.toFixed(1)} SOL`} />
         <Stat label="Listed" value={mockMarketStats.listedCount.toLocaleString('en-US')} />

@@ -1,7 +1,6 @@
 'use client';
 
-import { Search, X } from 'lucide-react';
-import { useEffect } from 'react';
+import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -74,109 +73,7 @@ export function FilterSidebar({
   const reset = () => onChange(defaultFilterState);
 
   return (
-    <aside className="hidden h-full w-60 flex-shrink-0 flex-col overflow-y-auto border-r border-white/40 bg-white/30 text-foreground backdrop-blur-md md:flex">
-      <FilterBody
-        state={state}
-        set={set}
-        onChange={onChange}
-        toggleTier={toggleTier}
-        reset={reset}
-      />
-    </aside>
-  );
-}
-
-/**
- * Mobile drawer wrapper for the same filter body. Triggered by a "Filters"
- * button in QuickChips; slides in from the left over the listings.
- */
-export function MobileFilterDrawer({
-  open,
-  onOpenChange,
-  state,
-  onChange,
-}: {
-  open: boolean;
-  onOpenChange: (next: boolean) => void;
-  state: FilterState;
-  onChange: (next: FilterState) => void;
-}) {
-  const set = <K extends keyof FilterState>(key: K, value: FilterState[K]) =>
-    onChange({ ...state, [key]: value });
-  const toggleTier = (tier: Tier) => {
-    const has = state.tiers.includes(tier);
-    set('tiers', has ? state.tiers.filter((t) => t !== tier) : [...state.tiers, tier]);
-  };
-  const reset = () => onChange(defaultFilterState);
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = open ? 'hidden' : prev || '';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open]);
-
-  if (!open) return null;
-
-  return (
-    <>
-      <div
-        aria-hidden
-        onClick={() => onOpenChange(false)}
-        className="fixed inset-0 z-[80] bg-black/30 backdrop-blur-sm md:hidden"
-      />
-      <aside
-        className="fixed bottom-0 left-0 top-0 z-[81] flex w-[300px] max-w-[86vw] flex-col bg-white/85 text-foreground backdrop-blur-xl md:hidden"
-        style={{
-          paddingTop: 'calc(var(--safe-top))',
-          paddingBottom: 'var(--safe-bottom)',
-          borderRight: '1px solid rgba(255,255,255,0.55)',
-        }}
-      >
-        <div className="flex items-center justify-between border-b border-white/30 px-4 py-3">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground/65">
-            Filters
-          </span>
-          <button
-            type="button"
-            aria-label="Close filters"
-            onClick={() => onOpenChange(false)}
-            className="grid h-9 w-9 place-items-center rounded-lg text-foreground/70 hover:bg-foreground/[0.06]"
-          >
-            <X size={18} />
-          </button>
-        </div>
-        <div className="flex flex-1 flex-col overflow-y-auto">
-          <FilterBody
-            state={state}
-            set={set}
-            onChange={onChange}
-            toggleTier={toggleTier}
-            reset={reset}
-          />
-        </div>
-      </aside>
-    </>
-  );
-}
-
-function FilterBody({
-  state,
-  set,
-  onChange,
-  toggleTier,
-  reset,
-}: {
-  state: FilterState;
-  set: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void;
-  onChange: (next: FilterState) => void;
-  toggleTier: (tier: Tier) => void;
-  reset: () => void;
-}) {
-  return (
-    <>
+    <aside className="flex h-full w-60 flex-shrink-0 flex-col overflow-y-auto border-r border-white/40 bg-white/30 text-foreground backdrop-blur-md">
       {/* Search */}
       <div className="border-b border-white/30 p-4">
         <div className="relative">
@@ -316,7 +213,7 @@ function FilterBody({
           Reset filters
         </Button>
       </div>
-    </>
+    </aside>
   );
 }
 
