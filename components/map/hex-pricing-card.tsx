@@ -9,12 +9,14 @@ type HexFloor = {
   h3Id: string;
   countryIso: string;
   countryName: string;
+  available: boolean;
   claimCount: number;
-  floor: number;
+  currentFloor: number;
+  nextFloor: number;
   claimed: null | { owner: string; purchasePrice: number; claimedAt: string };
 };
 
-const fmt = (n: number) => n.toFixed(3);
+const fmt = (n: number) => n.toFixed(4);
 const short = (a: string) => (a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '—');
 const grouped = (n: number) => n.toLocaleString('en-US');
 
@@ -63,24 +65,33 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
   }, [h3, load]);
 
   const claim = useCallback(async () => {
-    if (!h3 || !wallet.address) return;
+    if (!h3 || !wallet.address || !data) return;
     setClaiming(true);
     setErr(null);
     try {
       const r = await fetch('/api/claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ h3, owner: wallet.address }),
+        body: JSON.stringify({
+          h3,
+          owner: wallet.address,
+          quotedPriceUsd: data.currentFloor,
+        }),
       });
       const j = await r.json();
-      if (!r.ok) setErr(j.error ?? 'claim failed');
-      await load();
+      if (!r.ok) {
+        // Stale-quote → re-quote silently, user can confirm again
+        if (j.code === 'stale_quote') await load();
+        setErr(j.error ?? 'claim failed');
+      } else {
+        await load();
+      }
     } catch {
       setErr('network error');
     } finally {
       setClaiming(false);
     }
-  }, [h3, wallet.address, load]);
+  }, [h3, wallet.address, data, load]);
 
   if (!h3) return null;
 
@@ -116,7 +127,10 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
                 Current floor
               </div>
               <div className="text-[22px] font-bold leading-tight tabular-nums text-foreground">
-                ${fmt(data.floor)}
+                ${fmt(data.currentFloor)}
+              </div>
+              <div className="mt-0.5 text-[11px] tabular-nums text-foreground/55">
+                Next claim ${fmt(data.nextFloor)}
               </div>
             </div>
             <div className="text-right">
@@ -161,7 +175,7 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
               >
                 {claiming && <Loader2 size={14} className="animate-spin" />}
                 {wallet.connected
-                  ? `Claim for $${fmt(data.floor)}`
+                  ? `Claim for $${fmt(data.currentFloor)}`
                   : 'Connect wallet to claim'}
               </button>
               {err && <p className="mt-1.5 text-[12px] text-red-600/80">{err}</p>}

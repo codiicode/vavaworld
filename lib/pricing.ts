@@ -1,32 +1,56 @@
 /**
  * Primary-claim pricing.
  *
- * Every country starts at a $0.10 floor that rises linearly with the number
- * of claims in that country:
+ *   floor_usd = BASE_FLOOR_USD + (country_claim_count * SLOPE_PER_CLAIM_USD)
  *
- *   country_floor = BASE_FLOOR + (claims_in_country * SLOPE)
- *
- * All hexes in a country share the same floor at any moment. The server-side
- * functions here resolve a hex → country and read live counts from Supabase;
- * the actual claim/increment is atomic in the `claim_hex` DB function.
+ * Each country tracks its own claim_count. Quote → on-chain payment → commit
+ * is validated against a slippage tolerance so concurrent claims at the same
+ * floor don't surprise the user.
  *
  * Server-only (imports the boundary resolver). Client UI calls the API routes.
  */
 import { getServerSupabase } from './supabase-server';
 import { resolveHexCountry, INTL } from './geo/country-resolver';
 
-export const BASE_FLOOR = 0.1;
-export const SLOPE = 0.00001;
-export const H3_RESOLUTION = 12;
+export const PRICING = {
+  BASE_FLOOR_USD: 0.1,
+  SLOPE_PER_CLAIM_USD: 0.00001,
+  H3_RESOLUTION: 12,
+  CURRENCY_DECIMAL_PLACES: 4,
+  TX_SLIPPAGE_TOLERANCE: 0.02,
+} as const;
 
-/** Pure floor formula. Unrounded; format with `formatFloor` for display. */
+// Legacy named exports — preserved so existing imports
+// (`import { H3_RESOLUTION } from '@/lib/pricing'`) keep working.
+export const BASE_FLOOR = PRICING.BASE_FLOOR_USD;
+export const SLOPE = PRICING.SLOPE_PER_CLAIM_USD;
+export const H3_RESOLUTION = PRICING.H3_RESOLUTION;
+
+/**
+ * Pure floor formula. Returns the raw USD value — display rounding happens
+ * in `formatFloor` and storage rounding happens in the DB (DECIMAL(12,4)).
+ * Keeping this unrounded means tests can pin exact 5-decimal expectations
+ * like 1 claim → $0.10001.
+ */
 export function calculateFloor(claimCount: number): number {
-  return BASE_FLOOR + claimCount * SLOPE;
+  return PRICING.BASE_FLOOR_USD + claimCount * PRICING.SLOPE_PER_CLAIM_USD;
 }
 
-/** Canonical 3-decimal display string, e.g. 0.1 → "0.100". */
+/** Canonical N-decimal display string, e.g. 0.1 → "0.1000". */
 export function formatFloor(value: number): string {
-  return value.toFixed(3);
+  return value.toFixed(PRICING.CURRENCY_DECIMAL_PLACES);
+}
+
+/**
+ * Returns true if a quote is still acceptable against the current floor —
+ * i.e. either it's at/above the floor, or the downward drift is within the
+ * configured slippage tolerance. Tiny FP epsilon so an exact-on-boundary
+ * caller (e.g. drift = 0.020000000000000018 from 0.02 in IEEE 754) passes.
+ */
+export function isQuoteFresh(quotedUsd: number, currentFloorUsd: number): boolean {
+  if (quotedUsd >= currentFloorUsd) return true;
+  const drift = Math.abs(currentFloorUsd - quotedUsd) / currentFloorUsd;
+  return drift <= PRICING.TX_SLIPPAGE_TOLERANCE + 1e-9;
 }
 
 export type CountryState = {
@@ -36,7 +60,6 @@ export type CountryState = {
   floor: number;
 };
 
-/** Floor for a country code (reads live `claim_count` from the DB). */
 export async function getCountryFloor(isoCode: string): Promise<number> {
   const state = await getCountryState(isoCode);
   return state.floor;
@@ -63,8 +86,10 @@ export type HexFloor = {
   h3Id: string;
   countryIso: string;
   countryName: string;
+  available: boolean;
   claimCount: number;
-  floor: number;
+  currentFloor: number;
+  nextFloor: number;
   claimed: null | { owner: string; purchasePrice: number; claimedAt: string };
 };
 
@@ -87,18 +112,21 @@ export async function getHexFloor(h3Id: string): Promise<HexFloor> {
   ]);
 
   const claimCount = country?.claim_count ?? 0;
+  const claimed = hex
+    ? {
+        owner: hex.owner,
+        purchasePrice: Number(hex.purchase_price),
+        claimedAt: hex.claimed_at,
+      }
+    : null;
   return {
     h3Id,
     countryIso,
     countryName: country?.name ?? countryIso,
+    available: !claimed && countryIso !== INTL,
     claimCount,
-    floor: calculateFloor(claimCount),
-    claimed: hex
-      ? {
-          owner: hex.owner,
-          purchasePrice: Number(hex.purchase_price),
-          claimedAt: hex.claimed_at,
-        }
-      : null,
+    currentFloor: calculateFloor(claimCount),
+    nextFloor: calculateFloor(claimCount + 1),
+    claimed,
   };
 }

@@ -139,12 +139,17 @@ export function ClaimModal({
 
         // Mirror into Supabase so the off-chain `hexes` table has a row that
         // marketplace listings (FK on h3_id) can reference. Fire-and-forget —
-        // if it fails, the lazy mirror in tile-list-dialog catches it.
+        // if it fails, the lazy mirror in tile-list-dialog catches it. The
+        // on-chain `sig` is forwarded as txHash for traceability.
         for (const h3 of justClaimed) {
           fetch('/api/claim', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ h3, owner: wallet.publicKey.toBase58() }),
+            body: JSON.stringify({
+              h3,
+              owner: wallet.publicKey.toBase58(),
+              txHash: sig,
+            }),
           }).catch(() => {});
         }
 
