@@ -114,7 +114,7 @@ export default function Page() {
       {/* Search pill + style toggle — search shrinks to make room for the
           52px toggle. Desktop: clears the left rail (250) and right panel
           (356). Mobile: spans the width below the floating top bar. */}
-      <div className="pointer-events-none fixed inset-x-3 top-[66px] z-20 flex items-center gap-3 md:inset-x-auto md:left-[250px] md:right-[356px] md:top-[18px] md:px-[18px]">
+      <div className="pointer-events-none fixed inset-x-3 top-[66px] z-20 flex items-center gap-3 md:inset-x-auto md:left-[250px] md:right-[356px] md:top-[18px] md:pl-[18px] md:pr-0">
         <div className="min-w-0 flex-1">
           <GlassSearchBar mapRef={mapRef} />
         </div>
