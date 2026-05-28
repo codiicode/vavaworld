@@ -80,16 +80,14 @@ export function SignInGate({
           <button
             type="button"
             onClick={() => openWalletModal(true)}
-            className="flex items-center gap-3 rounded-xl px-4 py-3 text-left text-white transition-[filter] hover:brightness-105"
-            style={{
-              background: 'linear-gradient(135deg, #0ea5e9, #14b8a6)',
-              boxShadow: '0 6px 18px -8px rgba(20,184,166,0.6)',
-            }}
+            className="flex items-center gap-3 rounded-xl border border-white/45 bg-white/40 px-4 py-3 text-left transition-colors hover:bg-white/55"
           >
-            <Wallet size={16} className="flex-none" />
+            <Wallet size={16} className="flex-none text-foreground/65" />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold">Connect wallet</div>
-              <div className="text-[11.5px] text-white/85">
+              <div className="text-sm font-semibold text-foreground">
+                Connect wallet
+              </div>
+              <div className="text-[11.5px] text-foreground/60">
                 Phantom · Solflare · Backpack
               </div>
             </div>
