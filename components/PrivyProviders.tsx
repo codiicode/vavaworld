@@ -55,8 +55,8 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
         loginMethods: ['email', 'google', 'twitter'],
         appearance: {
           theme: 'light',
-          accentColor: '#7CBFEC',
-          logo: '/vavaworld-mark.svg',
+          accentColor: '#14b8a6',
+          logo: '/vavaworld-sphere.jpg',
           landingHeader: 'Welcome to VAVAWORLD',
           showWalletLoginFirst: false,
           walletChainType: 'solana-only',

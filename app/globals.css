@@ -199,70 +199,147 @@ body {
 .mapboxgl-ctrl-bottom-right, .mapboxgl-ctrl-bottom-left { background: transparent !important; }
 
 /* ────────────────────────────────────────────────────────────
-   Solana wallet-adapter button - brand-blue, pill, Inter
+   Solana wallet-adapter modal - styled to match the site's glass
+   design system (sky-bg + rounded-2xl border-white/40 bg-white/30
+   backdrop-blur-md). Wallet rows mirror the Sign-in gate buttons.
    ──────────────────────────────────────────────────────────── */
-.wallet-adapter-button {
-  font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
-  font-size: 13.5px !important;
+.wallet-adapter-modal {
+  font-family: var(--font-geist-sans), 'Inter', system-ui, sans-serif !important;
+}
+.wallet-adapter-modal-overlay {
+  background: rgba(8, 18, 36, 0.42) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+.wallet-adapter-modal-container {
+  padding: 12px !important;
+}
+.wallet-adapter-modal-wrapper {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  border-radius: 22px !important;
+  backdrop-filter: blur(20px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+  box-shadow:
+    0 24px 60px -20px rgba(8, 18, 36, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+  font-family: var(--font-geist-sans), 'Inter', sans-serif !important;
+  padding: 20px !important;
+  max-width: 420px !important;
+  width: 100% !important;
+}
+.wallet-adapter-modal-button-close {
+  background: rgba(255, 255, 255, 0.45) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  border-radius: 999px !important;
+  width: 32px !important;
+  height: 32px !important;
+  top: 14px !important;
+  right: 14px !important;
+}
+.wallet-adapter-modal-button-close svg {
+  fill: hsl(var(--foreground)) !important;
+}
+.wallet-adapter-modal-title {
+  font-family: var(--font-geist-sans), 'Inter', sans-serif !important;
+  color: hsl(var(--foreground)) !important;
+  font-weight: 600 !important;
+  font-size: 18px !important;
+  letter-spacing: -0.01em !important;
+  padding: 4px 12px 20px !important;
+  text-align: left !important;
+}
+.wallet-adapter-modal-list {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+.wallet-adapter-modal-list li {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.wallet-adapter-modal-list .wallet-adapter-button {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  border-radius: 14px !important;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  height: auto !important;
+  transition: background-color 0.15s ease !important;
+}
+.wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background: rgba(255, 255, 255, 0.60) !important;
+  filter: none !important;
+}
+.wallet-adapter-modal-list .wallet-adapter-button-end-icon,
+.wallet-adapter-modal-list .wallet-adapter-button-start-icon {
+  width: 24px !important;
+  height: 24px !important;
+}
+.wallet-adapter-modal-list-more {
+  color: hsl(var(--foreground) / 0.7) !important;
   font-weight: 500 !important;
-  letter-spacing: 0.01em !important;
+  padding: 10px 0 0 !important;
+}
+.wallet-adapter-modal-list-more svg {
+  fill: hsl(var(--foreground) / 0.7) !important;
+}
+
+/* The disconnect / change-wallet dropdown rendered next to a connected button */
+.wallet-adapter-dropdown-list {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  box-shadow: 0 12px 30px -10px rgba(8, 18, 36, 0.25) !important;
+  padding: 6px !important;
+}
+.wallet-adapter-dropdown-list-item {
+  font-family: var(--font-geist-sans), 'Inter', sans-serif !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: 10px !important;
+}
+.wallet-adapter-dropdown-list-item:hover {
+  background: rgba(255, 255, 255, 0.50) !important;
+}
+
+/* The wallet-adapter "Select Wallet" trigger button (rarely shown but
+   styled defensively in case anything still mounts it directly). */
+.wallet-adapter-button {
+  font-family: var(--font-geist-sans), 'Inter', sans-serif !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
   height: auto !important;
   padding: 10px 18px !important;
-  border-radius: 999px !important;
-  background: var(--signal) !important;
-  color: #ffffff !important;
-  border: 1.5px solid var(--signal) !important;
-  transition: filter 0.15s, background 0.15s, border-color 0.15s !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  transition: background-color 0.15s ease !important;
   line-height: 1.2 !important;
 }
 .wallet-adapter-button:not([disabled]):hover {
-  background: var(--signal-deep) !important;
-  border-color: var(--signal-deep) !important;
-}
-.wallet-adapter-button-trigger {
-  background: var(--signal) !important;
-  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.60) !important;
 }
 .wallet-adapter-button[disabled] {
-  background: rgba(255, 255, 255, 0.6) !important;
-  color: var(--dim) !important;
-  border-color: var(--hairline) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
+  color: hsl(var(--foreground) / 0.45) !important;
 }
 .wallet-adapter-button .wallet-adapter-button-start-icon,
 .wallet-adapter-button .wallet-adapter-button-end-icon {
   margin-right: 8px !important;
-}
-.wallet-adapter-modal-wrapper {
-  background: rgba(255, 255, 255, 0.96) !important;
-  border: 1px solid var(--hairline) !important;
-  border-radius: 14px !important;
-  font-family: 'Inter', sans-serif !important;
-}
-.wallet-adapter-modal-title {
-  font-family: 'Cormorant Garamond', Georgia, serif !important;
-  color: var(--ink) !important;
-  font-weight: 500 !important;
-}
-.wallet-adapter-modal-list .wallet-adapter-button {
-  background: transparent !important;
-  color: var(--ink) !important;
-  border: 1px solid transparent !important;
-  border-bottom: 1px solid var(--hair-2) !important;
-  border-radius: 0 !important;
-}
-.wallet-adapter-modal-list .wallet-adapter-button:hover {
-  background: rgba(29, 94, 149, 0.05) !important;
-  filter: none;
-}
-.wallet-adapter-dropdown-list {
-  background: rgba(255, 255, 255, 0.92) !important;
-  border: 1px solid var(--hairline) !important;
-  border-radius: 14px !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.wallet-adapter-dropdown-list-item {
-  font-family: 'Inter', sans-serif !important;
 }
 
 /* ─────────────────────────────────────────────────────────
