@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  * it locks the country row, validates a 2%-tolerance slippage check if
  * `quotedPriceUsd` was supplied, inserts the hex at the floor that existed
  * BEFORE this claim, increments the country's count, and stores `tx_hash` +
- * `claim_count_at_purchase` for observability — all in one transaction.
+ * `claim_count_at_purchase` for observability - all in one transaction.
  *
  * Translates DB errors to HTTP:
  *   stale_quote (P0001)            → 409 { code: 'stale_quote', currentFloor? }

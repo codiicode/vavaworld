@@ -1,4 +1,4 @@
-// Mock marketplace data — replaces real indexer queries until a backend exists.
+// Mock marketplace data - replaces real indexer queries until a backend exists.
 // Keep shapes close to what we expect from /api/marketplace/* later.
 
 export type Tier = 1 | 2 | 3;
@@ -17,7 +17,7 @@ export type Listing = {
   price: number;
   /** Display USD equivalent (no live conversion) */
   priceUsd: number;
-  /** % change vs same-tier 24h floor — positive green, negative red */
+  /** % change vs same-tier 24h floor - positive green, negative red */
   change24h: number;
   /** Last sale price for this exact tile (SOL), null if never sold */
   lastSale: number | null;
@@ -25,13 +25,13 @@ export type Listing = {
   listedAgo: string;
   /** Truncated 0xABCD…7890 seller address */
   sellerAddr: string;
-  /** Marker for "auction" status — small share to mix into the table */
+  /** Marker for "auction" status - small share to mix into the table */
   isAuction?: boolean;
   /** Iconic location flag (Eiffel, Statue of Liberty, etc.) */
   isIconic?: boolean;
   /** ISO-8601 UTC timestamp the hex was first claimed on-chain. */
   claimedAt: string;
-  /** 1-indexed global claim order — the Nth hex ever claimed. */
+  /** 1-indexed global claim order - the Nth hex ever claimed. */
   claimSequence: number;
 };
 
@@ -75,11 +75,11 @@ const RAW: Array<Omit<Listing, 'id' | 'priceUsd' | 'sellerAddr' | 'claimedAt' | 
 const FROZEN_NOW_MS = Date.parse('2026-05-21T18:30:00Z');
 
 function makeClaimMeta(counter: number): { claimedAt: string; claimSequence: number } {
-  // Pseudo-random but deterministic from counter — gives each tile a unique
+  // Pseudo-random but deterministic from counter - gives each tile a unique
   // sequence in the 1..50_000 range and a backwards-walking timestamp.
   const seqJitter = ((counter * 2654435761) >>> 0) % 1000;
   const claimSequence = counter * 379 + 11_421 + seqJitter;
-  // Walk back in minutes — newer counters = more recent.
+  // Walk back in minutes - newer counters = more recent.
   const minutesAgo = counter * 47 + (seqJitter % 360);
   const claimedAt = new Date(FROZEN_NOW_MS - minutesAgo * 60_000).toISOString();
   return { claimedAt, claimSequence };
@@ -100,7 +100,7 @@ function buildListings(): Listing[] {
       ...makeClaimMeta(counter),
     });
   }
-  // 30 more derived rows — shift price by tier and rotate cities
+  // 30 more derived rows - shift price by tier and rotate cities
   while (counter < 50) {
     const base = RAW[counter % RAW.length];
     counter += 1;
@@ -141,7 +141,7 @@ export type ActivityItem = {
   price: number;
   /** Pre-formatted "X" relative time (no unit needed for UI) */
   ago: string;
-  /** Event type — every on-chain sale is both a buy and a sell; we tag
+  /** Event type - every on-chain sale is both a buy and a sell; we tag
    *  the row from the perspective most interesting in the feed. */
   action: 'buy' | 'sell';
 };
@@ -191,7 +191,7 @@ export const mockActivity: ReadonlyArray<ActivityItem> = ACT_BASE.map((b, i) => 
   fromAddr: SELLERS[i % SELLERS.length],
   toAddr: SELLERS[(i + 4) % SELLERS.length],
   ago: fmtAgo(b.agoMin),
-  // Deterministic alternation so SSR matches CSR — no random per render.
+  // Deterministic alternation so SSR matches CSR - no random per render.
   action: i % 2 === 0 ? 'buy' : 'sell',
 }));
 
@@ -207,7 +207,7 @@ export const mockMarketStats = {
 } as const;
 
 // ──────────────────────────────────────────────────────────
-// Country counts (for the country-filter dropdown — derived
+// Country counts (for the country-filter dropdown - derived
 // from a fictional larger pool, not just our 50 listings)
 // ──────────────────────────────────────────────────────────
 

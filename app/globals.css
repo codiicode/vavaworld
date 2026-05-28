@@ -21,13 +21,13 @@
 
    Two coexisting var sets at the root:
    - shadcn HSL tokens (Tailwind theme): `bg-primary`, `text-muted-foreground`, …
-   - Legacy: --signal/--ink/--bg/etc. — read by inline-styled components on
+   - Legacy: --signal/--ink/--bg/etc. - read by inline-styled components on
      /profile + the old ClaimModal. Preserved so they don't break; the
      /map sidebar uses Tailwind tokens exclusively.
    ───────────────────────────────────────────────────────── */
 @layer base {
   :root {
-    /* shadcn — Linear-inspired light theme */
+    /* shadcn - Linear-inspired light theme */
     --background:           0 0% 98%;        /* #FAFAFA */
     --foreground:           222 12% 11%;     /* #1A1B1F */
     --card:                 0 0% 100%;
@@ -49,7 +49,7 @@
     --ring:                 204 75% 70%;
     --radius:               0.5rem;          /* 8px */
 
-    /* legacy (used by /profile + ClaimModal only — not /map) */
+    /* legacy (used by /profile + ClaimModal only - not /map) */
     --bg:          #f5f9fd;
     --bg-2:        #eaf4fc;
     --panel:       rgba(255, 255, 255, 0.62);
@@ -65,8 +65,8 @@
     --signal-deep: #0f2a4c;
 
     /* ─────────────────────────────────────────────────────────
-       Glass system — canonical tokens from the design handoff
-       (handoff: VAVAWORLD — Premium Glass UI, balanced preset).
+       Glass system - canonical tokens from the design handoff
+       (handoff: VAVAWORLD - Premium Glass UI, balanced preset).
        Used by .glass primitive + AppSidebar, /map overlays, etc.
        ───────────────────────────────────────────────────────── */
     --tint-r: 255; --tint-g: 255; --tint-b: 255;
@@ -93,7 +93,7 @@
 
 html, body { height: 100%; }
 body {
-  /* Sky photo backdrop — glass panels float on top with white-translucent
+  /* Sky photo backdrop - glass panels float on top with white-translucent
      backgrounds and dark text. Map page overrides with mapbox + dim overlay. */
   background-color: #c2d8f4;
   background-image: url('/sky-bg.jpg');
@@ -108,7 +108,7 @@ body {
 }
 
 /* Linear-style: no decorative shadows by default. We selectively re-enable for
-   .glass surfaces below — depth is the whole point of that primitive. */
+   .glass surfaces below - depth is the whole point of that primitive. */
 * { box-shadow: none; }
 
 /* ─────────────────────────────────────────────────────────
@@ -116,10 +116,10 @@ body {
 
    Two intensity variants modify the same tokens. Rim-light ::before
    gives the bright top edge that sells the effect. `.panel::after`
-   adds a soft inner shine — only large panels should opt in.
+   adds a soft inner shine - only large panels should opt in.
    ───────────────────────────────────────────────────────── */
 .glass {
-  /* NOTE: position is intentionally NOT set here — it would override Tailwind's
+  /* NOTE: position is intentionally NOT set here - it would override Tailwind's
      `.fixed`/`.absolute` utilities (this file is loaded AFTER `@tailwind utilities`,
      so equal-specificity wins by source order). Consumers must add a position
      class themselves; the ::before rim-light needs the parent to be positioned. */
@@ -199,7 +199,7 @@ body {
 .mapboxgl-ctrl-bottom-right, .mapboxgl-ctrl-bottom-left { background: transparent !important; }
 
 /* ────────────────────────────────────────────────────────────
-   Solana wallet-adapter button — brand-blue, pill, Inter
+   Solana wallet-adapter button - brand-blue, pill, Inter
    ──────────────────────────────────────────────────────────── */
 .wallet-adapter-button {
   font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
@@ -266,7 +266,7 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────
-   Custom scrollbars — site-wide. Matches the glass/sky vibe:
+   Custom scrollbars - site-wide. Matches the glass/sky vibe:
    thin, semi-transparent track + brand-tinted thumb that
    darkens on hover. Firefox uses scrollbar-* properties;
    WebKit gets the ::-webkit pseudo-elements.
@@ -294,7 +294,7 @@ body {
 *::-webkit-scrollbar-corner { background: transparent; }
 
 /* ─────────────────────────────────────────────────────────
-   Typography defaults — soft grotesk (Manrope) tightened
+   Typography defaults - soft grotesk (Manrope) tightened
    slightly for the dashboard feel. Headings get tighter
    letter-spacing and leading; body gets a relaxed 1.5 leading.
    ───────────────────────────────────────────────────────── */

@@ -16,7 +16,7 @@ export function hexesForBounds(bbox: Bbox, res: number = HEX_RES): string[] {
     [n, w],
     [s, w],
   ];
-  // A wide box at the target res is millions of cells — clamp resolution down
+  // A wide box at the target res is millions of cells - clamp resolution down
   // for large viewports to keep the result tractable.
   const effectiveRes = estimateSafeRes(bbox, res);
   const cells = polygonToCells([ring], effectiveRes);

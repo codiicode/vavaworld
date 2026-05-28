@@ -8,7 +8,7 @@ import { useEffect } from 'react';
  * After ClaimModal confirms a tx, dispatchClaimDone() fires here. Any hook
  * that holds wallet- or tile-derived state (useTiles, useUserTiles,
  * useWalletBalance, useCounters) subscribes via useClaimDoneListener and
- * refetches immediately — no waiting for the 30s polling tick, no stale
+ * refetches immediately - no waiting for the 30s polling tick, no stale
  * portfolio after the user navigates to /profile.
  */
 const EVENT_NAME = 'vavaworld:claim-done';

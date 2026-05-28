@@ -12,7 +12,7 @@ const SATELLITE: MapStyleId = 'mapbox://styles/mapbox/satellite-streets-v12';
 
 /**
  * Glass pill button to the right of the search bar. Clicking it toggles the
- * underlying Mapbox style between satellite imagery and Mapbox Standard —
+ * underlying Mapbox style between satellite imagery and Mapbox Standard -
  * the political/streets view that ALSO renders 3D buildings and famous
  * landmarks (Eiffel Tower, Burj Khalifa, etc.) when zoomed in. Globe
  * projection on both styles. Icon shown = style you'd switch TO.

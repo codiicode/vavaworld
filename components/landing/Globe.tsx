@@ -80,7 +80,7 @@ export function Globe() {
       if (!isVisible(a.lon, a.lat) || !isVisible(b.lon, b.lat)) return;
       // Trace the great-circle path that hugs the surface from dot to dot.
       // Sampling per-point and skipping anything on the far side keeps the
-      // line on the sphere — no screen-space bezier ballooning into the sky.
+      // line on the sphere - no screen-space bezier ballooning into the sky.
       const interp = d3.geoInterpolate([a.lon, a.lat], [b.lon, b.lat]);
       const N = 80;
       const end = Math.max(1, Math.floor(N * prog));
@@ -151,7 +151,7 @@ export function Globe() {
       ctx.strokeStyle = 'rgba(29,94,149,0.55)';
       ctx.stroke();
 
-      // Supporting cities — small dots, arc endpoints.
+      // Supporting cities - small dots, arc endpoints.
       CITIES.forEach((c) => {
         if (c.major || !isVisible(c.lon, c.lat)) return;
         const p = projection([c.lon, c.lat]);
@@ -162,7 +162,7 @@ export function Globe() {
         ctx.fill();
       });
 
-      // Major world cities — ringed marker + label, drawn on top.
+      // Major world cities - ringed marker + label, drawn on top.
       ctx.font = '600 25px "Inter", system-ui, sans-serif';
       ctx.textBaseline = 'middle';
       CITIES.forEach((c) => {
@@ -220,7 +220,7 @@ export function Globe() {
     function loop(t: number) {
       const dt = (t - last) / 1000;
       last = t;
-      // Always auto-rotate — hover/idle no longer pauses the globe. Drag still
+      // Always auto-rotate - hover/idle no longer pauses the globe. Drag still
       // nudges it on top of the continuous spin.
       lambda = (lambda + dt * 5) % 360;
       drawScene(dt);

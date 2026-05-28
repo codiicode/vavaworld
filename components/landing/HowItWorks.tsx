@@ -12,12 +12,12 @@ export function HowItWorks() {
           <div className="l-how-step">
             <span className="l-step-no">i.</span>
             <h3>Find a place on the earth.</h3>
-            <p>Real coordinates, true scale. Any place not yet taken — a house, a corner, a clearing in a forest.</p>
+            <p>Real coordinates, true scale. Any place not yet taken - a house, a corner, a clearing in a forest.</p>
           </div>
           <div className="l-how-step">
             <span className="l-step-no">ii.</span>
             <h3>Take it, in one transaction.</h3>
-            <p>A small sum, settled in a moment. No subscription, no lease, no committee — first asked, first received.</p>
+            <p>A small sum, settled in a moment. No subscription, no lease, no committee - first asked, first received.</p>
           </div>
           <div className="l-how-step">
             <span className="l-step-no">iii.</span>

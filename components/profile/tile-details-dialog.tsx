@@ -48,7 +48,7 @@ export function TileDetailsDialog({
             </span>
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="text-sm text-muted-foreground">
-            {location?.countryName ?? '—'}
+            {location?.countryName ?? '-'}
           </DialogPrimitive.Description>
         </div>
 

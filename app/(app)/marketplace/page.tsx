@@ -50,7 +50,7 @@ const TRIGGER =
 const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40';
 
 /**
- * Marketplace — minimal, glass-card grid matching the leaderboard / profile vibe.
+ * Marketplace - minimal, glass-card grid matching the leaderboard / profile vibe.
  * Filters live in a single top row (search · country · tier · sort) instead of a
  * dense side rail; listings render as satellite-preview tiles.
  */
@@ -258,11 +258,11 @@ function toListing(
   const tier = classifyTier(c.lat, c.lng);
   const price = Number(l.price_sol);
   return {
-    id: l.id, // UUID — used as the route segment on /marketplace/[id]
+    id: l.id, // UUID - used as the route segment on /marketplace/[id]
     h3: l.h3_id,
     countryCode: (loc?.countryCode ?? 'un').toLowerCase(),
-    city: loc?.place ?? loc?.countryName ?? '—',
-    neighborhood: loc?.neighborhood ?? loc?.place ?? '—',
+    city: loc?.place ?? loc?.countryName ?? '-',
+    neighborhood: loc?.neighborhood ?? loc?.place ?? '-',
     lat: c.lat,
     lng: c.lng,
     tier,

@@ -8,7 +8,7 @@ import { Flag } from '@/components/flag';
 import { findUserByHandle, type MockUser } from '@/lib/mock-users';
 
 /**
- * Public profile — read-only view of another player. Resolves a /u/[handle]
+ * Public profile - read-only view of another player. Resolves a /u/[handle]
  * segment as either a username (preferred) or a wallet address (fallback).
  *
  * When the handle isn't in our mock directory (e.g. leaderboard names), we
@@ -114,7 +114,7 @@ function fmtJoined(iso: string): string {
 function stubUser(handle: string): MockUser {
   const isAddr = handle.startsWith('0x');
   return {
-    addr: isAddr ? handle : '—',
+    addr: isAddr ? handle : '-',
     username: isAddr ? undefined : handle,
     country: 'us',
     joined: '2026-01-01',

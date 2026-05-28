@@ -35,7 +35,7 @@ export function NationsTable({
         <h2 className="text-base font-semibold tracking-tight">All nations</h2>
         <span className="text-xs tabular-nums text-foreground/60">
           {rows.length > 0
-            ? `Showing ${startRank}–${startRank + rows.length - 1} of ${fmtInt(total)} nations`
+            ? `Showing ${startRank}-${startRank + rows.length - 1} of ${fmtInt(total)} nations`
             : 'No nations match'}
         </span>
       </div>

@@ -16,7 +16,7 @@ type Variant = 'sidebar' | 'inline';
  * `variant='sidebar'` renders a compact button suited to the 200px app rail.
  * `variant='inline'` renders a full-size default Button (used in dialogs etc.).
  *
- * When already connected, renders nothing — callers show their own connected UI.
+ * When already connected, renders nothing - callers show their own connected UI.
  */
 export function ConnectButton({
   variant = 'inline',
@@ -57,7 +57,7 @@ export function ConnectButton({
           <div className="flex flex-col">
             <span className="text-sm font-medium">Sign in</span>
             <span className="text-[11px] text-muted-foreground">
-              Email, Google, or X — we make a wallet for you
+              Email, Google, or X - we make a wallet for you
             </span>
           </div>
         </button>

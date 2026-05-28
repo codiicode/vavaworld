@@ -5,22 +5,22 @@ import type { HexLocation } from './use-hex-locations';
 import type { ClaimedTile } from '@/types/tile';
 
 /**
- * A "property" — every tile claimed in the same transaction (and therefore
+ * A "property" - every tile claimed in the same transaction (and therefore
  * sharing the same `claimedAt` second) is grouped into one TileGroup so the
  * UI can render it as a single card instead of N copies of the same purchase.
  */
 export type TileGroup = {
-  /** Stable React key — the shared claimedAt second. */
+  /** Stable React key - the shared claimedAt second. */
   key: string;
   /** Hexes in this property, h3-sorted for stable rendering. */
   tiles: ClaimedTile[];
-  /** Unix seconds — the moment of purchase. */
+  /** Unix seconds - the moment of purchase. */
   claimedAt: number;
   /** Total SOL paid across the property. */
   totalSol: number;
-  /** Most common tier — used for the tile badge. */
+  /** Most common tier - used for the tile badge. */
   representativeTier: Tier;
-  /** Mean lat/lng across all hex centers — preview map center. */
+  /** Mean lat/lng across all hex centers - preview map center. */
   centerLat: number;
   centerLng: number;
   /** Mapbox zoom that frames the whole property comfortably. */
@@ -30,7 +30,7 @@ export type TileGroup = {
   /** Primary country (most common across the group). */
   countryCode: string | null;
   countryName: string | null;
-  /** Neighborhood — only if every hex shares one. */
+  /** Neighborhood - only if every hex shares one. */
   neighborhood: string | null;
 };
 
@@ -38,7 +38,7 @@ export function groupTilesByClaim(
   tiles: ClaimedTile[],
   locations: Map<string, HexLocation | undefined>,
 ): TileGroup[] {
-  // Bucket by claimedAt second — Postgres `now()` is transaction-start, and
+  // Bucket by claimedAt second - Postgres `now()` is transaction-start, and
   // Solana block_time has 1-second granularity, so all tiles claimed in one TX
   // share the same value.
   const buckets = new Map<number, ClaimedTile[]>();
@@ -60,7 +60,7 @@ export function groupTilesByClaim(
 
     // Frame the property: find max distance from the centroid (with longitude
     // scaled by cos(lat) so spans behave near the poles), then pick a zoom
-    // where everything fits comfortably. Step values are rough — they work
+    // where everything fits comfortably. Step values are rough - they work
     // for the contiguous batches that real users produce.
     const latRad = (centerLat * Math.PI) / 180;
     const maxLatSpread = Math.max(...centers.map((c) => Math.abs(c.lat - centerLat)));
@@ -99,7 +99,7 @@ export function groupTilesByClaim(
       .slice(0, 3)
       .map(([c]) => c);
     const more = cityTally.size > 3 ? ` +${cityTally.size - 3}` : '';
-    const citiesLabel = topCities.length > 0 ? topCities.join(' · ') + more : '—';
+    const citiesLabel = topCities.length > 0 ? topCities.join(' · ') + more : '-';
 
     out.push({
       key: String(claimedAt),

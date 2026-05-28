@@ -23,7 +23,7 @@ import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { cn } from '@/lib/utils';
 
 function shortAddr(addr: string): string {
-  if (!addr) return '—';
+  if (!addr) return '-';
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
@@ -161,7 +161,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
                 {profile.username ? `@${profile.username}` : shortAddr(wallet.address ?? '')}
               </span>
               <span className="truncate text-[11.5px] leading-tight tabular-nums text-foreground/55">
-                {balance !== null ? `${balance.toFixed(3)} SOL` : '— SOL'}
+                {balance !== null ? `${balance.toFixed(3)} SOL` : '- SOL'}
               </span>
             </div>
           </Link>
@@ -174,7 +174,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 /**
- * Global left rail — light glass over the sky body bg. Desktop only (md+);
+ * Global left rail - light glass over the sky body bg. Desktop only (md+);
  * on mobile the nav lives in {@link MobileNav}'s slide-in drawer instead.
  */
 export function AppSidebar() {

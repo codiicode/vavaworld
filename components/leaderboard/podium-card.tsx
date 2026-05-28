@@ -127,7 +127,7 @@ export function PodiumCard({
         </div>
       </div>
 
-      {/* Stats — gold gets 3, silver gets 2, bronze gets 1 */}
+      {/* Stats - gold gets 3, silver gets 2, bronze gets 1 */}
       <div
         className={cn(
           'grid gap-2.5 border-t border-white/40 pt-2.5',

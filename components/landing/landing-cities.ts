@@ -2,7 +2,7 @@ export type City = { name: string; lon: number; lat: number; major?: boolean };
 
 /**
  * Globe markers. `major: true` are the world's biggest / most iconic metros
- * (capital or not) — drawn larger with a ring + label. The rest are plain
+ * (capital or not) - drawn larger with a ring + label. The rest are plain
  * dots and act as arc endpoints.
  */
 export const CITIES: City[] = [

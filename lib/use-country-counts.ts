@@ -37,7 +37,7 @@ export function useCountryCounts(isos: ReadonlyArray<string>): Map<string, numbe
           const j = (await r.json()) as { claimCount: number };
           if (!cancelled) cacheRef.current.set(iso, j.claimCount ?? 0);
         } catch {
-          /* offline ok — leave it uncached so a later attempt can retry */
+          /* offline ok - leave it uncached so a later attempt can retry */
         }
       }
       if (!cancelled) setCounts(new Map(cacheRef.current));

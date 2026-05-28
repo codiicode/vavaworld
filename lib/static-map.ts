@@ -1,6 +1,6 @@
 /**
  * Mapbox Static Images URL for a single hex: a zoomed-in satellite shot
- * centered on the tile (no overlay — just the place).
+ * centered on the tile (no overlay - just the place).
  *
  * Used as the preview image on /marketplace/[id]. Returns null when no Mapbox
  * token is configured so the caller can fall back to a placeholder.

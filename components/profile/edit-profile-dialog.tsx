@@ -190,7 +190,7 @@ export function EditProfileDialog({
           </div>
 
           {/* Username */}
-          <Field label="Username" hint={usernameError ?? '2–24 letters, numbers, or _'}>
+          <Field label="Username" hint={usernameError ?? '2-24 letters, numbers, or _'}>
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}

@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 /**
- * VAVAWORLD mark — white, alpha-transparent PNG (public/logga transparent.png).
+ * VAVAWORLD mark - white, alpha-transparent PNG (public/logga transparent.png).
  *
- * Background-free, cut tight to the mark — no backdrop. Rendered `contain` in a
+ * Background-free, cut tight to the mark - no backdrop. Rendered `contain` in a
  * square box so it sits cleanly on any surface. Used globally (landing nav +
  * footer, app sidebar, portfolio sidebar).
  */

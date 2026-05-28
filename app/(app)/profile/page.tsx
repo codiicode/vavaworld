@@ -10,7 +10,7 @@ import { ProfileVersionProvider } from '@/lib/use-user-profile';
 import { SignInGate } from '@/components/auth/sign-in-gate';
 
 /**
- * /profile — light glass surface matching the Claude Design output.
+ * /profile - light glass surface matching the Claude Design output.
  *
  *   1. IdentityCard (avatar + name + meta + Export key / Edit profile + 3 stats)
  *   2. Tabs: Tiles | Activity

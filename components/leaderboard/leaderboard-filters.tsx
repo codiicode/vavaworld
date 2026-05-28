@@ -14,7 +14,7 @@ export type SortKey = 'hexes' | 'volume' | 'value' | 'countries' | 'bonded';
 /** ISO 3166-1 alpha-2 country code, or 'worldwide' for the all-countries view. */
 export type FilterKey = 'worldwide' | string;
 
-// Full ISO list (249 entries) + worldwide sentinel — every country picker on
+// Full ISO list (249 entries) + worldwide sentinel - every country picker on
 // the site should read from this so a user is never told "your country doesn't
 // exist" just because we forgot to add it.
 const COUNTRY_OPTIONS: ReadonlyArray<{ value: FilterKey; label: string }> = [

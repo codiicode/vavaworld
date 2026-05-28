@@ -83,7 +83,7 @@ export function TilesTab() {
     });
   }, [tiles, search, tierFilter, locations]);
 
-  // Group hexes by claim transaction — 50 hexes bought in one tx render as one
+  // Group hexes by claim transaction - 50 hexes bought in one tx render as one
   // "property" card / row, not 50 copies of the same purchase.
   const groups = useMemo(
     () => groupTilesByClaim(filteredTiles, locations),
@@ -110,7 +110,7 @@ export function TilesTab() {
           <p className="text-xs text-foreground/55 tabular-nums">
             {tiles
               ? `${tiles.length} ${tiles.length === 1 ? 'hex' : 'hexes'} · ${totalProperties} ${totalProperties === 1 ? 'property' : 'properties'}`
-              : '—'}
+              : '-'}
             {totalCities > 0 && ` · ${totalCities} ${totalCities === 1 ? 'city' : 'cities'}`}
           </p>
         </div>
@@ -236,7 +236,7 @@ export function TilesTab() {
       {tiles && tiles.length > 0 && (
         <div className="flex items-center justify-between border-t border-foreground/10 px-6 py-3">
           <span className="text-xs tabular-nums text-foreground/55">
-            Showing {start + 1}–{Math.min(start + PER_PAGE, groups.length)} of {groups.length}
+            Showing {start + 1}-{Math.min(start + PER_PAGE, groups.length)} of {groups.length}
           </span>
           <div className="flex items-center gap-1">
             <Button size="sm" variant="outline" disabled className="border-foreground/15 bg-white/40 text-foreground/55">Previous</Button>

@@ -21,7 +21,7 @@ export const PRICING = {
 } as const;
 
 // SOL→USD reference rate. Used purely to convert the USD-spec floor to
-// lamports for the actual on-chain payment. Hard-coded for now — switch to
+// lamports for the actual on-chain payment. Hard-coded for now - switch to
 // an oracle (Pyth) once primary claims move off devnet.
 export const SOL_USD = 150;
 
@@ -30,14 +30,14 @@ export function usdToLamports(usd: number): bigint {
   return BigInt(Math.round((usd / SOL_USD) * 1_000_000_000));
 }
 
-// Legacy named exports — preserved so existing imports
+// Legacy named exports - preserved so existing imports
 // (`import { H3_RESOLUTION } from '@/lib/pricing'`) keep working.
 export const BASE_FLOOR = PRICING.BASE_FLOOR_USD;
 export const SLOPE = PRICING.SLOPE_PER_CLAIM_USD;
 export const H3_RESOLUTION = PRICING.H3_RESOLUTION;
 
 /**
- * Pure floor formula. Returns the raw USD value — display rounding happens
+ * Pure floor formula. Returns the raw USD value - display rounding happens
  * in `formatFloor` and storage rounding happens in the DB (DECIMAL(12,4)).
  * Keeping this unrounded means tests can pin exact 5-decimal expectations
  * like 1 claim → $0.10001.
@@ -52,7 +52,7 @@ export function formatFloor(value: number): string {
 }
 
 /**
- * Returns true if a quote is still acceptable against the current floor —
+ * Returns true if a quote is still acceptable against the current floor -
  * i.e. either it's at/above the floor, or the downward drift is within the
  * configured slippage tolerance. Tiny FP epsilon so an exact-on-boundary
  * caller (e.g. drift = 0.020000000000000018 from 0.02 in IEEE 754) passes.

@@ -96,7 +96,7 @@ export async function createListing(args: {
   return data;
 }
 
-/** Cancel an active listing — sets status to cancelled. */
+/** Cancel an active listing - sets status to cancelled. */
 export async function cancelListing(id: string): Promise<void> {
   const sb = getSupabase();
   if (!sb) throw new Error('Supabase not configured');

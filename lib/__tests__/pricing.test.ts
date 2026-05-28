@@ -17,7 +17,7 @@ describe('calculateFloor', () => {
     expect(calculateFloor(0)).toBe(PRICING.BASE_FLOOR_USD);
   });
 
-  test('strictly monotonic — every additional claim raises the raw floor', () => {
+  test('strictly monotonic - every additional claim raises the raw floor', () => {
     for (let n = 0; n < 1000; n += 50) {
       expect(calculateFloor(n + 1)).toBeGreaterThan(calculateFloor(n));
     }
@@ -32,7 +32,7 @@ describe('formatFloor', () => {
   });
 });
 
-describe('isQuoteFresh — slippage tolerance', () => {
+describe('isQuoteFresh - slippage tolerance', () => {
   test('quote at current floor passes', () => {
     expect(isQuoteFresh(1.0, 1.0)).toBe(true);
   });

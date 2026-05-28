@@ -19,7 +19,7 @@ import type { HexLocation } from '@/lib/use-hex-locations';
 /**
  * "List for sale" dialog opened from the tile row "..." menu.
  *
- * Owner-side action — the secondary-market program isn't on-chain yet, so
+ * Owner-side action - the secondary-market program isn't on-chain yet, so
  * submitting here records intent only ("queued for listing") and shows a
  * confirmation. When the marketplace program lands we'll wire the actual
  * createListing instruction in this same handler.

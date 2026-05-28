@@ -8,7 +8,7 @@ const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 let _client: SupabaseClient | null = null;
 
 /**
- * Lazy singleton — avoids constructing the client at module-load (which breaks SSR
+ * Lazy singleton - avoids constructing the client at module-load (which breaks SSR
  * paths that don't have the env vars wired up yet, and adds noise to bundles that
  * never actually call Supabase).
  *

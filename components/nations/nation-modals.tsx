@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { fmtInt } from '@/lib/mock-nations';
 
 /**
- * Challenge-presidency explainer. Placeholder only — the real flow (bond
+ * Challenge-presidency explainer. Placeholder only - the real flow (bond
  * enough VAVA to overtake the sitting president) is out of scope.
  */
 export function ChallengePresidencyModal({
@@ -53,7 +53,7 @@ export function ChallengePresidencyModal({
 }
 
 /**
- * Bond-more-VAVA flow. Placeholder scaffold — the real bonding transaction
+ * Bond-more-VAVA flow. Placeholder scaffold - the real bonding transaction
  * is out of scope.
  */
 export function BondMoreModal({
@@ -72,7 +72,7 @@ export function BondMoreModal({
           Bond more $VAVA
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-          {/* TODO: real bonding flow — amount input, hex picker, tx signing. */}
+          {/* TODO: real bonding flow - amount input, hex picker, tx signing. */}
           Bonding more $VAVA in {countryName} increases your yield and your
           standing toward the cabinet and presidency. The bonding flow is
           coming soon.

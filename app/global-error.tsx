@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 
 /**
- * Root-level Next.js error boundary. Catches anything (app)/error.tsx misses —
+ * Root-level Next.js error boundary. Catches anything (app)/error.tsx misses -
  * specifically errors in the root layout itself (providers, fonts, polyfills).
  *
  * Intentionally minimal: no shadcn imports, no Tailwind utilities, no third-

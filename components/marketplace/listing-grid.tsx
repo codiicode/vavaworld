@@ -11,7 +11,7 @@ import type { Listing } from '@/lib/mock-marketplace';
  * Minimal listing card grid. Each card is a glass tile with a satellite
  * preview of the actual hex on top, then a thin info bar (city · neighborhood,
  * tier chip, price, 24h delta). Matches the visual vibe of the other (app)
- * pages — same rounded-2xl + bg-white/30 + backdrop-blur recipe.
+ * pages - same rounded-2xl + bg-white/30 + backdrop-blur recipe.
  */
 export function ListingGrid({ listings }: { listings: ReadonlyArray<Listing> }) {
   return (

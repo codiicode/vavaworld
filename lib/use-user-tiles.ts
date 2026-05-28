@@ -11,7 +11,7 @@ import type { ClaimedTile } from '@/types/tile';
 
 const coder = new BorshAccountsCoder(idl as Idl);
 
-/** Anchor 1.0+ keeps snake_case from the IDL in the decoded object — we tried
+/** Anchor 1.0+ keeps snake_case from the IDL in the decoded object - we tried
  *  camelCase first and got `undefined` on every field. */
 type DecodedTile = {
   owner: PublicKey;
@@ -26,7 +26,7 @@ type DecodedTile = {
  * Fetches every Tile PDA owned by the active wallet. Uses `getProgramAccounts`
  * with a memcmp filter at offset 8 (owner pubkey) on the 66-byte Tile layout.
  *
- * Single source of truth for "what tiles does this user own" — consumed by
+ * Single source of truth for "what tiles does this user own" - consumed by
  * IdentityCard (count, total spent), TilesTab (table/grid). The previous
  * MyTilesList logic was duplicated; this hook replaces it.
  */
@@ -42,7 +42,7 @@ export function useUserTiles(): {
   const [version, setVersion] = useState(0);
   const refetch = useCallback(() => setVersion((v) => v + 1), []);
 
-  // Stringify before using as a useEffect dep — `useActiveWallet` rebuilds the
+  // Stringify before using as a useEffect dep - `useActiveWallet` rebuilds the
   // PublicKey object every render, which would tear down + remount the effect
   // each render and storm getProgramAccounts (same bug as in use-wallet-balance).
   const addressKey = publicKey?.toBase58() ?? null;

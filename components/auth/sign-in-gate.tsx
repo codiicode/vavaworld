@@ -56,7 +56,7 @@ export function SignInGate({
         </div>
         <p className="mb-5 text-sm leading-relaxed text-foreground/70">
           Your {label} is tied to a Solana wallet. Sign in with email, Google or
-          X — we&apos;ll create an embedded wallet for you — or connect an
+          X - we&apos;ll create an embedded wallet for you - or connect an
           existing Phantom, Solflare or Backpack wallet.
         </p>
 
@@ -72,7 +72,7 @@ export function SignInGate({
                 Log in
               </div>
               <div className="text-[11.5px] text-foreground/60">
-                Email · Google · X — we make a wallet for you
+                Email · Google · X - we make a wallet for you
               </div>
             </div>
           </button>

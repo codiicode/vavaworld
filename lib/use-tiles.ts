@@ -17,7 +17,7 @@ const coder = new BorshAccountsCoder(idl as Idl);
 function decodeTile(buf: Buffer, h3: string): ClaimedTile | null {
   try {
     // Field names match the IDL (snake_case). Anchor 1.0+ does NOT translate
-    // these to camelCase on decode — we tried h3Id/claimedAt and got undefined.
+    // these to camelCase on decode - we tried h3Id/claimedAt and got undefined.
     const decoded = coder.decode<{
       owner: PublicKey;
       h3_id: { toString: () => string };

@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 /**
  * Server-side Supabase client (route handlers / server code).
  *
- * Uses the public anon key — that's sufficient because all writes go through
+ * Uses the public anon key - that's sufficient because all writes go through
  * the `claim_hex` SECURITY DEFINER function (which validates internally) and
  * the tables are RLS public-read only. No service-role key is needed or used.
  */

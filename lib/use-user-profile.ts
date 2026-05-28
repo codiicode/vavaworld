@@ -6,7 +6,7 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { useSupabaseProfile } from '@/lib/supabase-profile';
 
 export type UserProfile = {
-  /** Best human-readable name available — Supabase username > twitter handle > google name > … */
+  /** Best human-readable name available - Supabase username > twitter handle > google name > … */
   displayName: string;
   /** The @-handle to display next to the name. Supabase value wins over Twitter. */
   username: string | null;
@@ -27,7 +27,7 @@ export type UserProfile = {
 };
 
 function shortAddr(addr: string): string {
-  if (!addr) return '—';
+  if (!addr) return '-';
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
@@ -61,7 +61,7 @@ export function useUserProfile(): UserProfile {
   // Pre-hydration / fully signed-out shell
   if (!ready || (!user && !walletAddress)) {
     return {
-      displayName: walletAddress ? shortAddr(walletAddress) : '—',
+      displayName: walletAddress ? shortAddr(walletAddress) : '-',
       username: null,
       avatarUrl: null,
       flagCountryCode: null,
@@ -74,7 +74,7 @@ export function useUserProfile(): UserProfile {
   }
 
   // Base values from Privy / wallet
-  let displayName = walletAddress ? shortAddr(walletAddress) : '—';
+  let displayName = walletAddress ? shortAddr(walletAddress) : '-';
   let username: string | null = null;
   let avatarUrl: string | null = null;
   let provider: UserProfile['provider'] = walletAddress ? 'wallet' : null;
@@ -96,7 +96,7 @@ export function useUserProfile(): UserProfile {
     provider = 'email';
   }
 
-  // Supabase overrides — every field is independent so the user can mix
+  // Supabase overrides - every field is independent so the user can mix
   // (e.g. Twitter avatar but a custom display name).
   if (db?.username) {
     username = db.username;

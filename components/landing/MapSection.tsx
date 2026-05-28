@@ -8,7 +8,7 @@ export function MapSection() {
   const [claimed, setClaimed] = useState(18432);
 
   // Mirror the reference's "live register" cadence: bump claimed total every 2.2s.
-  // Real on-chain wiring can hook into the counters hook later — keep the visual liveness here.
+  // Real on-chain wiring can hook into the counters hook later - keep the visual liveness here.
   useEffect(() => {
     const id = window.setInterval(() => setClaimed((v) => v + 1), 2200);
     return () => window.clearInterval(id);
@@ -23,7 +23,7 @@ export function MapSection() {
             at <em>true scale.</em>
           </h2>
           <p>
-            Real coordinates. Real ground. A house, a corner, a clearing in a forest — choose a
+            Real coordinates. Real ground. A house, a corner, a clearing in a forest - choose a
             place that has not yet been taken, and hold it in your name.
           </p>
           <div className="l-stats">

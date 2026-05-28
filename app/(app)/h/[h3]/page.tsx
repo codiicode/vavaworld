@@ -63,7 +63,7 @@ function formatAgo(unixSec: number): string {
 }
 
 /**
- * Public hex detail page — one URL per hex so they're shareable. Resolves the
+ * Public hex detail page - one URL per hex so they're shareable. Resolves the
  * h3 in the URL, looks up on-chain ownership + any active marketplace listing,
  * and renders a clean glass-card view matching the rest of the (app) pages.
  */
@@ -85,7 +85,7 @@ export default function HexDetailPage() {
   const locations = useHexLocations(hexSet);
   const loc = locations.get(h3) ?? null;
 
-  // On-chain owner lookup — one getAccountInfo, decoded as a Tile PDA.
+  // On-chain owner lookup - one getAccountInfo, decoded as a Tile PDA.
   const [tile, setTile] = useState<ClaimedTile | null | undefined>(undefined);
   useEffect(() => {
     let cancelled = false;
@@ -126,7 +126,7 @@ export default function HexDetailPage() {
   }, [h3]);
 
   const city = loc?.place ?? loc?.countryName ?? 'Locating…';
-  const neighborhood = loc?.neighborhood ?? loc?.place ?? '—';
+  const neighborhood = loc?.neighborhood ?? loc?.place ?? '-';
   const country = loc?.countryName ?? 'Unmapped';
   const loadingOwner = tile === undefined;
   const claimed = tile !== null && tile !== undefined;
@@ -141,7 +141,7 @@ export default function HexDetailPage() {
         Back to map
       </Link>
 
-      {/* Header — title + flag + tier */}
+      {/* Header - title + flag + tier */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
@@ -164,7 +164,7 @@ export default function HexDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_1fr]">
-        {/* Left — preview + facts */}
+        {/* Left - preview + facts */}
         <div className="space-y-4">
           <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-white/40 bg-foreground/[0.04]">
             {mapImg ? (
@@ -199,7 +199,7 @@ export default function HexDetailPage() {
           </div>
         </div>
 
-        {/* Right — ownership / listing / actions */}
+        {/* Right - ownership / listing / actions */}
         <div className="space-y-4">
           {loadingOwner ? (
             <div className="flex items-center gap-2 rounded-2xl border border-white/40 bg-white/30 px-5 py-6 text-sm text-foreground/65 backdrop-blur-md">
@@ -292,7 +292,7 @@ function UnclaimedCard({ h3 }: { h3: string }) {
         Available
       </div>
       <p className="text-sm text-foreground/80">
-        This hex isn&apos;t claimed yet — be the first to plant a flag here.
+        This hex isn&apos;t claimed yet - be the first to plant a flag here.
       </p>
       <Link href={`/map#${h3}`}>
         <Button className="w-full">Claim on the map</Button>

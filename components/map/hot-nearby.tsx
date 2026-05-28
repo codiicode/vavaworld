@@ -3,7 +3,7 @@
 import { Flame } from 'lucide-react';
 
 /**
- * "Hot Nearby" bottom card on the map sidebar — placeholder until an indexer
+ * "Hot Nearby" bottom card on the map sidebar - placeholder until an indexer
  * for recent high-value claims is wired up. We dropped the mocked rows so the
  * UI doesn't lie about what's available right now.
  *

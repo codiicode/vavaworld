@@ -6,7 +6,7 @@ import { Camera, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
-// Browser-only WebGL viewer — never server-render it.
+// Browser-only WebGL viewer - never server-render it.
 const MapillaryViewer = dynamic(
   () => import('./mapillary-viewer').then((m) => m.MapillaryViewer),
   { ssr: false },
@@ -24,7 +24,7 @@ type Coverage =
  * within 50m of the hex's center; if one exists, the button activates and the
  * dialog mounts the interactive MapillaryViewer at that image.
  *
- * Free, no billing required — but coverage is patchy: great in cities,
+ * Free, no billing required - but coverage is patchy: great in cities,
  * thin/empty outside urban centers or popular routes.
  */
 export function StreetViewButton({
@@ -123,7 +123,7 @@ export function StreetViewButton({
           </div>
           <div className="border-t border-border px-5 py-2.5 text-[11px] text-muted-foreground">
             Drag to look around · click the arrows to move along the street.
-            Imagery © Mapillary contributors — coverage is crowd-sourced and
+            Imagery © Mapillary contributors - coverage is crowd-sourced and
             may be older than the satellite tile above.
           </div>
         </DialogContent>

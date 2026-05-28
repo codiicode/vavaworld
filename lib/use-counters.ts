@@ -45,7 +45,7 @@ export function useCounters(): Counters {
         const sold = decodeCounter(ai.data as Buffer);
         setCounters((c) => ({ ...c, [tier]: sold }));
       } catch {
-        /* one tier failed — keep going */
+        /* one tier failed - keep going */
       }
     }
   }, []);

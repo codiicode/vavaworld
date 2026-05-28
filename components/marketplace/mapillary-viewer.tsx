@@ -19,7 +19,7 @@ type MoveKey = 'forward' | 'back' | 'left' | 'right';
  * the captured sequence and turns the view left/right.
  *
  * The native `sequence` UI bar auto-hides and needs hovering to reveal, which
- * made steering feel hidden — so we turn it off and drive navigation through
+ * made steering feel hidden - so we turn it off and drive navigation through
  * our own persistent buttons via `viewer.moveDir(...)`.
  *
  * `mapillary-js` is heavy and browser-only, so we dynamic-import it inside the
@@ -49,7 +49,7 @@ export function MapillaryViewer({
           accessToken,
           container: ref.current,
           imageId,
-          // No cover (load immediately) and no auto-hiding sequence bar —
+          // No cover (load immediately) and no auto-hiding sequence bar -
           // we provide always-visible controls instead.
           component: { cover: false, sequence: false },
         });
@@ -61,7 +61,7 @@ export function MapillaryViewer({
           right: NavigationDirection.TurnRight,
         };
         moveRef.current = (key) => {
-          // moveDir rejects when there's no image that way — ignore silently.
+          // moveDir rejects when there's no image that way - ignore silently.
           viewer?.moveDir(dirMap[key]).catch(() => {});
         };
 

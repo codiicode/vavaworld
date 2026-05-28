@@ -21,7 +21,7 @@ export function PresidentHeroCard({ nation }: { nation: Nation }) {
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-amber-300/70 bg-white/35 backdrop-blur-md">
-      {/* Warm accent top stripe — elevates the president above regular cards */}
+      {/* Warm accent top stripe - elevates the president above regular cards */}
       <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500" />
 
       <div className="p-6">

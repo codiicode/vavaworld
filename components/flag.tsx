@@ -2,8 +2,8 @@ import { Globe } from 'lucide-react';
 
 /**
  * Real SVG country flag (via the bundled `flag-icons` set) instead of an
- * emoji. Emoji flags don't render on Windows/Chrome — they fall back to the
- * two-letter code ("SE", "US") — so we never use emoji for flags anywhere.
+ * emoji. Emoji flags don't render on Windows/Chrome - they fall back to the
+ * two-letter code ("SE", "US") - so we never use emoji for flags anywhere.
  *
  * `code` is an ISO 3166-1 alpha-2 code in any case ("se", "SE"). Anything
  * missing or malformed renders a neutral globe placeholder.

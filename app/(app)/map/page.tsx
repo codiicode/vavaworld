@@ -53,7 +53,7 @@ export default function Page() {
 
   const clearAll = () => setSelectedHexes(new Set());
 
-  // Quick-pick "mark N closest" — expands the saved seed hex into a cluster
+  // Quick-pick "mark N closest" - expands the saved seed hex into a cluster
   // of N cells and REPLACES the selection so the count is exactly N. The
   // seed stays unchanged so the user can toggle between {10, 100, 500, 1000,
   // custom} freely from the same anchor.
@@ -110,7 +110,7 @@ export default function Page() {
 
   return (
     <>
-      {/* Map fills the viewport — `fixed` so it's independent of any parent
+      {/* Map fills the viewport - `fixed` so it's independent of any parent
           layout height. AppSidebar and GlassRightPanel are also fixed and sit
           on top via higher z-index. */}
       <div className="fixed inset-0 z-0">
@@ -123,7 +123,7 @@ export default function Page() {
         />
       </div>
 
-      {/* Dim layer — only on satellite (which is image-heavy and varied).
+      {/* Dim layer - only on satellite (which is image-heavy and varied).
           Mapbox Standard is already pale and reads fine without dimming. */}
       {isSatellite && (
         <div
@@ -139,7 +139,7 @@ export default function Page() {
         />
       )}
 
-      {/* Search pill + style toggle — search shrinks to make room for the
+      {/* Search pill + style toggle - search shrinks to make room for the
           52px toggle. Desktop: clears the left rail (250) and right panel
           (356). Mobile: spans the width below the floating top bar. */}
       <div className="pointer-events-none fixed inset-x-3 top-[66px] z-20 flex items-center gap-3 md:inset-x-auto md:left-[250px] md:right-[356px] md:top-[18px] md:pl-[18px] md:pr-0">

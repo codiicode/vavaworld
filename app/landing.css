@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────
-   VAVAWORLD Landing — light-theme scoped to .landing-root
+   VAVAWORLD Landing - light-theme scoped to .landing-root
    Hand-off design by Claude Design, recreated as React components.
    ───────────────────────────────────────────────────────── */
 
@@ -73,7 +73,7 @@
 
 /* ── NAV ─────────────────────────────────── */
 .landing-root nav.l-site {
-  /* Liquid-glass top nav, floating with margin from edges — matches the
+  /* Liquid-glass top nav, floating with margin from edges - matches the
      light-glass panels on /profile, /marketplace, AppSidebar. */
   position: fixed;
   top: 14px; left: 14px; right: 14px;
@@ -151,7 +151,7 @@
 .landing-root .l-nav-right { display: flex; align-items: center; gap: 12px; }
 
 /* ─── Unified button system ─────────────────────────────────────
-   One primary CTA style used everywhere on the landing — matches
+   One primary CTA style used everywhere on the landing - matches
    the "Claim your first hex" CTA on /profile + /marketplace. */
 .landing-root .l-btn-ghost,
 .landing-root nav.l-site .l-btn-ghost {
@@ -178,7 +178,7 @@
   border-color: rgba(255, 255, 255, 0.85);
 }
 
-/* Text-only link (Log in) — matches ink token, no fill. */
+/* Text-only link (Log in) - matches ink token, no fill. */
 .landing-root nav.l-site .l-btn-text {
   color: rgba(10, 26, 46, 0.72);
   font-family: var(--font-manrope), "Inter", sans-serif;
@@ -229,7 +229,7 @@
   border-color: rgba(10, 26, 46, 0.40);
 }
 
-/* Profile pill — same liquid-glass fill as the nav itself, just outlined so
+/* Profile pill - same liquid-glass fill as the nav itself, just outlined so
    it reads as a button, with the same ink text colour as the nav links. */
 .landing-root nav.l-site .l-btn-profile {
   background:

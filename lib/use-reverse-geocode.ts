@@ -90,7 +90,7 @@ export function useReverseGeocode(
         cache.set(key, next);
         setRegion(next);
       } catch {
-        /* offline — silent */
+        /* offline - silent */
       }
     })();
 

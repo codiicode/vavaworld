@@ -24,7 +24,7 @@ function makeRow(verb: Verb, id: number): Row {
 
 /**
  * Three-column live register: Taken / Listed / Passed on.
- * Mock data on a 2.2s pulse — swap for a websocket subscription later.
+ * Mock data on a 2.2s pulse - swap for a websocket subscription later.
  */
 export function Register() {
   const [taken, setTaken] = useState<Row[]>([]);
@@ -46,7 +46,7 @@ export function Register() {
     setPassed(seed('passed'));
   }, []);
 
-  // Tick — drop a new row on top every ~2.2s
+  // Tick - drop a new row on top every ~2.2s
   useEffect(() => {
     let nextId = 1000;
     const id = window.setInterval(() => {
@@ -69,7 +69,7 @@ export function Register() {
         <div className="l-section-head">
           <div>
             <h2>The <em>register.</em></h2>
-            <p className="l-sub">A plain ledger of every cell taken, listed, and passed on — amended hourly.</p>
+            <p className="l-sub">A plain ledger of every cell taken, listed, and passed on - amended hourly.</p>
           </div>
         </div>
 

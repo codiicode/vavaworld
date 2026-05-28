@@ -33,7 +33,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Three-tabbed transfer dialog.
- *  - Wallet address: real on-chain `transfer` instruction — the Tile PDA's
+ *  - Wallet address: real on-chain `transfer` instruction - the Tile PDA's
  *    owner field is reassigned, signed by the current owner.
  *  - X handle / Email: still queued-intent stubs (need a pending-transfer
  *    backend the recipient claims on sign-in).
@@ -138,7 +138,7 @@ export function TileTransferDialog({
         const sig = await wallet.signAndSendTransaction(tx);
         await connection.confirmTransaction(sig, 'confirmed');
 
-        // The tile just left this wallet — make /profile + the sidebar refetch.
+        // The tile just left this wallet - make /profile + the sidebar refetch.
         dispatchClaimDone({ h3s: [tile.h3], txSig: sig });
         setSubmitting(false);
         setDone(true);
@@ -149,7 +149,7 @@ export function TileTransferDialog({
       return;
     }
 
-    // X / Email — no backend yet; record intent + show queued confirmation.
+    // X / Email - no backend yet; record intent + show queued confirmation.
     await new Promise((r) => setTimeout(r, 800));
     setSubmitting(false);
     setDone(true);

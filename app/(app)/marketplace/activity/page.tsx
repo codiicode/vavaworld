@@ -15,7 +15,7 @@ import { Flag } from '@/components/flag';
 import { UserLink } from '@/components/user-link';
 
 /**
- * Full activity log — the "see more" target from the right-rail mini-feed.
+ * Full activity log - the "see more" target from the right-rail mini-feed.
  *
  * Same dense, scannable table style as the main marketplace.
  */

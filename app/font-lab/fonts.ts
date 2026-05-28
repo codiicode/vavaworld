@@ -10,7 +10,7 @@ import {
 import { GeistSans } from 'geist/font/sans';
 
 // next/font requires each loader to be called at module scope and assigned to
-// a const — not inline inside an object literal — so it can statically analyse
+// a const - not inline inside an object literal - so it can statically analyse
 // and prebundle the fonts at build time.
 const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700'] });
 const manrope = Manrope({

@@ -9,7 +9,7 @@ import type { Listing } from '@/lib/mock-marketplace';
 
 /**
  * Honest "buy is coming" dialog. The on-chain secondary-market program isn't
- * deployed yet, so we can't actually transfer the hex + escrow SOL — and we
+ * deployed yet, so we can't actually transfer the hex + escrow SOL - and we
  * refuse to fake it. When the contract ships, this dialog becomes the real
  * confirm step.
  */
@@ -64,7 +64,7 @@ export function BuyDialog({
             <p className="leading-relaxed">
               The on-chain secondary-market program isn&apos;t deployed yet, so
               we can&apos;t escrow SOL or transfer ownership atomically. Rather
-              than fake it, we&apos;re holding off — buys go live with the
+              than fake it, we&apos;re holding off - buys go live with the
               contract.
             </p>
           </div>

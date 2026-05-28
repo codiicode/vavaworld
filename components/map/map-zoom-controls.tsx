@@ -8,7 +8,7 @@ import type { MapRef } from 'react-map-gl/mapbox';
  * Floating zoom controls on the right side of /map (under the GlassRightPanel
  * on desktop, anchored above the bottom-sheet on mobile).
  *
- *   ⊕  "Get me close" — one-tap flyTo to a zoom where individual hexes appear
+ *   ⊕  "Get me close" - one-tap flyTo to a zoom where individual hexes appear
  *   +  zoom in one step
  *   −  zoom out one step
  *

@@ -1,6 +1,6 @@
 // Mock user directory. Replaces the bare SELLERS string array we used to render
 // addresses across activity feeds, sale history, etc. Some users have chosen
-// a username, others haven't — when a username is set, UI should prefer it.
+// a username, others haven't - when a username is set, UI should prefer it.
 //
 // Every entry maps to a public profile at /u/[handle], where handle is the
 // username (without @) when present and the address otherwise.
@@ -8,7 +8,7 @@
 export type MockUser = {
   addr: string;
   username?: string;
-  /** ISO 3166-1 alpha-2, lowercase — drives the country flag chip. */
+  /** ISO 3166-1 alpha-2, lowercase - drives the country flag chip. */
   country: string;
   /** Mock join date, ISO. */
   joined: string;
@@ -33,7 +33,7 @@ export const MOCK_USERS: ReadonlyArray<MockUser> = [
   { addr: '0x9988…AABB', username: 'jordaan',    country: 'nl', joined: '2025-11-08', hexes:  864, countries: 11, bondedVava: 1_020_000 },
 ];
 
-/** Slug used in /u/[handle] — username (no @) when present, otherwise address. */
+/** Slug used in /u/[handle] - username (no @) when present, otherwise address. */
 export function userHandle(u: { addr: string; username?: string }): string {
   return u.username ?? u.addr;
 }

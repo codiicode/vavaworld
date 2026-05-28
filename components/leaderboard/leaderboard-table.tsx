@@ -20,7 +20,7 @@ export function LeaderboardTable({ rows }: { rows: LeaderboardEntry[] }) {
         <h2 className="text-base font-semibold tracking-tight">All Rankings</h2>
         <span className="text-xs tabular-nums text-foreground/60">
           {rows.length > 0
-            ? `Showing ${first}–${last} of ${TOTAL_HOLDERS.toLocaleString()} holders`
+            ? `Showing ${first}-${last} of ${TOTAL_HOLDERS.toLocaleString()} holders`
             : `No holders match this filter`}
         </span>
       </div>

@@ -8,7 +8,7 @@ import { BrandLogo } from '@/components/brand-logo';
 /**
  * Fixed glassy top nav. CTAs change based on session state:
  *  - signed out → "Log in" (Privy: email/Google/X) + "Connect wallet"
- *    (wallet-adapter: Phantom/Solflare/Backpack — no Privy involved).
+ *    (wallet-adapter: Phantom/Solflare/Backpack - no Privy involved).
  *  - signed in  → "Profile" → /profile
  *  - hydrating  → render placeholder shell so layout doesn't jump.
  */

@@ -3,7 +3,7 @@
 import { Activity } from 'lucide-react';
 
 /**
- * Activity tab on the map sidebar — empty state until the on-chain event
+ * Activity tab on the map sidebar - empty state until the on-chain event
  * indexer is built. Replaces a previous mock list so the UI doesn't lie.
  */
 export function ActivityFeed() {

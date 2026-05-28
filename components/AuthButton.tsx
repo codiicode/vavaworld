@@ -15,7 +15,7 @@ export function AuthButton({ onDark = false }: { onDark?: boolean }) {
   const [open, setOpen] = useState(false);
 
   // Auto-trigger Privy login when arriving via /map?login=true (from landing's Log in CTA).
-  // Wait for SDK to hydrate first — otherwise we'd open the modal even for users who already
+  // Wait for SDK to hydrate first - otherwise we'd open the modal even for users who already
   // have a session (which would just dismiss as no-op but flash the UI).
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -53,12 +53,12 @@ export function AuthButton({ onDark = false }: { onDark?: boolean }) {
     };
   }, [wallet.publicKey]);
 
-  // Don't show anything until SDK has hydrated — prevents "Sign in" flash on returning users
+  // Don't show anything until SDK has hydrated - prevents "Sign in" flash on returning users
   if (!wallet.ready) {
     return null;
   }
 
-  // Brand-blue filled CTA — works on both dark satellite (high contrast)
+  // Brand-blue filled CTA - works on both dark satellite (high contrast)
   // and light /profile background. Pill shape, Inter, matches the landing nav primary.
   if (!wallet.connected) {
     return (
@@ -90,7 +90,7 @@ export function AuthButton({ onDark = false }: { onDark?: boolean }) {
     );
   }
 
-  // Wallet pill — translucent white glass over satellite imagery,
+  // Wallet pill - translucent white glass over satellite imagery,
   // brand-blue accent dot + Inter mono numerals.
   const pillBg = onDark ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.62)';
   return (

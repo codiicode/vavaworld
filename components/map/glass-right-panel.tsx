@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import type { ClaimedTile } from '@/types/tile';
 
 function shortAddr(addr: string): string {
-  if (!addr) return '—';
+  if (!addr) return '-';
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
@@ -88,7 +88,7 @@ export function GlassRightPanel({
 
   // USD-spec pricing curve walk per country: floor(n) = 0.10 + n × 0.00001.
   // Each hex in the same country pays the next floor after the previous one
-  // in the batch — so 3 hexes in Germany at count=1 pay 0.10001, 0.10002,
+  // in the batch - so 3 hexes in Germany at count=1 pay 0.10001, 0.10002,
   // 0.10003. SOL settlement is derived purely for display via SOL_USD.
   const isos = items
     .map((it) => locations.get(it.h3)?.countryCode)
@@ -199,7 +199,7 @@ export function GlassRightPanel({
         )}
       </div>
 
-      {/* Full panel content — hidden when mobile-collapsed, always visible on desktop. */}
+      {/* Full panel content - hidden when mobile-collapsed, always visible on desktop. */}
       <div
         className={cn(
           'flex min-h-0 flex-1 flex-col',
@@ -235,7 +235,7 @@ export function GlassRightPanel({
             {wallet.connected
               ? balance !== null
                 ? `${balance.toFixed(3)} SOL`
-                : '— SOL'
+                : '- SOL'
               : 'Connect wallet'}
           </div>
         </div>
@@ -362,7 +362,7 @@ function SelectionBody({
   );
   const allClaimed = !empty && claimableCount === 0;
 
-  // For big selections (>20) the per-row list is meaningless — every hex is
+  // For big selections (>20) the per-row list is meaningless - every hex is
   // a few metres apart with the same country, same coords to 3 dp. Show a
   // compact country breakdown instead so the Claim button stays visible.
   const compact = count > 20;
@@ -449,7 +449,7 @@ function SelectionBody({
               <input
                 type="number"
                 inputMode="numeric"
-                placeholder="Custom 2–1000"
+                placeholder="Custom 2-1000"
                 value={customN}
                 onChange={(e) => setCustomN(e.target.value)}
                 onKeyDown={(e) => {
@@ -482,7 +482,7 @@ function SelectionBody({
           <>
             {claimedCount > 0 && (
               <div className="rounded-md border border-amber-400/30 bg-amber-400/10 px-2.5 py-2 text-[11.5px] leading-relaxed text-amber-100">
-                {claimedCount} of {count} already claimed — those can&apos;t be bought.
+                {claimedCount} of {count} already claimed - those can&apos;t be bought.
               </div>
             )}
             {compact ? (
@@ -692,7 +692,7 @@ function ClaimedHexView({
 
         <p className="text-[12.5px] leading-relaxed text-white/60">
           This hex isn&apos;t available to claim. Visit the owner&apos;s profile
-          to see their other properties — if they list it for sale, it&apos;ll
+          to see their other properties - if they list it for sale, it&apos;ll
           appear on the marketplace.
         </p>
       </div>

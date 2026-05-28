@@ -22,7 +22,7 @@ export function expandFromSeed(seed: string, total: number): string[] {
     k++;
     cells = gridDisk(seed, k);
   }
-  // gridDisk doesn't guarantee seed-first ordering on every release — make
+  // gridDisk doesn't guarantee seed-first ordering on every release - make
   // sure it is, then trim.
   if (cells[0] !== seed) {
     cells = [seed, ...cells.filter((c) => c !== seed)];

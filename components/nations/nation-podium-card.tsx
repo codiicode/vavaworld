@@ -142,7 +142,7 @@ export function NationPodiumCard({
         </div>
       </div>
 
-      {/* Stats — gold gets 3 (Floor / Claims / Bonded), silver gets 2, bronze 1 */}
+      {/* Stats - gold gets 3 (Floor / Claims / Bonded), silver gets 2, bronze 1 */}
       <div
         className={cn(
           'grid gap-2.5 border-t border-white/40 pt-2.5',

@@ -10,7 +10,7 @@ describe('hexesForBounds', () => {
   });
 
   it('caps at safety limit for huge bbox', () => {
-    // World — guard against runaway
+    // World - guard against runaway
     const hexes = hexesForBounds([-180, -85, 180, 85]);
     expect(hexes.length).toBeLessThanOrEqual(20000);
   });

@@ -17,7 +17,7 @@ type HexFloor = {
 };
 
 const fmt = (n: number) => n.toFixed(4);
-const short = (a: string) => (a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '—');
+const short = (a: string) => (a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '-');
 const grouped = (n: number) => n.toLocaleString('en-US');
 
 /**
@@ -110,7 +110,7 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
       <div className="mb-2 flex items-center gap-2">
         <Flag code={data?.countryIso} size={18} />
         <span className="truncate text-[14px] font-semibold text-foreground">
-          {data?.countryName ?? (loading ? 'Locating…' : '—')}
+          {data?.countryName ?? (loading ? 'Locating…' : '-')}
         </span>
         {loading && <Loader2 size={13} className="animate-spin text-foreground/50" />}
       </div>

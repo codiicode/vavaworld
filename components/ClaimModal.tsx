@@ -86,7 +86,7 @@ export function ClaimModal({
     try {
       const connection = getConnection();
 
-      // One SystemProgram.transfer for the batch total — primary claims now
+      // One SystemProgram.transfer for the batch total - primary claims now
       // pay the USD-spec floor in SOL straight to the treasury. The Tile
       // registry is off-chain in Supabase; on-chain Anchor program is kept
       // for the future bonding-curve resale path only.
@@ -106,7 +106,7 @@ export function ClaimModal({
       await connection.confirmTransaction(sig, 'confirmed');
 
       // Mirror each hex into Supabase with the per-hex USD quote so the DB
-      // function records the exact floor the user paid. Parallel — order
+      // function records the exact floor the user paid. Parallel - order
       // inside the same country is enforced by the SELECT FOR UPDATE in
       // claim_hex, so the count walks monotonically regardless of arrival.
       const owner = wallet.publicKey.toBase58();

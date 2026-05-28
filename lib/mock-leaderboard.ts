@@ -1,4 +1,4 @@
-// Mock leaderboard — replaces a real indexer/ranking query until one exists.
+// Mock leaderboard - replaces a real indexer/ranking query until one exists.
 // Deterministic generator so ranks/values are stable across renders & builds.
 
 export interface LeaderboardEntry {
@@ -52,14 +52,14 @@ function build(): LeaderboardEntry[] {
   const out: LeaderboardEntry[] = [];
   for (let i = 0; i < 50; i++) {
     const rank = i + 1;
-    // Hexes: rank 1 ≈ 2.5M, rank 50 ≈ 250k — smooth decay + a little jitter.
+    // Hexes: rank 1 ≈ 2.5M, rank 50 ≈ 250k - smooth decay + a little jitter.
     const t = i / 49;
     const baseHex = 2_500_000 * Math.pow(0.36, t); // 2.5M → ~900k path
     const hexes = Math.round((baseHex + (0.5 - r()) * 40_000) / 1000) * 1000;
     const valueSOL = Math.round((520 * Math.pow(0.40, t) + (0.5 - r()) * 8) * 10) / 10;
     const valueUSD = Math.round(valueSOL * 152);
     const vol = Math.round((r() * 60 - 18) * 10) / 10; // ~70% positive
-    // Bonded $VAVA: rank 1 ≈ 3.2M, rank 50 ≈ ~60k — smooth decay + jitter.
+    // Bonded $VAVA: rank 1 ≈ 3.2M, rank 50 ≈ ~60k - smooth decay + jitter.
     const bonded = Math.round((3_200_000 * Math.pow(0.34, t) + (0.5 - r()) * 50_000) / 1000) * 1000;
     const country = COUNTRIES[i % COUNTRIES.length];
     out.push({

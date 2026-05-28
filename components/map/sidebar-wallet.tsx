@@ -8,7 +8,7 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
 
 function shortAddr(addr: string): string {
-  if (!addr) return '—';
+  if (!addr) return '-';
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
@@ -64,7 +64,7 @@ export function SidebarWallet() {
                 {shortAddr(wallet.address ?? '')}
               </span>
               <span className="text-xs leading-tight tabular-nums text-muted-foreground">
-                {balance !== null ? `${balance.toFixed(3)} SOL` : '— SOL'}
+                {balance !== null ? `${balance.toFixed(3)} SOL` : '- SOL'}
               </span>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 
 /**
- * The VAVAWORLD hex-grid mark. Five rings, only the centre filled — the rest are outline.
+ * The VAVAWORLD hex-grid mark. Five rings, only the centre filled - the rest are outline.
  * Pure SVG, no JS animation. Pass `color` to control stroke + centre fill.
  */
 export function BrandMark({ color = '#ffffff', size = 26 }: { color?: string; size?: number }) {

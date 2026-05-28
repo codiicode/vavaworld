@@ -15,7 +15,7 @@ import { EditProfileDialog } from './edit-profile-dialog';
 import { ExportKeyButton } from './export-key-button';
 
 function shortAddr(addr: string): string {
-  if (!addr) return '—';
+  if (!addr) return '-';
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
@@ -149,15 +149,15 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
             )}
           </div>
           <div className="grid grid-cols-3 gap-6 sm:gap-8">
-            <SummaryStat label="Hexes" value={tiles ? String(tiles.length) : '—'} />
+            <SummaryStat label="Hexes" value={tiles ? String(tiles.length) : '-'} />
             <SummaryStat
               label="Spent"
-              value={totalSpent !== null ? totalSpent.toFixed(3) : '—'}
+              value={totalSpent !== null ? totalSpent.toFixed(3) : '-'}
               unit="SOL"
             />
             <SummaryStat
               label="Balance"
-              value={balance !== null ? balance.toFixed(3) : '—'}
+              value={balance !== null ? balance.toFixed(3) : '-'}
               unit="SOL"
             />
           </div>

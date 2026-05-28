@@ -21,7 +21,7 @@ import { HotNearby } from './hot-nearby';
  *   1. Wallet header (avatar + addr + balance, or "Connect" button)
  *   2. Region context (place name + 3 mini stats, when zoom > 11)
  *   3. Tabs: Selection / My Tiles / Activity
- *   4. Hot Nearby — always at the bottom
+ *   4. Hot Nearby - always at the bottom
  *
  * Viewport state (zoom, centre) is subscribed from the underlying mapbox-gl `move`
  * event via `mapRef.current.getMap()`, so the Region card re-geocodes as the user pans.

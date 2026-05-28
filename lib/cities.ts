@@ -4,7 +4,7 @@
 // to the T1 (50 km) / T2 (200 km) radius.
 //
 // Stored here so the client-side tier classifier matches the on-chain
-// classifier 1:1 — otherwise quotes computed off-chain would diverge from
+// classifier 1:1 - otherwise quotes computed off-chain would diverge from
 // the price the program charges and the slippage guard would reject the tx.
 //
 // To regenerate (must match the Rust array): see the inline generator at the

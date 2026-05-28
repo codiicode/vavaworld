@@ -97,7 +97,7 @@ export default function PortfolioPage() {
       };
     });
 
-    // Regions — group all individual hexes by country, % of portfolio.
+    // Regions - group all individual hexes by country, % of portfolio.
     const byCountry = new Map<string, { count: number; code: string | null }>();
     for (const t of list) {
       const loc = locations.get(t.h3);

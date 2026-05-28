@@ -23,7 +23,7 @@ import {
 } from '@/lib/supabase-listings';
 import { cn } from '@/lib/utils';
 
-/** Tile detail — works for both real (UUID) and seed (mock) listings. */
+/** Tile detail - works for both real (UUID) and seed (mock) listings. */
 export default function TileDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -206,7 +206,7 @@ export default function TileDetailPage() {
             {!isOwn && (
               <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
                 Buying settles on-chain via the secondary-market program. That
-                contract isn&apos;t deployed yet — buys will go live with it.
+                contract isn&apos;t deployed yet - buys will go live with it.
               </p>
             )}
           </div>
@@ -231,7 +231,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 
 /**
  * Permanent provenance line. Format:
- *   Claimed at 3:47:21 PM UTC, May 21, 2026 — Hex #18,632 ever claimed.
+ *   Claimed at 3:47:21 PM UTC, May 21, 2026 - Hex #18,632 ever claimed.
  *
  * Renders deterministically in en-US/UTC so SSR and CSR agree.
  */
@@ -257,7 +257,7 @@ function ClaimStamp({ claimedAt, sequence }: { claimedAt: string; sequence: numb
         <span className="text-foreground/55">Claimed at </span>
         <span className="font-medium tabular-nums text-foreground">{time} UTC</span>
         <span className="text-foreground/55">, {day}</span>
-        <span className="px-2 text-foreground/30">—</span>
+        <span className="px-2 text-foreground/30">-</span>
         <span className="text-foreground/55">Hex </span>
         <span className="font-semibold tabular-nums text-foreground">
           #{sequence.toLocaleString('en-US')}
@@ -279,8 +279,8 @@ function dbToListing(
     id: l.id,
     h3: l.h3_id,
     countryCode: (loc?.countryCode ?? 'un').toLowerCase(),
-    city: loc?.place ?? loc?.countryName ?? '—',
-    neighborhood: loc?.neighborhood ?? loc?.place ?? '—',
+    city: loc?.place ?? loc?.countryName ?? '-',
+    neighborhood: loc?.neighborhood ?? loc?.place ?? '-',
     lat: c.lat,
     lng: c.lng,
     tier: classifyTier(c.lat, c.lng),
@@ -288,7 +288,7 @@ function dbToListing(
     priceUsd: Math.round(price * 150),
     change24h: 0,
     lastSale: null,
-    listedAgo: '—',
+    listedAgo: '-',
     sellerAddr: l.seller,
     claimedAt: l.listed_at,
     claimSequence: 0,

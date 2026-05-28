@@ -5,7 +5,7 @@ import { Flag } from '@/components/flag';
 
 /**
  * Region context: the viewport-centre's place name + country flag.
- * Only renders when zoom > 11 — at world view the centre is meaningless.
+ * Only renders when zoom > 11 - at world view the centre is meaningless.
  *
  * Per-region tile stats (count / floor / available) need an indexer; intentionally
  * dropped until that exists rather than showing made-up numbers.

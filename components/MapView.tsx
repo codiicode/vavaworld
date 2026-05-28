@@ -11,7 +11,7 @@ import { ownerColor } from '@/lib/owner-color';
 import { PublicKey } from '@solana/web3.js';
 
 // Per-hex geometry/tier cache. h3 IDs are deterministic so coords + center +
-// tier never change for a given cell — compute once, reuse across every
+// tier never change for a given cell - compute once, reuse across every
 // refreshHexes pass. Without this, panning 2 000+ visible hexes re-runs
 // cellToBoundary + cellToLatLng + a 200-entry city loop for every single one
 // on every move event, which is the bulk of the visible "buffer" delay.
@@ -350,12 +350,12 @@ export function MapView({
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    // Free up Shift+drag (Mapbox box-zoom) — we use Ctrl+drag for box-select instead
+    // Free up Shift+drag (Mapbox box-zoom) - we use Ctrl+drag for box-select instead
     map.boxZoom.disable();
 
     installHexLayers();
 
-    // When the user toggles map style, Mapbox wipes custom layers — re-add them
+    // When the user toggles map style, Mapbox wipes custom layers - re-add them
     // and re-render the visible hexes once the new style finishes loading.
     map.on('style.load', () => {
       installHexLayers();
@@ -458,7 +458,7 @@ export function MapView({
       if (!h3) return;
 
       // Every tap toggles (add or remove). Holding shift behaves identically
-      // — it's there for muscle-memory from the old "shift to multi-select"
+      // - it's there for muscle-memory from the old "shift to multi-select"
       // flow, but a plain click already multi-selects now. Mobile users get
       // multi-select for free since there's no modifier to require.
       const next = new Set(selectedHexes);

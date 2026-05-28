@@ -156,7 +156,7 @@ function makeNation(iso: string, name: string): Nation {
   };
 }
 
-// Sweden — exact reference numbers from the brief.
+// Sweden - exact reference numbers from the brief.
 function sweden(): Nation {
   const rnd = seeded('SE-fixed');
   return {

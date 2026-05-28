@@ -6,10 +6,10 @@
  * 2. Coastal fallback: the 50m coastline is generalised, so tight coastal
  *    cities (Stockholm, NYC, …) fall just offshore of the polygon. If the
  *    point is within COAST_KM of a country's edge, attribute it there.
- * 3. Otherwise — genuine open ocean / Antarctica (excluded from the
- *    dataset) — return "INTL".
+ * 3. Otherwise - genuine open ocean / Antarctica (excluded from the
+ *    dataset) - return "INTL".
  *
- * Do NOT import this from client components — it pulls a ~1.7 MB JSON.
+ * Do NOT import this from client components - it pulls a ~1.7 MB JSON.
  */
 import { cellToLatLng } from 'h3-js';
 import boundaries from './countries-50m.min.json';
@@ -76,7 +76,7 @@ export function resolveCountry(lat: number, lng: number): string {
       if (inPolygon(lng, lat, poly)) return c.iso;
     }
   }
-  // 2. Coastal fallback — nearest edge within COAST_KM.
+  // 2. Coastal fallback - nearest edge within COAST_KM.
   const kx = 111.32 * Math.cos((lat * Math.PI) / 180);
   const maxD2 = COAST_KM * COAST_KM;
   const pad = COAST_KM / 100; // ~deg padding on the bbox prefilter

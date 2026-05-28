@@ -16,7 +16,7 @@ export function getConnection(): Connection {
 
 /**
  * Build a typed Anchor Program for the wallet-adapter wallet.
- * Returns null if wallet is not connected — read-only paths should use getConnection() directly.
+ * Returns null if wallet is not connected - read-only paths should use getConnection() directly.
  */
 export function getProgram(wallet: WalletContextState): Program<Tiles> | null {
   if (!wallet.publicKey || !wallet.signTransaction) return null;
