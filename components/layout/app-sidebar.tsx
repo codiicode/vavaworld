@@ -97,15 +97,15 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
               className={cn(
                 'relative flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] leading-none transition-colors duration-150',
                 active
-                  ? 'font-semibold text-white shadow-[0_8px_24px_-12px_rgba(20,184,166,0.65)]'
+                  ? 'font-semibold text-foreground'
                   : 'font-medium text-foreground/70 hover:bg-foreground/[0.04] hover:text-foreground',
               )}
               style={
                 active
                   ? {
-                      background:
-                        'linear-gradient(135deg, rgba(14,165,233,0.92) 0%, rgba(20,184,166,0.92) 100%)',
-                      border: '1px solid rgba(255,255,255,0.30)',
+                      background: 'rgba(255,255,255,0.55)',
+                      border: '1px solid rgba(255,255,255,0.65)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
                     }
                   : undefined
               }
