@@ -48,12 +48,14 @@ export function GlassRightPanel({
   selectedHexes,
   seedHex,
   onRemoveHex,
+  onClearAll,
   onClaim,
   onSelectClosest,
 }: {
   selectedHexes: Set<string>;
   seedHex: string | null;
   onRemoveHex: (h3: string) => void;
+  onClearAll: () => void;
   onClaim: () => void;
   onSelectClosest: (n: number) => void;
 }) {
@@ -290,6 +292,7 @@ export function GlassRightPanel({
             claimedTiles={claimedTiles}
             hasSeed={seedHex !== null}
             onRemove={onRemoveHex}
+            onClearAll={onClearAll}
             onClaim={onClaim}
             onSelectClosest={onSelectClosest}
             walletConnected={wallet.connected}
@@ -311,6 +314,7 @@ function SelectionBody({
   claimedTiles,
   hasSeed,
   onRemove,
+  onClearAll,
   onClaim,
   onSelectClosest,
   walletConnected,
@@ -322,6 +326,7 @@ function SelectionBody({
   claimedTiles: Map<string, ClaimedTile>;
   hasSeed: boolean;
   onRemove: (h3: string) => void;
+  onClearAll: () => void;
   onClaim: () => void;
   onSelectClosest: (n: number) => void;
   walletConnected: boolean;
@@ -376,9 +381,20 @@ function SelectionBody({
           <span className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-white/52">
             Selected
           </span>
-          <span className="text-xs tabular-nums tracking-[0.04em] text-white/52">
-            {count} / 1000
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs tabular-nums tracking-[0.04em] text-white/52">
+              {count} / 1000
+            </span>
+            {!empty && (
+              <button
+                type="button"
+                onClick={onClearAll}
+                className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55 transition-colors hover:text-white"
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
 
         {!empty && <HexPricingCard h3={items[0]?.h3 ?? null} />}

@@ -51,6 +51,8 @@ export default function Page() {
     setSelectedHexes(next);
   };
 
+  const clearAll = () => setSelectedHexes(new Set());
+
   // Quick-pick "mark N closest" — expands the saved seed hex into a cluster
   // of N cells and REPLACES the selection so the count is exactly N. The
   // seed stays unchanged so the user can toggle between {10, 100, 500, 1000,
@@ -151,6 +153,7 @@ export default function Page() {
         selectedHexes={selectedHexes}
         seedHex={seed}
         onRemoveHex={removeHex}
+        onClearAll={clearAll}
         onClaim={() => setShowClaim(true)}
         onSelectClosest={selectClosest}
       />
