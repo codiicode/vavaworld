@@ -9,6 +9,7 @@ import { MapStyleToggle, type MapStyleId } from '@/components/map/map-style-togg
 import { MapZoomControls } from '@/components/map/map-zoom-controls';
 import { ClaimModal } from '@/components/ClaimModal';
 import { hexCenter } from '@/lib/h3-utils';
+import { expandFromSeed } from '@/lib/hex-expand';
 
 /**
  * Full-bleed map page. The map fills the viewport behind everything; the AppSidebar
@@ -32,6 +33,14 @@ export default function Page() {
     const next = new Set(selectedHexes);
     next.delete(h3);
     setSelectedHexes(next);
+  };
+
+  // Quick-pick "mark N closest" — expands the single seed-selected hex into
+  // a cluster of N cells and REPLACES the selection so the count is exactly N.
+  const selectClosest = (total: number) => {
+    const seed = selectedHexes.values().next().value;
+    if (typeof seed !== 'string') return;
+    setSelectedHexes(new Set(expandFromSeed(seed, total)));
   };
 
   const onClaimConfirmed = (h3s: string[]) => {
@@ -125,6 +134,7 @@ export default function Page() {
         selectedHexes={selectedHexes}
         onRemoveHex={removeHex}
         onClaim={() => setShowClaim(true)}
+        onSelectClosest={selectClosest}
       />
 
       <MapZoomControls mapRef={mapRef} />

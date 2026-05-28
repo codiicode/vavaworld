@@ -48,10 +48,12 @@ export function GlassRightPanel({
   selectedHexes,
   onRemoveHex,
   onClaim,
+  onSelectClosest,
 }: {
   selectedHexes: Set<string>;
   onRemoveHex: (h3: string) => void;
   onClaim: () => void;
+  onSelectClosest: (n: number) => void;
 }) {
   const [tab, setTab] = useState<TabId>('selection');
   // Mobile-only: the sheet starts COLLAPSED so the map stays tappable behind
@@ -276,6 +278,7 @@ export function GlassRightPanel({
             claimedTiles={claimedTiles}
             onRemove={onRemoveHex}
             onClaim={onClaim}
+            onSelectClosest={onSelectClosest}
             walletConnected={wallet.connected}
           />
         )
@@ -295,6 +298,7 @@ function SelectionBody({
   claimedTiles,
   onRemove,
   onClaim,
+  onSelectClosest,
   walletConnected,
 }: {
   count: number;
@@ -304,6 +308,7 @@ function SelectionBody({
   claimedTiles: Map<string, ClaimedTile>;
   onRemove: (h3: string) => void;
   onClaim: () => void;
+  onSelectClosest: (n: number) => void;
   walletConnected: boolean;
 }) {
   const empty = count === 0;
@@ -329,6 +334,27 @@ function SelectionBody({
         </div>
 
         {!empty && <HexPricingCard h3={items[0]?.h3 ?? null} />}
+
+        {count === 1 && !claimedTiles.has(items[0]!.h3) && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/52">
+              Mark closest
+            </span>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[10, 100, 500, 1000].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => onSelectClosest(n)}
+                  className="glass rounded-md py-1.5 text-[12px] font-semibold tabular-nums text-white transition-colors hover:bg-white/10"
+                  style={{ border: '1px solid rgba(255,255,255,0.18)' }}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {empty ? (
           <p className="text-[13.5px] leading-[1.45] text-white/72">

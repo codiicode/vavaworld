@@ -457,16 +457,14 @@ export function MapView({
       const h3 = feats[0].properties?.h3 as string | undefined;
       if (!h3) return;
 
-      const ev = e.originalEvent;
-      if (ev.shiftKey) {
-        const next = new Set(selectedHexes);
-        if (next.has(h3)) next.delete(h3);
-        else next.add(h3);
-        setSelectedHexes(next);
-      } else {
-        // Single click — replace selection
-        setSelectedHexes(new Set([h3]));
-      }
+      // Every tap toggles (add or remove). Holding shift behaves identically
+      // — it's there for muscle-memory from the old "shift to multi-select"
+      // flow, but a plain click already multi-selects now. Mobile users get
+      // multi-select for free since there's no modifier to require.
+      const next = new Set(selectedHexes);
+      if (next.has(h3)) next.delete(h3);
+      else next.add(h3);
+      setSelectedHexes(next);
     },
     [selectedHexes, setSelectedHexes, mapRef],
   );
