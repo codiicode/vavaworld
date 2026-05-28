@@ -114,8 +114,10 @@ export function GlassRightPanel({
     <aside
       className={cn(
         'glass glass-panel fixed z-30 flex flex-col',
-        // Desktop: pinned right rail, always fully expanded.
-        'md:inset-x-auto md:bottom-[18px] md:right-[18px] md:top-[18px] md:max-h-none md:w-[320px] md:overflow-visible md:rounded-[22px] md:px-5 md:pb-[22px] md:pt-5',
+        // Desktop: pinned right rail. overflow-hidden + flex-1/min-h-0 on the
+        // inner wrapper means the long hex list scrolls inside the panel,
+        // never pushing the Claim button below the viewport.
+        'md:inset-x-auto md:bottom-[18px] md:right-[18px] md:top-[18px] md:max-h-none md:w-[320px] md:overflow-hidden md:rounded-[22px] md:px-5 md:pb-[22px] md:pt-5',
         // Mobile: bottom sheet. Collapsed = compact bar (~88px) so most of
         // the map is reachable for taps; expanded = scrollable sheet.
         mobileExpanded
@@ -184,7 +186,7 @@ export function GlassRightPanel({
       {/* Full panel content — hidden when mobile-collapsed, always visible on desktop. */}
       <div
         className={cn(
-          'flex flex-col',
+          'flex min-h-0 flex-1 flex-col',
           mobileExpanded ? 'flex' : 'hidden md:flex',
         )}
         style={{ gap: 20 }}
@@ -341,6 +343,32 @@ function SelectionBody({
   );
   const allClaimed = !empty && claimableCount === 0;
 
+  // For big selections (>20) the per-row list is meaningless — every hex is
+  // a few metres apart with the same country, same coords to 3 dp. Show a
+  // compact country breakdown instead so the Claim button stays visible.
+  const compact = count > 20;
+  const groups = compact
+    ? Array.from(
+        items.reduce(
+          (m, it, i) => {
+            const loc = locations.get(it.h3);
+            const iso = loc?.countryCode ?? 'INTL';
+            const name = loc?.countryName ?? loc?.place ?? iso;
+            const ex = m.get(iso) ?? { iso, name, count: 0, claimed: 0, totalUsd: 0 };
+            ex.count += 1;
+            if (claimedTiles.has(it.h3)) ex.claimed += 1;
+            else ex.totalUsd += perItemUsd[i];
+            m.set(iso, ex);
+            return m;
+          },
+          new Map<
+            string,
+            { iso: string; name: string; count: number; claimed: number; totalUsd: number }
+          >(),
+        ).values(),
+      )
+    : [];
+
   return (
     <>
       <div className="relative z-[1] flex flex-col gap-3">
@@ -416,63 +444,91 @@ function SelectionBody({
                 {claimedCount} of {count} already claimed — those can&apos;t be bought.
               </div>
             )}
-            <div className="-mx-1 flex max-h-[280px] flex-col overflow-y-auto">
-              {items.map((it, i) => {
-                const loc = locations.get(it.h3);
-                const title = loc?.neighborhood ?? loc?.place ?? loc?.countryName ?? 'Locating…';
-                const isClaimed = claimedTiles.has(it.h3);
-                return (
+            {compact ? (
+              <div className="-mx-1 flex flex-col gap-1.5">
+                {groups.map((g) => (
                   <div
-                    key={it.h3}
-                    className={cn(
-                      'group flex items-center justify-between rounded-md px-1 py-2 transition-colors hover:bg-white/[0.04]',
-                      isClaimed && 'opacity-60',
-                    )}
+                    key={g.iso}
+                    className="flex items-center justify-between rounded-md bg-white/[0.04] px-2.5 py-2.5"
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <Flag code={loc?.countryCode} size={16} />
+                      <Flag code={g.iso} size={18} />
                       <div className="flex min-w-0 flex-col">
-                        <span className="truncate text-[13px] font-medium leading-tight text-white">
-                          {title}
+                        <span className="truncate text-[13px] font-semibold leading-tight text-white">
+                          {g.name}
                         </span>
-                        <span className="mt-0.5 truncate text-[10.5px] leading-tight tabular-nums text-white/52">
-                          {Math.abs(it.lat).toFixed(3)}°{it.lat >= 0 ? 'N' : 'S'},{' '}
-                          {Math.abs(it.lng).toFixed(3)}°{it.lng >= 0 ? 'E' : 'W'}
+                        <span className="mt-0.5 text-[11px] leading-tight tabular-nums text-white/55">
+                          {g.count.toLocaleString('en-US')} hex
+                          {g.count === 1 ? '' : 'es'}
+                          {g.claimed > 0 && ` · ${g.claimed} already claimed`}
                         </span>
                       </div>
                     </div>
-                    <div className="flex flex-shrink-0 items-center gap-2">
-                      <span
-                        className="rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider"
-                        style={{ background: 'rgba(94, 234, 212, 0.16)', color: 'var(--brand)' }}
-                      >
-                        T{it.tier}
-                      </span>
-                      {isClaimed ? (
-                        <span className="text-[11px] font-medium uppercase tracking-wider text-amber-200">
-                          Claimed
-                        </span>
-                      ) : (
-                        <span className="text-[12.5px] font-medium tabular-nums text-white">
-                          ${perItemUsd[i].toFixed(4)}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemove(it.h3);
-                        }}
-                        className="text-white/52 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
-                        aria-label="Remove"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
+                    <span className="flex-shrink-0 text-[13.5px] font-semibold tabular-nums text-white">
+                      ${g.totalUsd.toFixed(g.totalUsd < 10 ? 4 : 2)}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="-mx-1 flex max-h-[260px] flex-col overflow-y-auto">
+                {items.map((it, i) => {
+                  const loc = locations.get(it.h3);
+                  const title = loc?.neighborhood ?? loc?.place ?? loc?.countryName ?? 'Locating…';
+                  const isClaimed = claimedTiles.has(it.h3);
+                  return (
+                    <div
+                      key={it.h3}
+                      className={cn(
+                        'group flex items-center justify-between rounded-md px-1 py-2 transition-colors hover:bg-white/[0.04]',
+                        isClaimed && 'opacity-60',
+                      )}
+                    >
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <Flag code={loc?.countryCode} size={16} />
+                        <div className="flex min-w-0 flex-col">
+                          <span className="truncate text-[13px] font-medium leading-tight text-white">
+                            {title}
+                          </span>
+                          <span className="mt-0.5 truncate text-[10.5px] leading-tight tabular-nums text-white/52">
+                            {Math.abs(it.lat).toFixed(3)}°{it.lat >= 0 ? 'N' : 'S'},{' '}
+                            {Math.abs(it.lng).toFixed(3)}°{it.lng >= 0 ? 'E' : 'W'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-shrink-0 items-center gap-2">
+                        <span
+                          className="rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider"
+                          style={{ background: 'rgba(94, 234, 212, 0.16)', color: 'var(--brand)' }}
+                        >
+                          T{it.tier}
+                        </span>
+                        {isClaimed ? (
+                          <span className="text-[11px] font-medium uppercase tracking-wider text-amber-200">
+                            Claimed
+                          </span>
+                        ) : (
+                          <span className="text-[12.5px] font-medium tabular-nums text-white">
+                            ${perItemUsd[i].toFixed(4)}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemove(it.h3);
+                          }}
+                          className="text-white/52 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
+                          aria-label="Remove"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
       </div>
