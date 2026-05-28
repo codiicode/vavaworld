@@ -15,6 +15,7 @@ import {
 import { Flag } from '@/components/flag';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
+import { SignInGate } from '@/components/auth/sign-in-gate';
 import { useUserTiles } from '@/lib/use-user-tiles';
 import { useHexLocations } from '@/lib/use-hex-locations';
 import { useCounters } from '@/lib/use-counters';
@@ -150,6 +151,7 @@ export default function PortfolioPage() {
       : 'collector';
 
   return (
+    <SignInGate label="portfolio">
     <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
       {/* Header */}
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -367,6 +369,7 @@ export default function PortfolioPage() {
         </section>
       </div>
     </div>
+    </SignInGate>
   );
 }
 
