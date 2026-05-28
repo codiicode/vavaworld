@@ -138,7 +138,21 @@ export function GlassRightPanel({
           className="mx-auto mb-2 block h-1 w-12 rounded-full bg-white/40"
         />
         {!mobileExpanded && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {count > 0 && (
+              <button
+                type="button"
+                onClick={onClearAll}
+                aria-label="Clear all"
+                className="grid h-10 w-10 flex-none place-items-center rounded-full text-white transition-colors"
+                style={{
+                  background: 'rgba(244, 114, 182, 0.18)',
+                  border: '1px solid rgba(244, 114, 182, 0.45)',
+                }}
+              >
+                <X size={16} strokeWidth={2.5} />
+              </button>
+            )}
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-semibold text-white">
                 {count === 0
@@ -167,7 +181,7 @@ export function GlassRightPanel({
               type="button"
               onClick={() => setMobileExpanded(true)}
               aria-label="Expand"
-              className="grid h-10 w-10 place-items-center rounded-full text-white/70"
+              className="grid h-10 w-10 flex-none place-items-center rounded-full text-white/70"
             >
               <ChevronUp size={18} />
             </button>
@@ -377,11 +391,11 @@ function SelectionBody({
   return (
     <>
       <div className="relative z-[1] flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <span className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-white/52">
             Selected
           </span>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <span className="text-xs tabular-nums tracking-[0.04em] text-white/52">
               {count} / 1000
             </span>
@@ -389,8 +403,19 @@ function SelectionBody({
               <button
                 type="button"
                 onClick={onClearAll}
-                className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55 transition-colors hover:text-white"
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white transition-colors"
+                style={{
+                  background: 'rgba(244, 114, 182, 0.18)',
+                  border: '1px solid rgba(244, 114, 182, 0.45)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(244, 114, 182, 0.30)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(244, 114, 182, 0.18)';
+                }}
               >
+                <X size={12} strokeWidth={2.5} />
                 Clear
               </button>
             )}
