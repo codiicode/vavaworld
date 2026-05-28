@@ -7,6 +7,7 @@ import { BrandLogo } from '@/components/brand-logo';
 import {
   Activity,
   BarChart3,
+  Coins,
   Globe,
   Map as MapIcon,
   Menu,
@@ -54,6 +55,7 @@ const NAV: ReadonlyArray<NavItem> = [
   { label: 'Nations', href: '/nations', icon: Globe },
   { label: 'Activity', href: '/activity', icon: Activity },
   { label: 'Leaderboard', href: '/leaderboard', icon: Trophy },
+  { label: 'Staking', href: '/staking', icon: Coins },
 ];
 
 /**
