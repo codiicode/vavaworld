@@ -93,11 +93,21 @@ export default function NationsPage() {
         </div>
       </div>
 
-      {podium.length === 3 && (
-        <div className="mb-6 grid grid-cols-3 items-end gap-4">
-          <NationPodiumCard nation={podium[1]} rank={2} />
-          <NationPodiumCard nation={podium[0]} rank={1} className="z-10 scale-105" />
-          <NationPodiumCard nation={podium[2]} rank={3} />
+      {podium.length > 0 && (
+        <div className="mb-4 flex flex-col gap-2.5">
+          {podium[0] && (
+            <NationPodiumCard nation={podium[0]} rank={1} variant="gold" />
+          )}
+          {(podium[1] || podium[2]) && (
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[3fr_2fr]">
+              {podium[1] && (
+                <NationPodiumCard nation={podium[1]} rank={2} variant="silver" />
+              )}
+              {podium[2] && (
+                <NationPodiumCard nation={podium[2]} rank={3} variant="bronze" />
+              )}
+            </div>
+          )}
         </div>
       )}
 
