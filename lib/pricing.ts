@@ -20,6 +20,16 @@ export const PRICING = {
   TX_SLIPPAGE_TOLERANCE: 0.02,
 } as const;
 
+// SOL→USD reference rate. Used purely to convert the USD-spec floor to
+// lamports for the actual on-chain payment. Hard-coded for now — switch to
+// an oracle (Pyth) once primary claims move off devnet.
+export const SOL_USD = 150;
+
+/** USD → lamports at the current SOL_USD rate. */
+export function usdToLamports(usd: number): bigint {
+  return BigInt(Math.round((usd / SOL_USD) * 1_000_000_000));
+}
+
 // Legacy named exports — preserved so existing imports
 // (`import { H3_RESOLUTION } from '@/lib/pricing'`) keep working.
 export const BASE_FLOOR = PRICING.BASE_FLOOR_USD;

@@ -1,20 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { ComputeBudgetProgram, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { BN, Program, type Idl } from '@coral-xyz/anchor';
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
-import { quoteBatch } from '@/lib/quote';
-import { useCounters } from '@/lib/use-counters';
 import { useActiveWallet } from '@/lib/active-wallet';
-import { tilePda, counterPda } from '@/lib/tile-pda';
-import { getConnection, PROGRAM_ID } from '@/lib/anchor-client';
+import { useHexLocations } from '@/lib/use-hex-locations';
+import { useCountryCounts } from '@/lib/use-country-counts';
+import { getConnection } from '@/lib/anchor-client';
 import { dispatchClaimDone } from '@/lib/claim-events';
-import idl from '@/lib/anchor-idl.json';
-import type { Tiles } from '@/lib/anchor-types';
+import { PRICING, SOL_USD, usdToLamports } from '@/lib/pricing';
 
-const programIdPk = new PublicKey(PROGRAM_ID);
+const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY;
+const treasuryPk = TREASURY_ADDRESS ? new PublicKey(TREASURY_ADDRESS) : null;
 
 const uiLabel: React.CSSProperties = {
   fontFamily: "'Inter', sans-serif",
@@ -31,18 +29,7 @@ const monoNum: React.CSSProperties = {
   fontFeatureSettings: '"tnum"',
 };
 
-type State = 'review' | 'signing' | 'confirmed' | 'partial' | 'error';
-
-// Each claim ix burns ~550K CUs per tile on BPF and a TX caps at 1.4M, so
-// the practical multi-tile batch is 2. Anything bigger needs the on-chain
-// classifier optimised; until then we chunk client-side.
-const CLAIM_CHUNK_SIZE = 2;
-
-function chunk<T>(arr: ReadonlyArray<T>, size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
+type State = 'review' | 'signing' | 'confirmed' | 'error';
 
 export function ClaimModal({
   selectedHexes,
@@ -54,25 +41,34 @@ export function ClaimModal({
   onConfirmed: (h3s: string[]) => void;
 }) {
   const wallet = useActiveWallet();
-  const counters = useCounters();
+  const locations = useHexLocations(selectedHexes);
   const [state, setState] = useState<State>('review');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [txSig, setTxSig] = useState<string>('');
-  const [progress, setProgress] = useState<{
-    current: number;
-    total: number;
-    succeeded: string[];
-  } | null>(null);
 
   const items = Array.from(selectedHexes).map((h3) => {
     const c = hexCenter(h3);
     return { h3, tier: classifyTier(c.lat, c.lng) };
   });
-  const totalLamports = quoteBatch(items, counters);
-  const totalSol = Number(totalLamports) / LAMPORTS_PER_SOL;
 
-  const batches = chunk(items, CLAIM_CHUNK_SIZE);
-  const totalBatches = batches.length;
+  // USD-spec pricing curve per country: floor(n) = 0.10 + n × 0.00001. Each
+  // hex in the same country pays the next floor after the previous one in
+  // the batch. The treasury settles in SOL via SOL_USD reference rate.
+  const isos = items
+    .map((it) => locations.get(it.h3)?.countryCode)
+    .filter((iso): iso is string => Boolean(iso));
+  const countryCounts = useCountryCounts(isos);
+  const localOffset: Record<string, number> = {};
+  const perItemUsd = items.map((it) => {
+    const iso = locations.get(it.h3)?.countryCode ?? 'INTL';
+    const base = countryCounts.get(iso) ?? 0;
+    const off = localOffset[iso] ?? 0;
+    localOffset[iso] = off + 1;
+    return PRICING.BASE_FLOOR_USD + (base + off) * PRICING.SLOPE_PER_CLAIM_USD;
+  });
+  const totalUsd = perItemUsd.reduce((s, u) => s + u, 0);
+  const totalLamports = usdToLamports(totalUsd);
+  const totalSol = Number(totalLamports) / 1_000_000_000;
 
   const handleConfirm = async () => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
@@ -80,101 +76,67 @@ export function ClaimModal({
       setErrorMsg('Wallet not connected');
       return;
     }
+    if (!treasuryPk) {
+      setState('error');
+      setErrorMsg('Treasury address not configured (NEXT_PUBLIC_TREASURY)');
+      return;
+    }
     setState('signing');
-    setProgress({ current: 0, total: totalBatches, succeeded: [] });
 
-    const connection = getConnection();
-    const program = new Program<Tiles>(idl as Idl, { connection });
-    const succeeded: string[] = [];
-    let lastSig = '';
+    try {
+      const connection = getConnection();
 
-    // Sequential — Solana fee payer + nonce ordering would race if we sent in
-    // parallel. Each batch ≤ CLAIM_CHUNK_SIZE so we stay under the CU cap.
-    for (let i = 0; i < batches.length; i++) {
-      const batch = batches[i];
-      setProgress({ current: i + 1, total: totalBatches, succeeded: [...succeeded] });
-      try {
-        const batchLamports = quoteBatch(batch, counters);
-        const batchExpectedMax = (batchLamports * 102n) / 100n;
+      // One SystemProgram.transfer for the batch total — primary claims now
+      // pay the USD-spec floor in SOL straight to the treasury. The Tile
+      // registry is off-chain in Supabase; on-chain Anchor program is kept
+      // for the future bonding-curve resale path only.
+      const ix = SystemProgram.transfer({
+        fromPubkey: wallet.publicKey,
+        toPubkey: treasuryPk,
+        lamports: Number(totalLamports),
+      });
 
-        const h3Bns = batch.map((it) => new BN(BigInt('0x' + it.h3).toString()));
-        const tilePdas = batch.map((it) => tilePda(it.h3, programIdPk)[0]);
+      const { blockhash } = await connection.getLatestBlockhash('confirmed');
+      const tx = new Transaction({
+        feePayer: wallet.publicKey,
+        recentBlockhash: blockhash,
+      }).add(ix);
 
-        const ix = await program.methods
-          .claim(h3Bns, new BN(batchExpectedMax.toString()))
-          .accounts({
-            claimer: wallet.publicKey,
-            t1Counter: counterPda(1, programIdPk)[0],
-            t2Counter: counterPda(2, programIdPk)[0],
-            t3Counter: counterPda(3, programIdPk)[0],
-          })
-          .remainingAccounts(
-            tilePdas.map((p) => ({ pubkey: p, isWritable: true, isSigner: false })),
-          )
-          .instruction();
+      const sig = await wallet.signAndSendTransaction(tx);
+      await connection.confirmTransaction(sig, 'confirmed');
 
-        const { blockhash } = await connection.getLatestBlockhash('confirmed');
-        const tx = new Transaction({
-          feePayer: wallet.publicKey,
-          recentBlockhash: blockhash,
-        })
-          .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 }))
-          .add(ix);
-
-        const sim = await connection.simulateTransaction(tx, undefined, [wallet.publicKey]);
-        if (sim.value.err) {
-          const logs = sim.value.logs ?? [];
-          const programLog = logs.find((l) =>
-            l.includes('AnchorError') || l.includes('failed:') || l.includes('Program log: Error'),
-          );
-          const friendly = programLog ?? `Simulation rejected: ${JSON.stringify(sim.value.err)}`;
-          throw new Error(friendly + (logs.length ? '\n\nFull logs:\n' + logs.join('\n') : ''));
-        }
-
-        const sig = await wallet.signAndSendTransaction(tx);
-        await connection.confirmTransaction(sig, 'confirmed');
-        lastSig = sig;
-        const justClaimed = batch.map((b) => b.h3);
-        succeeded.push(...justClaimed);
-
-        // Mirror into Supabase so the off-chain `hexes` table has a row that
-        // marketplace listings (FK on h3_id) can reference. Fire-and-forget —
-        // if it fails, the lazy mirror in tile-list-dialog catches it. The
-        // on-chain `sig` is forwarded as txHash for traceability.
-        for (const h3 of justClaimed) {
+      // Mirror each hex into Supabase with the per-hex USD quote so the DB
+      // function records the exact floor the user paid. Parallel — order
+      // inside the same country is enforced by the SELECT FOR UPDATE in
+      // claim_hex, so the count walks monotonically regardless of arrival.
+      const owner = wallet.publicKey.toBase58();
+      const mirrorResults = await Promise.allSettled(
+        items.map((it, i) =>
           fetch('/api/claim', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              h3,
-              owner: wallet.publicKey.toBase58(),
+              h3: it.h3,
+              owner,
               txHash: sig,
+              quotedPriceUsd: perItemUsd[i],
             }),
-          }).catch(() => {});
-        }
+          }).then((r) => (r.ok ? it.h3 : null)),
+        ),
+      );
+      const succeeded = mirrorResults
+        .map((r) => (r.status === 'fulfilled' ? r.value : null))
+        .filter((h): h is string => h !== null);
 
-        // Fire per-batch so /profile + counters update progressively, not just
-        // at the end. Each batch is a separate "property" in the grouped view
-        // because Postgres now() advances per batch insert.
-        dispatchClaimDone({ h3s: justClaimed, txSig: sig });
-        setProgress({ current: i + 1, total: totalBatches, succeeded: [...succeeded] });
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        setErrorMsg(
-          succeeded.length > 0
-            ? `Stopped at batch ${i + 1}/${totalBatches} (${succeeded.length} hexes claimed before this failed):\n\n${msg}`
-            : msg,
-        );
-        setTxSig(lastSig);
-        setState(succeeded.length > 0 ? 'partial' : 'error');
-        if (succeeded.length > 0) onConfirmed(succeeded);
-        return;
-      }
+      setTxSig(sig);
+      dispatchClaimDone({ h3s: succeeded, txSig: sig });
+      setState('confirmed');
+      onConfirmed(succeeded);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErrorMsg(msg);
+      setState('error');
     }
-
-    setTxSig(lastSig);
-    setState('confirmed');
-    onConfirmed(succeeded);
   };
 
   const primaryBtn: React.CSSProperties = {
@@ -246,23 +208,8 @@ export function ClaimModal({
                 </li>
               ))}
             </ul>
-            {totalBatches > 1 && (
-              <div
-                className="mb-4 rounded-md px-3 py-2.5 text-[11.5px] leading-relaxed"
-                style={{
-                  background: 'rgba(245, 158, 11, 0.10)',
-                  border: '1px solid rgba(245, 158, 11, 0.30)',
-                  color: '#78350f',
-                }}
-              >
-                Big batch — sent as <b>{totalBatches} transactions</b> of up to{' '}
-                {CLAIM_CHUNK_SIZE} hexes each (the on-chain tier classifier&apos;s
-                compute budget caps a single TX). Don&apos;t close this window
-                until it&apos;s done.
-              </div>
-            )}
-            <div className="flex items-baseline justify-between mb-7">
-              <span style={uiLabel}>Estimated total</span>
+            <div className="flex items-baseline justify-between mb-2">
+              <span style={uiLabel}>Total</span>
               <span
                 style={{
                   fontFamily: "'Cormorant Garamond', serif",
@@ -274,9 +221,15 @@ export function ClaimModal({
                   fontFeatureSettings: '"tnum"',
                 }}
               >
-                {totalSol.toFixed(4)}
-                <span style={{ ...uiLabel, marginLeft: '8px', fontStyle: 'normal' }}>SOL</span>
+                ${totalUsd.toFixed(totalUsd < 10 ? 4 : 2)}
               </span>
+            </div>
+            <div
+              className="mb-7 flex items-center justify-end gap-1"
+              style={{ ...monoNum, color: 'var(--dim)' }}
+            >
+              <span>≈ {totalSol.toFixed(6)} SOL</span>
+              <span style={{ opacity: 0.5 }}> · @ ${SOL_USD}/SOL</span>
             </div>
             <div className="flex gap-3">
               <button
@@ -316,31 +269,7 @@ export function ClaimModal({
                 animation: 'pulse 1.6s ease-in-out infinite',
               }}
             />
-            <span style={uiLabel}>
-              {progress && progress.total > 1
-                ? `Claiming batch ${progress.current}/${progress.total}…`
-                : 'Signing transaction…'}
-            </span>
-            {progress && progress.total > 1 && (
-              <>
-                <div
-                  className="mt-2 h-1.5 w-56 overflow-hidden rounded-full"
-                  style={{ background: 'rgba(0,0,0,0.08)' }}
-                >
-                  <div
-                    style={{
-                      width: `${(progress.succeeded.length / items.length) * 100}%`,
-                      height: '100%',
-                      background: 'var(--signal)',
-                      transition: 'width 220ms ease-out',
-                    }}
-                  />
-                </div>
-                <span style={{ ...monoNum, color: 'var(--dim)' }}>
-                  {progress.succeeded.length} / {items.length} hexes claimed
-                </span>
-              </>
-            )}
+            <span style={uiLabel}>Signing transaction…</span>
             <style jsx>{`
               @keyframes pulse {
                 0%, 100% { opacity: 1; transform: scale(1); }
@@ -378,45 +307,6 @@ export function ClaimModal({
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink)')}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
             >
-              Close
-            </button>
-          </>
-        )}
-
-        {state === 'partial' && (
-          <>
-            <div className="py-4 mb-4">
-              <div style={{ ...uiLabel, color: '#b45309', marginBottom: '10px' }}>
-                Partially claimed
-              </div>
-              <div style={{ ...monoNum, color: 'var(--ink)', marginBottom: '12px' }}>
-                {progress?.succeeded.length ?? 0} of {items.length} hexes claimed before stopping.
-              </div>
-              <pre
-                className="whitespace-pre-wrap overflow-y-auto"
-                style={{
-                  maxHeight: 200,
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: '11px',
-                  color: 'var(--ink-2)',
-                  lineHeight: 1.5,
-                }}
-              >
-                {errorMsg}
-              </pre>
-              {txSig && (
-                <a
-                  href={`https://solscan.io/tx/${txSig}?cluster=devnet`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 inline-block"
-                  style={{ ...uiLabel, color: 'var(--signal)', textDecoration: 'underline' }}
-                >
-                  Last successful tx →
-                </a>
-              )}
-            </div>
-            <button onClick={onClose} className="w-full py-3 transition-colors" style={ghostBtn}>
               Close
             </button>
           </>

@@ -7,12 +7,12 @@ import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { useUserProfile } from '@/lib/use-user-profile';
-import { useCounters } from '@/lib/use-counters';
 import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
 import { useTiles } from '@/lib/use-tiles';
+import { useCountryCounts } from '@/lib/use-country-counts';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
-import { quoteOne } from '@/lib/quote';
+import { PRICING, SOL_USD } from '@/lib/pricing';
 import { Flag } from '@/components/flag';
 import { HexPricingCard } from '@/components/map/hex-pricing-card';
 import { cn } from '@/lib/utils';
@@ -65,7 +65,6 @@ export function GlassRightPanel({
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { balance } = useWalletBalance(wallet.publicKey);
-  const counters = useCounters();
   const locations = useHexLocations(selectedHexes);
 
   // Find out which of the selected hexes are already claimed (on-chain PDA hit).
@@ -85,20 +84,30 @@ export function GlassRightPanel({
     return { h3, lat: c.lat, lng: c.lng, tier: classifyTier(c.lat, c.lng) };
   });
 
-  // Bonding-curve walk for per-row price display
-  const localSold: Record<1 | 2 | 3, bigint> = { 1: 0n, 2: 0n, 3: 0n };
-  const perItemSol = items.map((it) => {
-    const sold = counters[it.tier] + localSold[it.tier];
-    localSold[it.tier] += 1n;
-    return Number(quoteOne(it.tier, sold)) / LAMPORTS_PER_SOL;
+  // USD-spec pricing curve walk per country: floor(n) = 0.10 + n × 0.00001.
+  // Each hex in the same country pays the next floor after the previous one
+  // in the batch — so 3 hexes in Germany at count=1 pay 0.10001, 0.10002,
+  // 0.10003. SOL settlement is derived purely for display via SOL_USD.
+  const isos = items
+    .map((it) => locations.get(it.h3)?.countryCode)
+    .filter((iso): iso is string => Boolean(iso));
+  const countryCounts = useCountryCounts(isos);
+  const localOffset: Record<string, number> = {};
+  const perItemUsd = items.map((it) => {
+    const iso = locations.get(it.h3)?.countryCode ?? 'INTL';
+    const base = countryCounts.get(iso) ?? 0;
+    const off = localOffset[iso] ?? 0;
+    localOffset[iso] = off + 1;
+    return PRICING.BASE_FLOOR_USD + (base + off) * PRICING.SLOPE_PER_CLAIM_USD;
   });
+  const perItemSol = perItemUsd.map((u) => u / SOL_USD);
 
   const count = items.length;
 
   // Quick mobile-summary totals so the collapsed bar can show price preview
   // without rendering the full list.
-  const claimableTotalSolMobile = items.reduce(
-    (s, it, i) => (claimedTiles.has(it.h3) ? s : s + perItemSol[i]),
+  const claimableTotalUsdMobile = items.reduce(
+    (s, it, i) => (claimedTiles.has(it.h3) ? s : s + perItemUsd[i]),
     0,
   );
 
@@ -131,7 +140,7 @@ export function GlassRightPanel({
               <div className="truncate text-[13px] font-semibold text-white">
                 {count === 0
                   ? 'Tap a hex to select'
-                  : `${count} selected · ${claimableTotalSolMobile.toFixed(3)} SOL`}
+                  : `${count} selected · $${claimableTotalUsdMobile.toFixed(claimableTotalUsdMobile < 10 ? 4 : 2)}`}
               </div>
               <div className="mt-0.5 truncate text-[11px] text-white/55">
                 {count === 0 ? 'Map is fully interactive' : 'Tap to expand'}
@@ -276,6 +285,7 @@ export function GlassRightPanel({
             count={count}
             items={items}
             perItemSol={perItemSol}
+            perItemUsd={perItemUsd}
             locations={locations}
             claimedTiles={claimedTiles}
             hasSeed={seedHex !== null}
@@ -297,6 +307,7 @@ function SelectionBody({
   count,
   items,
   perItemSol,
+  perItemUsd,
   locations,
   claimedTiles,
   hasSeed,
@@ -308,6 +319,7 @@ function SelectionBody({
   count: number;
   items: ReadonlyArray<Item>;
   perItemSol: ReadonlyArray<number>;
+  perItemUsd: ReadonlyArray<number>;
   locations: ReturnType<typeof useHexLocations>;
   claimedTiles: Map<string, ClaimedTile>;
   hasSeed: boolean;
@@ -327,6 +339,10 @@ function SelectionBody({
   const max = count > 1000;
   const claimedCount = items.reduce((s, it) => (claimedTiles.has(it.h3) ? s + 1 : s), 0);
   const claimableCount = count - claimedCount;
+  const claimableTotalUsd = items.reduce(
+    (s, it, i) => (claimedTiles.has(it.h3) ? s : s + perItemUsd[i]),
+    0,
+  );
   const claimableTotalSol = items.reduce(
     (s, it, i) => (claimedTiles.has(it.h3) ? s : s + perItemSol[i]),
     0,
@@ -446,7 +462,7 @@ function SelectionBody({
                         </span>
                       ) : (
                         <span className="text-[12.5px] font-medium tabular-nums text-white">
-                          {perItemSol[i].toFixed(2)}
+                          ${perItemUsd[i].toFixed(4)}
                         </span>
                       )}
                       <button
@@ -490,7 +506,7 @@ function SelectionBody({
               ? 'All selected are already claimed'
               : !walletConnected
                 ? 'Connect wallet to claim'
-                : `Claim ${claimableCount} ${claimableCount === 1 ? 'hex' : 'hexes'} · ${claimableTotalSol.toFixed(3)} SOL`}
+                : `Claim ${claimableCount} ${claimableCount === 1 ? 'hex' : 'hexes'} · $${claimableTotalUsd.toFixed(claimableTotalUsd < 10 ? 4 : 2)}`}
       </button>
     </>
   );
