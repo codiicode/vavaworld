@@ -12,7 +12,7 @@ import { useTiles } from '@/lib/use-tiles';
 import { useCountryCounts } from '@/lib/use-country-counts';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
-import { PRICING, SOL_USD } from '@/lib/pricing';
+import { PRICING } from '@/lib/pricing';
 import { Flag } from '@/components/flag';
 import { HexPricingCard } from '@/components/map/hex-pricing-card';
 import { cn } from '@/lib/utils';
@@ -100,7 +100,6 @@ export function GlassRightPanel({
     localOffset[iso] = off + 1;
     return PRICING.BASE_FLOOR_USD + (base + off) * PRICING.SLOPE_PER_CLAIM_USD;
   });
-  const perItemSol = perItemUsd.map((u) => u / SOL_USD);
 
   const count = items.length;
 
@@ -284,7 +283,6 @@ export function GlassRightPanel({
           <SelectionBody
             count={count}
             items={items}
-            perItemSol={perItemSol}
             perItemUsd={perItemUsd}
             locations={locations}
             claimedTiles={claimedTiles}
@@ -306,7 +304,6 @@ type Item = { h3: string; lat: number; lng: number; tier: 1 | 2 | 3 };
 function SelectionBody({
   count,
   items,
-  perItemSol,
   perItemUsd,
   locations,
   claimedTiles,
@@ -318,7 +315,6 @@ function SelectionBody({
 }: {
   count: number;
   items: ReadonlyArray<Item>;
-  perItemSol: ReadonlyArray<number>;
   perItemUsd: ReadonlyArray<number>;
   locations: ReturnType<typeof useHexLocations>;
   claimedTiles: Map<string, ClaimedTile>;
@@ -341,10 +337,6 @@ function SelectionBody({
   const claimableCount = count - claimedCount;
   const claimableTotalUsd = items.reduce(
     (s, it, i) => (claimedTiles.has(it.h3) ? s : s + perItemUsd[i]),
-    0,
-  );
-  const claimableTotalSol = items.reduce(
-    (s, it, i) => (claimedTiles.has(it.h3) ? s : s + perItemSol[i]),
     0,
   );
   const allClaimed = !empty && claimableCount === 0;
