@@ -207,7 +207,7 @@ export function ClaimModal({
       }}
     >
       <div
-        className="w-[460px] p-8"
+        className="w-[calc(100vw-24px)] max-w-[460px] p-6 md:p-8"
         style={{
           background: 'rgba(255, 255, 255, 0.92)',
           backdropFilter: 'blur(14px) saturate(140%)',

@@ -38,7 +38,7 @@ export function MapZoomControls({
   return (
     <div
       className="pointer-events-auto fixed z-20 flex flex-col gap-2
-        right-3 bottom-[calc(64vh+12px)]
+        right-3 bottom-[110px]
         md:bottom-auto md:right-[356px] md:top-[88px]"
     >
       <ZoomBtn label="Zoom in close" onClick={flyClose} primary>

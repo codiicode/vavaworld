@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, ChevronDown, ExternalLink, X } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
@@ -54,6 +54,10 @@ export function GlassRightPanel({
   onClaim: () => void;
 }) {
   const [tab, setTab] = useState<TabId>('selection');
+  // Mobile-only: the sheet starts COLLAPSED so the map stays tappable behind
+  // it (otherwise selecting one hex would block tapping more). Tap the bar
+  // header to expand. Desktop ignores this and is always fully visible.
+  const [mobileExpanded, setMobileExpanded] = useState(false);
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { balance } = useWalletBalance(wallet.publicKey);
@@ -87,11 +91,92 @@ export function GlassRightPanel({
 
   const count = items.length;
 
+  // Quick mobile-summary totals so the collapsed bar can show price preview
+  // without rendering the full list.
+  const claimableTotalSolMobile = items.reduce(
+    (s, it, i) => (claimedTiles.has(it.h3) ? s : s + perItemSol[i]),
+    0,
+  );
+
   return (
     <aside
-      className="glass glass-panel fixed z-30 flex flex-col px-5 pb-[22px] pt-5 inset-x-0 bottom-0 max-h-[64vh] overflow-y-auto md:inset-x-auto md:bottom-[18px] md:right-[18px] md:top-[18px] md:max-h-none md:w-[320px] md:overflow-visible"
-      style={{ gap: 20 }}
+      className={cn(
+        'glass glass-panel fixed z-30 flex flex-col',
+        // Desktop: pinned right rail, always fully expanded.
+        'md:inset-x-auto md:bottom-[18px] md:right-[18px] md:top-[18px] md:max-h-none md:w-[320px] md:overflow-visible md:rounded-[22px] md:px-5 md:pb-[22px] md:pt-5',
+        // Mobile: bottom sheet. Collapsed = compact bar (~88px) so most of
+        // the map is reachable for taps; expanded = scrollable sheet.
+        mobileExpanded
+          ? 'inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-[22px] px-5 pb-[22px] pt-3'
+          : 'inset-x-3 bottom-3 max-h-[88px] overflow-hidden rounded-[22px] px-4 py-3',
+      )}
+      style={{ gap: mobileExpanded ? 20 : 0 }}
     >
+      {/* Mobile: collapsed handle + summary bar. Hidden on desktop where the
+          full panel is always shown. */}
+      <div className="md:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileExpanded((v) => !v)}
+          aria-label={mobileExpanded ? 'Minimise' : 'Expand'}
+          className="mx-auto mb-2 block h-1 w-12 rounded-full bg-white/40"
+        />
+        {!mobileExpanded && (
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[13px] font-semibold text-white">
+                {count === 0
+                  ? 'Tap a hex to select'
+                  : `${count} selected · ${claimableTotalSolMobile.toFixed(3)} SOL`}
+              </div>
+              <div className="mt-0.5 truncate text-[11px] text-white/55">
+                {count === 0 ? 'Map is fully interactive' : 'Tap to expand'}
+              </div>
+            </div>
+            {count > 0 && (
+              <button
+                type="button"
+                onClick={onClaim}
+                disabled={!wallet.connected}
+                className="glass glass--cta flex h-10 items-center justify-center rounded-full px-4 text-[13px] font-bold tracking-[0.04em] disabled:opacity-50"
+                style={{
+                  border: '1px solid rgba(255,255,255,0.24)',
+                  color: '#042f2e',
+                }}
+              >
+                Claim
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setMobileExpanded(true)}
+              aria-label="Expand"
+              className="grid h-10 w-10 place-items-center rounded-full text-white/70"
+            >
+              <ChevronUp size={18} />
+            </button>
+          </div>
+        )}
+        {mobileExpanded && (
+          <button
+            type="button"
+            onClick={() => setMobileExpanded(false)}
+            aria-label="Minimise"
+            className="absolute right-3 top-2 grid h-8 w-8 place-items-center rounded-full text-white/60"
+          >
+            <ChevronDown size={18} />
+          </button>
+        )}
+      </div>
+
+      {/* Full panel content — hidden when mobile-collapsed, always visible on desktop. */}
+      <div
+        className={cn(
+          'flex flex-col',
+          mobileExpanded ? 'flex' : 'hidden md:flex',
+        )}
+        style={{ gap: 20 }}
+      >
       {/* Wallet chip */}
       <div
         className="relative z-[1] flex items-center gap-3 rounded-[16px] px-3 py-2"
@@ -195,7 +280,7 @@ export function GlassRightPanel({
           />
         )
       )}
-
+      </div>
     </aside>
   );
 }
