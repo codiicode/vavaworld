@@ -19,7 +19,11 @@ import { expandFromSeed } from '@/lib/hex-expand';
  * The zoom-in pill is rendered inside MapView itself (it depends on the map's zoom).
  */
 export default function Page() {
-  const [selectedHexes, setSelectedHexes] = useState<Set<string>>(new Set());
+  const [selectedHexes, setSelectedHexesRaw] = useState<Set<string>>(new Set());
+  // The "anchor" hex the quick-pick chips expand around. Sticky across
+  // expansions so {10 → 100 → 500} all stay centred on the user's original
+  // tap. Resets when the anchor is removed or the selection is cleared.
+  const [seed, setSeed] = useState<string | null>(null);
   const [showClaim, setShowClaim] = useState(false);
   const [mapStyle, setMapStyle] = useState<MapStyleId>(
     'mapbox://styles/mapbox/satellite-streets-v12',
@@ -29,18 +33,31 @@ export default function Page() {
 
   const isSatellite = mapStyle === 'mapbox://styles/mapbox/satellite-streets-v12';
 
+  // Wrapper that keeps the seed in sync with the selection. Any code that
+  // changes selectedHexes goes through here so the seed transitions stay
+  // consistent (claim ux relies on seed being null when the basket is empty).
+  const setSelectedHexes = (next: Set<string>) => {
+    setSelectedHexesRaw(next);
+    setSeed((prev) => {
+      if (next.size === 0) return null;
+      if (prev !== null && next.has(prev)) return prev;
+      return next.values().next().value ?? null;
+    });
+  };
+
   const removeHex = (h3: string) => {
     const next = new Set(selectedHexes);
     next.delete(h3);
     setSelectedHexes(next);
   };
 
-  // Quick-pick "mark N closest" — expands the single seed-selected hex into
-  // a cluster of N cells and REPLACES the selection so the count is exactly N.
+  // Quick-pick "mark N closest" — expands the saved seed hex into a cluster
+  // of N cells and REPLACES the selection so the count is exactly N. The
+  // seed stays unchanged so the user can toggle between {10, 100, 500, 1000,
+  // custom} freely from the same anchor.
   const selectClosest = (total: number) => {
-    const seed = selectedHexes.values().next().value;
-    if (typeof seed !== 'string') return;
-    setSelectedHexes(new Set(expandFromSeed(seed, total)));
+    if (!seed) return;
+    setSelectedHexesRaw(new Set(expandFromSeed(seed, total)));
   };
 
   const onClaimConfirmed = (h3s: string[]) => {
@@ -132,6 +149,7 @@ export default function Page() {
 
       <GlassRightPanel
         selectedHexes={selectedHexes}
+        seedHex={seed}
         onRemoveHex={removeHex}
         onClaim={() => setShowClaim(true)}
         onSelectClosest={selectClosest}

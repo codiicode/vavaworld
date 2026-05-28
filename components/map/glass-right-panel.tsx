@@ -46,11 +46,13 @@ const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
  */
 export function GlassRightPanel({
   selectedHexes,
+  seedHex,
   onRemoveHex,
   onClaim,
   onSelectClosest,
 }: {
   selectedHexes: Set<string>;
+  seedHex: string | null;
   onRemoveHex: (h3: string) => void;
   onClaim: () => void;
   onSelectClosest: (n: number) => void;
@@ -276,6 +278,7 @@ export function GlassRightPanel({
             perItemSol={perItemSol}
             locations={locations}
             claimedTiles={claimedTiles}
+            hasSeed={seedHex !== null}
             onRemove={onRemoveHex}
             onClaim={onClaim}
             onSelectClosest={onSelectClosest}
@@ -296,6 +299,7 @@ function SelectionBody({
   perItemSol,
   locations,
   claimedTiles,
+  hasSeed,
   onRemove,
   onClaim,
   onSelectClosest,
@@ -306,11 +310,19 @@ function SelectionBody({
   perItemSol: ReadonlyArray<number>;
   locations: ReturnType<typeof useHexLocations>;
   claimedTiles: Map<string, ClaimedTile>;
+  hasSeed: boolean;
   onRemove: (h3: string) => void;
   onClaim: () => void;
   onSelectClosest: (n: number) => void;
   walletConnected: boolean;
 }) {
+  const [customN, setCustomN] = useState('');
+  const customParsed = Number.parseInt(customN, 10);
+  const customValid =
+    Number.isFinite(customParsed) && customParsed >= 2 && customParsed <= 1000;
+  const applyCustom = () => {
+    if (customValid) onSelectClosest(customParsed);
+  };
   const empty = count === 0;
   const max = count > 1000;
   const claimedCount = items.reduce((s, it) => (claimedTiles.has(it.h3) ? s + 1 : s), 0);
@@ -335,7 +347,7 @@ function SelectionBody({
 
         {!empty && <HexPricingCard h3={items[0]?.h3 ?? null} />}
 
-        {count === 1 && !claimedTiles.has(items[0]!.h3) && (
+        {hasSeed && (
           <div className="flex flex-col gap-1.5">
             <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/52">
               Mark closest
@@ -346,12 +358,41 @@ function SelectionBody({
                   key={n}
                   type="button"
                   onClick={() => onSelectClosest(n)}
-                  className="glass rounded-md py-1.5 text-[12px] font-semibold tabular-nums text-white transition-colors hover:bg-white/10"
+                  className={cn(
+                    'glass rounded-md py-1.5 text-[12px] font-semibold tabular-nums text-white transition-colors hover:bg-white/10',
+                    count === n && 'ring-1 ring-white/40',
+                  )}
                   style={{ border: '1px solid rgba(255,255,255,0.18)' }}
                 >
                   {n}
                 </button>
               ))}
+            </div>
+            <div className="flex gap-1.5">
+              <input
+                type="number"
+                inputMode="numeric"
+                placeholder="Custom 2–1000"
+                value={customN}
+                onChange={(e) => setCustomN(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    applyCustom();
+                  }
+                }}
+                className="glass min-w-0 flex-1 rounded-md bg-transparent px-2.5 py-1.5 text-[12px] tabular-nums text-white placeholder:text-white/35 focus:outline-none focus:ring-1 focus:ring-white/40"
+                style={{ border: '1px solid rgba(255,255,255,0.18)' }}
+              />
+              <button
+                type="button"
+                disabled={!customValid}
+                onClick={applyCustom}
+                className="glass rounded-md px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                style={{ border: '1px solid rgba(255,255,255,0.18)' }}
+              >
+                Apply
+              </button>
             </div>
           </div>
         )}
