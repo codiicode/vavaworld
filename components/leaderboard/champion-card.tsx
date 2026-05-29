@@ -37,24 +37,24 @@ export function ChampionCard({ entry }: { entry: LeaderboardEntry }) {
         />
 
         {/* Inner glass surface */}
-        <div className="relative overflow-hidden rounded-[1.45rem] border border-amber-200/50 bg-gradient-to-br from-amber-100/55 via-amber-50/35 to-white/25 p-5 backdrop-blur-md md:p-6">
+        <div className="relative overflow-hidden rounded-[1.45rem] border border-amber-200/50 bg-gradient-to-br from-amber-100/55 via-amber-50/35 to-white/25 p-6 backdrop-blur-md md:p-8">
           {/* Light sweep */}
           <span
             aria-hidden
             className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/55 to-transparent animate-champion-shimmer motion-reduce:hidden"
           />
 
-          <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
+          <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between md:gap-8">
             {/* Identity */}
-            <div className="flex items-center gap-4 md:gap-5">
+            <div className="flex items-center gap-5 md:gap-6">
               <div className="relative flex-shrink-0">
                 {/* Floating crown */}
                 <Crown
-                  size={26}
+                  size={32}
                   strokeWidth={2}
-                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 -rotate-6 fill-amber-300 text-amber-500 drop-shadow-[0_2px_6px_rgba(245,158,11,0.6)]"
+                  className="absolute -top-4 left-1/2 -translate-x-1/2 -rotate-6 fill-amber-300 text-amber-500 drop-shadow-[0_2px_6px_rgba(245,158,11,0.6)]"
                 />
-                <Avatar className="h-[68px] w-[68px] text-lg ring-[3px] ring-amber-300/80 shadow-[0_0_24px_-4px_rgba(245,158,11,0.7)] md:h-[76px] md:w-[76px] md:text-xl">
+                <Avatar className="h-[84px] w-[84px] text-xl ring-[3px] ring-amber-300/80 shadow-[0_0_24px_-4px_rgba(245,158,11,0.7)] md:h-[96px] md:w-[96px] md:text-2xl">
                   <AvatarFallback className="bg-gradient-to-br from-amber-400/30 to-orange-500/20 font-bold text-amber-700">
                     {initial}
                   </AvatarFallback>
@@ -68,15 +68,15 @@ export function ChampionCard({ entry }: { entry: LeaderboardEntry }) {
                     Champion
                   </span>
                 </div>
-                <div className="mt-0.5 flex items-center gap-2">
-                  <span className="truncate bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent md:text-[1.75rem]">
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="truncate bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent md:text-[2.25rem]">
                     @{handle}
                   </span>
                   {entry.verified && (
-                    <Check className="h-5 w-5 flex-shrink-0 text-emerald-500" />
+                    <Check className="h-6 w-6 flex-shrink-0 text-emerald-500" />
                   )}
                 </div>
-                <div className="mt-1 flex items-center gap-1.5 text-sm text-foreground/70">
+                <div className="mt-1.5 flex items-center gap-1.5 text-sm text-foreground/70">
                   <Flag code={entry.country} size={18} />
                   <span className="font-semibold tabular-nums text-foreground">
                     {entry.hexes.toLocaleString()}
@@ -87,7 +87,7 @@ export function ChampionCard({ entry }: { entry: LeaderboardEntry }) {
             </div>
 
             {/* Stats */}
-            <div className="grid flex-shrink-0 grid-cols-3 gap-5 border-t border-amber-200/50 pt-4 md:gap-7 md:border-l md:border-t-0 md:pl-7 md:pt-0">
+            <div className="grid flex-shrink-0 grid-cols-3 gap-6 border-t border-amber-200/50 pt-5 md:gap-9 md:border-l md:border-t-0 md:pl-9 md:pt-0">
               <ChampStat label="Value" value={`${entry.valueSOL} SOL`} />
               <ChampStat label="Countries" value={String(entry.countries)} />
               <ChampStat
@@ -108,7 +108,7 @@ function ChampStat({ label, value }: { label: string; value: string }) {
       <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-700/70">
         {label}
       </div>
-      <div className="text-base font-bold tabular-nums text-foreground md:text-lg">
+      <div className="text-lg font-bold tabular-nums text-foreground md:text-xl">
         {value}
       </div>
     </div>
