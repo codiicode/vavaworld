@@ -68,13 +68,14 @@ const AGG_SOURCE = 'country-agg';
 const AGG_CIRCLE = 'country-agg-circle';
 const AGG_LABEL = 'country-agg-label';
 
-const SAT_SOURCE = 'satellite-raster';
-const SAT_LAYER = 'satellite-raster';
-
-// Single persistent base style. We NEVER call setStyle (it tears down the GL
-// tile cache + all custom layers = the multi-second blank flash). Satellite is
-// a raster layer toggled via `visibility` on top of this, see installHexLayers.
-const BASE_STYLE = 'mapbox://styles/mapbox/standard';
+// Two distinct base styles. Satellite (default) is the light satellite-streets
+// raster + minimal label overlay - it downloads ONLY satellite tiles. Map view
+// is the richer Mapbox Standard vector style. We deliberately do NOT layer one
+// over the other (that double-downloads both tile sets and starves the visible
+// layer's tiles - the "buffering" the user saw). Toggling swaps the style; the
+// style.load handler re-installs the hex layers + re-applies feature-state.
+const SATELLITE_STYLE = 'mapbox://styles/mapbox/satellite-streets-v12';
+const MAP_STYLE = 'mapbox://styles/mapbox/standard';
 
 // Render individual hexes only at zoom >= 16. At z14-15 a res-12 cell is ~1px
 // (invisible) yet the viewport holds tens of thousands of them; gating at 16
@@ -123,10 +124,6 @@ export function MapView({
   useEffect(() => {
     tilesRef.current = tiles;
   }, [tiles]);
-  const satelliteRef = useRef(satellite);
-  useEffect(() => {
-    satelliteRef.current = satellite;
-  }, [satellite]);
   // Tracks the selection set last written to feature-state so changes apply as
   // a diff (O(changed)) instead of re-touching every visible cell.
   const prevSelectedRef = useRef<Set<string>>(new Set());
@@ -319,40 +316,11 @@ export function MapView({
     }
   }, [ready, tiles, mapRef]);
 
-  // Satellite toggle → just flip raster-layer visibility. No style reload.
-  useEffect(() => {
-    const map = mapRef.current?.getMap();
-    if (!ready || !map || !map.getLayer(SAT_LAYER)) return;
-    map.setLayoutProperty(SAT_LAYER, 'visibility', satellite ? 'visible' : 'none');
-  }, [ready, satellite, mapRef]);
-
-  // Idempotent: also re-runs after a (rare) style reload without throwing.
+  // Idempotent: re-runs after a style toggle (which wipes custom layers).
   const installHexLayers = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
     if (map.getSource(SOURCE_ID)) return;
-
-    // Satellite imagery as a raster layer in the 'bottom' slot: it covers the
-    // base land/water polygons but sits beneath Standard's roads + labels, so
-    // toggling it on gives a satellite+streets hybrid (like satellite-streets)
-    // and toggling off reveals the vector map - both instant, no tile refetch.
-    if (!map.getSource(SAT_SOURCE)) {
-      map.addSource(SAT_SOURCE, {
-        type: 'raster',
-        url: 'mapbox://mapbox.satellite',
-        tileSize: 256,
-      });
-    }
-    if (!map.getLayer(SAT_LAYER)) {
-      map.addLayer({
-        id: SAT_LAYER,
-        type: 'raster',
-        source: SAT_SOURCE,
-        slot: 'bottom',
-        layout: { visibility: satelliteRef.current ? 'visible' : 'none' },
-        paint: { 'raster-fade-duration': 0 },
-      });
-    }
 
     map.addSource(SOURCE_ID, {
       type: 'geojson',
@@ -448,6 +416,19 @@ export function MapView({
     });
   }, [mapRef]);
 
+  // Repaint the grid from the current visible set + feature-state. Needed after
+  // a style toggle: setStyle wipes the source, and the geometry effect won't
+  // re-fire if visibleHexes is unchanged, so the grid would stay empty.
+  const repaintGrid = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    const ids = visibleRef.current;
+    if (!map || ids.length === 0) return;
+    const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+    if (!src) return;
+    src.setData(buildGeometry(ids));
+    applyFeatureState(ids);
+  }, [mapRef, buildGeometry, applyFeatureState]);
+
   const onLoad = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
@@ -460,6 +441,7 @@ export function MapView({
     // Safety net: if a style ever reloads (we no longer trigger it), re-add.
     map.on('style.load', () => {
       installHexLayers();
+      repaintGrid();
       refreshHexes();
     });
 
@@ -519,7 +501,7 @@ export function MapView({
 
     setReady(true);
     refreshHexes();
-  }, [mapRef, refreshHexes, setSelectedHexes, installHexLayers]);
+  }, [mapRef, refreshHexes, setSelectedHexes, installHexLayers, repaintGrid]);
 
   const onClick = useCallback(
     (e: MapMouseEvent) => {
@@ -589,11 +571,15 @@ export function MapView({
         mapboxAccessToken={token}
         initialViewState={{ longitude: 13.405, latitude: 52.52, zoom: 10 }}
         style={{ position: 'absolute', inset: 0 }}
-        mapStyle={BASE_STYLE}
+        mapStyle={satellite ? SATELLITE_STYLE : MAP_STYLE}
         projection={{ name: 'globe' }}
         onLoad={onLoad}
         onMove={scheduleRefresh}
-        onMoveEnd={refreshHexes}
+        // moveend fires after EVERY wheel tick / micro zoom-ease, not just at
+        // the true end of a gesture - route it through the same trailing
+        // debounce so the heavy rebuild runs once after motion settles, not
+        // dozens of times mid-gesture.
+        onMoveEnd={scheduleRefresh}
         onClick={onClick}
         interactiveLayerIds={[FILL_LAYER, CLAIMED_LAYER]}
       />
