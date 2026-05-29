@@ -32,7 +32,7 @@ export function SignInGate({
   }
 
   return (
-    <div className="mx-auto flex max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] flex-col items-center justify-center px-4 py-6 md:px-8 md:py-8 2xl:px-10">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center px-4 py-6 md:px-8 md:py-8">
       <div className="w-full max-w-md rounded-2xl border border-white/40 bg-white/30 p-6 backdrop-blur-md md:p-8">
         <div className="mb-5 flex items-center gap-3">
           <div
