@@ -5,6 +5,7 @@
  * pseudo-randomly from its ISO code.
  */
 import { COUNTRIES } from './countries';
+import { fmtCompact } from './format';
 
 export type Person = {
   username: string;
@@ -25,6 +26,7 @@ export type ActivityEvent = {
 export type Nation = {
   iso: string; // uppercase ISO 3166-1 alpha-2
   name: string;
+  rankDelta: number; // position change vs the previous snapshot (+up / -down / 0)
   floor: number;
   claims: number;
   bondedVava: number;
@@ -46,11 +48,7 @@ export const fmtUsd3 = (n: number) => `$${n.toFixed(3)}`;
 export const fmtInt = (n: number) => n.toLocaleString('en-US');
 export const fmtUsd = (n: number) =>
   `$${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-export function fmtCompact(n: number): string {
-  if (n >= 1_000_000) return `${+(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${+(n / 1_000).toFixed(0)}K`;
-  return `${n}`;
-}
+export { fmtCompact };
 /** `0x4a3b...92ef` style. */
 export const truncAddr = (a: string) =>
   a.length > 10 ? `${a.slice(0, 6)}...${a.slice(-4)}` : a;
@@ -143,6 +141,7 @@ function makeNation(iso: string, name: string): Nation {
   );
   return {
     iso, name, floor, claims, bondedVava, bonders,
+    rankDelta: Math.floor(rnd() * 11) - 5,
     president,
     cabinet,
     userPosition: {
@@ -162,6 +161,7 @@ function sweden(): Nation {
   return {
     iso: 'SE',
     name: 'Sweden',
+    rankDelta: 2,
     floor: 0.573,
     claims: 47328,
     bondedVava: 8_400_000,

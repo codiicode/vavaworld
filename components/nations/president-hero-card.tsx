@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Crown } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { CountUp } from '@/components/count-up';
 import { ChallengePresidencyModal } from './nation-modals';
 import {
   type Nation,
@@ -88,9 +89,11 @@ export function PresidentHeroCard({ nation }: { nation: Nation }) {
               </div>
 
               <div className="md:text-right">
-                <div className="text-3xl font-bold tabular-nums text-foreground md:text-[2rem]">
-                  {fmtInt(p.bondedVava)} $VAVA
-                </div>
+                <CountUp
+                  value={p.bondedVava}
+                  format={(n) => `${fmtInt(Math.round(n))} $VAVA`}
+                  className="block text-3xl font-bold tabular-nums text-foreground md:text-[2rem]"
+                />
                 <div className="mt-0.5 text-sm tabular-nums text-foreground/55">
                   ≈ {fmtUsd(p.bondedVava * VAVA_USD)}
                 </div>
@@ -110,17 +113,21 @@ export function PresidentHeroCard({ nation }: { nation: Nation }) {
                 <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-700/70">
                   Earned this month
                 </div>
-                <div className="text-lg font-bold tabular-nums text-foreground">
-                  {fmtUsd(p.earnedThisMonthUsd)}
-                </div>
+                <CountUp
+                  value={p.earnedThisMonthUsd}
+                  format={(n) => fmtUsd(Math.round(n))}
+                  className="text-lg font-bold tabular-nums text-foreground"
+                />
               </div>
               <div>
                 <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-700/70">
                   Term length
                 </div>
-                <div className="text-lg font-bold tabular-nums text-foreground">
-                  {p.termDays} days
-                </div>
+                <CountUp
+                  value={p.termDays}
+                  format={(n) => `${Math.round(n)} days`}
+                  className="text-lg font-bold tabular-nums text-foreground"
+                />
               </div>
             </div>
           </div>

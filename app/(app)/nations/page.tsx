@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/select';
 import { NationPodiumCard } from '@/components/nations/nation-podium-card';
 import { NationsTable } from '@/components/nations/nations-table';
+import { RankingsSkeleton } from '@/components/rankings-skeleton';
+import { useFirstMountLoading } from '@/lib/use-first-mount-loading';
 import { NATIONS, sortNations, type NationSort } from '@/lib/mock-nations';
 
 const SORT_LABELS: Record<NationSort, string> = {
@@ -27,6 +29,7 @@ const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40';
 export default function NationsPage() {
   const [sort, setSort] = useState<NationSort>('claims');
   const [query, setQuery] = useState('');
+  const loading = useFirstMountLoading();
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -93,25 +96,31 @@ export default function NationsPage() {
         </div>
       </div>
 
-      {podium.length > 0 && (
-        <div className="mb-4 flex flex-col gap-2.5">
-          {podium[0] && (
-            <NationPodiumCard nation={podium[0]} rank={1} variant="gold" />
-          )}
-          {(podium[1] || podium[2]) && (
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[3fr_2fr]">
-              {podium[1] && (
-                <NationPodiumCard nation={podium[1]} rank={2} variant="silver" />
+      {loading ? (
+        <RankingsSkeleton />
+      ) : (
+        <>
+          {podium.length > 0 && (
+            <div className="mb-4 flex flex-col gap-2.5">
+              {podium[0] && (
+                <NationPodiumCard nation={podium[0]} rank={1} variant="gold" />
               )}
-              {podium[2] && (
-                <NationPodiumCard nation={podium[2]} rank={3} variant="bronze" />
+              {(podium[1] || podium[2]) && (
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[3fr_2fr]">
+                  {podium[1] && (
+                    <NationPodiumCard nation={podium[1]} rank={2} variant="silver" />
+                  )}
+                  {podium[2] && (
+                    <NationPodiumCard nation={podium[2]} rank={3} variant="bronze" />
+                  )}
+                </div>
               )}
             </div>
           )}
-        </div>
-      )}
 
-      <NationsTable rows={rest} startRank={4} total={list.length} />
+          <NationsTable rows={rest} startRank={4} total={list.length} />
+        </>
+      )}
     </div>
   );
 }

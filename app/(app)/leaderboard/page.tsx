@@ -10,11 +10,14 @@ import {
 import { PodiumCard } from '@/components/leaderboard/podium-card';
 import { ChampionCard } from '@/components/leaderboard/champion-card';
 import { LeaderboardTable } from '@/components/leaderboard/leaderboard-table';
+import { RankingsSkeleton } from '@/components/rankings-skeleton';
+import { useFirstMountLoading } from '@/lib/use-first-mount-loading';
 import { mockLeaderboard } from '@/lib/mock-leaderboard';
 
 export default function LeaderboardPage() {
   const [sort, setSort] = useState<SortKey>('hexes');
   const [filter, setFilter] = useState<FilterKey>('worldwide');
+  const loading = useFirstMountLoading();
 
   const list = useMemo(() => {
     const filtered =
@@ -56,21 +59,27 @@ export default function LeaderboardPage() {
         onFilterChange={setFilter}
       />
 
-      {podium.length > 0 && (
-        <div className="mb-4 flex flex-col gap-2.5">
-          {/* #1 - dedicated champion hero (see ChampionCard) */}
-          {podium[0] && <ChampionCard entry={podium[0]} />}
-          {/* #2 + #3 - side by side, #2 wider so size hierarchy is obvious */}
-          {(podium[1] || podium[2]) && (
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[3fr_2fr]">
-              {podium[1] && <PodiumCard entry={podium[1]} variant="silver" />}
-              {podium[2] && <PodiumCard entry={podium[2]} variant="bronze" />}
+      {loading ? (
+        <RankingsSkeleton />
+      ) : (
+        <>
+          {podium.length > 0 && (
+            <div className="mb-4 flex flex-col gap-2.5">
+              {/* #1 - dedicated champion hero (see ChampionCard) */}
+              {podium[0] && <ChampionCard entry={podium[0]} />}
+              {/* #2 + #3 - side by side, #2 wider so size hierarchy is obvious */}
+              {(podium[1] || podium[2]) && (
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[3fr_2fr]">
+                  {podium[1] && <PodiumCard entry={podium[1]} variant="silver" />}
+                  {podium[2] && <PodiumCard entry={podium[2]} variant="bronze" />}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      <LeaderboardTable rows={tableRows} />
+          <LeaderboardTable rows={tableRows} />
+        </>
+      )}
     </div>
   );
 }

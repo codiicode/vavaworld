@@ -14,6 +14,8 @@ export interface LeaderboardEntry {
   countries: number;
   bonded: number; // $VAVA bonded
   verified: boolean;
+  rankDelta: number; // position change vs the previous snapshot (+up / -down / 0)
+  isYou?: boolean; // the signed-in user's own row (mock: one fixed entry)
 }
 
 const COUNTRIES: ReadonlyArray<{ code: string; flag: string }> = [
@@ -77,6 +79,9 @@ function build(): LeaderboardEntry[] {
       countries: Math.max(1, Math.round(38 * Math.pow(0.5, t) + r() * 3)),
       bonded: Math.max(50_000, bonded),
       verified: r() > 0.45,
+      // Deterministic, index-derived so it never reshuffles the rest of the row.
+      rankDelta: ((i * 7 + 3) % 11) - 5,
+      isYou: rank === 23,
     });
   }
   return out;

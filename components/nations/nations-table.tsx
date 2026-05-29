@@ -7,8 +7,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Flag } from '@/components/flag';
+import { GradientAvatar } from '@/components/gradient-avatar';
+import { RankDelta } from '@/components/rank-delta';
 import {
   type Nation,
   fmtUsd3,
@@ -58,9 +59,12 @@ export function NationsTable({
               key={n.iso}
               className="cursor-pointer border-white/20 transition-colors hover:bg-white/20"
             >
-              <TableCell className="w-16 font-mono text-sm tabular-nums text-foreground/60">
-                <Link href={`/nations/${n.iso}`} className="block">
-                  {String(startRank + i).padStart(2, '0')}
+              <TableCell className="w-20 text-foreground/60">
+                <Link href={`/nations/${n.iso}`} className="flex items-center gap-2">
+                  <span className="font-mono text-sm tabular-nums">
+                    {String(startRank + i).padStart(2, '0')}
+                  </span>
+                  <RankDelta delta={n.rankDelta} />
                 </Link>
               </TableCell>
               <TableCell>
@@ -74,11 +78,12 @@ export function NationsTable({
               </TableCell>
               <TableCell>
                 <Link href={`/nations/${n.iso}`} className="flex items-center gap-2">
-                  <Avatar className="h-7 w-7 ring-2 ring-white/40">
-                    <AvatarFallback className="bg-primary/20 text-[11px] font-semibold text-primary">
-                      {initials(n.president.username)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <GradientAvatar
+                    seed={n.president.wallet || n.president.username}
+                    initial={initials(n.president.username)}
+                    className="h-7 w-7 ring-white/40"
+                    textClassName="text-[11px]"
+                  />
                   <span className="truncate text-sm">@{n.president.username}</span>
                 </Link>
               </TableCell>

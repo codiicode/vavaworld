@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { Check, Crown } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { BadgeCheck, Crown, Medal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Flag } from '@/components/flag';
+import { GradientAvatar } from '@/components/gradient-avatar';
 import type { LeaderboardEntry } from '@/lib/mock-leaderboard';
 
 type Variant = 'gold' | 'silver' | 'bronze';
@@ -100,22 +100,29 @@ export function PodiumCard({
           </span>
         </div>
         {isGold && <Crown size={15} strokeWidth={1.8} className="text-amber-500" />}
+        {isSilver && <Medal size={15} strokeWidth={1.8} className="text-slate-400" />}
+        {!isGold && !isSilver && (
+          <Medal size={15} strokeWidth={1.8} className="text-amber-700" />
+        )}
       </div>
 
       {/* Avatar + handle */}
       <div className={cn('mb-3 flex items-center', isGold ? 'gap-3.5' : 'gap-2.5')}>
-        <Avatar className={cn(avatarSize, 'ring-2 ring-white/70 flex-shrink-0')}>
-          <AvatarFallback className="bg-primary/20 font-semibold text-primary">
-            {initial}
-          </AvatarFallback>
-        </Avatar>
+        <GradientAvatar
+          seed={entry.walletAddress || handle}
+          initial={initial}
+          className={cn(avatarSize, 'ring-white/70 flex-shrink-0')}
+        />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className={cn('truncate font-semibold tracking-tight text-foreground', nameSize)}>
               @{handle}
             </span>
             {entry.verified && (
-              <Check className={cn('flex-shrink-0 text-emerald-500', isGold ? 'h-4 w-4' : 'h-3 w-3')} />
+              <BadgeCheck
+                className={cn('flex-shrink-0 text-emerald-500', isGold ? 'h-4 w-4' : 'h-3.5 w-3.5')}
+                aria-label="Verified"
+              />
             )}
           </div>
           <div className={cn('mt-0.5 flex items-center gap-1.5 text-foreground/65', hexesSize)}>

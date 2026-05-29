@@ -169,7 +169,7 @@ export function ClaimModal({
       }}
     >
       <div
-        className="w-[calc(100vw-24px)] max-w-[460px] p-6 md:p-8"
+        className="relative w-[calc(100vw-24px)] max-w-[460px] overflow-hidden p-6 md:p-8"
         style={{
           background: 'rgba(255, 255, 255, 0.92)',
           backdropFilter: 'blur(14px) saturate(140%)',
@@ -281,12 +281,19 @@ export function ClaimModal({
 
         {state === 'confirmed' && (
           <>
+            <ClaimCelebration />
             <div className="py-8 text-center flex flex-col items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full grid place-items-center"
-                style={{ background: 'var(--signal-soft)', color: 'var(--signal)', fontSize: '20px' }}
-              >
-                ✓
+              <div className="relative grid place-items-center">
+                <span
+                  className="absolute inset-0 rounded-full animate-ping"
+                  style={{ background: 'var(--signal-soft)', animationIterationCount: 2 }}
+                />
+                <div
+                  className="relative w-10 h-10 rounded-full grid place-items-center"
+                  style={{ background: 'var(--signal-soft)', color: 'var(--signal)', fontSize: '20px' }}
+                >
+                  ✓
+                </div>
               </div>
               <div style={{ ...uiLabel, color: 'var(--ink)' }}>
                 {items.length} {items.length === 1 ? 'hex' : 'hexes'} claimed
@@ -347,6 +354,72 @@ export function ClaimModal({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+const CONFETTI_COLORS = ['#1d5e95', '#f59e0b', '#10b981', '#fb7185', '#8b5cf6'];
+
+/**
+ * One-shot confetti burst overlaid on the success state. Pure CSS - each piece
+ * gets a deterministic angle/distance from its index so there's no layout
+ * thrash and nothing to clean up.
+ */
+function ClaimCelebration() {
+  const pieces = Array.from({ length: 18 }, (_, i) => {
+    const angle = (i / 18) * Math.PI * 2;
+    const dist = 90 + (i % 4) * 26;
+    return {
+      tx: Math.cos(angle) * dist,
+      ty: Math.sin(angle) * dist - 30, // bias upward so they arc then fall
+      rot: (i % 2 ? 1 : -1) * (180 + i * 24),
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      delay: (i % 5) * 30,
+    };
+  });
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center overflow-hidden">
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          className="confetti-piece"
+          style={
+            {
+              background: p.color,
+              '--tx': `${p.tx}px`,
+              '--ty': `${p.ty}px`,
+              '--rot': `${p.rot}deg`,
+              animationDelay: `${p.delay}ms`,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+      <style jsx>{`
+        .confetti-piece {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          border-radius: 2px;
+          opacity: 0;
+          animation: confetti-fly 900ms ease-out forwards;
+        }
+        @keyframes confetti-fly {
+          0% {
+            transform: translate(0, 0) rotate(0deg) scale(0.6);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1);
+            opacity: 0;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .confetti-piece {
+            display: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }

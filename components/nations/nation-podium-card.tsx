@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { Crown } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Crown, Medal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Flag } from '@/components/flag';
+import { GradientAvatar } from '@/components/gradient-avatar';
 import {
   type Nation,
   fmtUsd3,
@@ -112,6 +112,10 @@ export function NationPodiumCard({
           </span>
         </div>
         {isGold && <Crown size={15} strokeWidth={1.8} className="text-amber-500" />}
+        {isSilver && <Medal size={15} strokeWidth={1.8} className="text-slate-400" />}
+        {!isGold && !isSilver && (
+          <Medal size={15} strokeWidth={1.8} className="text-amber-700" />
+        )}
       </div>
 
       {/* Flag + name + president */}
@@ -132,11 +136,11 @@ export function NationPodiumCard({
               subSize,
             )}
           >
-            <Avatar className={cn(avatarSize, 'flex-none ring-1 ring-white/60')}>
-              <AvatarFallback className="bg-primary/20 font-semibold text-primary">
-                {initials(nation.president.username)}
-              </AvatarFallback>
-            </Avatar>
+            <GradientAvatar
+              seed={nation.president.wallet || nation.president.username}
+              initial={initials(nation.president.username)}
+              className={cn(avatarSize, 'flex-none ring-1 ring-white/60')}
+            />
             <span className="truncate">@{nation.president.username}</span>
           </div>
         </div>

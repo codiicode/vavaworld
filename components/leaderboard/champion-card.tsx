@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { Check, Crown } from 'lucide-react';
+import { BadgeCheck, Crown } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Flag } from '@/components/flag';
+import { CountUp } from '@/components/count-up';
 import type { LeaderboardEntry } from '@/lib/mock-leaderboard';
 
 /**
@@ -73,14 +74,16 @@ export function ChampionCard({ entry }: { entry: LeaderboardEntry }) {
                     @{handle}
                   </span>
                   {entry.verified && (
-                    <Check className="h-6 w-6 flex-shrink-0 text-emerald-500" />
+                    <BadgeCheck className="h-6 w-6 flex-shrink-0 text-emerald-500" aria-label="Verified" />
                   )}
                 </div>
                 <div className="mt-1.5 flex items-center gap-1.5 text-sm text-foreground/70">
                   <Flag code={entry.country} size={18} />
-                  <span className="font-semibold tabular-nums text-foreground">
-                    {entry.hexes.toLocaleString()}
-                  </span>
+                  <CountUp
+                    value={entry.hexes}
+                    format={(n) => Math.round(n).toLocaleString()}
+                    className="font-semibold tabular-nums text-foreground"
+                  />
                   <span className="text-foreground/60">hexes</span>
                 </div>
               </div>
@@ -88,11 +91,20 @@ export function ChampionCard({ entry }: { entry: LeaderboardEntry }) {
 
             {/* Stats */}
             <div className="grid flex-shrink-0 grid-cols-3 gap-6 border-t border-amber-200/50 pt-5 md:gap-9 md:border-l md:border-t-0 md:pl-9 md:pt-0">
-              <ChampStat label="Value" value={`${entry.valueSOL} SOL`} />
-              <ChampStat label="Countries" value={String(entry.countries)} />
+              <ChampStat
+                label="Value"
+                value={entry.valueSOL}
+                format={(n) => `${n.toFixed(1)} SOL`}
+              />
+              <ChampStat
+                label="Countries"
+                value={entry.countries}
+                format={(n) => String(Math.round(n))}
+              />
               <ChampStat
                 label="Bonded"
-                value={`${(entry.bonded / 1_000_000).toFixed(2)}M`}
+                value={entry.bonded}
+                format={(n) => `${(n / 1_000_000).toFixed(2)}M`}
               />
             </div>
           </div>
@@ -102,15 +114,25 @@ export function ChampionCard({ entry }: { entry: LeaderboardEntry }) {
   );
 }
 
-function ChampStat({ label, value }: { label: string; value: string }) {
+function ChampStat({
+  label,
+  value,
+  format,
+}: {
+  label: string;
+  value: number;
+  format: (n: number) => string;
+}) {
   return (
     <div>
       <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-700/70">
         {label}
       </div>
-      <div className="text-lg font-bold tabular-nums text-foreground md:text-xl">
-        {value}
-      </div>
+      <CountUp
+        value={value}
+        format={format}
+        className="text-lg font-bold tabular-nums text-foreground md:text-xl"
+      />
     </div>
   );
 }
