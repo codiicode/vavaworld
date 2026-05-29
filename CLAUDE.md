@@ -1,8 +1,14 @@
 # VAVA / vavaworld.fun / $VAVA
 
-Tile-claiming Solana dApp. Full-screen Mapbox satellite map, H3 res-9 hex
-overlay (~201 m edge). Users claim tiles by paying SOL; planned $VAVA SPL
+Tile-claiming Solana dApp. Full-screen Mapbox satellite map, H3 res-12 hex
+overlay (~9 m edge). Users claim tiles by paying SOL; planned $VAVA SPL
 token used for bonding (locked-up VAVA per claim).
+
+**H3 resolution is 12 site-wide and is the claim contract** — `lib/h3-utils.ts`
+`HEX_RES=12`, `lib/pricing.ts` `H3_RESOLUTION:12`, and `/api/claim` +
+`/api/hex-floor` reject any hex that isn't res 12. Never lower it. The map only
+*renders* the grid at zoom ≥ 16 (a res-12 cell is sub-pixel below that); it does
+not coarsen the rendered cells, so a clicked cell is always the claimable cell.
 
 **Repo:** `C:\Users\User\Desktop\tomorrowland`
 **Live:** https://vavaworld.fun (alias of https://vavaworld.vercel.app)
@@ -28,7 +34,7 @@ token used for bonding (locked-up VAVA per claim).
 | Framework | Next.js 14 (App Router), TypeScript strict, React 18 |
 | Styling | Tailwind + shadcn/ui (Radix primitives in `components/ui/`) |
 | Map | Mapbox GL + `react-map-gl/mapbox` v8, satellite-v9 style |
-| Geo | h3-js 4 (resolution 9) |
+| Geo | h3-js 4 (resolution 12) |
 | Chain | Solana **devnet**, Anchor 1.0.2 program at `anchor/programs/tiles` |
 | Wallet | Privy (`@privy-io/react-auth`) embedded wallet + Phantom/Solflare/Backpack via wallet-adapter |
 | Off-chain data | Supabase (`@supabase/supabase-js`) — profiles, claim_hex pricing fn, etc. |
