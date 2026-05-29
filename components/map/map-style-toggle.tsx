@@ -2,35 +2,26 @@
 
 import { Map as MapIcon, Satellite } from 'lucide-react';
 
-export type MapStyleId =
-  | 'mapbox://styles/mapbox/satellite-streets-v12'
-  | 'mapbox://styles/mapbox/standard';
-
-const STANDARD: MapStyleId = 'mapbox://styles/mapbox/standard';
-// satellite-streets keeps the satellite imagery + overlays street/place labels.
-const SATELLITE: MapStyleId = 'mapbox://styles/mapbox/satellite-streets-v12';
-
 /**
- * Glass pill button to the right of the search bar. Clicking it toggles the
- * underlying Mapbox style between satellite imagery and Mapbox Standard -
- * the political/streets view that ALSO renders 3D buildings and famous
- * landmarks (Eiffel Tower, Burj Khalifa, etc.) when zoomed in. Globe
- * projection on both styles. Icon shown = style you'd switch TO.
+ * Glass pill button to the right of the search bar. Toggles the satellite
+ * raster overlay on/off over the persistent Mapbox Standard base (which also
+ * renders 3D buildings + landmarks when zoomed in). Toggling is instant - it
+ * flips a layer's visibility rather than reloading the map style. Icon shown =
+ * the view you'd switch TO.
  */
 export function MapStyleToggle({
-  value,
+  satellite,
   onChange,
 }: {
-  value: MapStyleId;
-  onChange: (next: MapStyleId) => void;
+  satellite: boolean;
+  onChange: (next: boolean) => void;
 }) {
-  const isSatellite = value === SATELLITE;
-  const next = isSatellite ? STANDARD : SATELLITE;
+  const isSatellite = satellite;
   const label = isSatellite ? 'Switch to map view' : 'Switch to satellite view';
   return (
     <button
       type="button"
-      onClick={() => onChange(next)}
+      onClick={() => onChange(!satellite)}
       aria-label={label}
       title={label}
       className="glass pointer-events-auto relative grid h-11 w-11 flex-none place-items-center rounded-full text-white/80 transition-colors hover:text-white"

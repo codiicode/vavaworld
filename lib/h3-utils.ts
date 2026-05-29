@@ -2,7 +2,11 @@ import { polygonToCells, cellToBoundary, cellToLatLng } from 'h3-js';
 import type { Feature, Polygon } from 'geojson';
 
 export const HEX_RES = 12 as const;
-const SAFETY_CAP = 20000;
+// Hard ceiling on cells painted per viewport. Paired with MIN_ZOOM_FOR_HEXES=16
+// in MapView (a z16 viewport is ~2k res-12 cells), so this is a safety net, not
+// the common path. Keeping it low means the worst-case synchronous polygonToCells
+// + GeoJSON build can never balloon into the 100ms+ stutter range.
+const SAFETY_CAP = 4000;
 
 export type Bbox = [west: number, south: number, east: number, north: number];
 

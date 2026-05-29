@@ -5,7 +5,7 @@ import type { MapRef } from 'react-map-gl/mapbox';
 import { MapView } from '@/components/MapView';
 import { GlassRightPanel } from '@/components/map/glass-right-panel';
 import { GlassSearchBar } from '@/components/map/glass-search-bar';
-import { MapStyleToggle, type MapStyleId } from '@/components/map/map-style-toggle';
+import { MapStyleToggle } from '@/components/map/map-style-toggle';
 import { MapZoomControls } from '@/components/map/map-zoom-controls';
 import { ClaimModal } from '@/components/ClaimModal';
 import { hexCenter } from '@/lib/h3-utils';
@@ -25,13 +25,13 @@ export default function Page() {
   // tap. Resets when the anchor is removed or the selection is cleared.
   const [seed, setSeed] = useState<string | null>(null);
   const [showClaim, setShowClaim] = useState(false);
-  const [mapStyle, setMapStyle] = useState<MapStyleId>(
-    'mapbox://styles/mapbox/satellite-streets-v12',
-  );
+  // Satellite is a raster overlay toggled on a single persistent base style -
+  // see MapView. Default on (matches the previous satellite-first view).
+  const [satellite, setSatellite] = useState(true);
   const mapRef = useRef<MapRef | null>(null);
   const refreshTilesRef = useRef<((h3s: string[]) => void) | null>(null);
 
-  const isSatellite = mapStyle === 'mapbox://styles/mapbox/satellite-streets-v12';
+  const isSatellite = satellite;
 
   // Wrapper that keeps the seed in sync with the selection. Any code that
   // changes selectedHexes goes through here so the seed transitions stay
@@ -119,7 +119,7 @@ export default function Page() {
           setSelectedHexes={setSelectedHexes}
           mapRef={mapRef}
           refreshTilesRef={refreshTilesRef}
-          mapStyle={mapStyle}
+          satellite={satellite}
         />
       </div>
 
@@ -146,7 +146,7 @@ export default function Page() {
         <div className="min-w-0 flex-1">
           <GlassSearchBar mapRef={mapRef} />
         </div>
-        <MapStyleToggle value={mapStyle} onChange={setMapStyle} />
+        <MapStyleToggle satellite={satellite} onChange={setSatellite} />
       </div>
 
       <GlassRightPanel

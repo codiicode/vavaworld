@@ -60,8 +60,20 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
     if (!h3) return;
     setLoading(true);
     load().finally(() => setLoading(false));
-    const t = window.setInterval(load, 5000); // live floor updates
-    return () => window.clearInterval(t);
+    // Live floor updates - but pause polling while the tab is hidden so a
+    // backgrounded map doesn't keep hammering /api/hex-floor every 5s.
+    const tick = () => {
+      if (!document.hidden) void load();
+    };
+    const t = window.setInterval(tick, 5000);
+    const onVis = () => {
+      if (!document.hidden) void load();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.clearInterval(t);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, [h3, load]);
 
   const claim = useCallback(async () => {

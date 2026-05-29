@@ -49,6 +49,10 @@ export function useTiles(visibleHexes: string[]): {
   const [tiles, setTiles] = useState<Cache>(new Map());
   const cacheRef = useRef<Cache>(new Map());
   const connRef = useRef<Connection>(getConnection());
+  // Monotonic token: panning fast queues several fetches against devnet. Only
+  // the newest may commit results - older awaits bail after each RPC batch so
+  // a slow stale response can't overwrite the current viewport's tiles.
+  const reqTokenRef = useRef(0);
 
   const fetchH3s = useCallback(async (h3s: string[]) => {
     if (h3s.length === 0) return;
@@ -57,11 +61,13 @@ export function useTiles(visibleHexes: string[]): {
     const toFetch = h3s.filter((h) => !cacheRef.current.has(h));
     if (toFetch.length === 0) return;
 
+    const myToken = ++reqTokenRef.current;
     const pdas = toFetch.map((h) => ({ h, pda: tilePda(h, programIdPk)[0] }));
 
     for (let i = 0; i < pdas.length; i += BATCH) {
       const slice = pdas.slice(i, i + BATCH);
       const accs = await conn.getMultipleAccountsInfo(slice.map((s) => s.pda));
+      if (reqTokenRef.current !== myToken) return; // superseded by a newer fetch
       slice.forEach((s, idx) => {
         const ai = accs[idx];
         if (!ai) {
