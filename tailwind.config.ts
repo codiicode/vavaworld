@@ -76,6 +76,10 @@ const config: Config = {
         'champion-spin': {
           to: { transform: 'rotate(360deg)' },
         },
+        marquee: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -83,6 +87,7 @@ const config: Config = {
         'champion-shimmer': 'champion-shimmer 5s ease-in-out infinite',
         'champion-aura': 'champion-aura 4s ease-in-out infinite',
         'champion-spin': 'champion-spin 9s linear infinite',
+        marquee: 'marquee 45s linear infinite',
       },
     },
   },

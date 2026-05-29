@@ -7,6 +7,7 @@ import { GlassRightPanel } from '@/components/map/glass-right-panel';
 import { GlassSearchBar } from '@/components/map/glass-search-bar';
 import { MapStyleToggle } from '@/components/map/map-style-toggle';
 import { MapZoomControls } from '@/components/map/map-zoom-controls';
+import { LiveClaimsFeed } from '@/components/map/live-claims-feed';
 import { ClaimModal } from '@/components/ClaimModal';
 import { hexCenter } from '@/lib/h3-utils';
 import { expandFromSeed } from '@/lib/hex-expand';
@@ -159,6 +160,8 @@ export default function Page() {
       />
 
       <MapZoomControls mapRef={mapRef} />
+
+      <LiveClaimsFeed />
 
       {showClaim && (
         <ClaimModal

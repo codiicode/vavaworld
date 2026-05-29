@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Globe, Hexagon } from 'lucide-react';
+import { ArrowLeft, Crown, Globe, Hexagon } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Flag } from '@/components/flag';
+import { Achievements } from '@/components/profile/achievements';
+import { ShareProfile } from '@/components/profile/share-profile';
 import { findUserByHandle, type MockUser } from '@/lib/mock-users';
 
 /**
@@ -36,7 +38,7 @@ export default function PublicProfilePage() {
       <div className="overflow-hidden rounded-2xl border border-white/40 bg-white/30 p-7 backdrop-blur-md">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-5">
-            <Avatar className="h-16 w-16">
+            <Avatar className="h-16 w-16 ring-2 ring-white/50">
               <AvatarFallback
                 className="text-base font-medium text-white"
                 style={{ background: gradientFromAddr(user.addr) }}
@@ -51,6 +53,12 @@ export default function PublicProfilePage() {
                   {display}
                 </h1>
                 <Flag code={user.country} size={18} />
+                {(user.presidentOf?.length ?? 0) > 0 && (
+                  <span className="flex items-center gap-1 rounded-full border border-amber-300/60 bg-gradient-to-br from-amber-300/40 to-orange-400/25 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-amber-700">
+                    <Crown size={11} className="fill-amber-400" />
+                    President
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-3 text-[11px] text-foreground/55">
                 <span className="font-mono">{user.addr}</span>
@@ -59,6 +67,8 @@ export default function PublicProfilePage() {
               </div>
             </div>
           </div>
+
+          <ShareProfile user={user} />
         </div>
 
         <div className="mt-6 grid grid-cols-3 gap-4 border-t border-white/30 pt-5">
@@ -74,6 +84,8 @@ export default function PublicProfilePage() {
           />
           <Stat label="$VAVA bonded" value={user.bondedVava.toLocaleString()} />
         </div>
+
+        <Achievements user={user} />
       </div>
 
       <p className="mt-6 text-center text-[11px] text-foreground/55">

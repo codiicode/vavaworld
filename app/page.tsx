@@ -3,6 +3,7 @@ import './landing.css';
 import { CloudField } from '@/components/landing/CloudField';
 import { SiteNav } from '@/components/landing/SiteNav';
 import { Hero } from '@/components/landing/Hero';
+import { LiveTicker } from '@/components/landing/LiveTicker';
 import { MapSection } from '@/components/landing/MapSection';
 import { Register } from '@/components/landing/Register';
 import { Door } from '@/components/landing/Door';
@@ -26,6 +27,7 @@ export default function LandingPage() {
       <CloudField />
       <SiteNav />
       <Hero />
+      <LiveTicker />
       <MapSection />
       <Register />
       <Door />
