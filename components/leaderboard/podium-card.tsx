@@ -3,7 +3,8 @@ import { BadgeCheck, Crown, Medal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Flag } from '@/components/flag';
 import { GradientAvatar } from '@/components/gradient-avatar';
-import type { LeaderboardEntry } from '@/lib/mock-leaderboard';
+import { fmtCompact } from '@/lib/format';
+import type { RowView, Scope } from '@/lib/mock-leaderboard';
 
 type Variant = 'gold' | 'silver' | 'bronze';
 
@@ -45,19 +46,24 @@ const VARIANT = {
  * top, then 2 (silver/bronze) or 3 (gold) stat tiles underneath.
  */
 export function PodiumCard({
-  entry,
+  row,
   variant,
+  scope,
   className,
 }: {
-  entry: LeaderboardEntry;
+  row: RowView;
   variant: Variant;
+  scope: Scope;
   className?: string;
 }) {
   const v = VARIANT[variant];
+  const { entry } = row;
   const handle = entry.username.replace(/^@/, '');
   const initial = handle[0]?.toUpperCase() ?? '?';
   const isGold = variant === 'gold';
   const isSilver = variant === 'silver';
+  const isWorldwide = scope === 'worldwide';
+  const president = !isWorldwide && row.isPresident;
 
   // Each variant gets its own scale of paddings, avatars, type.
   // Trimmed so the rest of the leaderboard is visible without scrolling.
@@ -88,7 +94,7 @@ export function PodiumCard({
               v.chip,
             )}
           >
-            {entry.rank}
+            {row.rank}
           </div>
           <span
             className={cn(
@@ -96,12 +102,14 @@ export function PodiumCard({
               v.labelColor,
             )}
           >
-            {v.label}
+            {president ? 'President' : v.label}
           </span>
         </div>
-        {isGold && <Crown size={15} strokeWidth={1.8} className="text-amber-500" />}
-        {isSilver && <Medal size={15} strokeWidth={1.8} className="text-slate-400" />}
-        {!isGold && !isSilver && (
+        {president ? (
+          <Crown size={15} strokeWidth={1.8} className="text-amber-500" />
+        ) : isSilver ? (
+          <Medal size={15} strokeWidth={1.8} className="text-slate-400" />
+        ) : (
           <Medal size={15} strokeWidth={1.8} className="text-amber-700" />
         )}
       </div>
@@ -126,9 +134,9 @@ export function PodiumCard({
             )}
           </div>
           <div className={cn('mt-0.5 flex items-center gap-1.5 text-foreground/65', hexesSize)}>
-            <Flag code={entry.country} size={isGold ? 16 : 13} />
+            <Flag code={isWorldwide ? entry.country : scope} size={isGold ? 16 : 13} />
             <span className="tabular-nums font-medium">
-              {entry.hexes.toLocaleString()} hexes
+              {row.hexes.toLocaleString()} hexes
             </span>
           </div>
         </div>
@@ -141,12 +149,15 @@ export function PodiumCard({
           isGold ? 'grid-cols-3' : isSilver ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
-        <Stat label="Value" value={`${entry.valueSOL} SOL`} big={isGold} />
-        {(isGold || isSilver) && (
-          <Stat label="Countries" value={String(entry.countries)} big={isGold} />
-        )}
+        <Stat label="Value" value={`${row.valueSOL.toFixed(1)} SOL`} big={isGold} />
+        {(isGold || isSilver) &&
+          (isWorldwide ? (
+            <Stat label="Countries" value={String(row.countries)} big={isGold} />
+          ) : (
+            <Stat label="Bonded" value={fmtCompact(row.bonded)} big={isGold} />
+          ))}
         {isGold && (
-          <Stat label="Bonded" value={`${(entry.bonded / 1_000_000).toFixed(2)}M`} big />
+          <Stat label="Bonded" value={`${(row.bonded / 1_000_000).toFixed(2)}M`} big />
         )}
       </div>
     </Link>

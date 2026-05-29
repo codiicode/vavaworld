@@ -37,6 +37,8 @@ export function LeaderboardFilters({
   filter: FilterKey;
   onFilterChange: (f: FilterKey) => void;
 }) {
+  // Countries / Volume have no per-country equivalent, so they're worldwide-only.
+  const isWorldwide = filter === 'worldwide';
   return (
     <div className="mb-6 grid max-w-2xl grid-cols-2 gap-4">
       <div>
@@ -50,9 +52,13 @@ export function LeaderboardFilters({
           <SelectContent className={CONTENT}>
             <SelectItem value="hexes">Most Hexes</SelectItem>
             <SelectItem value="bonded">Most $VAVA Bonded</SelectItem>
-            <SelectItem value="volume">Trading Volume (24h)</SelectItem>
             <SelectItem value="value">Portfolio Value</SelectItem>
-            <SelectItem value="countries">Most Countries</SelectItem>
+            {isWorldwide && (
+              <SelectItem value="volume">Trading Volume (24h)</SelectItem>
+            )}
+            {isWorldwide && (
+              <SelectItem value="countries">Most Countries</SelectItem>
+            )}
           </SelectContent>
         </Select>
       </div>

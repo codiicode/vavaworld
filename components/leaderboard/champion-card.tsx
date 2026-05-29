@@ -3,16 +3,29 @@ import { BadgeCheck, Crown } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Flag } from '@/components/flag';
 import { CountUp } from '@/components/count-up';
-import type { LeaderboardEntry } from '@/lib/mock-leaderboard';
+import { fmtCompact } from '@/lib/format';
+import type { RowView, Scope } from '@/lib/mock-leaderboard';
 
 /**
- * The #1 hero. Deliberately diverges from the silver/bronze PodiumCard so the
- * top spot reads as a trophy, not just a bigger tile: rotating gold border,
- * pulsing aura, a light sweep, a floating crown and gold-gradient name.
+ * The #1 hero. Diverges from the silver/bronze PodiumCard so the top spot
+ * reads as a trophy (rotating gold ring, pulsing aura, light sweep, floating
+ * crown, gold-gradient name). Stats are scope-resolved: worldwide shows the
+ * global flex; a country scope shows in-country holdings + the presidency.
  */
-export function ChampionCard({ entry }: { entry: LeaderboardEntry }) {
+export function ChampionCard({
+  row,
+  scope,
+  scopeName,
+}: {
+  row: RowView;
+  scope: Scope;
+  scopeName: string | null;
+}) {
+  const { entry } = row;
   const handle = entry.username.replace(/^@/, '');
   const initial = handle[0]?.toUpperCase() ?? '?';
+  const isWorldwide = scope === 'worldwide';
+  const president = !isWorldwide && row.isPresident;
 
   return (
     <div className="relative">
@@ -66,7 +79,7 @@ export function ChampionCard({ entry }: { entry: LeaderboardEntry }) {
                 <div className="flex items-center gap-1.5">
                   <Crown size={13} className="fill-amber-400 text-amber-500" />
                   <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700">
-                    Champion
+                    {president ? `President of ${scopeName}` : isWorldwide ? 'Champion' : `#1 in ${scopeName}`}
                   </span>
                 </div>
                 <div className="mt-1 flex items-center gap-2">
@@ -78,13 +91,15 @@ export function ChampionCard({ entry }: { entry: LeaderboardEntry }) {
                   )}
                 </div>
                 <div className="mt-1.5 flex items-center gap-1.5 text-sm text-foreground/70">
-                  <Flag code={entry.country} size={18} />
+                  <Flag code={isWorldwide ? entry.country : scope} size={18} />
                   <CountUp
-                    value={entry.hexes}
+                    value={row.hexes}
                     format={(n) => Math.round(n).toLocaleString()}
                     className="font-semibold tabular-nums text-foreground"
                   />
-                  <span className="text-foreground/60">hexes</span>
+                  <span className="text-foreground/60">
+                    {isWorldwide ? 'hexes' : `hexes in ${scopeName}`}
+                  </span>
                 </div>
               </div>
             </div>
@@ -93,17 +108,25 @@ export function ChampionCard({ entry }: { entry: LeaderboardEntry }) {
             <div className="grid flex-shrink-0 grid-cols-3 gap-6 border-t border-amber-200/50 pt-5 md:gap-9 md:border-l md:border-t-0 md:pl-9 md:pt-0">
               <ChampStat
                 label="Value"
-                value={entry.valueSOL}
+                value={row.valueSOL}
                 format={(n) => `${n.toFixed(1)} SOL`}
               />
-              <ChampStat
-                label="Countries"
-                value={entry.countries}
-                format={(n) => String(Math.round(n))}
-              />
+              {isWorldwide ? (
+                <ChampStat
+                  label="Countries"
+                  value={row.countries}
+                  format={(n) => String(Math.round(n))}
+                />
+              ) : (
+                <ChampStat
+                  label="Worldwide"
+                  value={entry.hexes}
+                  format={(n) => fmtCompact(Math.round(n))}
+                />
+              )}
               <ChampStat
                 label="Bonded"
-                value={entry.bonded}
+                value={row.bonded}
                 format={(n) => `${(n / 1_000_000).toFixed(2)}M`}
               />
             </div>
