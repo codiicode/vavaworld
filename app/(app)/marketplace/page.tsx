@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Flag } from '@/components/flag';
+import { CountrySelect } from '@/components/country-select';
 import { ListingGrid } from '@/components/marketplace/listing-grid';
 import {
   mockChipCounts,
@@ -19,7 +19,6 @@ import {
   type Listing,
   type Tier,
 } from '@/lib/mock-marketplace';
-import { COUNTRIES } from '@/lib/countries';
 import {
   useActiveListings,
   useListingsVersion,
@@ -159,22 +158,12 @@ export default function MarketplacePage() {
             className={`${TRIGGER} pl-9`}
           />
         </div>
-        <Select value={country} onValueChange={(v) => setCountry(v)}>
-          <SelectTrigger className={`${TRIGGER} sm:w-44`}>
-            <SelectValue placeholder="Country" />
-          </SelectTrigger>
-          <SelectContent className={CONTENT}>
-            <SelectItem value="all">All countries</SelectItem>
-            {COUNTRIES.map((c) => (
-              <SelectItem key={c.code} value={c.code}>
-                <span className="flex items-center gap-2">
-                  <Flag code={c.code} size={14} />
-                  {c.name}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CountrySelect
+          value={country}
+          onChange={setCountry}
+          allOption={{ value: 'all', label: 'All countries' }}
+          triggerClassName="sm:w-44"
+        />
         <Select
           value={String(tier)}
           onValueChange={(v) => setTier(v === 'all' ? 'all' : (Number(v) as Tier))}

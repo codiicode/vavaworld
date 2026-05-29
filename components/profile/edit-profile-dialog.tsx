@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Search, Upload, X } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,9 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { COUNTRIES, findCountry } from '@/lib/countries';
-import { Flag } from '@/components/flag';
+import { CountrySelect } from '@/components/country-select';
 import {
   upsertProfile,
   uploadAvatar,
@@ -202,7 +200,14 @@ export function EditProfileDialog({
 
           {/* Flag picker */}
           <Field label="Country">
-            <CountryPicker value={flagCode} onChange={setFlagCode} />
+            <CountrySelect
+              value={flagCode}
+              onChange={setFlagCode}
+              clearable
+              placeholder="No country"
+              triggerClassName="h-10 rounded-md border-border bg-background hover:bg-muted/50"
+              contentClassName="border-border bg-popover"
+            />
           </Field>
 
           {/* Bio */}
@@ -263,108 +268,3 @@ function Field({
   );
 }
 
-function CountryPicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-
-  const selected = findCountry(value);
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return COUNTRIES;
-    return COUNTRIES.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.code.includes(q),
-    );
-  }, [search]);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="flex h-10 w-full items-center justify-between rounded-md border border-border bg-background px-3 text-left text-sm transition-colors hover:bg-muted/50"
-        >
-          {selected ? (
-            <span className="flex items-center gap-2">
-              <Flag code={selected.code} size={15} />
-              <span>{selected.name}</span>
-            </span>
-          ) : (
-            <span className="text-muted-foreground">No country</span>
-          )}
-          <span className="flex items-center gap-1">
-            {selected && (
-              <span
-                role="button"
-                tabIndex={0}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange('');
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onChange('');
-                  }
-                }}
-                className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                aria-label="Clear country"
-              >
-                <X size={12} />
-              </span>
-            )}
-          </span>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <div className="flex items-center gap-2 border-b border-border px-3">
-          <Search size={14} className="text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search countries…"
-            className="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
-          />
-        </div>
-        <div className="max-h-72 overflow-y-auto overscroll-contain">
-          <div className="p-1">
-            {filtered.length === 0 && (
-              <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-                No countries match.
-              </p>
-            )}
-            {filtered.map((c) => {
-              const isSelected = c.code === value;
-              return (
-                <button
-                  key={c.code}
-                  type="button"
-                  onClick={() => {
-                    onChange(c.code);
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    'flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted',
-                    isSelected && 'bg-muted',
-                  )}
-                >
-                  <span className="flex items-center gap-2">
-                    <Flag code={c.code} size={15} />
-                    <span>{c.name}</span>
-                  </span>
-                  {isSelected && <Check size={12} className="text-primary" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
