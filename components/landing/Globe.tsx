@@ -6,6 +6,7 @@ import { feature } from 'topojson-client';
 import type { Feature, FeatureCollection } from 'geojson';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { CITIES, type City } from './landing-cities';
+import { subscribeClaimPings } from '@/lib/claim-pings';
 
 /**
  * Orthographic globe rendered to canvas at 1400x1400 (downscaled by CSS).
@@ -63,6 +64,15 @@ export function Globe() {
     }
 
     function pickCity() { return CITIES[Math.floor(Math.random() * CITIES.length)]; }
+
+    // Live claim flashes - a hex was just bought somewhere, light up that exact
+    // spot. Fed by the shared ping stream (Supabase Realtime + local + mock).
+    type Flash = { lon: number; lat: number; t: number };
+    const flashes: Flash[] = [];
+    const FLASH_TTL = 2.3;
+    const unsubPings = subscribeClaimPings((p) => {
+      if (flashes.length < 40) flashes.push({ lon: p.lon, lat: p.lat, t: 0 });
+    });
 
     function isVisible(lon: number, lat: number) {
       const rot = projection.rotate();
@@ -213,6 +223,33 @@ export function Globe() {
         while (b === a) b = pickCity();
         arcQueue.push({ a, b, t: 0, dur: 1.9 + Math.random() * 0.5 });
       }
+
+      // Claim flashes on top: expanding teal ring + glowing core, only while
+      // the spot is on the near hemisphere (rotates away naturally).
+      for (let i = flashes.length - 1; i >= 0; i--) {
+        const fl = flashes[i];
+        fl.t += dt;
+        const prog = fl.t / FLASH_TTL;
+        if (prog >= 1) { flashes.splice(i, 1); continue; }
+        if (!isVisible(fl.lon, fl.lat)) continue;
+        const fp = projection([fl.lon, fl.lat]);
+        if (!fp) continue;
+        const [fx, fy] = fp;
+        ctx.beginPath();
+        ctx.arc(fx, fy, 5 + prog * 30, 0, Math.PI * 2);
+        ctx.lineWidth = 2.4;
+        ctx.strokeStyle = `rgba(20,184,166,${Math.max(0, 0.9 * (1 - prog))})`;
+        ctx.stroke();
+        const coreA = Math.max(0, 1 - prog * 0.85);
+        ctx.beginPath();
+        ctx.arc(fx, fy, 6.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(45,212,191,${coreA})`;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(fx, fy, 2.6, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${coreA})`;
+        ctx.fill();
+      }
     }
 
     let last = performance.now();
@@ -245,6 +282,7 @@ export function Globe() {
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
+      unsubPings();
       wrap.removeEventListener('mousedown', onDown);
       window.removeEventListener('mouseup', onUp);
       window.removeEventListener('mousemove', onMove);
