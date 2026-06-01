@@ -1,12 +1,15 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import * as d3 from 'd3-geo';
 import { feature } from 'topojson-client';
+import { latLngToCell } from 'h3-js';
 import type { Feature, FeatureCollection } from 'geojson';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { CITIES, type City } from './landing-cities';
 import { subscribeClaimPings, type ClaimPing } from '@/lib/claim-pings';
+import { HEX_RES } from '@/lib/h3-utils';
 
 /**
  * Orthographic globe rendered to canvas at 1400x1400 (downscaled by CSS).
@@ -18,6 +21,7 @@ type WorldTopo = Topology<{ land: GeometryCollection; countries: GeometryCollect
 export function Globe() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -378,7 +382,7 @@ export function Globe() {
         }
       }
       hovered = cand;
-      if (canvas) canvas.style.cursor = hovered ? 'pointer' : '';
+      if (canvas) canvas.style.cursor = hovered ? 'pointer' : dragging ? 'grabbing' : 'grab';
       // 3. Retire expired flashes (never the frozen/hovered one).
       for (let i = flashes.length - 1; i >= 0; i--) {
         if (flashes[i] !== hovered && flashes[i].t / FLASH_TTL >= 1) flashes.splice(i, 1);
@@ -443,17 +447,52 @@ export function Globe() {
     }
     raf = requestAnimationFrame(loop);
 
+    // Click-vs-drag: track the press origin + total travel. A release with
+    // little travel is a "click" and opens the map at that spot (the globe is
+    // a portal); anything beyond the threshold is a rotate gesture.
+    let downAt: { x: number; y: number } | null = null;
+    let travel = 0;
+    const CLICK_SLOP = 6;
+
+    const navigateToSpot = () => {
+      // Prefer a hovered claim marker (exact hex); otherwise invert the pointer
+      // position to a lon/lat on the sphere and snap to the res-12 cell there.
+      if (hovered) {
+        const h3 = latLngToCell(hovered.lat, hovered.lon, HEX_RES);
+        router.push(`/map#${h3}`);
+        return;
+      }
+      if (pointer) {
+        const inv = projection.invert?.([pointer.x, pointer.y]);
+        if (inv && Number.isFinite(inv[0]) && Number.isFinite(inv[1])) {
+          const h3 = latLngToCell(inv[1], inv[0], HEX_RES);
+          router.push(`/map#${h3}`);
+          return;
+        }
+      }
+      router.push('/map');
+    };
+
     const onDown = (e: MouseEvent) => {
       dragging = true;
       dragLast = { x: e.clientX, y: e.clientY };
+      downAt = { x: e.clientX, y: e.clientY };
+      travel = 0;
     };
-    const onUp = () => { dragging = false; };
+    const onUp = () => {
+      dragging = false;
+      if (downAt && travel <= CLICK_SLOP) navigateToSpot();
+      downAt = null;
+    };
     const onMove = (e: MouseEvent) => {
       if (!dragging || !dragLast) return;
       // Horizontal drag spins longitude, vertical drag tilts latitude - so the
       // globe can be turned any direction (up/down/diagonal), not just sideways.
-      lambda = (lambda + (e.clientX - dragLast.x) * 0.4) % 360;
-      tilt = Math.max(-89, Math.min(89, tilt + (e.clientY - dragLast.y) * 0.4));
+      const dx = e.clientX - dragLast.x;
+      const dy = e.clientY - dragLast.y;
+      travel += Math.abs(dx) + Math.abs(dy);
+      lambda = (lambda + dx * 0.4) % 360;
+      tilt = Math.max(-89, Math.min(89, tilt + dy * 0.4));
       dragLast = { x: e.clientX, y: e.clientY };
     };
     // Track the pointer in canvas-internal coords for flash hover-testing.

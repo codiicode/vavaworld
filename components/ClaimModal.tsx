@@ -5,6 +5,7 @@ import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { useActiveWallet } from '@/lib/active-wallet';
+import { useUserProfile } from '@/lib/use-user-profile';
 import { useHexLocations } from '@/lib/use-hex-locations';
 import { useCountryCounts } from '@/lib/use-country-counts';
 import { getConnection } from '@/lib/anchor-client';
@@ -41,6 +42,7 @@ export function ClaimModal({
   onConfirmed: (h3s: string[]) => void;
 }) {
   const wallet = useActiveWallet();
+  const profile = useUserProfile();
   const locations = useHexLocations(selectedHexes);
   const [state, setState] = useState<State>('review');
   const [errorMsg, setErrorMsg] = useState<string>('');
@@ -69,6 +71,37 @@ export function ClaimModal({
   const totalUsd = perItemUsd.reduce((s, u) => s + u, 0);
   const totalLamports = usdToLamports(totalUsd);
   const totalSol = Number(totalLamports) / 1_000_000_000;
+
+  // Shareable reveal link - built from the primary (first) hex's location.
+  const buildShareUrl = (): string => {
+    const first = items[0];
+    const loc = first ? locations.get(first.h3) : undefined;
+    const center = first ? hexCenter(first.h3) : { lat: 0, lng: 0 };
+    const by = profile.username ?? (wallet.publicKey ? wallet.publicKey.toBase58() : 'someone');
+    const params = new URLSearchParams({
+      by,
+      place: loc?.place ?? loc?.countryName ?? 'the map',
+      country: loc?.countryCode ?? '',
+      lat: center.lat.toFixed(4),
+      lon: center.lng.toFixed(4),
+      n: String(items.length),
+      sol: totalSol.toFixed(totalSol < 0.01 ? 5 : 3),
+    });
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://vavaworld.fun';
+    return `${origin}/c?${params.toString()}`;
+  };
+
+  const shareOnX = () => {
+    const url = buildShareUrl();
+    const first = items[0];
+    const loc = first ? locations.get(first.h3) : undefined;
+    const where = loc?.place ?? loc?.countryName ?? 'the map';
+    const text = `I just claimed ${items.length} hex${items.length === 1 ? '' : 'es'} in ${where} on vavaworld 🌍 Hold your ground:`;
+    const u = new URL('https://twitter.com/intent/tweet');
+    u.searchParams.set('text', text);
+    u.searchParams.set('url', url);
+    window.open(u.toString(), '_blank', 'noopener,noreferrer');
+  };
 
   const handleConfirm = async () => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
@@ -307,15 +340,32 @@ export function ClaimModal({
                 View on Solscan →
               </a>
             </div>
-            <button
-              onClick={onClose}
-              className="w-full py-3 transition-colors"
-              style={ghostBtn}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink)')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
-            >
-              Close
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-3 transition-colors"
+                style={ghostBtn}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
+              >
+                Close
+              </button>
+              <button
+                onClick={shareOnX}
+                className="flex-1 py-3 transition-all"
+                style={primaryBtn}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--signal-deep)';
+                  e.currentTarget.style.borderColor = 'var(--signal-deep)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--signal)';
+                  e.currentTarget.style.borderColor = 'var(--signal)';
+                }}
+              >
+                Share your claim
+              </button>
+            </div>
           </>
         )}
 
