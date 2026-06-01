@@ -78,7 +78,12 @@ export function Globe() {
       vis: boolean;
     };
     const flashes: Flash[] = [];
-    const FLASH_TTL = 2.3;
+    // A claim stays pinned on the globe for a full minute. PING_DUR is just the
+    // short intro pulse (expanding ring); after that the marker + card hold
+    // steady until the last FADE_OUT seconds, then fade away.
+    const FLASH_TTL = 60;
+    const PING_DUR = 2.0;
+    const FADE_OUT = 2.0;
     const unsubPings = subscribeClaimPings((p) => {
       if (flashes.length < 40) flashes.push({ lon: p.lon, lat: p.lat, t: 0, meta: p, sx: 0, sy: 0, vis: false });
     });
@@ -376,20 +381,31 @@ export function Globe() {
       for (let i = flashes.length - 1; i >= 0; i--) {
         if (flashes[i] !== hovered && flashes[i].t / FLASH_TTL >= 1) flashes.splice(i, 1);
       }
-      // 4. Ring + core for every alive, visible flash. The hovered one holds a
-      //    steady highlighted ring instead of expanding.
+      // 4. Ring + core for every alive, visible flash. A one-shot intro ring
+      //    expands over PING_DUR; the marker dot then stays put for the whole
+      //    minute and only the closing FADE_OUT dims it.
       for (const fl of flashes) {
         if (!fl.vis) continue;
-        const prog = Math.min(1, fl.t / FLASH_TTL);
         const isHov = fl === hovered;
+        const ping = Math.min(1, fl.t / PING_DUR); // 0→1 intro
+        const lifeFade = isHov ? 1 : Math.max(0, Math.min(1, (FLASH_TTL - fl.t) / FADE_OUT));
+        // Expanding intro ring (only during the first PING_DUR seconds).
+        if (ping < 1 && !isHov) {
+          ctx.beginPath();
+          ctx.arc(fl.sx, fl.sy, 5 + ping * 30, 0, Math.PI * 2);
+          ctx.lineWidth = 2.4;
+          ctx.strokeStyle = `rgba(20,184,166,${Math.max(0, 0.9 * (1 - ping))})`;
+          ctx.stroke();
+        }
+        // Steady marker ring - thin halo that persists, brighter when hovered.
         ctx.beginPath();
-        ctx.arc(fl.sx, fl.sy, isHov ? 13 : 5 + prog * 30, 0, Math.PI * 2);
-        ctx.lineWidth = 2.4;
+        ctx.arc(fl.sx, fl.sy, isHov ? 13 : 10, 0, Math.PI * 2);
+        ctx.lineWidth = isHov ? 2.4 : 1.6;
         ctx.strokeStyle = isHov
           ? 'rgba(45,212,191,0.95)'
-          : `rgba(20,184,166,${Math.max(0, 0.9 * (1 - prog))})`;
+          : `rgba(45,212,191,${0.55 * lifeFade})`;
         ctx.stroke();
-        const coreA = isHov ? 1 : Math.max(0, 1 - prog * 0.85);
+        const coreA = isHov ? 1 : lifeFade;
         ctx.beginPath();
         ctx.arc(fl.sx, fl.sy, 6.5, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(45,212,191,${coreA})`;
@@ -399,12 +415,14 @@ export function Globe() {
         ctx.fillStyle = `rgba(255,255,255,${coreA})`;
         ctx.fill();
       }
-      // 5. Cards: a compact pill for each live flash, the expanded detail card
-      //    for the hovered one (drawn last so it sits on top).
+      // 5. Cards: a compact pill for each live flash (held the whole minute,
+      //    fading only at the very end), the expanded detail card for the
+      //    hovered one (drawn last so it sits on top).
       for (const fl of flashes) {
         if (!fl.vis || fl === hovered) continue;
-        const prog = Math.min(1, fl.t / FLASH_TTL);
-        const a = Math.min(1, fl.t / 0.12) * (prog < 0.8 ? 1 : Math.max(0, (1 - prog) / 0.2));
+        const inA = Math.min(1, fl.t / 0.18);
+        const outA = Math.max(0, Math.min(1, (FLASH_TTL - fl.t) / FADE_OUT));
+        const a = inA * outA;
         if (a > 0.02) drawCard(fl, false, a);
       }
       if (hovered && hovered.vis) drawCard(hovered, true, 1);
