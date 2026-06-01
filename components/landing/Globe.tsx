@@ -52,7 +52,9 @@ export function Globe() {
     let lambda = 0;
     let dragging = false;
     let dragLast: { x: number; y: number } | null = null;
-    const TILT = -14;
+    // Vertical rotation (latitude tilt). Drag changes it freely; clamped so the
+    // poles can be brought into view but the globe never flips upside down.
+    let tilt = -14;
 
     type Arc = { a: City; b: City; t: number; dur: number };
     const arcQueue: Arc[] = [];
@@ -250,7 +252,7 @@ export function Globe() {
     function drawScene(dt: number) {
       if (!ctx) return;
       ctx.clearRect(0, 0, W, H);
-      projection.rotate([lambda, TILT, 0]);
+      projection.rotate([lambda, tilt, 0]);
 
       ctx.beginPath();
       path({ type: 'Sphere' });
@@ -448,7 +450,10 @@ export function Globe() {
     const onUp = () => { dragging = false; };
     const onMove = (e: MouseEvent) => {
       if (!dragging || !dragLast) return;
+      // Horizontal drag spins longitude, vertical drag tilts latitude - so the
+      // globe can be turned any direction (up/down/diagonal), not just sideways.
       lambda = (lambda + (e.clientX - dragLast.x) * 0.4) % 360;
+      tilt = Math.max(-89, Math.min(89, tilt + (e.clientY - dragLast.y) * 0.4));
       dragLast = { x: e.clientX, y: e.clientY };
     };
     // Track the pointer in canvas-internal coords for flash hover-testing.
