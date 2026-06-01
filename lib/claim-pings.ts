@@ -16,8 +16,41 @@ import { CITIES } from '@/components/landing/landing-cities';
  * The globe subscribes imperatively (canvas loop), so this is a tiny pub/sub
  * rather than React state.
  */
-export type ClaimPing = { lon: number; lat: number };
+export type ClaimPing = {
+  lon: number;
+  lat: number;
+  // Optional metadata for the globe's hover card. Mock + local claims fill it
+  // in; Realtime fills what the row exposes (owner, price).
+  handle?: string;
+  city?: string;
+  hexes?: number;
+  priceSol?: number;
+};
 type Cb = (p: ClaimPing) => void;
+
+const HANDLES = [
+  'vavaqueen', 'tokyodrift', 'brooklyn', 'marais', 'paulista', 'whale',
+  'gangnam', 'jordaan', 'nordicwhale', 'pixel_baron', 'frostbyte', 'maptiger',
+  'aurora', 'kbh_kim', 'shibuyaSam', 'lisbon_lu',
+];
+
+/** A believable mock claim near city `i` - jittered position + plausible meta. */
+function mockPing(i: number): ClaimPing {
+  const c = CITIES[i];
+  const hexes = 1 + Math.floor(Math.random() * 12);
+  return {
+    lon: c.lon + (Math.random() - 0.5) * 2.5,
+    lat: c.lat + (Math.random() - 0.5) * 2.5,
+    city: c.name,
+    handle: HANDLES[(i * 7 + 3) % HANDLES.length],
+    hexes,
+    priceSol: +(0.04 + Math.random() * 2.2).toFixed(2),
+  };
+}
+
+function shortAddr(addr: string) {
+  return addr.length > 9 ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : addr;
+}
 
 const subs = new Set<Cb>();
 let started = false;
@@ -29,10 +62,10 @@ function emit(p: ClaimPing) {
   subs.forEach((cb) => cb(p));
 }
 
-function pingFromH3(h3: string) {
+function pingFromH3(h3: string, extra?: Partial<ClaimPing>) {
   try {
     const [lat, lon] = cellToLatLng(h3);
-    emit({ lon, lat });
+    emit({ lon, lat, ...extra });
   } catch {
     /* invalid cell - skip */
   }
@@ -47,8 +80,7 @@ function start() {
   mockTimer = window.setInterval(() => {
     if (document.hidden) return;
     i = (i * 7 + 3) % CITIES.length;
-    const c = CITIES[i];
-    emit({ lon: c.lon + (Math.random() - 0.5) * 2.5, lat: c.lat + (Math.random() - 0.5) * 2.5 });
+    emit(mockPing(i));
   }, 3500);
 
   // Real cross-user claims.
@@ -60,8 +92,17 @@ function start() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'hexes' },
         (payload) => {
-          const h3 = (payload.new as { h3_id?: string })?.h3_id;
-          if (h3) pingFromH3(h3);
+          const row = payload.new as { h3_id?: string; owner?: string; purchase_price?: number };
+          if (!row?.h3_id) return;
+          // purchase_price unit is unknown across envs - treat large values as lamports.
+          const raw = row.purchase_price;
+          const priceSol =
+            typeof raw === 'number' ? (raw > 1e6 ? raw / 1e9 : raw) : undefined;
+          pingFromH3(row.h3_id, {
+            handle: row.owner ? shortAddr(row.owner) : undefined,
+            hexes: 1,
+            priceSol: priceSol != null ? +priceSol.toFixed(2) : undefined,
+          });
         },
       )
       .subscribe();
@@ -70,7 +111,8 @@ function start() {
   // The local buyer's own claim (same tab) for instant feedback.
   onLocal = (e: Event) => {
     const detail = (e as CustomEvent<{ h3s?: string[] }>).detail;
-    (detail?.h3s ?? []).forEach(pingFromH3);
+    const h3s = detail?.h3s ?? [];
+    h3s.forEach((h3) => pingFromH3(h3, { handle: 'you', hexes: h3s.length }));
   };
   window.addEventListener('vavaworld:claim-done', onLocal);
 }

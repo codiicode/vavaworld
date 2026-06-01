@@ -440,15 +440,15 @@
 }
 
 /* ── MAP / GLOBE ─────────────────────────── */
-.landing-root .l-map-sec { position: relative; z-index: 1; padding: 120px 0 100px; }
+.landing-root .l-map-sec { position: relative; z-index: 1; padding: 56px 0 88px; }
 .landing-root .l-map-inner {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 48px;
-  display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  gap: 64px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 36px;
 }
 .landing-root .l-map-text .l-eyebrow-text {
   font-family: var(--font-manrope), "Inter", sans-serif;
@@ -514,6 +514,9 @@
 .landing-root .l-globe-wrap {
   position: relative;
   aspect-ratio: 1/1;
+  width: 100%;
+  max-width: min(86vmin, 900px);
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -837,7 +840,7 @@
 @media (max-width: 1000px) {
   .landing-root .l-nav-links { display: none; }
   .landing-root .l-map-inner { grid-template-columns: 1fr; gap: 40px; }
-  .landing-root .l-globe-wrap { aspect-ratio: 1/1; max-width: 560px; margin: 0 auto; }
+  .landing-root .l-globe-wrap { aspect-ratio: 1/1; max-width: min(90vmin, 640px); margin: 0 auto; }
   .landing-root .l-reg-grid { grid-template-columns: 1fr; }
   .landing-root .l-reg-col { border-right: 0; border-bottom: 1px solid var(--l-hair-2); }
   .landing-root .l-reg-col:last-child { border-bottom: 0; }
