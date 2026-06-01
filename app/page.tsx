@@ -5,7 +5,6 @@ import { SiteNav } from '@/components/landing/SiteNav';
 import { Hero } from '@/components/landing/Hero';
 import { LiveTicker } from '@/components/landing/LiveTicker';
 import { MapSection } from '@/components/landing/MapSection';
-import { Register } from '@/components/landing/Register';
 import { Door } from '@/components/landing/Door';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { SiteFooter } from '@/components/landing/SiteFooter';
@@ -29,7 +28,6 @@ export default function LandingPage() {
       <Hero />
       <LiveTicker />
       <MapSection />
-      <Register />
       <Door />
       <HowItWorks />
       <SiteFooter />
