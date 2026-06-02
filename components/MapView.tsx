@@ -84,22 +84,31 @@ const MAP_STYLE = 'mapbox://styles/mapbox/standard';
 // clicked cell is always the exact claimable cell.
 const MIN_ZOOM_FOR_HEXES = 16;
 
-// Cap the resolution mapbox renders at. The map paints clientW*clientH*dpr^2
-// pixels per frame, so a hi-DPI / large screen (e.g. a retina laptop at dpr 2,
-// or a 4K monitor at 150% scale) renders 4-8x the pixels of a small laptop and
-// the GPU fill-rate collapses - the "fast on my laptop, JÄTTESEGT on the big
-// screen" report. Satellite imagery is lossy enough that beyond ~1.5x the extra
-// pixels buy little visible sharpness. We override the *JS* devicePixelRatio
-// value mapbox reads when sizing its canvas; this does NOT affect how the
-// browser rasterises CSS/text (those use the real hardware dpr independently),
-// so the rest of the UI stays crisp. Lower MAX_PIXEL_RATIO toward 1 for more
-// speed on very large screens.
-const MAX_PIXEL_RATIO = 1.5;
-if (typeof window !== 'undefined' && window.devicePixelRatio > MAX_PIXEL_RATIO) {
+// Render the map to a fixed PIXEL BUDGET rather than the screen's native
+// resolution. The map paints clientW*clientH*dpr^2 pixels per frame, so a big
+// or hi-DPI screen (retina laptop at dpr 2, OR a 4K monitor at dpr 1) paints
+// 4-8x the pixels of a small laptop and GPU fill-rate collapses - the "fast on
+// my laptop, JÄTTESEGT on the big screen" report. A fixed dpr cap doesn't help
+// a dpr-1 4K monitor (already at 1), so instead we target a constant rendered
+// buffer (~PIXEL_BUDGET): small screens are untouched (their budget ratio >=
+// real dpr), large/hi-DPI screens scale down proportionally, with a floor so
+// satellite never gets too soft. We override the *JS* devicePixelRatio mapbox
+// reads when sizing its canvas; recomputed per read so it adapts to resizes and
+// monitor moves. This does NOT affect CSS/text (those use the real hardware
+// dpr independently), so the rest of the UI stays crisp. Tune PIXEL_BUDGET
+// down for more speed, RATIO_FLOOR up for more sharpness.
+const PIXEL_BUDGET = 2_500_000; // ~2.5 MP target render buffer
+const RATIO_FLOOR = 0.75;
+if (typeof window !== 'undefined') {
+  const realDpr = window.devicePixelRatio || 1;
   try {
     Object.defineProperty(window, 'devicePixelRatio', {
       configurable: true,
-      get: () => MAX_PIXEL_RATIO,
+      get: () => {
+        const area = (window.innerWidth || 1) * (window.innerHeight || 1);
+        const budgetRatio = Math.sqrt(PIXEL_BUDGET / area);
+        return Math.max(RATIO_FLOOR, Math.min(realDpr, budgetRatio));
+      },
     });
   } catch {
     /* non-configurable in some envs - nothing we can do, leave as-is */
