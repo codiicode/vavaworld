@@ -18,7 +18,7 @@ export function ShareProfile({ user }: { user: MockUser }) {
 
   const text =
     `${name} owns ${user.hexes.toLocaleString()} hexes across ${user.countries} ` +
-    `countries on vavaworld 🌍${user.presidentOf?.length ? ` · President of ${user.presidentOf.map((c) => c.toUpperCase()).join(', ')}` : ''}`;
+    `countries on VavaWorld 🌍${user.presidentOf?.length ? ` · President of ${user.presidentOf.map((c) => c.toUpperCase()).join(', ')}` : ''}`;
 
   const shareX = () => {
     const u = new URL('https://twitter.com/intent/tweet');

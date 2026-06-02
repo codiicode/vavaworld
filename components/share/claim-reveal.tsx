@@ -193,7 +193,7 @@ export function ClaimReveal({ claim }: { claim: ClaimShare }) {
             href="/"
             className="rounded-full border border-white/30 px-6 py-3 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
           >
-            What is vavaworld?
+            What is VavaWorld?
           </Link>
         </div>
       </div>

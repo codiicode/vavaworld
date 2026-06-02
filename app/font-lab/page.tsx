@@ -94,7 +94,7 @@ export default function FontLabPage() {
             Welcome back, Leo
           </h1>
           <p className="mt-1.5 max-w-xl text-sm text-foreground/70">
-            Your hex holdings and value across vavaworld. The oldest currency in
+            Your hex holdings and value across VavaWorld. The oldest currency in
             human history - now digital.
           </p>
         </Section>
@@ -227,7 +227,7 @@ export default function FontLabPage() {
         <Section label="Body / long-form copy">
           <div className="max-w-3xl space-y-3 text-[15px] leading-relaxed text-foreground/80">
             <p>
-              Vavaworld divides the surface of the earth into one hundred million
+              VavaWorld divides the surface of the earth into one hundred million
               hexagonal cells. Each cell is held by exactly one person - in their
               name, without expiry. The register fills only once.
             </p>

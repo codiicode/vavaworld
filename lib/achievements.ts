@@ -38,7 +38,7 @@ export function achievementsFor(u: MockUser): Achievement[] {
     out.push({
       id: 'founder',
       label: 'Founding Citizen',
-      description: 'Claimed land in the earliest days of vavaworld',
+      description: 'Claimed land in the earliest days of VavaWorld',
       icon: 'sparkles',
       gold: true,
     });

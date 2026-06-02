@@ -8,7 +8,7 @@ export function SiteFooter() {
         <div className="l-foot-brand">
           <div className="l-brand l-dark">
             <span className="l-mark"><BrandLogo size={34} /></span>
-            <span className="l-name">Vavaworld</span>
+            <span className="l-name">VavaWorld</span>
           </div>
           <p>A permanent record of the earth, divided by hand into one hundred million parts.</p>
         </div>

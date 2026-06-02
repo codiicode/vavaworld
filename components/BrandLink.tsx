@@ -28,7 +28,7 @@ export function BrandLink({ onDark = false }: { onDark?: boolean }) {
           color,
         }}
       >
-        VAVAWORLD
+        VavaWorld
       </span>
     </Link>
   );

@@ -81,7 +81,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
           className="text-[11px] tracking-[0.02em] text-white"
           style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
         >
-          VAVAWORLD
+          VavaWorld
         </span>
       </Link>
 
@@ -226,7 +226,7 @@ export function MobileNav() {
             className="text-[11px] tracking-[0.02em] text-white"
             style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
           >
-            VAVAWORLD
+            VavaWorld
           </span>
         </Link>
         <button

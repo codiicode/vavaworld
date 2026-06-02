@@ -96,7 +96,7 @@ export function ClaimModal({
     const first = items[0];
     const loc = first ? locations.get(first.h3) : undefined;
     const where = loc?.place ?? loc?.countryName ?? 'the map';
-    const text = `I just claimed ${items.length} hex${items.length === 1 ? '' : 'es'} in ${where} on vavaworld 🌍 Hold your ground:`;
+    const text = `I just claimed ${items.length} hex${items.length === 1 ? '' : 'es'} in ${where} on VavaWorld 🌍 Hold your ground:`;
     const u = new URL('https://twitter.com/intent/tweet');
     u.searchParams.set('text', text);
     u.searchParams.set('url', url);

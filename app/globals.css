@@ -66,7 +66,7 @@
 
     /* ─────────────────────────────────────────────────────────
        Glass system - canonical tokens from the design handoff
-       (handoff: VAVAWORLD - Premium Glass UI, balanced preset).
+       (handoff: VavaWorld - Premium Glass UI, balanced preset).
        Used by .glass primitive + AppSidebar, /map overlays, etc.
        ───────────────────────────────────────────────────────── */
     --tint-r: 255; --tint-g: 255; --tint-b: 255;

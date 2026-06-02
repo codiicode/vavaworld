@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 import { findUserByHandle } from '@/lib/mock-users';
 
 export const runtime = 'edge';
-export const alt = 'vavaworld player profile';
+export const alt = 'VavaWorld player profile';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -63,7 +63,7 @@ export default async function Image({ params }: { params: { handle: string } }) 
         {/* Top: wordmark */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 30, fontWeight: 800, letterSpacing: 6, color: '#ffffff' }}>
-            VAVAWORLD
+            VavaWorld
           </span>
           <span style={{ fontSize: 24, color: '#5eead4', letterSpacing: 2 }}>vavaworld.fun</span>
         </div>

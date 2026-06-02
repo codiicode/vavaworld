@@ -73,7 +73,7 @@ export default function StakingPage() {
           </div>
           <p className="text-sm leading-relaxed text-foreground/75">
             Staking turns the land economy into something everyone in
-            VAVAWORLD shares. Even people who don&apos;t own hexes can earn
+            VavaWorld shares. Even people who don&apos;t own hexes can earn
             from the growth of a country by bonding $VAVA against it - and
             people who do own land get rewarded for backing the place
             they&apos;ve already invested in.

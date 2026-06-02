@@ -30,7 +30,7 @@ export function Hero() {
         </h1>
         <div className="l-row">
           <p className="l-lead">
-            Vavaworld divides the surface of the earth into one hundred million hexagonal cells.
+            VavaWorld divides the surface of the earth into one hundred million hexagonal cells.
             Each cell is held by exactly one person - in their name, without expiry.
           </p>
           <div className="l-ctas">

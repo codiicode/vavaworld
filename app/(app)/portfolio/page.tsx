@@ -163,7 +163,7 @@ export default function PortfolioPage() {
             Welcome back, {displayName}
           </h1>
           <p className="mt-1 text-sm text-foreground/70">
-            Your hex holdings and value across vavaworld
+            Your hex holdings and value across VavaWorld
           </p>
         </div>
         <Link

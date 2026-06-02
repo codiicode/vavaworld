@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 /**
- * VAVAWORLD mark - white, alpha-transparent PNG (public/logga transparent.png).
+ * VavaWorld mark - white, alpha-transparent PNG (public/logga transparent.png).
  *
  * Background-free, cut tight to the mark - no backdrop. Rendered `contain` in a
  * square box so it sits cleanly on any surface. Used globally (landing nav +
@@ -16,7 +16,7 @@ export function BrandLogo({
   return (
     <img
       src="/logga transparent.png"
-      alt="VAVAWORLD"
+      alt="VavaWorld"
       width={size}
       height={size}
       style={{

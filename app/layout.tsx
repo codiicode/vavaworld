@@ -7,24 +7,24 @@ import { Providers } from './providers';
 export const metadata: Metadata = {
   metadataBase: new URL('https://vavaworld.fun'),
   title: {
-    default: '$VAVA · vavaworld',
-    template: '%s · vavaworld',
+    default: '$VAVA · VavaWorld',
+    template: '%s · VavaWorld',
   },
   description:
-    'Claim hexes on a live world map. Buy, sell, and trade pieces of the earth on vavaworld.',
-  applicationName: 'vavaworld',
+    'Claim hexes on a live world map. Buy, sell, and trade pieces of the earth on VavaWorld.',
+  applicationName: 'VavaWorld',
   openGraph: {
     type: 'website',
-    siteName: 'vavaworld',
-    title: '$VAVA · vavaworld',
+    siteName: 'VavaWorld',
+    title: '$VAVA · VavaWorld',
     description:
       'Claim hexes on a live world map. Buy, sell, and trade pieces of the earth.',
     url: 'https://vavaworld.fun',
-    images: [{ url: '/logo.jpg', width: 1200, height: 630, alt: 'vavaworld' }],
+    images: [{ url: '/logo.jpg', width: 1200, height: 630, alt: 'VavaWorld' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '$VAVA · vavaworld',
+    title: '$VAVA · VavaWorld',
     description:
       'Claim hexes on a live world map. Buy, sell, and trade pieces of the earth.',
     images: ['/logo.jpg'],
