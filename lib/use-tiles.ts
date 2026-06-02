@@ -11,6 +11,11 @@ import type { ClaimedTile } from '@/types/tile';
 import type { Tier } from './tier';
 
 const BATCH = 100;
+// Fire several getMultipleAccountsInfo batches at once instead of serially -
+// a settled z16 viewport is ~2k cells (20 batches), and 20 sequential RPC
+// round-trips is seconds of "tiles colouring in late". Bounded so we don't
+// trip provider rate limits (429) on a fast pan.
+const CONCURRENCY = 8;
 const programIdPk = new PublicKey(PROGRAM_ID);
 const coder = new BorshAccountsCoder(idl as Idl);
 
@@ -64,17 +69,23 @@ export function useTiles(visibleHexes: string[]): {
     const myToken = ++reqTokenRef.current;
     const pdas = toFetch.map((h) => ({ h, pda: tilePda(h, programIdPk)[0] }));
 
-    for (let i = 0; i < pdas.length; i += BATCH) {
-      const slice = pdas.slice(i, i + BATCH);
-      const accs = await conn.getMultipleAccountsInfo(slice.map((s) => s.pda));
+    const batches: { h: string; pda: PublicKey }[][] = [];
+    for (let i = 0; i < pdas.length; i += BATCH) batches.push(pdas.slice(i, i + BATCH));
+
+    // Process in waves of CONCURRENCY parallel batches; bail between waves if a
+    // newer viewport fetch has superseded this one.
+    for (let i = 0; i < batches.length; i += CONCURRENCY) {
+      const wave = batches.slice(i, i + CONCURRENCY);
+      const results = await Promise.all(
+        wave.map((slice) => conn.getMultipleAccountsInfo(slice.map((s) => s.pda))),
+      );
       if (reqTokenRef.current !== myToken) return; // superseded by a newer fetch
-      slice.forEach((s, idx) => {
-        const ai = accs[idx];
-        if (!ai) {
-          cacheRef.current.set(s.h, null);
-        } else {
-          cacheRef.current.set(s.h, decodeTile(ai.data as Buffer, s.h));
-        }
+      wave.forEach((slice, wi) => {
+        const accs = results[wi];
+        slice.forEach((s, idx) => {
+          const ai = accs[idx];
+          cacheRef.current.set(s.h, ai ? decodeTile(ai.data as Buffer, s.h) : null);
+        });
       });
     }
     setTiles(new Map(cacheRef.current));

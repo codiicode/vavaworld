@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import type { MapRef } from 'react-map-gl/mapbox';
 import { MapView } from '@/components/MapView';
 import { GlassRightPanel } from '@/components/map/glass-right-panel';
@@ -8,9 +9,16 @@ import { GlassSearchBar } from '@/components/map/glass-search-bar';
 import { MapStyleToggle } from '@/components/map/map-style-toggle';
 import { MapZoomControls } from '@/components/map/map-zoom-controls';
 import { LiveClaimsFeed } from '@/components/map/live-claims-feed';
-import { ClaimModal } from '@/components/ClaimModal';
 import { hexCenter } from '@/lib/h3-utils';
 import { expandFromSeed } from '@/lib/hex-expand';
+
+// The claim flow pulls in Anchor + web3.js + pricing - none of which the map
+// needs until the user actually opens it. Load that chunk on demand so it
+// doesn't compete with map startup.
+const ClaimModal = dynamic(
+  () => import('@/components/ClaimModal').then((m) => m.ClaimModal),
+  { ssr: false },
+);
 
 /**
  * Full-bleed map page. The map fills the viewport behind everything; the AppSidebar

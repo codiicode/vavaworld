@@ -4,7 +4,11 @@ import { calculateFloor } from '@/lib/pricing';
 import { countryCentroid } from '@/lib/geo/country-resolver';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+// Slowly-changing aggregates (claim counts per country). Let the CDN serve it:
+// first hit pays the Supabase round-trip (~1.2s), everyone else gets an instant
+// edge response, and after 60s stale-while-revalidate refreshes in the
+// background so a load is never blocked on it. The client throttles to 10s too.
+export const revalidate = 60;
 
 /**
  * GET /api/countries → every country that has at least one claim, with its
@@ -31,5 +35,8 @@ export async function GET() {
       centroid: countryCentroid(c.iso_code),
     }))
     .filter((c) => c.centroid !== null);
-  return NextResponse.json({ countries }, { headers: { 'Cache-Control': 'no-store' } });
+  return NextResponse.json(
+    { countries },
+    { headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' } },
+  );
 }

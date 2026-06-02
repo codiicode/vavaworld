@@ -4,27 +4,19 @@ import { useMemo, type ReactNode } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import {
-  BitgetWalletAdapter,
-  Coin98WalletAdapter,
   CoinbaseWalletAdapter,
-  LedgerWalletAdapter,
-  MathWalletAdapter,
-  NightlyWalletAdapter,
   PhantomWalletAdapter,
   SolflareWalletAdapter,
-  TokenPocketWalletAdapter,
-  TorusWalletAdapter,
-  TrezorWalletAdapter,
-  TrustWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 
 /**
  * Wallet-standard wallets (Phantom, Solflare, Backpack, Glow, OKX, etc.)
  * auto-register themselves when their browser extension is installed - they'll
- * appear in the picker without any explicit adapter listing. The adapters
- * declared below are for wallets that DON'T auto-register, plus a few popular
- * names so they also show up with a "Not installed" link.
+ * appear in the picker without any explicit adapter listing. We list only a
+ * few popular names so they also show with a "Not installed" link; the long
+ * tail (Torus/Ledger/Trezor/etc.) each drags in a heavy SDK into the bundle on
+ * EVERY page for marginal coverage, so they're intentionally omitted.
  */
 export function WalletProviders({ children }: { children: ReactNode }) {
   const endpoint = useMemo(
@@ -36,15 +28,6 @@ export function WalletProviders({ children }: { children: ReactNode }) {
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
       new CoinbaseWalletAdapter(),
-      new LedgerWalletAdapter(),
-      new TrezorWalletAdapter(),
-      new NightlyWalletAdapter(),
-      new TrustWalletAdapter(),
-      new BitgetWalletAdapter(),
-      new Coin98WalletAdapter(),
-      new TokenPocketWalletAdapter(),
-      new MathWalletAdapter(),
-      new TorusWalletAdapter(),
     ],
     [],
   );

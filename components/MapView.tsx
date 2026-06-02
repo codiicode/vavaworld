@@ -192,7 +192,7 @@ export function MapView({
     if (now - aggFetchedAt.current < 10000) return;
     aggFetchedAt.current = now;
     try {
-      const r = await fetch('/api/countries', { cache: 'no-store' });
+      const r = await fetch('/api/countries');
       const j = await r.json();
       const feats = (j.countries ?? [])
         .filter((c: { centroid: [number, number] | null }) => c.centroid)
