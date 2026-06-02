@@ -60,8 +60,7 @@ function sameViewport(a: string[], b: string[]): boolean {
 const SOURCE_ID = 'h3-grid';
 const FILL_LAYER = 'h3-grid-fill';
 const LINE_LAYER = 'h3-grid-line';
-const CLAIMED_LAYER = 'h3-grid-claimed';
-const SELECTED_FILL_LAYER = 'h3-grid-selected-fill';
+const STATE_FILL_LAYER = 'h3-grid-state-fill';
 const SELECTED_LAYER = 'h3-grid-selected';
 
 const AGG_SOURCE = 'country-agg';
@@ -97,8 +96,8 @@ const MIN_ZOOM_FOR_HEXES = 16;
 // monitor moves. This does NOT affect CSS/text (those use the real hardware
 // dpr independently), so the rest of the UI stays crisp. Tune PIXEL_BUDGET
 // down for more speed, RATIO_FLOOR up for more sharpness.
-const PIXEL_BUDGET = 2_500_000; // ~2.5 MP target render buffer
-const RATIO_FLOOR = 0.75;
+const PIXEL_BUDGET = 1_300_000; // ~1.3 MP target render buffer (aggressive)
+const RATIO_FLOOR = 0.5;
 if (typeof window !== 'undefined') {
   const realDpr = window.devicePixelRatio || 1;
   try {
@@ -374,23 +373,29 @@ export function MapView({
         'fill-opacity': 0,
       },
     });
+    // One state fill instead of two: selected (teal) takes precedence over
+    // claimed (owner colour); empty cells stay transparent. Merging the former
+    // claimed + selected fill layers removes a full-viewport fill pass per
+    // frame - meaningful on large/hi-DPI screens.
     map.addLayer({
-      id: CLAIMED_LAYER,
+      id: STATE_FILL_LAYER,
       type: 'fill',
       source: SOURCE_ID,
       paint: {
-        'fill-color': ['coalesce', ['feature-state', 'ownerColor'], '#888'],
-        'fill-opacity': ['case', ['boolean', ['feature-state', 'claimed'], false], 0.55, 0.0],
-      },
-    });
-    // Selected hexes glow teal (whole-cell fill) before the outline grid.
-    map.addLayer({
-      id: SELECTED_FILL_LAYER,
-      type: 'fill',
-      source: SOURCE_ID,
-      paint: {
-        'fill-color': '#5eead4',
-        'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.55, 0.0],
+        'fill-color': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          '#5eead4',
+          ['coalesce', ['feature-state', 'ownerColor'], '#888'],
+        ],
+        'fill-opacity': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          0.55,
+          ['boolean', ['feature-state', 'claimed'], false],
+          0.55,
+          0.0,
+        ],
       },
     });
     map.addLayer({
@@ -542,7 +547,7 @@ export function MapView({
       }
       const map = mapRef.current?.getMap();
       if (!map) return;
-      const feats = map.queryRenderedFeatures(e.point, { layers: [FILL_LAYER, CLAIMED_LAYER] });
+      const feats = map.queryRenderedFeatures(e.point, { layers: [FILL_LAYER] });
       if (!feats.length) return;
       const h3 = feats[0].properties?.h3 as string | undefined;
       if (!h3) return;
@@ -612,7 +617,7 @@ export function MapView({
         // dozens of times mid-gesture.
         onMoveEnd={scheduleRefresh}
         onClick={onClick}
-        interactiveLayerIds={[FILL_LAYER, CLAIMED_LAYER]}
+        interactiveLayerIds={[FILL_LAYER]}
       />
       <div
         className="absolute inset-0 z-[5]"
