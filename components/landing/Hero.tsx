@@ -73,8 +73,9 @@ export function Hero() {
 
   return (
     <div className="alt-hero relative min-h-screen w-full overflow-hidden bg-white text-[#000000]">
-      {/* Background video (z-0). Starts 300px down, fills to the bottom. */}
-      <div className="absolute bottom-0 left-0 right-0 z-0" style={{ top: '300px' }}>
+      {/* Background video (z-0). Full-bleed - fills the whole hero, no seam at
+          the treetops; the nav + copy sit over it. */}
+      <div className="absolute inset-0 z-0">
         <video
           ref={videoRef}
           className="h-full w-full object-cover"
