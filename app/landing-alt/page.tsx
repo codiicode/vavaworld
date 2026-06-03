@@ -66,8 +66,6 @@ export default function LandingAltPage() {
           playsInline
           preload="auto"
         />
-        {/* Gradient overlay over the video */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white via-transparent to-white" />
       </div>
 
       {/* Navigation (z-10) */}
