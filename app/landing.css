@@ -3,6 +3,15 @@
    Hand-off design by Claude Design, recreated as React components.
    ───────────────────────────────────────────────────────── */
 
+/* Cinematic hero (components/landing/Hero.tsx) entrance animations. */
+@keyframes alt-fade-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.alt-fade-rise { animation: alt-fade-rise 0.8s ease-out both; }
+.alt-fade-rise-delay { animation: alt-fade-rise 0.8s ease-out 0.2s both; }
+.alt-fade-rise-delay-2 { animation: alt-fade-rise 0.8s ease-out 0.4s both; }
+
 .landing-root {
   --l-sky-pale:  #eaf4fc;
   --l-sky-mist:  #cfe5f6;

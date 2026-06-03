@@ -1,7 +1,6 @@
 import { Inter } from 'next/font/google';
 import './landing.css';
 import { CloudField } from '@/components/landing/CloudField';
-import { SiteNav } from '@/components/landing/SiteNav';
 import { Hero } from '@/components/landing/Hero';
 import { LiveTicker } from '@/components/landing/LiveTicker';
 import { MapSection } from '@/components/landing/MapSection';
@@ -24,7 +23,6 @@ export default function LandingPage() {
   return (
     <div className={`landing-root ${groteskFont.variable} ${groteskFont.className}`}>
       <CloudField />
-      <SiteNav />
       <Hero />
       <LiveTicker />
       <MapSection />
