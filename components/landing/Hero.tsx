@@ -111,7 +111,8 @@ export function Hero() {
           {wallet.ready && wallet.connected && (
             <Link
               href="/profile"
-              className="rounded-full bg-[#000000] px-6 py-2.5 text-sm text-white transition-transform hover:scale-[1.03]"
+              className="rounded-full bg-[#000000] px-6 py-2.5 text-sm transition-transform hover:scale-[1.03]"
+              style={{ color: '#FFFFFF' }}
             >
               Profile
             </Link>
@@ -129,7 +130,8 @@ export function Hero() {
               <button
                 type="button"
                 onClick={() => openWalletModal(true)}
-                className="rounded-full bg-[#000000] px-6 py-2.5 text-sm text-white transition-transform hover:scale-[1.03]"
+                className="rounded-full bg-[#000000] px-6 py-2.5 text-sm transition-transform hover:scale-[1.03]"
+                style={{ color: '#FFFFFF' }}
               >
                 Connect wallet
               </button>
@@ -163,9 +165,10 @@ export function Hero() {
 
         <Link
           href="/map"
-          className="alt-fade-rise-delay-2 mt-12 rounded-full bg-[#000000] px-14 py-5 text-base text-white transition-transform hover:scale-[1.03]"
+          className="alt-fade-rise-delay-2 mt-12 rounded-full bg-[#000000] px-14 py-5 text-base transition-transform hover:scale-[1.03]"
+          style={{ color: '#FFFFFF' }}
         >
-          Open the map
+          Enter VavaWorld
         </Link>
       </section>
     </div>
