@@ -4,11 +4,16 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useActiveWallet } from '@/lib/active-wallet';
+import { Instrument_Serif } from 'next/font/google';
 import { BrandLogo } from '@/components/brand-logo';
 
-// Inter - the landing's grotesk font (exposed as --font-manrope). Hero headline
-// + wordmark use this.
-const FONT_STACK = 'var(--font-manrope), "Inter", sans-serif';
+// Instrument Serif - the font the first deploy of this hero used for the headline.
+const headlineSerif = Instrument_Serif({
+  weight: '400',
+  style: ['normal', 'italic'],
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 const VIDEO_URL =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_083109_283f3553-e28f-428b-a723-d639c617eb2b.mp4';
@@ -124,9 +129,8 @@ export function Hero() {
         style={{ paddingTop: 'calc(8rem - 75px)' }}
       >
         <h1
-          className="alt-fade-rise mx-auto max-w-[1500px] font-normal"
+          className={`${headlineSerif.className} alt-fade-rise mx-auto max-w-[1500px] font-normal`}
           style={{
-            fontFamily: FONT_STACK,
             // Fluid size so the first line always fits; nowrap (desktop) keeps it
             // to two lines like before instead of wrapping into three.
             fontSize: 'clamp(2.25rem, 5.2vw, 4.5rem)',
