@@ -124,16 +124,21 @@ export function Hero() {
         style={{ paddingTop: 'calc(8rem - 75px)' }}
       >
         <h1
-          className="alt-fade-rise max-w-7xl text-5xl font-normal sm:text-7xl md:text-8xl"
+          className="alt-fade-rise mx-auto max-w-[1500px] font-normal"
           style={{
             fontFamily: FONT_STACK,
-            lineHeight: 1.02,
+            // Fluid size so the first line always fits; nowrap (desktop) keeps it
+            // to two lines like before instead of wrapping into three.
+            fontSize: 'clamp(2.25rem, 5.2vw, 4.5rem)',
+            lineHeight: 1.05,
             letterSpacing: '-0.02em',
             color: '#000000',
           }}
         >
-          The oldest currency in{' '}
-          <span style={{ fontStyle: 'italic', color: '#6F6F6F' }}>human history.</span>
+          <span className="md:whitespace-nowrap">
+            The oldest currency in{' '}
+            <span style={{ fontStyle: 'italic', color: '#6F6F6F' }}>human history.</span>
+          </span>
           <br />
           Now digital.
         </h1>
