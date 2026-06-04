@@ -38,22 +38,9 @@ export function Hero() {
     const v = videoRef.current;
     if (!v) return;
 
-    // Subtle synced zoom: ease in toward the middle of the clip and back out by
-    // the end so the native loop restart lands at scale 1 - a gentle zoom-out
-    // into the loop instead of the old fade-to-white flash.
-    const AMP = 0.08;
-    let raf = 0;
-    const tick = () => {
-      const d = v.duration;
-      if (d && !Number.isNaN(d)) {
-        const p = v.currentTime / d; // 0..1, resets on each native loop
-        v.style.transform = `scale(${1 + AMP * Math.sin(p * Math.PI)})`;
-      }
-      raf = requestAnimationFrame(tick);
-    };
+    // Just nudge playback; the video loops natively (no fade, no per-frame
+    // transform) so it stays smooth and never flashes the white background.
     void v.play().catch(() => {});
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
   }, []);
 
   return (
@@ -64,7 +51,6 @@ export function Hero() {
         <video
           ref={videoRef}
           className="h-full w-full object-cover"
-          style={{ transformOrigin: 'center', willChange: 'transform' }}
           src={VIDEO_URL}
           muted
           autoPlay
