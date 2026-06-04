@@ -2,17 +2,13 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Instrument_Serif } from 'next/font/google';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { BrandLogo } from '@/components/brand-logo';
 
-const serif = Instrument_Serif({
-  weight: '400',
-  style: ['normal', 'italic'],
-  subsets: ['latin'],
-  display: 'swap',
-});
+// The font the previous hero used (the landing's base serif, loaded globally in
+// globals.css) - reverting the headline + wordmark to it.
+const SERIF_STACK = '"Cormorant Garamond", "EB Garamond", Georgia, serif';
 
 const VIDEO_URL =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_083109_283f3553-e28f-428b-a723-d639c617eb2b.mp4';
@@ -67,7 +63,10 @@ export function Hero() {
           {/* Black on the light hero - the asset is a white transparent PNG, so
               brightness(0) recolours the opaque mark to black, keeping alpha. */}
           <BrandLogo size={34} className="[filter:brightness(0)]" />
-          <span className={`${serif.className} text-3xl tracking-tight text-[#000000]`}>
+          <span
+            className="text-3xl tracking-tight text-[#000000]"
+            style={{ fontFamily: SERIF_STACK }}
+          >
             VavaWorld
           </span>
         </Link>
@@ -125,8 +124,13 @@ export function Hero() {
         style={{ paddingTop: 'calc(8rem - 75px)' }}
       >
         <h1
-          className={`${serif.className} alt-fade-rise max-w-7xl text-5xl font-normal sm:text-7xl md:text-8xl`}
-          style={{ lineHeight: 0.95, letterSpacing: '-2.46px', color: '#000000' }}
+          className="alt-fade-rise max-w-7xl text-5xl font-normal sm:text-7xl md:text-8xl"
+          style={{
+            fontFamily: SERIF_STACK,
+            lineHeight: 1.0,
+            letterSpacing: '-0.01em',
+            color: '#000000',
+          }}
         >
           The oldest currency in{' '}
           <span style={{ fontStyle: 'italic', color: '#6F6F6F' }}>human history.</span>
