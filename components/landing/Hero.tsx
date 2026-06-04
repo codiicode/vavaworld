@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Instrument_Serif } from 'next/font/google';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useActiveWallet } from '@/lib/active-wallet';
+import { BrandLogo } from '@/components/brand-logo';
 
 const serif = Instrument_Serif({
   weight: '400',
@@ -62,8 +63,13 @@ export function Hero() {
 
       {/* Navigation (z-10) - in-flow, carries the real login/wallet actions */}
       <nav className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-8 py-6">
-        <Link href="/" className={`${serif.className} text-3xl tracking-tight text-[#000000]`}>
-          VavaWorld
+        <Link href="/" className="flex items-center gap-2.5">
+          {/* Black on the light hero - the asset is a white transparent PNG, so
+              brightness(0) recolours the opaque mark to black, keeping alpha. */}
+          <BrandLogo size={34} className="[filter:brightness(0)]" />
+          <span className={`${serif.className} text-3xl tracking-tight text-[#000000]`}>
+            VavaWorld
+          </span>
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
