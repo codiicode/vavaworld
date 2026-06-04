@@ -6,9 +6,9 @@ import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { BrandLogo } from '@/components/brand-logo';
 
-// The font the previous hero used (the landing's base serif, loaded globally in
-// globals.css) - reverting the headline + wordmark to it.
-const SERIF_STACK = '"Cormorant Garamond", "EB Garamond", Georgia, serif';
+// Inter - the landing's grotesk font (exposed as --font-manrope). Hero headline
+// + wordmark use this.
+const FONT_STACK = 'var(--font-manrope), "Inter", sans-serif';
 
 const VIDEO_URL =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_083109_283f3553-e28f-428b-a723-d639c617eb2b.mp4';
@@ -65,7 +65,7 @@ export function Hero() {
           <BrandLogo size={34} className="[filter:brightness(0)]" />
           <span
             className="text-3xl tracking-tight text-[#000000]"
-            style={{ fontFamily: SERIF_STACK }}
+            style={{ fontFamily: FONT_STACK }}
           >
             VavaWorld
           </span>
@@ -126,9 +126,9 @@ export function Hero() {
         <h1
           className="alt-fade-rise max-w-7xl text-5xl font-normal sm:text-7xl md:text-8xl"
           style={{
-            fontFamily: SERIF_STACK,
-            lineHeight: 1.0,
-            letterSpacing: '-0.01em',
+            fontFamily: FONT_STACK,
+            lineHeight: 1.02,
+            letterSpacing: '-0.02em',
             color: '#000000',
           }}
         >
