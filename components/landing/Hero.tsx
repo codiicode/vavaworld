@@ -38,37 +38,22 @@ export function Hero() {
     const v = videoRef.current;
     if (!v) return;
 
-    const FADE = 0.5; // seconds
+    // Subtle synced zoom: ease in toward the middle of the clip and back out by
+    // the end so the native loop restart lands at scale 1 - a gentle zoom-out
+    // into the loop instead of the old fade-to-white flash.
+    const AMP = 0.08;
     let raf = 0;
-
     const tick = () => {
       const d = v.duration;
       if (d && !Number.isNaN(d)) {
-        const t = v.currentTime;
-        let o = 1;
-        if (t < FADE) o = t / FADE;
-        else if (t > d - FADE) o = Math.max(0, (d - t) / FADE);
-        v.style.opacity = String(o);
+        const p = v.currentTime / d; // 0..1, resets on each native loop
+        v.style.transform = `scale(${1 + AMP * Math.sin(p * Math.PI)})`;
       }
       raf = requestAnimationFrame(tick);
     };
-
-    const onEnded = () => {
-      v.style.opacity = '0';
-      window.setTimeout(() => {
-        v.currentTime = 0;
-        void v.play().catch(() => {});
-      }, 100);
-    };
-
-    v.addEventListener('ended', onEnded);
     void v.play().catch(() => {});
     raf = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      v.removeEventListener('ended', onEnded);
-    };
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   return (
@@ -79,10 +64,11 @@ export function Hero() {
         <video
           ref={videoRef}
           className="h-full w-full object-cover"
-          style={{ opacity: 0, transition: 'opacity 0.1s linear' }}
+          style={{ transformOrigin: 'center', willChange: 'transform' }}
           src={VIDEO_URL}
           muted
           autoPlay
+          loop
           playsInline
           preload="auto"
         />
