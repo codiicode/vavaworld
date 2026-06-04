@@ -96,15 +96,13 @@ export function Globe3DLanding() {
 
   return (
     <Globe3D
-      className="mx-auto h-[min(86vmin,720px)] w-full max-w-[860px]"
+      className="mx-auto h-[min(125vmin,1180px)] w-full max-w-[1180px]"
       popups={[...cityPopups, ...buyPopups]}
       config={{
         radius: 2,
+        cameraDistanceFactor: 2.7,
         autoRotateSpeed: 0.45,
-        showAtmosphere: true,
-        atmosphereColor: '#5eead4',
-        atmosphereIntensity: 0.55,
-        atmosphereBlur: 2.5,
+        showAtmosphere: false,
         enableZoom: false,
         enablePan: false,
         backgroundColor: null,

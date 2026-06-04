@@ -57,6 +57,8 @@ export interface Globe3DConfig {
   minDistance?: number;
   /** Max zoom distance */
   maxDistance?: number;
+  /** Camera distance as a multiple of radius (lower = globe fills more of the frame) */
+  cameraDistanceFactor?: number;
   /** Initial rotation */
   initialRotation?: { x: number; y: number };
   /** Marker default size */
@@ -463,7 +465,7 @@ function Scene({ markers, popups, config, onMarkerClick, onMarkerHover }: SceneP
 
   // Set initial camera position (pulled back to accommodate markers)
   React.useEffect(() => {
-    camera.position.set(0, 0, config.radius * 3.5);
+    camera.position.set(0, 0, config.radius * config.cameraDistanceFactor);
     camera.lookAt(0, 0, 0);
   }, [camera, config.radius]);
 
@@ -553,6 +555,7 @@ const defaultConfig: Required<Globe3DConfig> = {
   enablePan: false,
   minDistance: 5,
   maxDistance: 15,
+  cameraDistanceFactor: 3.5,
   initialRotation: { x: 0, y: 0 },
   markerSize: 0.06,
   showWireframe: false,
@@ -588,7 +591,7 @@ export function Globe3D({
           fov: 45,
           near: 0.1,
           far: 1000,
-          position: [0, 0, mergedConfig.radius * 3.5],
+          position: [0, 0, mergedConfig.radius * mergedConfig.cameraDistanceFactor],
         }}
         style={{
           background: mergedConfig.backgroundColor || "transparent",

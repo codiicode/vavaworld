@@ -14,8 +14,27 @@ const Globe3DLanding = dynamic(
 
 export function MapSection() {
   return (
-    <section className="l-map-sec" id="map">
-      <div className="l-map-inner">
+    <section
+      className="l-map-sec"
+      id="map"
+      style={{
+        position: 'relative',
+        background:
+          'radial-gradient(circle at 50% 44%, rgba(20,184,166,0.16), transparent 52%), linear-gradient(180deg, #060d1c 0%, #081628 48%, #060d1c 100%)',
+      }}
+    >
+      {/* Ease the dark band out of the light sections above/below. */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          background:
+            'linear-gradient(180deg, rgba(207,229,246,0.9) 0%, transparent 9%, transparent 91%, rgba(207,229,246,0.9) 100%)',
+        }}
+      />
+      <div className="l-map-inner" style={{ position: 'relative' }}>
         <Globe3DLanding />
       </div>
     </section>
