@@ -64,8 +64,8 @@ export function Hero() {
               brightness(0) recolours the opaque mark to black, keeping alpha. */}
           <BrandLogo size={34} className="[filter:brightness(0)]" />
           <span
-            className="text-3xl tracking-tight text-[#000000]"
-            style={{ fontFamily: FONT_STACK }}
+            className="text-xl tracking-[0.02em] text-[#000000]"
+            style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
           >
             VavaWorld
           </span>
