@@ -67,7 +67,7 @@ export function Hero() {
             className="text-xl tracking-[0.02em] text-[#000000]"
             style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
           >
-            VavaWorld
+            VAVAWORLD
           </span>
         </Link>
 
