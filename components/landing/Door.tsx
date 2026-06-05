@@ -1,18 +1,18 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 export function Door() {
   return (
     <section className="l-door" id="door">
       <div className="l-bg">
-        <Image
-          src="/hero-door.jpg"
-          alt=""
-          fill
-          sizes="100vw"
-          quality={85}
+        <video
+          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260503_162107_3cd240af-dff4-4396-b8b7-22e25c9adb1c.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
       <div className="l-veil" />
