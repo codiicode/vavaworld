@@ -14,29 +14,19 @@ const Globe3DLanding = dynamic(
 
 export function MapSection() {
   return (
-    <section
-      className="l-map-sec"
-      id="map"
-      style={{ position: 'relative', background: 'linear-gradient(180deg,#f1f7fb 0%,#ffffff 100%)' }}
-    >
+    <section className="l-map-sec" id="map" style={{ position: 'relative' }}>
+      {/* Soft brand glow behind the Earth - no box, just ambience. */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          background: 'radial-gradient(circle at 50% 46%, rgba(20,184,166,0.13), transparent 56%)',
+        }}
+      />
       <div className="l-map-inner" style={{ position: 'relative' }}>
-        {/* Soft light "sky" panel the Earth floats in - matches the hero's bright vibe. */}
-        <div
-          style={{
-            position: 'relative',
-            margin: '0 auto',
-            width: '100%',
-            maxWidth: 900,
-            borderRadius: 40,
-            overflow: 'hidden',
-            border: '1px solid rgba(13,52,86,0.07)',
-            background:
-              'radial-gradient(circle at 50% 42%, rgba(20,184,166,0.16), transparent 62%), linear-gradient(180deg,#eaf4fc 0%,#dff0ec 100%)',
-            boxShadow: '0 40px 90px -40px rgba(13,52,86,0.28)',
-          }}
-        >
-          <Globe3DLanding />
-        </div>
+        <Globe3DLanding />
       </div>
     </section>
   );

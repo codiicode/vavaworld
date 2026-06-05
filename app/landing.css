@@ -40,8 +40,8 @@
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
   background:
-    radial-gradient(ellipse 60% 45% at 50% 90%, #eaf4fc 0%, transparent 65%),
-    linear-gradient(180deg, #4ea7df 0%, #6cb6ea 30%, #94caee 60%, #c8e2f4 100%);
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(94, 234, 212, 0.10) 0%, transparent 60%),
+    linear-gradient(180deg, #fbfdfe 0%, #f3f8fb 55%, #eef4f8 100%);
   background-attachment: fixed;
 }
 
