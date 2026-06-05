@@ -37,14 +37,14 @@ export const HexesCore = ({ className, ...rest }: { className?: string }) => {
             }}
           >
             {new Array(COLS).fill(0).map((_, j) => {
-              // Sparse deterministic scatter of "claimed" hexes for life.
+              // Sparse deterministic scatter of grey-filled hexes (hex.jpg look).
               const claimed = (i * COLS + j) % 23 === 0 || (i * 3 + j * 7) % 37 === 0;
               return (
                 <div
                   key={`hex-${i}-${j}`}
                   className={cn(
-                    'flex-none transition-colors duration-150 ease-out hover:bg-[#5eead4]',
-                    claimed ? 'bg-[#5eead4]/55' : 'bg-white/[0.08]',
+                    'flex-none transition-colors duration-150 ease-out hover:bg-[#c6cfdb]',
+                    claimed ? 'bg-[#dce1e9]' : 'bg-white',
                   )}
                   style={{ width: W, height: H, clipPath: HEX_CLIP }}
                 />
