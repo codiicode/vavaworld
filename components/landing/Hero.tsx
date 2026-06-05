@@ -22,7 +22,7 @@ const NAV_LINKS = [
   { label: 'Buy land', href: '/map' },
   { label: 'Marketplace', href: '/marketplace' },
   { label: 'Leaderboard', href: '/leaderboard' },
-  { label: 'How it works', href: '#how' },
+  { label: 'How it works', href: '/how-it-works' },
   { label: 'Tokenomics', href: '#' },
 ];
 

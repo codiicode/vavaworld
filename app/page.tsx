@@ -4,7 +4,6 @@ import { Hero } from '@/components/landing/Hero';
 import { LiveTicker } from '@/components/landing/LiveTicker';
 import { MapSection } from '@/components/landing/MapSection';
 import { Door } from '@/components/landing/Door';
-import { HowItWorks } from '@/components/landing/HowItWorks';
 import { SiteFooter } from '@/components/landing/SiteFooter';
 
 // Landing uses Inter as a free, near-identical stand-in for Neue Haas Grotesk
@@ -25,7 +24,6 @@ export default function LandingPage() {
       <LiveTicker />
       <MapSection />
       <Door />
-      <HowItWorks />
       <SiteFooter />
     </div>
   );

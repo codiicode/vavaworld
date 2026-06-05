@@ -18,7 +18,7 @@ export function SiteFooter() {
             <li><Link href="/map">Buy land</Link></li>
             <li><Link href="/marketplace">Marketplace</Link></li>
             <li><Link href="/leaderboard">Leaderboard</Link></li>
-            <li><a href="#how">How it works</a></li>
+            <li><Link href="/how-it-works">How it works</Link></li>
           </ul>
         </div>
         <div className="l-foot-col">
