@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { AppSidebar, MobileNav } from '@/components/layout/app-sidebar';
+import { GlowBackground } from '@/components/ui/glow-background';
 import { cn } from '@/lib/utils';
 
 /**
@@ -14,14 +15,9 @@ export default function AppGroupLayout({ children }: { children: React.ReactNode
   const isMap = pathname?.startsWith('/map') ?? false;
 
   return (
-    <div
-      className="relative min-h-screen w-full bg-cover bg-center bg-fixed"
-      style={{
-        // Shared sky photo behind every (app) page (sky-bg.jpg is the exact
-        // 360_F_98262429… stock image the brief referenced).
-        backgroundImage: "url('/sky-bg.jpg')",
-      }}
-    >
+    <div className="relative min-h-screen w-full">
+      {/* Shared white + soft-glow backdrop for every (app) page. */}
+      <GlowBackground />
       <div className="relative z-10 h-screen overflow-hidden">
         <AppSidebar />
         <MobileNav />

@@ -67,6 +67,9 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { balance } = useWalletBalance(wallet.publicKey);
+  // The sidebar glass is dark over the map but light over the white-glow app
+  // pages - so the wordmark/logo flip to black off-map to stay visible.
+  const isMap = pathname?.startsWith('/map') ?? false;
 
   return (
     <>
@@ -76,10 +79,13 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
         onClick={onNavigate}
         className="flex items-center gap-3 px-1.5 py-0.5"
       >
-        <BrandLogo size={38} />
+        <BrandLogo size={38} className={isMap ? '' : '[filter:brightness(0)]'} />
         <span
-          className="text-[11px] tracking-[0.02em] text-white"
-          style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
+          className="text-[11px] tracking-[0.02em]"
+          style={{
+            fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif',
+            color: isMap ? '#ffffff' : '#0b1a2e',
+          }}
         >
           VAVAWORLD
         </span>
@@ -197,6 +203,7 @@ export function AppSidebar() {
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const isMap = pathname?.startsWith('/map') ?? false;
 
   // Close on navigation.
   useEffect(() => {
@@ -221,10 +228,13 @@ export function MobileNav() {
         style={GLASS_PANEL}
       >
         <Link href="/" className="flex items-center gap-2.5">
-          <BrandLogo size={30} />
+          <BrandLogo size={30} className={isMap ? '' : '[filter:brightness(0)]'} />
           <span
-            className="text-[11px] tracking-[0.02em] text-white"
-            style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
+            className="text-[11px] tracking-[0.02em]"
+            style={{
+              fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif',
+              color: isMap ? '#ffffff' : '#0b1a2e',
+            }}
           >
             VAVAWORLD
           </span>
