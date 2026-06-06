@@ -3,6 +3,12 @@
    Hand-off design by Claude Design, recreated as React components.
    ───────────────────────────────────────────────────────── */
 
+/* Footer hex-grid: let hover pass through the content to the grid behind,
+   while keeping the actual links clickable. */
+.l-site .l-foot-inner,
+.l-site .l-foot-bottom { pointer-events: none; }
+.l-site .l-foot-inner a { pointer-events: auto; }
+
 /* Cinematic hero (components/landing/Hero.tsx) entrance animations. */
 @keyframes alt-fade-rise {
   from { opacity: 0; transform: translateY(20px); }

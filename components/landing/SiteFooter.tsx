@@ -1,10 +1,23 @@
 import Link from 'next/link';
 import { BrandLogo } from '@/components/brand-logo';
+import { Hexes } from '@/components/ui/background-hexes';
 
 export function SiteFooter() {
   return (
-    <footer className="l-site">
-      <div className="l-foot-inner">
+    <footer className="l-site" style={{ position: 'relative', overflow: 'hidden', background: '#eceff4' }}>
+      {/* Hex grid background covering the whole footer (lights up on hover). */}
+      <Hexes />
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+          background: 'linear-gradient(180deg, #f3f8fb 0%, rgba(243,248,251,0) 22%)',
+        }}
+      />
+      <div className="l-foot-inner" style={{ position: 'relative', zIndex: 1 }}>
         <div className="l-foot-brand">
           <div className="l-brand l-dark">
             <span className="l-mark"><BrandLogo size={34} className="[filter:brightness(0)]" /></span>
@@ -40,7 +53,7 @@ export function SiteFooter() {
           </ul>
         </div>
       </div>
-      <div className="l-foot-bottom">
+      <div className="l-foot-bottom" style={{ position: 'relative', zIndex: 1 }}>
         <span>© 2026 &nbsp;·&nbsp; Stockholm</span>
       </div>
     </footer>
