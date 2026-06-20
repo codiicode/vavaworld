@@ -403,7 +403,21 @@
 }
 
 /* ── MAP / GLOBE ─────────────────────────── */
-.landing-root .l-map-sec { position: relative; z-index: 1; padding: 120px 0 100px; }
+.landing-root .l-map-sec {
+  position: relative;
+  z-index: 1;
+  padding: 120px 0 100px;
+  background: url('/sky-bg.jpg') center/cover no-repeat;
+  isolation: isolate;
+}
+.landing-root .l-map-sec::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(245, 249, 253, 0.45) 0%, rgba(245, 249, 253, 0.25) 50%, rgba(245, 249, 253, 0.55) 100%);
+  pointer-events: none;
+}
 .landing-root .l-map-inner {
   max-width: 1440px;
   margin: 0 auto;
