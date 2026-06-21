@@ -6,7 +6,23 @@ import { HeroParticles } from './HeroParticles';
 export function Hero() {
   return (
     <section className="l-hero">
-      <div className="l-bg" />
+      <div className="l-bg">
+        <video
+          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_083109_283f3553-e28f-428b-a723-d639c617eb2b.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      </div>
       <div className="l-glow-pulse" />
       <div className="l-haze" />
       <HeroParticles />
