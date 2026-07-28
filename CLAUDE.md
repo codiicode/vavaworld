@@ -105,21 +105,27 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 
 ## Deploy flow (memorize this)
 
-Vercel is wired manually — no git auto-deploy. After committing:
+Vercel auto-deploys `main` from GitHub (`codiicode/vavaworld`). Pushing IS
+the deploy — there is no manual CLI step, no alias step:
 
 ```bash
 # 1. Deploy
-npx vercel --prod --yes
+git push origin main
 
-# 2. Find the resulting URL (or grab from output)
-npx vercel ls vavaworld --prod   # top row is freshest
-
-# 3. Alias the deploy to the production hostname
-npx vercel alias set vavaworld-<hash>-leo-jankovics-projects.vercel.app vavaworld.vercel.app
-
-# 4. Verify live
+# 2. Verify live (production alias updates itself)
 curl -fsS https://vavaworld.vercel.app/<route> | grep <some-string-you-just-changed>
 ```
+
+**Never ship with `npx vercel --prod`.** A CLI deploy bypasses git, so the
+next push to `main` silently reverts it. That is how the 2026-06 split
+happened: 144 commits of landing work existed only as CLI deploys while
+GitHub's `main` kept putting the other version back into production.
+Recovered in `31f2cd8`; both histories are kept as `archive/local-main-2b94263`
+and `archive/github-main-bf4fe48`.
+
+Instant Rollback in the Vercel UI only reaches the newest production deploys
+— older ones report "a newer deployment exists" and cannot be promoted. The
+fix for a bad production build is always a commit on `main`, never the UI.
 
 Project name on Vercel: `vavaworld` (owner `leo-jankovics-projects`). Custom domain `vavaworld.fun` aliases to the same.
 
