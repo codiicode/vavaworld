@@ -2,26 +2,124 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Map, { type MapRef, type MapMouseEvent } from 'react-map-gl/mapbox';
-import type { FeatureCollection, Polygon } from 'geojson';
+import type { Feature, FeatureCollection, Polygon, Position } from 'geojson';
 import type { GeoJSONSource } from 'mapbox-gl';
 import { hexCenter, hexToFeature, hexesForBounds } from '@/lib/h3-utils';
-import { TIER_FILL, classifyTier } from '@/lib/tier';
+import { TIER_FILL, type Tier, classifyTier } from '@/lib/tier';
 import { useTiles } from '@/lib/use-tiles';
 import { ownerColor } from '@/lib/owner-color';
 import { PublicKey } from '@solana/web3.js';
 
+// Per-hex geometry/tier cache. h3 IDs are deterministic so coords + center +
+// tier never change for a given cell - compute once, reuse across every
+// rebuild. Bounded with a simple FIFO evict so long pan sessions don't leak.
+type HexMeta = { coords: Position[]; lat: number; lng: number; tier: Tier };
+const HEX_META_CAP = 200_000;
+const hexMetaCache: globalThis.Map<string, HexMeta> = new globalThis.Map();
+function getHexMeta(h3: string): HexMeta {
+  let m = hexMetaCache.get(h3);
+  if (!m) {
+    const f = hexToFeature(h3);
+    const ring = (f.geometry.coordinates[0] ?? []) as Position[];
+    const c = hexCenter(h3);
+    m = { coords: ring, lat: c.lat, lng: c.lng, tier: classifyTier(c.lat, c.lng) };
+    if (hexMetaCache.size >= HEX_META_CAP) {
+      // Evict the oldest ~10% in insertion order to amortise the cost.
+      let n = Math.ceil(HEX_META_CAP * 0.1);
+      for (const key of hexMetaCache.keys()) {
+        hexMetaCache.delete(key);
+        if (--n <= 0) break;
+      }
+    }
+    hexMetaCache.set(h3, m);
+  }
+  return m;
+}
+
+// PublicKey.toBytes + base58 parse is expensive per-tile. The color is purely a
+// function of the address string, so memoize per owner.
+const ownerColorCache: globalThis.Map<string, string> = new globalThis.Map();
+function getOwnerColor(addr: string): string {
+  let c = ownerColorCache.get(addr);
+  if (!c) {
+    c = ownerColor(new PublicKey(addr));
+    ownerColorCache.set(addr, c);
+  }
+  return c;
+}
+
+// Cheap reference-equality check so we skip React state updates when the
+// viewport produced exactly the same hex set (common during a pan/zoom gesture).
+function sameViewport(a: string[], b: string[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
 const SOURCE_ID = 'h3-grid';
 const FILL_LAYER = 'h3-grid-fill';
 const LINE_LAYER = 'h3-grid-line';
-const CLAIMED_LAYER = 'h3-grid-claimed';
+const STATE_FILL_LAYER = 'h3-grid-state-fill';
 const SELECTED_LAYER = 'h3-grid-selected';
+
+const AGG_SOURCE = 'country-agg';
+const AGG_CIRCLE = 'country-agg-circle';
+const AGG_LABEL = 'country-agg-label';
+
+// Two distinct base styles. Satellite (default) is the light satellite-streets
+// raster + minimal label overlay - it downloads ONLY satellite tiles. Map view
+// is the richer Mapbox Standard vector style. We deliberately do NOT layer one
+// over the other (that double-downloads both tile sets and starves the visible
+// layer's tiles - the "buffering" the user saw). Toggling swaps the style; the
+// style.load handler re-installs the hex layers + re-applies feature-state.
+const SATELLITE_STYLE = 'mapbox://styles/mapbox/satellite-streets-v12';
+const MAP_STYLE = 'mapbox://styles/mapbox/standard';
+
+// Render individual hexes only at zoom >= 16. At z14-15 a res-12 cell is ~1px
+// (invisible) yet the viewport holds tens of thousands of them; gating at 16
+// keeps the painted set to ~2k and the per-settle rebuild instant. Claim
+// identity stays res-12 (HEX_RES) - we never coarsen the rendered grid, so a
+// clicked cell is always the exact claimable cell.
+const MIN_ZOOM_FOR_HEXES = 16;
+
+// Render the map to a fixed PIXEL BUDGET rather than the screen's native
+// resolution. The map paints clientW*clientH*dpr^2 pixels per frame, so a big
+// or hi-DPI screen (retina laptop at dpr 2, OR a 4K monitor at dpr 1) paints
+// 4-8x the pixels of a small laptop and GPU fill-rate collapses - the "fast on
+// my laptop, JÄTTESEGT on the big screen" report. A fixed dpr cap doesn't help
+// a dpr-1 4K monitor (already at 1), so instead we target a constant rendered
+// buffer (~PIXEL_BUDGET): small screens are untouched (their budget ratio >=
+// real dpr), large/hi-DPI screens scale down proportionally, with a floor so
+// satellite never gets too soft. We override the *JS* devicePixelRatio mapbox
+// reads when sizing its canvas; recomputed per read so it adapts to resizes and
+// monitor moves. This does NOT affect CSS/text (those use the real hardware
+// dpr independently), so the rest of the UI stays crisp. Tune PIXEL_BUDGET
+// down for more speed, RATIO_FLOOR up for more sharpness.
+const PIXEL_BUDGET = 1_300_000; // ~1.3 MP target render buffer (aggressive)
+const RATIO_FLOOR = 0.5;
+if (typeof window !== 'undefined') {
+  const realDpr = window.devicePixelRatio || 1;
+  try {
+    Object.defineProperty(window, 'devicePixelRatio', {
+      configurable: true,
+      get: () => {
+        const area = (window.innerWidth || 1) * (window.innerHeight || 1);
+        const budgetRatio = Math.sqrt(PIXEL_BUDGET / area);
+        return Math.max(RATIO_FLOOR, Math.min(realDpr, budgetRatio));
+      },
+    });
+  } catch {
+    /* non-configurable in some envs - nothing we can do, leave as-is */
+  }
+}
 
 type Props = {
   selectedHexes: Set<string>;
   setSelectedHexes: (s: Set<string>) => void;
   mapRef: React.MutableRefObject<MapRef | null>;
   refreshTilesRef?: React.MutableRefObject<((h3s: string[]) => void) | null>;
-  mapStyle?: string;
+  satellite?: boolean;
 };
 
 export function MapView({
@@ -29,19 +127,21 @@ export function MapView({
   setSelectedHexes,
   mapRef,
   refreshTilesRef,
-  mapStyle = 'mapbox://styles/mapbox/satellite-v9',
+  satellite = true,
 }: Props) {
   const [ready, setReady] = useState(false);
   const [visibleHexes, setVisibleHexes] = useState<string[]>([]);
+  // Tile (claimed-status) fetches run against this settled-after-motion set, not
+  // the live viewport, so panning doesn't fire RPC on every frame.
+  const [settledHexes, setSettledHexes] = useState<string[]>([]);
   const [zoomedIn, setZoomedIn] = useState(false);
-  const { tiles, refresh } = useTiles(visibleHexes);
+  const { tiles, refresh } = useTiles(settledHexes);
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const aggFetchedAt = useRef(0);
 
-  // Latest selectedHexes / visibleHexes / tiles tracked in refs so the
-  // mousedown / mousemove handlers we attach in onLoad can rebuild the
-  // mapbox source data directly (without going through React state) for
-  // instant visual feedback while paint-dragging.
+  // Latest values tracked in refs so the imperative map handlers (mousedown /
+  // mousemove / feature-state sync) read current data without re-binding.
   const selectedRef = useRef(selectedHexes);
   useEffect(() => {
     selectedRef.current = selectedHexes;
@@ -54,11 +154,10 @@ export function MapView({
   useEffect(() => {
     tilesRef.current = tiles;
   }, [tiles]);
+  // Tracks the selection set last written to feature-state so changes apply as
+  // a diff (O(changed)) instead of re-touching every visible cell.
+  const prevSelectedRef = useRef<Set<string>>(new Set());
 
-  // Paint-drag state: when the user mousedowns on a hex and starts dragging,
-  // we collect every hex the cursor passes over and merge them into the
-  // selection on mouseup. Map pan is disabled for the duration so the camera
-  // doesn't move while painting.
   const paintRef = useRef<{
     pressed: boolean;
     moved: boolean;
@@ -67,47 +166,99 @@ export function MapView({
     startY: number;
   } | null>(null);
 
-  // Suppresses the mapbox 'click' event that fires right after a paint-drag
-  // ends, otherwise the click handler would replace the freshly painted set.
   const skipClickRef = useRef(false);
 
-  // Expose refresh to parent so claim modal can invalidate after a successful tx
   useEffect(() => {
     if (refreshTilesRef) refreshTilesRef.current = refresh;
   }, [refresh, refreshTilesRef]);
 
-  const buildFeatureCollection = useCallback(
+  // Geometry only. Selection / claimed / owner are driven via feature-state
+  // (below), NOT baked into properties, so changing them never rebuilds or
+  // re-uploads this collection.
+  const buildGeometry = useCallback(
     (ids: string[]): FeatureCollection<Polygon> => ({
       type: 'FeatureCollection',
       features: ids.map((id) => {
-        const f = hexToFeature(id);
-        const c = hexCenter(id);
-        const claimed = tiles.get(id);
-        f.properties = {
-          ...f.properties,
-          tier: classifyTier(c.lat, c.lng),
-          claimed: !!claimed,
-          ownerColor: claimed ? ownerColor(new PublicKey(claimed.owner)) : null,
-          selected: selectedHexes.has(id),
+        const m = getHexMeta(id);
+        const f: Feature<Polygon> = {
+          id,
+          type: 'Feature',
+          geometry: { type: 'Polygon', coordinates: [m.coords] },
+          properties: { h3: id, tier: m.tier },
         };
         return f;
       }),
     }),
-    [tiles, selectedHexes],
+    [],
   );
 
-  // Hide the hex grid entirely below this zoom — at world-view zoom the
-  // hex count balloons and viewport-batched RPC calls become slow.
-  // Only render hexes when zoomed in enough that they're meaningful.
-  const MIN_ZOOM_FOR_HEXES = 14;
+  // Push selection + claimed/owner into Mapbox feature-state for the given ids.
+  // setData clears feature-state, so this must run after every geometry rebuild.
+  const applyFeatureState = useCallback(
+    (ids: string[]) => {
+      const map = mapRef.current?.getMap();
+      if (!map) return;
+      const sel = selectedRef.current;
+      const tl = tilesRef.current;
+      for (const id of ids) {
+        const claimed = tl.get(id);
+        map.setFeatureState(
+          { source: SOURCE_ID, id },
+          {
+            selected: sel.has(id),
+            claimed: !!claimed,
+            ownerColor: claimed ? getOwnerColor(claimed.owner) : null,
+          },
+        );
+      }
+    },
+    [mapRef],
+  );
+
+  const loadAgg = useCallback(async () => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+    const now = Date.now();
+    if (now - aggFetchedAt.current < 10000) return;
+    aggFetchedAt.current = now;
+    try {
+      const r = await fetch('/api/countries');
+      const j = await r.json();
+      const feats = (j.countries ?? [])
+        .filter((c: { centroid: [number, number] | null }) => c.centroid)
+        .map(
+          (c: {
+            iso: string;
+            name: string;
+            claimCount: number;
+            floor: number;
+            centroid: [number, number];
+          }) => ({
+            type: 'Feature' as const,
+            geometry: { type: 'Point' as const, coordinates: c.centroid },
+            properties: {
+              label: `${c.name}\n$${c.floor.toFixed(3)} · ${c.claimCount.toLocaleString('en-US')} claims`,
+            },
+          }),
+        );
+      const src = map.getSource(AGG_SOURCE) as GeoJSONSource | undefined;
+      if (src) src.setData({ type: 'FeatureCollection', features: feats });
+    } catch {
+      /* offline ok */
+    }
+  }, [mapRef]);
 
   const refreshHexes = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
     const isZoomedIn = map.getZoom() >= MIN_ZOOM_FOR_HEXES;
     setZoomedIn(isZoomedIn);
+    const aggVis = isZoomedIn ? 'none' : 'visible';
+    if (map.getLayer(AGG_CIRCLE)) map.setLayoutProperty(AGG_CIRCLE, 'visibility', aggVis);
+    if (map.getLayer(AGG_LABEL)) map.setLayoutProperty(AGG_LABEL, 'visibility', aggVis);
     if (!isZoomedIn) {
-      setVisibleHexes([]);
+      setVisibleHexes((prev) => (prev.length === 0 ? prev : []));
+      void loadAgg();
       return;
     }
     const b = map.getBounds();
@@ -119,19 +270,83 @@ export function MapView({
       b.getNorth(),
     ];
     const ids = hexesForBounds(bbox);
-    setVisibleHexes(ids);
-  }, [mapRef]);
+    setVisibleHexes((prev) => (sameViewport(prev, ids) ? prev : ids));
+  }, [mapRef, loadAgg]);
 
-  // Keep source data in sync with visible / tiles / selection
+  // Trailing debounce: the heavy polygonToCells + GeoJSON rebuild runs ONCE
+  // ~120ms after motion pauses, never mid-gesture. onMoveEnd fires the
+  // authoritative final pass against the exact stopping bounds.
+  const refreshTimerRef = useRef<number | null>(null);
+  const scheduleRefresh = useCallback(() => {
+    if (refreshTimerRef.current != null) window.clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = window.setTimeout(() => {
+      refreshTimerRef.current = null;
+      refreshHexes();
+    }, 120);
+  }, [refreshHexes]);
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current != null) window.clearTimeout(refreshTimerRef.current);
+    };
+  }, []);
+
+  // Decouple RPC tile fetches from the move stream: only fetch claimed-status
+  // for a viewport that's been stable ~250ms. fetchH3s already de-dupes cached
+  // cells, so revisiting painted areas costs nothing.
+  const settleTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (settleTimerRef.current != null) window.clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = window.setTimeout(() => {
+      settleTimerRef.current = null;
+      setSettledHexes(visibleHexes);
+    }, 250);
+    return () => {
+      if (settleTimerRef.current != null) window.clearTimeout(settleTimerRef.current);
+    };
+  }, [visibleHexes]);
+
+  // Rebuild geometry only when the visible set changes, then (re)apply
+  // feature-state since setData wipes it.
   useEffect(() => {
     const map = mapRef.current?.getMap();
     if (!ready || !map) return;
     const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
-    if (src) src.setData(buildFeatureCollection(visibleHexes));
-  }, [ready, visibleHexes, buildFeatureCollection, mapRef]);
+    if (!src) return;
+    src.setData(buildGeometry(visibleHexes));
+    applyFeatureState(visibleHexes);
+    prevSelectedRef.current = new Set(selectedRef.current);
+  }, [ready, visibleHexes, buildGeometry, applyFeatureState, mapRef]);
 
-  // Idempotent: re-runs after a Mapbox style change (which wipes custom
-  // sources/layers) without throwing on the second add.
+  // Selection change → diff against last-applied set, touch only what changed.
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!ready || !map) return;
+    const prev = prevSelectedRef.current;
+    const next = selectedHexes;
+    for (const h of prev) {
+      if (!next.has(h)) map.setFeatureState({ source: SOURCE_ID, id: h }, { selected: false });
+    }
+    for (const h of next) {
+      if (!prev.has(h)) map.setFeatureState({ source: SOURCE_ID, id: h }, { selected: true });
+    }
+    prevSelectedRef.current = new Set(next);
+  }, [ready, selectedHexes, mapRef]);
+
+  // Claimed status arrives (settled fetch) → update claimed/owner feature-state
+  // for the currently visible cells. No geometry rebuild.
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!ready || !map) return;
+    for (const id of visibleRef.current) {
+      const claimed = tiles.get(id);
+      map.setFeatureState(
+        { source: SOURCE_ID, id },
+        { claimed: !!claimed, ownerColor: claimed ? getOwnerColor(claimed.owner) : null },
+      );
+    }
+  }, [ready, tiles, mapRef]);
+
+  // Idempotent: re-runs after a style toggle (which wipes custom layers).
   const installHexLayers = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
@@ -139,6 +354,7 @@ export function MapView({
 
     map.addSource(SOURCE_ID, {
       type: 'geojson',
+      promoteId: 'h3',
       data: { type: 'FeatureCollection', features: [] },
     });
     map.addLayer({
@@ -157,13 +373,29 @@ export function MapView({
         'fill-opacity': 0,
       },
     });
+    // One state fill instead of two: selected (teal) takes precedence over
+    // claimed (owner colour); empty cells stay transparent. Merging the former
+    // claimed + selected fill layers removes a full-viewport fill pass per
+    // frame - meaningful on large/hi-DPI screens.
     map.addLayer({
-      id: CLAIMED_LAYER,
+      id: STATE_FILL_LAYER,
       type: 'fill',
       source: SOURCE_ID,
       paint: {
-        'fill-color': ['coalesce', ['get', 'ownerColor'], '#888'],
-        'fill-opacity': ['case', ['get', 'claimed'], 0.55, 0.0],
+        'fill-color': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          '#5eead4',
+          ['coalesce', ['feature-state', 'ownerColor'], '#888'],
+        ],
+        'fill-opacity': [
+          'case',
+          ['boolean', ['feature-state', 'selected'], false],
+          0.55,
+          ['boolean', ['feature-state', 'claimed'], false],
+          0.55,
+          0.0,
+        ],
       },
     });
     map.addLayer({
@@ -176,38 +408,86 @@ export function MapView({
       id: SELECTED_LAYER,
       type: 'line',
       source: SOURCE_ID,
-      paint: { 'line-color': '#ffffff', 'line-width': 2.5 },
-      filter: ['==', ['get', 'selected'], true],
+      paint: {
+        'line-color': '#ffffff',
+        'line-width': 3,
+        'line-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.95, 0.0],
+      },
+    });
+
+    map.addSource(AGG_SOURCE, {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+    map.addLayer({
+      id: AGG_CIRCLE,
+      type: 'circle',
+      source: AGG_SOURCE,
+      layout: { visibility: 'none' },
+      paint: {
+        'circle-radius': 6,
+        'circle-color': '#14b8a6',
+        'circle-opacity': 0.9,
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 1.5,
+      },
+    });
+    map.addLayer({
+      id: AGG_LABEL,
+      type: 'symbol',
+      source: AGG_SOURCE,
+      layout: {
+        visibility: 'none',
+        'text-field': ['get', 'label'],
+        'text-size': 12,
+        'text-offset': [0, 1.1],
+        'text-anchor': 'top',
+        'text-allow-overlap': false,
+      },
+      paint: {
+        'text-color': '#ffffff',
+        'text-halo-color': 'rgba(8,14,28,0.85)',
+        'text-halo-width': 1.4,
+      },
     });
   }, [mapRef]);
+
+  // Repaint the grid from the current visible set + feature-state. Needed after
+  // a style toggle: setStyle wipes the source, and the geometry effect won't
+  // re-fire if visibleHexes is unchanged, so the grid would stay empty.
+  const repaintGrid = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    const ids = visibleRef.current;
+    if (!map || ids.length === 0) return;
+    const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+    if (!src) return;
+    src.setData(buildGeometry(ids));
+    applyFeatureState(ids);
+  }, [mapRef, buildGeometry, applyFeatureState]);
 
   const onLoad = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    // Free up Shift+drag (Mapbox box-zoom) — we use Ctrl+drag for box-select instead
+    // Free up Shift+drag (Mapbox box-zoom) - we use Ctrl+drag for box-select.
     map.boxZoom.disable();
 
     installHexLayers();
 
-    // When the user toggles map style, Mapbox wipes custom layers — re-add them
-    // and re-render the visible hexes once the new style finishes loading.
+    // Safety net: if a style ever reloads (we no longer trigger it), re-add.
     map.on('style.load', () => {
       installHexLayers();
+      repaintGrid();
       refreshHexes();
     });
 
     // ─── Paint-drag selection ────────────────────────────────────────
-    // Mousedown on a hex (no modifier) → disable map pan, start collecting.
-    // Mousemove keeps adding hexes the cursor passes over.
-    // Mouseup commits the merged set into the selection and re-enables pan.
     map.on('mousedown', FILL_LAYER, (e) => {
       const ev = e.originalEvent as MouseEvent;
-      if (ev.button !== 0) return; // left button only
-      if (ev.shiftKey || ev.ctrlKey || ev.metaKey || ev.altKey) return; // leave modifier flows alone
+      if (ev.button !== 0) return;
+      if (ev.shiftKey || ev.ctrlKey || ev.metaKey || ev.altKey) return;
       const h3 = e.features?.[0]?.properties?.h3 as string | undefined;
       if (!h3) return;
-
       map.dragPan.disable();
       paintRef.current = {
         pressed: true,
@@ -221,36 +501,23 @@ export function MapView({
     map.on('mousemove', (e) => {
       const p = paintRef.current;
       if (!p?.pressed) return;
+      const wasMoved = p.moved;
       const dx = e.point.x - p.startX;
       const dy = e.point.y - p.startY;
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) p.moved = true;
       const feats = map.queryRenderedFeatures(e.point, { layers: [FILL_LAYER] });
       const h3 = feats[0]?.properties?.h3 as string | undefined;
-      if (!h3 || p.hexes.has(h3)) return;
-      p.hexes.add(h3);
-
-      // Live preview: rebuild source data with the in-progress paint set
-      // merged into the committed selection. We rebuild directly here
-      // instead of going through React state so each new hex lights up on
-      // the next animation frame.
-      const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
-      if (!src) return;
-      const merged = new Set(selectedRef.current);
-      for (const h of p.hexes) merged.add(h);
-      const features = visibleRef.current.map((id) => {
-        const f = hexToFeature(id);
-        const c = hexCenter(id);
-        const claimed = tilesRef.current.get(id);
-        f.properties = {
-          ...f.properties,
-          tier: classifyTier(c.lat, c.lng),
-          claimed: !!claimed,
-          ownerColor: claimed ? ownerColor(new PublicKey(claimed.owner)) : null,
-          selected: merged.has(id),
-        };
-        return f;
-      });
-      src.setData({ type: 'FeatureCollection', features });
+      const isNew = !!h3 && !p.hexes.has(h3);
+      if (isNew) p.hexes.add(h3!);
+      // Live O(1) preview via feature-state - no GeoJSON rebuild per cursor move.
+      if (p.moved) {
+        if (!wasMoved) {
+          // crossed the drag threshold: highlight everything accumulated so far
+          for (const h of p.hexes) map.setFeatureState({ source: SOURCE_ID, id: h }, { selected: true });
+        } else if (isNew) {
+          map.setFeatureState({ source: SOURCE_ID, id: h3! }, { selected: true });
+        }
+      }
     });
 
     const endPaint = () => {
@@ -266,44 +533,32 @@ export function MapView({
       paintRef.current = null;
     };
     map.on('mouseup', endPaint);
-    // If the cursor leaves the canvas mid-paint, end gracefully so we don't
-    // strand a "pressed" state and lock pan forever.
     map.getCanvas().addEventListener('mouseleave', endPaint);
 
     setReady(true);
     refreshHexes();
-  }, [mapRef, refreshHexes, setSelectedHexes, installHexLayers]);
+  }, [mapRef, refreshHexes, setSelectedHexes, installHexLayers, repaintGrid]);
 
   const onClick = useCallback(
     (e: MapMouseEvent) => {
-      // The mapbox 'click' event fires after a paint-drag's mouseup. Skip it
-      // so we don't replace the freshly painted selection with a single-hex.
       if (skipClickRef.current) {
         skipClickRef.current = false;
         return;
       }
       const map = mapRef.current?.getMap();
       if (!map) return;
-      const feats = map.queryRenderedFeatures(e.point, { layers: [FILL_LAYER, CLAIMED_LAYER] });
+      const feats = map.queryRenderedFeatures(e.point, { layers: [FILL_LAYER] });
       if (!feats.length) return;
       const h3 = feats[0].properties?.h3 as string | undefined;
       if (!h3) return;
-
-      const ev = e.originalEvent;
-      if (ev.shiftKey) {
-        const next = new Set(selectedHexes);
-        if (next.has(h3)) next.delete(h3);
-        else next.add(h3);
-        setSelectedHexes(next);
-      } else {
-        // Single click — replace selection
-        setSelectedHexes(new Set([h3]));
-      }
+      const next = new Set(selectedHexes);
+      if (next.has(h3)) next.delete(h3);
+      else next.add(h3);
+      setSelectedHexes(next);
     },
     [selectedHexes, setSelectedHexes, mapRef],
   );
 
-  // Ctrl+drag rectangle: overlay only intercepts when ctrlKey is held
   const handleOverlayMouseDown = (e: React.MouseEvent) => {
     if (!e.ctrlKey) return;
     dragStartRef.current = { x: e.clientX, y: e.clientY };
@@ -321,7 +576,7 @@ export function MapView({
     const y1 = Math.min(start.y, e.clientY) - rect.top;
     const x2 = Math.max(start.x, e.clientX) - rect.left;
     const y2 = Math.max(start.y, e.clientY) - rect.top;
-    if (Math.abs(x2 - x1) < 5 || Math.abs(y2 - y1) < 5) return; // click, not drag
+    if (Math.abs(x2 - x1) < 5 || Math.abs(y2 - y1) < 5) return;
     const feats = map.queryRenderedFeatures(
       [
         [x1, y1],
@@ -352,12 +607,17 @@ export function MapView({
         mapboxAccessToken={token}
         initialViewState={{ longitude: 13.405, latitude: 52.52, zoom: 10 }}
         style={{ position: 'absolute', inset: 0 }}
-        mapStyle={mapStyle}
+        mapStyle={satellite ? SATELLITE_STYLE : MAP_STYLE}
         projection={{ name: 'globe' }}
         onLoad={onLoad}
-        onMoveEnd={refreshHexes}
+        onMove={scheduleRefresh}
+        // moveend fires after EVERY wheel tick / micro zoom-ease, not just at
+        // the true end of a gesture - route it through the same trailing
+        // debounce so the heavy rebuild runs once after motion settles, not
+        // dozens of times mid-gesture.
+        onMoveEnd={scheduleRefresh}
         onClick={onClick}
-        interactiveLayerIds={[FILL_LAYER, CLAIMED_LAYER]}
+        interactiveLayerIds={[FILL_LAYER]}
       />
       <div
         className="absolute inset-0 z-[5]"

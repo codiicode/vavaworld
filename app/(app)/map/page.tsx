@@ -1,13 +1,24 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import type { MapRef } from 'react-map-gl/mapbox';
 import { MapView } from '@/components/MapView';
 import { GlassRightPanel } from '@/components/map/glass-right-panel';
 import { GlassSearchBar } from '@/components/map/glass-search-bar';
-import { MapStyleToggle, type MapStyleId } from '@/components/map/map-style-toggle';
-import { ClaimModal } from '@/components/ClaimModal';
+import { MapStyleToggle } from '@/components/map/map-style-toggle';
+import { MapZoomControls } from '@/components/map/map-zoom-controls';
+import { LiveClaimsFeed } from '@/components/map/live-claims-feed';
 import { hexCenter } from '@/lib/h3-utils';
+import { expandFromSeed } from '@/lib/hex-expand';
+
+// The claim flow pulls in Anchor + web3.js + pricing - none of which the map
+// needs until the user actually opens it. Load that chunk on demand so it
+// doesn't compete with map startup.
+const ClaimModal = dynamic(
+  () => import('@/components/ClaimModal').then((m) => m.ClaimModal),
+  { ssr: false },
+);
 
 /**
  * Full-bleed map page. The map fills the viewport behind everything; the AppSidebar
@@ -17,20 +28,47 @@ import { hexCenter } from '@/lib/h3-utils';
  * The zoom-in pill is rendered inside MapView itself (it depends on the map's zoom).
  */
 export default function Page() {
-  const [selectedHexes, setSelectedHexes] = useState<Set<string>>(new Set());
+  const [selectedHexes, setSelectedHexesRaw] = useState<Set<string>>(new Set());
+  // The "anchor" hex the quick-pick chips expand around. Sticky across
+  // expansions so {10 → 100 → 500} all stay centred on the user's original
+  // tap. Resets when the anchor is removed or the selection is cleared.
+  const [seed, setSeed] = useState<string | null>(null);
   const [showClaim, setShowClaim] = useState(false);
-  const [mapStyle, setMapStyle] = useState<MapStyleId>(
-    'mapbox://styles/mapbox/satellite-v9',
-  );
+  // Satellite is a raster overlay toggled on a single persistent base style -
+  // see MapView. Default on (matches the previous satellite-first view).
+  const [satellite, setSatellite] = useState(true);
   const mapRef = useRef<MapRef | null>(null);
   const refreshTilesRef = useRef<((h3s: string[]) => void) | null>(null);
 
-  const isSatellite = mapStyle === 'mapbox://styles/mapbox/satellite-v9';
+  const isSatellite = satellite;
+
+  // Wrapper that keeps the seed in sync with the selection. Any code that
+  // changes selectedHexes goes through here so the seed transitions stay
+  // consistent (claim ux relies on seed being null when the basket is empty).
+  const setSelectedHexes = (next: Set<string>) => {
+    setSelectedHexesRaw(next);
+    setSeed((prev) => {
+      if (next.size === 0) return null;
+      if (prev !== null && next.has(prev)) return prev;
+      return next.values().next().value ?? null;
+    });
+  };
 
   const removeHex = (h3: string) => {
     const next = new Set(selectedHexes);
     next.delete(h3);
     setSelectedHexes(next);
+  };
+
+  const clearAll = () => setSelectedHexes(new Set());
+
+  // Quick-pick "mark N closest" - expands the saved seed hex into a cluster
+  // of N cells and REPLACES the selection so the count is exactly N. The
+  // seed stays unchanged so the user can toggle between {10, 100, 500, 1000,
+  // custom} freely from the same anchor.
+  const selectClosest = (total: number) => {
+    if (!seed) return;
+    setSelectedHexesRaw(new Set(expandFromSeed(seed, total)));
   };
 
   const onClaimConfirmed = (h3s: string[]) => {
@@ -81,7 +119,7 @@ export default function Page() {
 
   return (
     <>
-      {/* Map fills the viewport — `fixed` so it's independent of any parent
+      {/* Map fills the viewport - `fixed` so it's independent of any parent
           layout height. AppSidebar and GlassRightPanel are also fixed and sit
           on top via higher z-index. */}
       <div className="fixed inset-0 z-0">
@@ -90,11 +128,11 @@ export default function Page() {
           setSelectedHexes={setSelectedHexes}
           mapRef={mapRef}
           refreshTilesRef={refreshTilesRef}
-          mapStyle={mapStyle}
+          satellite={satellite}
         />
       </div>
 
-      {/* Dim layer — only on satellite (which is image-heavy and varied).
+      {/* Dim layer - only on satellite (which is image-heavy and varied).
           Mapbox Standard is already pale and reads fine without dimming. */}
       {isSatellite && (
         <div
@@ -110,21 +148,28 @@ export default function Page() {
         />
       )}
 
-      {/* Search pill + style toggle — search shrinks to make room for the
-          52px toggle. The container clears the left rail (250) and the right
-          panel (356), and pads its inner edges 18px. */}
-      <div className="pointer-events-none fixed left-[250px] right-[356px] top-[18px] z-20 flex items-center gap-3 px-[18px]">
+      {/* Search pill + style toggle - search shrinks to make room for the
+          52px toggle. Desktop: clears the left rail (250) and right panel
+          (356). Mobile: spans the width below the floating top bar. */}
+      <div className="pointer-events-none fixed inset-x-3 top-[66px] z-20 flex items-center gap-3 md:inset-x-auto md:left-[250px] md:right-[356px] md:top-[18px] md:pl-[18px] md:pr-0">
         <div className="min-w-0 flex-1">
           <GlassSearchBar mapRef={mapRef} />
         </div>
-        <MapStyleToggle value={mapStyle} onChange={setMapStyle} />
+        <MapStyleToggle satellite={satellite} onChange={setSatellite} />
       </div>
 
       <GlassRightPanel
         selectedHexes={selectedHexes}
+        seedHex={seed}
         onRemoveHex={removeHex}
+        onClearAll={clearAll}
         onClaim={() => setShowClaim(true)}
+        onSelectClosest={selectClosest}
       />
+
+      <MapZoomControls mapRef={mapRef} />
+
+      <LiveClaimsFeed />
 
       {showClaim && (
         <ClaimModal

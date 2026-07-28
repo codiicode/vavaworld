@@ -1,51 +1,86 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ActivitySidebar } from '@/components/marketplace/activity-sidebar';
-import { BuyDialog } from '@/components/marketplace/buy-dialog';
-import { EmptyState } from '@/components/marketplace/empty-state';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import {
-  FilterSidebar,
-  defaultFilterState,
-  type FilterState,
-} from '@/components/marketplace/filter-sidebar';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { CountrySelect } from '@/components/country-select';
 import { ListingGrid } from '@/components/marketplace/listing-grid';
-import { ListingTable, type SortKey } from '@/components/marketplace/listing-table';
-import { MarketHeader } from '@/components/marketplace/market-header';
-import { QuickChips, type QuickFilter, type ViewMode } from '@/components/marketplace/quick-chips';
-import { mockListings, type Listing } from '@/lib/mock-marketplace';
+import {
+  mockChipCounts,
+  mockListings,
+  mockMarketStats,
+  type Listing,
+  type Tier,
+} from '@/lib/mock-marketplace';
+import {
+  useActiveListings,
+  useListingsVersion,
+  type DbListing,
+} from '@/lib/supabase-listings';
+import { hexCenter } from '@/lib/h3-utils';
+import { useHexLocations } from '@/lib/use-hex-locations';
+import { classifyTier } from '@/lib/tier';
+
+type SortKey = 'newest' | 'price-asc' | 'price-desc' | 'trending';
+
+const SORT_LABELS: Record<SortKey, string> = {
+  newest: 'Newest',
+  'price-asc': 'Price: Low → High',
+  'price-desc': 'Price: High → Low',
+  trending: 'Trending',
+};
+
+const TIER_OPTIONS: ReadonlyArray<{ value: 'all' | Tier; label: string }> = [
+  { value: 'all', label: 'All tiers' },
+  { value: 1, label: 'Tier 1' },
+  { value: 2, label: 'Tier 2' },
+  { value: 3, label: 'Tier 3' },
+];
+
+const TRIGGER =
+  'bg-white/40 backdrop-blur-md border-white/40 h-11 rounded-xl text-foreground';
+const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40';
 
 /**
- * Marketplace landing — three-column shell.
- *
- *  240px FilterSidebar │ flexible main │ 300px ActivitySidebar (≥1280px)
- *
- * Filtering and sorting happen client-side against the mock dataset. When the
- * indexer lands, this whole page becomes a data-shape wrapper around the same
- * components.
+ * Marketplace - minimal, glass-card grid matching the leaderboard / profile vibe.
+ * Filters live in a single top row (search · country · tier · sort) instead of a
+ * dense side rail; listings render as satellite-preview tiles.
  */
 export default function MarketplacePage() {
-  const [filters, setFilters] = useState<FilterState>(defaultFilterState);
-  const [chip, setChip] = useState<QuickFilter>('buy-now');
-  const [view, setView] = useState<ViewMode>('table');
+  const [search, setSearch] = useState('');
+  const [country, setCountry] = useState<'all' | string>('all');
+  const [tier, setTier] = useState<'all' | Tier>('all');
   const [sort, setSort] = useState<SortKey>('newest');
-  const [buyTarget, setBuyTarget] = useState<Listing | null>(null);
+
+  // Real listings from Supabase, refetched whenever someone lists/cancels.
+  const version = useListingsVersion();
+  const { listings: dbListings } = useActiveListings(version);
+  const dbHexSet = useMemo(
+    () => new Set(dbListings.map((l) => l.h3_id)),
+    [dbListings],
+  );
+  const dbLocations = useHexLocations(dbHexSet);
+  const realListings = useMemo(
+    () => dbListings.map((l) => toListing(l, dbLocations)),
+    [dbListings, dbLocations],
+  );
+  const allListings = useMemo<ReadonlyArray<Listing>>(
+    () => [...realListings, ...mockListings],
+    [realListings],
+  );
 
   const visible = useMemo(() => {
-    let xs: ReadonlyArray<Listing> = mockListings;
+    let xs: ReadonlyArray<Listing> = allListings;
 
-    // Quick-chip narrows first (cheapest filter)
-    if (chip === 'auctions') xs = xs.filter((l) => l.isAuction);
-    if (chip === 'new24h') {
-      xs = xs.filter((l) => l.listedAgo.endsWith('m ago') || l.listedAgo.endsWith('h ago'));
-    }
-    if (chip === 'price-drop') xs = xs.filter((l) => l.change24h < -3);
-    if (chip === 'ending-soon') xs = xs.filter((l) => l.isAuction);
-    if (chip === 'whale-watch') xs = xs.filter((l) => l.price >= 0.7);
-
-    // Search
-    if (filters.search.trim()) {
-      const q = filters.search.toLowerCase();
+    if (search.trim()) {
+      const q = search.toLowerCase();
       xs = xs.filter(
         (l) =>
           l.city.toLowerCase().includes(q) ||
@@ -53,37 +88,10 @@ export default function MarketplacePage() {
           l.countryCode.toLowerCase().includes(q),
       );
     }
+    if (country !== 'all') xs = xs.filter((l) => l.countryCode === country);
+    if (tier !== 'all') xs = xs.filter((l) => l.tier === tier);
 
-    // Tier
-    if (filters.tiers.length > 0) {
-      xs = xs.filter((l) => filters.tiers.includes(l.tier));
-    }
-
-    // Price
-    xs = xs.filter((l) => l.price >= filters.priceMin && l.price <= filters.priceMax);
-
-    // Country
-    if (filters.countries.length > 0) {
-      xs = xs.filter((l) => filters.countries.includes(l.countryCode));
-    }
-
-    // Decay
-    xs = xs.filter((l) => l.decayPercent >= filters.decayMin);
-
-    // Status
-    if (filters.status === 'auction') xs = xs.filter((l) => l.isAuction);
-    // listed and reserve-met both pass everything for now (mock data)
-
-    // Special
-    if (filters.iconic) xs = xs.filter((l) => l.isIconic);
-    if (filters.newOnly) {
-      xs = xs.filter((l) => l.listedAgo.endsWith('m ago') || l.listedAgo.endsWith('h ago'));
-    }
-    if (filters.whaleOnly) xs = xs.filter((l) => l.price >= 0.6);
-
-    // Sort
-    const sorted = [...xs];
-    sorted.sort((a, b) => {
+    return [...xs].sort((a, b) => {
       switch (sort) {
         case 'price-asc':
           return a.price - b.price;
@@ -91,51 +99,182 @@ export default function MarketplacePage() {
           return b.price - a.price;
         case 'trending':
           return b.change24h - a.change24h;
-        case 'ending':
-          return Number(b.isAuction) - Number(a.isAuction);
         case 'newest':
         default:
-          // mins ago first, then hours, then days — listedAgo is pre-formatted
           return rankAgo(a.listedAgo) - rankAgo(b.listedAgo);
       }
     });
-    return sorted;
-  }, [filters, chip, sort]);
+  }, [allListings, search, country, tier, sort]);
+
+  const reset = () => {
+    setSearch('');
+    setCountry('all');
+    setTier('all');
+    setSort('newest');
+  };
 
   return (
-    <div className="flex h-full">
-      <FilterSidebar state={filters} onChange={setFilters} />
-
-      <section className="flex flex-1 flex-col overflow-hidden">
-        <MarketHeader />
-        <QuickChips active={chip} onChange={setChip} view={view} onViewChange={setView} />
-
-        {visible.length === 0 ? (
-          <EmptyState onReset={() => setFilters(defaultFilterState)} />
-        ) : view === 'table' ? (
-          <ListingTable
-            listings={visible}
-            totalCount={mockListings.length}
-            sort={sort}
-            onSortChange={setSort}
-            onBuy={setBuyTarget}
-          />
-        ) : (
-          <ListingGrid listings={visible} onBuy={setBuyTarget} />
-        )}
-      </section>
-
-      <div className="hidden xl:block">
-        <ActivitySidebar />
+    <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
+      {/* Header */}
+      <div className="mb-6 flex items-end justify-between">
+        <div>
+          <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
+            Market
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+            Marketplace
+          </h1>
+          <p className="mt-1 text-sm text-foreground/70">
+            Buy and sell hexes across VavaWorld
+          </p>
+        </div>
       </div>
 
-      <BuyDialog
-        listing={buyTarget}
-        open={buyTarget !== null}
-        onOpenChange={(open) => !open && setBuyTarget(null)}
-      />
+      {/* Stat strip */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Floor" value={`${mockMarketStats.floor.toFixed(3)} SOL`} />
+        <Stat label="Volume (24h)" value={`${mockMarketStats.volume24h} SOL`} />
+        <Stat
+          label="Listed"
+          value={mockMarketStats.listedCount.toLocaleString('en-US')}
+        />
+        <Stat
+          label="Sales (24h)"
+          value={mockChipCounts.new24h.toLocaleString('en-US')}
+        />
+      </div>
+
+      {/* Filter row */}
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+        <div className="relative">
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground/55"
+          />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search city, neighborhood, country…"
+            className={`${TRIGGER} pl-9`}
+          />
+        </div>
+        <CountrySelect
+          value={country}
+          onChange={setCountry}
+          allOption={{ value: 'all', label: 'All countries' }}
+          triggerClassName="sm:w-44"
+        />
+        <Select
+          value={String(tier)}
+          onValueChange={(v) => setTier(v === 'all' ? 'all' : (Number(v) as Tier))}
+        >
+          <SelectTrigger className={`${TRIGGER} sm:w-32`}>
+            <SelectValue placeholder="Tier" />
+          </SelectTrigger>
+          <SelectContent className={CONTENT}>
+            {TIER_OPTIONS.map((o) => (
+              <SelectItem key={String(o.value)} value={String(o.value)}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+          <SelectTrigger className={`${TRIGGER} sm:w-40`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className={CONTENT}>
+            {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+              <SelectItem key={k} value={k}>
+                {SORT_LABELS[k]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Count */}
+      <div className="mb-4 flex items-center justify-between text-xs text-foreground/60">
+        <span className="tabular-nums">
+          {visible.length === 0
+            ? 'No listings match these filters'
+            : `Showing ${visible.length} of ${allListings.length.toLocaleString('en-US')}`}
+          {realListings.length > 0 && ` · ${realListings.length} live`}
+        </span>
+        {(search || country !== 'all' || tier !== 'all') && (
+          <button
+            type="button"
+            onClick={reset}
+            className="font-medium text-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+          >
+            Reset filters
+          </button>
+        )}
+      </div>
+
+      {/* Grid */}
+      {visible.length === 0 ? (
+        <div className="rounded-2xl border border-white/40 bg-white/30 px-6 py-20 text-center text-sm text-foreground/60 backdrop-blur-md">
+          Try widening the search, dropping the tier, or picking a different country.
+        </div>
+      ) : (
+        <ListingGrid listings={visible} />
+      )}
     </div>
   );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/40 bg-white/30 px-4 py-3 backdrop-blur-md">
+      <div className="text-[10.5px] font-medium uppercase tracking-[0.08em] text-foreground/60">
+        {label}
+      </div>
+      <div className="mt-1 text-lg font-semibold tabular-nums tracking-tight text-foreground">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+/** Adapt a real DB listing into the same Listing shape the grid renders. */
+function toListing(
+  l: DbListing,
+  locations: Map<string, ReturnType<typeof useHexLocations> extends Map<string, infer V> ? V : never>,
+): Listing {
+  const c = hexCenter(l.h3_id);
+  const loc = locations.get(l.h3_id);
+  const tier = classifyTier(c.lat, c.lng);
+  const price = Number(l.price_sol);
+  return {
+    id: l.id, // UUID - used as the route segment on /marketplace/[id]
+    h3: l.h3_id,
+    countryCode: (loc?.countryCode ?? 'un').toLowerCase(),
+    city: loc?.place ?? loc?.countryName ?? '-',
+    neighborhood: loc?.neighborhood ?? loc?.place ?? '-',
+    lat: c.lat,
+    lng: c.lng,
+    tier,
+    price,
+    priceUsd: Math.round(price * 150),
+    change24h: 0,
+    lastSale: null,
+    listedAgo: formatAgo(l.listed_at),
+    sellerAddr: l.seller,
+    claimedAt: l.listed_at,
+    claimSequence: 0,
+  };
+}
+
+function formatAgo(iso: string): string {
+  const then = new Date(iso).getTime();
+  const mins = Math.max(0, Math.floor((Date.now() - then) / 60_000));
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
 function rankAgo(s: string): number {

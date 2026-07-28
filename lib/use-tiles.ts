@@ -11,13 +11,18 @@ import type { ClaimedTile } from '@/types/tile';
 import type { Tier } from './tier';
 
 const BATCH = 100;
+// Fire several getMultipleAccountsInfo batches at once instead of serially -
+// a settled z16 viewport is ~2k cells (20 batches), and 20 sequential RPC
+// round-trips is seconds of "tiles colouring in late". Bounded so we don't
+// trip provider rate limits (429) on a fast pan.
+const CONCURRENCY = 8;
 const programIdPk = new PublicKey(PROGRAM_ID);
 const coder = new BorshAccountsCoder(idl as Idl);
 
 function decodeTile(buf: Buffer, h3: string): ClaimedTile | null {
   try {
     // Field names match the IDL (snake_case). Anchor 1.0+ does NOT translate
-    // these to camelCase on decode — we tried h3Id/claimedAt and got undefined.
+    // these to camelCase on decode - we tried h3Id/claimedAt and got undefined.
     const decoded = coder.decode<{
       owner: PublicKey;
       h3_id: { toString: () => string };
@@ -49,6 +54,10 @@ export function useTiles(visibleHexes: string[]): {
   const [tiles, setTiles] = useState<Cache>(new Map());
   const cacheRef = useRef<Cache>(new Map());
   const connRef = useRef<Connection>(getConnection());
+  // Monotonic token: panning fast queues several fetches against devnet. Only
+  // the newest may commit results - older awaits bail after each RPC batch so
+  // a slow stale response can't overwrite the current viewport's tiles.
+  const reqTokenRef = useRef(0);
 
   const fetchH3s = useCallback(async (h3s: string[]) => {
     if (h3s.length === 0) return;
@@ -57,18 +66,26 @@ export function useTiles(visibleHexes: string[]): {
     const toFetch = h3s.filter((h) => !cacheRef.current.has(h));
     if (toFetch.length === 0) return;
 
+    const myToken = ++reqTokenRef.current;
     const pdas = toFetch.map((h) => ({ h, pda: tilePda(h, programIdPk)[0] }));
 
-    for (let i = 0; i < pdas.length; i += BATCH) {
-      const slice = pdas.slice(i, i + BATCH);
-      const accs = await conn.getMultipleAccountsInfo(slice.map((s) => s.pda));
-      slice.forEach((s, idx) => {
-        const ai = accs[idx];
-        if (!ai) {
-          cacheRef.current.set(s.h, null);
-        } else {
-          cacheRef.current.set(s.h, decodeTile(ai.data as Buffer, s.h));
-        }
+    const batches: { h: string; pda: PublicKey }[][] = [];
+    for (let i = 0; i < pdas.length; i += BATCH) batches.push(pdas.slice(i, i + BATCH));
+
+    // Process in waves of CONCURRENCY parallel batches; bail between waves if a
+    // newer viewport fetch has superseded this one.
+    for (let i = 0; i < batches.length; i += CONCURRENCY) {
+      const wave = batches.slice(i, i + CONCURRENCY);
+      const results = await Promise.all(
+        wave.map((slice) => conn.getMultipleAccountsInfo(slice.map((s) => s.pda))),
+      );
+      if (reqTokenRef.current !== myToken) return; // superseded by a newer fetch
+      wave.forEach((slice, wi) => {
+        const accs = results[wi];
+        slice.forEach((s, idx) => {
+          const ai = accs[idx];
+          cacheRef.current.set(s.h, ai ? decodeTile(ai.data as Buffer, s.h) : null);
+        });
       });
     }
     setTiles(new Map(cacheRef.current));

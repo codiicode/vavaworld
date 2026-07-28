@@ -6,7 +6,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
@@ -41,14 +41,14 @@ export function TileDetailsDialog({
       <DialogContent className="sm:max-w-[460px]">
         <div className="space-y-1.5">
           <DialogPrimitive.Title className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <span>{flagEmoji(location?.countryCode) || '🌐'}</span>
+            <Flag code={location?.countryCode} size={16} />
             <span>{place}</span>
             <span className="ml-auto rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary">
               T{tile.tier}
             </span>
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="text-sm text-muted-foreground">
-            {location?.countryName ?? '—'}
+            {location?.countryName ?? '-'}
           </DialogPrimitive.Description>
         </div>
 

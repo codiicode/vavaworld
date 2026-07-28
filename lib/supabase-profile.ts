@@ -38,7 +38,7 @@ export function useSupabaseProfile(walletAddress: string | null, version = 0) {
         .maybeSingle<DbProfile>();
       if (cancelled) return;
       if (error) {
-        // Common case: no row yet — `maybeSingle` returns null without error.
+        // Common case: no row yet - `maybeSingle` returns null without error.
         // Any other error we just swallow into "no profile" for now.
         setData(null);
       } else {
@@ -58,7 +58,7 @@ export function useSupabaseProfile(walletAddress: string | null, version = 0) {
  * Upsert profile row by wallet address. Returns the new row on success or
  * throws with a user-readable message.
  *
- * Username uniqueness is enforced by a case-insensitive unique index — we
+ * Username uniqueness is enforced by a case-insensitive unique index - we
  * surface that as a friendly "Username is taken" message.
  */
 export async function upsertProfile(
@@ -82,7 +82,7 @@ export async function upsertProfile(
 
   if (error) {
     if (error.code === '23505') throw new Error('Username is already taken');
-    if (error.code === '23514') throw new Error('Invalid input — check username and bio length');
+    if (error.code === '23514') throw new Error('Invalid input - check username and bio length');
     throw new Error(error.message);
   }
   return data;

@@ -11,7 +11,7 @@ import { useActiveWallet } from '@/lib/active-wallet';
  * embedded Solana wallet.
  *
  * Only rendered when the active wallet came from Privy (`source === 'privy'`).
- * For external wallets (Phantom etc.) the user already controls their key —
+ * For external wallets (Phantom etc.) the user already controls their key -
  * showing a button there would be misleading.
  *
  * Per Privy docs: the key is rendered in an iframe on a separate domain. Our

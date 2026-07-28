@@ -1,6 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
 @import 'mapbox-gl/dist/mapbox-gl.css';
 @import '@solana/wallet-adapter-react-ui/styles.css';
+
+/* Self-hosted display face for the brand wordmark (used site-wide). */
+@font-face {
+  font-family: "StretchPro";
+  src: url("/fonts/StretchPro.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -12,13 +21,13 @@
 
    Two coexisting var sets at the root:
    - shadcn HSL tokens (Tailwind theme): `bg-primary`, `text-muted-foreground`, …
-   - Legacy: --signal/--ink/--bg/etc. — read by inline-styled components on
+   - Legacy: --signal/--ink/--bg/etc. - read by inline-styled components on
      /profile + the old ClaimModal. Preserved so they don't break; the
      /map sidebar uses Tailwind tokens exclusively.
    ───────────────────────────────────────────────────────── */
 @layer base {
   :root {
-    /* shadcn — Linear-inspired light theme */
+    /* shadcn - Linear-inspired light theme */
     --background:           0 0% 98%;        /* #FAFAFA */
     --foreground:           222 12% 11%;     /* #1A1B1F */
     --card:                 0 0% 100%;
@@ -40,7 +49,7 @@
     --ring:                 204 75% 70%;
     --radius:               0.5rem;          /* 8px */
 
-    /* legacy (used by /profile + ClaimModal only — not /map) */
+    /* legacy (used by /profile + ClaimModal only - not /map) */
     --bg:          #f5f9fd;
     --bg-2:        #eaf4fc;
     --panel:       rgba(255, 255, 255, 0.62);
@@ -56,8 +65,8 @@
     --signal-deep: #0f2a4c;
 
     /* ─────────────────────────────────────────────────────────
-       Glass system — canonical tokens from the design handoff
-       (handoff: VAVAWORLD — Premium Glass UI, balanced preset).
+       Glass system - canonical tokens from the design handoff
+       (handoff: VavaWorld - Premium Glass UI, balanced preset).
        Used by .glass primitive + AppSidebar, /map overlays, etc.
        ───────────────────────────────────────────────────────── */
     --tint-r: 255; --tint-g: 255; --tint-b: 255;
@@ -84,7 +93,7 @@
 
 html, body { height: 100%; }
 body {
-  /* Sky photo backdrop — glass panels float on top with white-translucent
+  /* Sky photo backdrop - glass panels float on top with white-translucent
      backgrounds and dark text. Map page overrides with mapbox + dim overlay. */
   background-color: #c2d8f4;
   background-image: url('/sky-bg.jpg');
@@ -99,7 +108,7 @@ body {
 }
 
 /* Linear-style: no decorative shadows by default. We selectively re-enable for
-   .glass surfaces below — depth is the whole point of that primitive. */
+   .glass surfaces below - depth is the whole point of that primitive. */
 * { box-shadow: none; }
 
 /* ─────────────────────────────────────────────────────────
@@ -107,10 +116,10 @@ body {
 
    Two intensity variants modify the same tokens. Rim-light ::before
    gives the bright top edge that sells the effect. `.panel::after`
-   adds a soft inner shine — only large panels should opt in.
+   adds a soft inner shine - only large panels should opt in.
    ───────────────────────────────────────────────────────── */
 .glass {
-  /* NOTE: position is intentionally NOT set here — it would override Tailwind's
+  /* NOTE: position is intentionally NOT set here - it would override Tailwind's
      `.fixed`/`.absolute` utilities (this file is loaded AFTER `@tailwind utilities`,
      so equal-specificity wins by source order). Consumers must add a position
      class themselves; the ::before rim-light needs the parent to be positioned. */
@@ -190,68 +199,196 @@ body {
 .mapboxgl-ctrl-bottom-right, .mapboxgl-ctrl-bottom-left { background: transparent !important; }
 
 /* ────────────────────────────────────────────────────────────
-   Solana wallet-adapter button — brand-blue, pill, Inter
+   Solana wallet-adapter modal - styled to match the site's glass
+   design system (sky-bg + rounded-2xl border-white/40 bg-white/30
+   backdrop-blur-md). Wallet rows mirror the Sign-in gate buttons.
    ──────────────────────────────────────────────────────────── */
-.wallet-adapter-button {
-  font-family: 'Inter', -apple-system, system-ui, sans-serif !important;
-  font-size: 13.5px !important;
+.wallet-adapter-modal {
+  font-family: var(--font-geist-sans), 'Inter', system-ui, sans-serif !important;
+}
+.wallet-adapter-modal-overlay {
+  background: rgba(8, 18, 36, 0.42) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+.wallet-adapter-modal-container {
+  padding: 12px !important;
+}
+.wallet-adapter-modal-wrapper {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  border-radius: 22px !important;
+  backdrop-filter: blur(20px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(140%) !important;
+  box-shadow:
+    0 24px 60px -20px rgba(8, 18, 36, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+  font-family: var(--font-geist-sans), 'Inter', sans-serif !important;
+  padding: 20px !important;
+  max-width: 420px !important;
+  width: 100% !important;
+}
+.wallet-adapter-modal-button-close {
+  background: rgba(255, 255, 255, 0.45) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  border-radius: 999px !important;
+  width: 32px !important;
+  height: 32px !important;
+  top: 14px !important;
+  right: 14px !important;
+}
+.wallet-adapter-modal-button-close svg {
+  fill: hsl(var(--foreground)) !important;
+}
+.wallet-adapter-modal-title {
+  font-family: var(--font-geist-sans), 'Inter', sans-serif !important;
+  color: hsl(var(--foreground)) !important;
+  font-weight: 600 !important;
+  font-size: 18px !important;
+  letter-spacing: -0.01em !important;
+  padding: 4px 12px 20px !important;
+  text-align: left !important;
+}
+.wallet-adapter-modal-list {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+.wallet-adapter-modal-list li {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.wallet-adapter-modal-list .wallet-adapter-button {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  border-radius: 14px !important;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  height: auto !important;
+  transition: background-color 0.15s ease !important;
+}
+.wallet-adapter-modal-list .wallet-adapter-button:hover {
+  background: rgba(255, 255, 255, 0.60) !important;
+  filter: none !important;
+}
+.wallet-adapter-modal-list .wallet-adapter-button-end-icon,
+.wallet-adapter-modal-list .wallet-adapter-button-start-icon {
+  width: 24px !important;
+  height: 24px !important;
+}
+.wallet-adapter-modal-list-more {
+  color: hsl(var(--foreground) / 0.7) !important;
   font-weight: 500 !important;
-  letter-spacing: 0.01em !important;
+  padding: 10px 0 0 !important;
+}
+.wallet-adapter-modal-list-more svg {
+  fill: hsl(var(--foreground) / 0.7) !important;
+}
+
+/* The disconnect / change-wallet dropdown rendered next to a connected button */
+.wallet-adapter-dropdown-list {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  box-shadow: 0 12px 30px -10px rgba(8, 18, 36, 0.25) !important;
+  padding: 6px !important;
+}
+.wallet-adapter-dropdown-list-item {
+  font-family: var(--font-geist-sans), 'Inter', sans-serif !important;
+  color: hsl(var(--foreground)) !important;
+  border-radius: 10px !important;
+}
+.wallet-adapter-dropdown-list-item:hover {
+  background: rgba(255, 255, 255, 0.50) !important;
+}
+
+/* The wallet-adapter "Select Wallet" trigger button (rarely shown but
+   styled defensively in case anything still mounts it directly). */
+.wallet-adapter-button {
+  font-family: var(--font-geist-sans), 'Inter', sans-serif !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
   height: auto !important;
   padding: 10px 18px !important;
-  border-radius: 999px !important;
-  background: var(--signal) !important;
-  color: #ffffff !important;
-  border: 1.5px solid var(--signal) !important;
-  transition: filter 0.15s, background 0.15s, border-color 0.15s !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  transition: background-color 0.15s ease !important;
   line-height: 1.2 !important;
 }
 .wallet-adapter-button:not([disabled]):hover {
-  background: var(--signal-deep) !important;
-  border-color: var(--signal-deep) !important;
-}
-.wallet-adapter-button-trigger {
-  background: var(--signal) !important;
-  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.60) !important;
 }
 .wallet-adapter-button[disabled] {
-  background: rgba(255, 255, 255, 0.6) !important;
-  color: var(--dim) !important;
-  border-color: var(--hairline) !important;
+  background: rgba(255, 255, 255, 0.30) !important;
+  color: hsl(var(--foreground) / 0.45) !important;
 }
 .wallet-adapter-button .wallet-adapter-button-start-icon,
 .wallet-adapter-button .wallet-adapter-button-end-icon {
   margin-right: 8px !important;
 }
-.wallet-adapter-modal-wrapper {
-  background: rgba(255, 255, 255, 0.96) !important;
-  border: 1px solid var(--hairline) !important;
-  border-radius: 14px !important;
-  font-family: 'Inter', sans-serif !important;
+
+/* ─────────────────────────────────────────────────────────
+   Custom scrollbars - site-wide. Matches the glass/sky vibe:
+   thin, semi-transparent track + brand-tinted thumb that
+   darkens on hover. Firefox uses scrollbar-* properties;
+   WebKit gets the ::-webkit pseudo-elements.
+   ───────────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 184, 166, 0.55) rgba(255, 255, 255, 0.18);
 }
-.wallet-adapter-modal-title {
-  font-family: 'Cormorant Garamond', Georgia, serif !important;
-  color: var(--ink) !important;
-  font-weight: 500 !important;
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 999px;
 }
-.wallet-adapter-modal-list .wallet-adapter-button {
-  background: transparent !important;
-  color: var(--ink) !important;
-  border: 1px solid transparent !important;
-  border-bottom: 1px solid var(--hair-2) !important;
-  border-radius: 0 !important;
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(94, 234, 212, 0.55), rgba(14, 165, 233, 0.55));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
-.wallet-adapter-modal-list .wallet-adapter-button:hover {
-  background: rgba(29, 94, 149, 0.05) !important;
-  filter: none;
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(94, 234, 212, 0.85), rgba(14, 165, 233, 0.85));
+  background-clip: padding-box;
+  border: 2px solid transparent;
 }
-.wallet-adapter-dropdown-list {
-  background: rgba(255, 255, 255, 0.92) !important;
-  border: 1px solid var(--hairline) !important;
-  border-radius: 14px !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+*::-webkit-scrollbar-corner { background: transparent; }
+
+/* ─────────────────────────────────────────────────────────
+   Typography defaults - soft grotesk (Manrope) tightened
+   slightly for the dashboard feel. Headings get tighter
+   letter-spacing and leading; body gets a relaxed 1.5 leading.
+   ───────────────────────────────────────────────────────── */
+body {
+  font-feature-settings: "ss01", "ss02", "cv11";
+  letter-spacing: -0.005em;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-.wallet-adapter-dropdown-list-item {
-  font-family: 'Inter', sans-serif !important;
-}
+h1, h2, h3, h4 { letter-spacing: -0.022em; }
+h1 { line-height: 1.1; }
+h2 { line-height: 1.2; }
+h3, h4 { line-height: 1.25; }
+
+/* Bump the shadcn muted-foreground so it actually passes WCAG AA
+   against the white-translucent glass cards over the sky bg
+   (was a too-light grey that read blue-on-blue in places). */
+:root { --muted-foreground: 215 22% 28%; }

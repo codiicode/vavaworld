@@ -2,7 +2,6 @@
 
 import { Mail, Wallet } from 'lucide-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { cn } from '@/lib/utils';
@@ -17,7 +16,7 @@ type Variant = 'sidebar' | 'inline';
  * `variant='sidebar'` renders a compact button suited to the 200px app rail.
  * `variant='inline'` renders a full-size default Button (used in dialogs etc.).
  *
- * When already connected, renders nothing — callers show their own connected UI.
+ * When already connected, renders nothing - callers show their own connected UI.
  */
 export function ConnectButton({
   variant = 'inline',
@@ -32,15 +31,21 @@ export function ConnectButton({
   if (!wallet.ready) return null;
   if (wallet.connected) return null;
 
+  // Glass pill that matches the sidebar / sky background instead of the
+  // default solid primary fill (which looked out of place against the panel).
+  const glassClass =
+    'inline-flex items-center justify-center rounded-[12px] border border-white/40 bg-white/30 text-foreground backdrop-blur-md transition-colors hover:bg-white/45 hover:text-foreground';
   const triggerClass =
-    variant === 'sidebar' ? 'h-8 w-full text-xs font-medium' : 'h-9 text-sm font-medium';
+    variant === 'sidebar'
+      ? `${glassClass} h-9 w-full text-[13px] font-medium`
+      : `${glassClass} h-9 px-4 text-sm font-medium`;
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button size={variant === 'sidebar' ? 'sm' : 'default'} className={cn(triggerClass, className)}>
+        <button type="button" className={cn(triggerClass, className)}>
           Connect
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 p-1">
         <button
@@ -52,7 +57,7 @@ export function ConnectButton({
           <div className="flex flex-col">
             <span className="text-sm font-medium">Sign in</span>
             <span className="text-[11px] text-muted-foreground">
-              Email, Google, or X — we make a wallet for you
+              Email, Google, or X - we make a wallet for you
             </span>
           </div>
         </button>

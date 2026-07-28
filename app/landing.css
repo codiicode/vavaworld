@@ -1,7 +1,22 @@
 /* ─────────────────────────────────────────────────────────
-   VAVAWORLD Landing — light-theme scoped to .landing-root
+   VavaWorld Landing - light-theme scoped to .landing-root
    Hand-off design by Claude Design, recreated as React components.
    ───────────────────────────────────────────────────────── */
+
+/* Footer hex-grid: let hover pass through the content to the grid behind,
+   while keeping the actual links clickable. */
+.l-site .l-foot-inner,
+.l-site .l-foot-bottom { pointer-events: none; }
+.l-site .l-foot-inner a { pointer-events: auto; }
+
+/* Cinematic hero (components/landing/Hero.tsx) entrance animations. */
+@keyframes alt-fade-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.alt-fade-rise { animation: alt-fade-rise 0.8s ease-out both; }
+.alt-fade-rise-delay { animation: alt-fade-rise 0.8s ease-out 0.2s both; }
+.alt-fade-rise-delay-2 { animation: alt-fade-rise 0.8s ease-out 0.4s both; }
 
 .landing-root {
   --l-sky-pale:  #eaf4fc;
@@ -31,8 +46,8 @@
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
   background:
-    radial-gradient(ellipse 60% 45% at 50% 90%, #eaf4fc 0%, transparent 65%),
-    linear-gradient(180deg, #4ea7df 0%, #6cb6ea 30%, #94caee 60%, #c8e2f4 100%);
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(94, 234, 212, 0.10) 0%, transparent 60%),
+    linear-gradient(180deg, #fbfdfe 0%, #f3f8fb 55%, #eef4f8 100%);
   background-attachment: fixed;
 }
 
@@ -44,7 +59,7 @@
 .landing-root button { font: inherit; background: none; border: none; color: inherit; cursor: pointer; }
 .landing-root svg { display: block; }
 .landing-root ::selection { background: var(--l-sky-deep); color: #fff; }
-.landing-root .l-sans { font-family: "Inter", sans-serif; }
+.landing-root .l-sans { font-family: var(--font-manrope), "Inter", sans-serif; }
 
 /* ── DRIFTING SKY ────────────────────────── */
 .landing-root .l-sky-stage {
@@ -73,7 +88,7 @@
 
 /* ── NAV ─────────────────────────────────── */
 .landing-root nav.l-site {
-  /* Liquid-glass top nav, floating with margin from edges — matches the
+  /* Liquid-glass top nav, floating with margin from edges - matches the
      light-glass panels on /profile, /marketplace, AppSidebar. */
   position: fixed;
   top: 14px; left: 14px; right: 14px;
@@ -96,23 +111,37 @@
   align-items: center;
   justify-content: space-between;
   gap: 32px;
+  font-family: var(--font-manrope), "Inter", sans-serif;
 }
-/* Nav contents sit on the light-glass nav, so text is dark — matches the
-   foreground tokens we use elsewhere. */
+/* Defensive: every text node inside the nav inherits Inter, *except* the
+   brand wordmark which has its own explicit StretchPro declaration. */
+.landing-root nav.l-site :not(.l-name) {
+  font-family: var(--font-manrope), "Inter", sans-serif;
+}
+/* Brand sits next to the white transparent mark, so the wordmark is white. */
 .landing-root nav.l-site .l-brand,
-.landing-root nav.l-site .l-brand .l-name { color: var(--l-ink); }
-.landing-root nav.l-site .l-brand .l-mark { width: 26px; height: 26px; }
+.landing-root nav.l-site .l-brand .l-name,
+.landing-root .l-foot-brand .l-brand,
+.landing-root .l-foot-brand .l-brand .l-name { color: #fff; }
 .landing-root .l-brand { display: flex; align-items: center; gap: 14px; }
+/* Wrap the logo so its inline-block baseline gap can't shift it; the flex
+   box centres on the wordmark cap-height. */
+.landing-root .l-brand .l-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
 .landing-root .l-brand .l-name {
-  font-family: "Inter", sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.32em;
+  font-family: "StretchPro", "Abril Fatface", Georgia, serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 .landing-root .l-nav-links { display: flex; align-items: center; gap: 34px; }
 .landing-root .l-nav-links a {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.14em;
@@ -137,12 +166,10 @@
 .landing-root .l-nav-right { display: flex; align-items: center; gap: 12px; }
 
 /* ─── Unified button system ─────────────────────────────────────
-   One primary CTA style used everywhere on the landing — matches
+   One primary CTA style used everywhere on the landing - matches
    the "Claim your first hex" CTA on /profile + /marketplace. */
 .landing-root .l-btn-ghost,
-.landing-root .l-btn-overlay-ghost,
-.landing-root nav.l-site .l-btn-ghost,
-.landing-root nav.l-site .l-btn-overlay-ghost {
+.landing-root nav.l-site .l-btn-ghost {
   background:
     linear-gradient(135deg, rgba(94, 234, 212, 0.65), rgba(56, 189, 248, 0.55));
   color: #042f2e;
@@ -150,7 +177,7 @@
   box-shadow:
     0 6px 18px -8px rgba(20, 184, 166, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -161,21 +188,19 @@
   -webkit-backdrop-filter: blur(8px);
 }
 .landing-root .l-btn-ghost:hover,
-.landing-root .l-btn-overlay-ghost:hover,
-.landing-root nav.l-site .l-btn-ghost:hover,
-.landing-root nav.l-site .l-btn-overlay-ghost:hover {
+.landing-root nav.l-site .l-btn-ghost:hover {
   filter: brightness(1.05);
   border-color: rgba(255, 255, 255, 0.85);
 }
 
-/* Text-only link (Log in) — matches ink token, no fill. */
+/* Text-only link (Log in) - matches ink token, no fill. */
 .landing-root nav.l-site .l-btn-text {
   color: rgba(10, 26, 46, 0.72);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: none;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 .landing-root nav.l-site .l-btn-text:hover { color: var(--l-ink); }
 
@@ -187,7 +212,7 @@
   font-size: 15.5px;
   border: 1.5px solid var(--l-line);
   transition: background 0.15s, color 0.15s, border-color 0.15s;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-weight: 500;
   letter-spacing: 0.01em;
   border-radius: 999px;
@@ -202,24 +227,50 @@
 .landing-root .l-btn-ghost:hover { background: #fff; }
 .landing-root .l-btn-overlay-ghost {
   background: rgba(255, 255, 255, 0.10);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  color: rgba(10, 26, 46, 0.72);
+  border: 1px solid rgba(10, 26, 46, 0.22);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 11px 22px;
+}
+.landing-root .l-btn-overlay-ghost:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--l-ink);
+  border-color: rgba(10, 26, 46, 0.40);
+}
+
+/* Profile pill - same liquid-glass fill as the nav itself, just outlined so
+   it reads as a button, with the same ink text colour as the nav links. */
+.landing-root nav.l-site .l-btn-profile {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.55) 100%);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid rgba(10, 26, 46, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  color: rgba(10, 26, 46, 0.72);
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 12.5px;
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   padding: 11px 22px;
 }
-.landing-root .l-btn-overlay-ghost:hover { background: rgba(255, 255, 255, 0.22); border-color: #fff; }
+.landing-root nav.l-site .l-btn-profile:hover {
+  border-color: rgba(10, 26, 46, 0.40);
+  color: var(--l-ink);
+}
 .landing-root .l-btn-text {
   padding: 8px 6px;
   border: 0;
   color: rgba(255, 255, 255, 0.92);
   border-radius: 0;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 12.5px;
   font-weight: 500;
   letter-spacing: 0.16em;
@@ -239,7 +290,14 @@
 .landing-root .l-hero .l-bg {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  transform-origin: 52% 48%;
+  animation: l-kenburns 36s ease-in-out infinite alternate;
+  will-change: transform;
+  filter: contrast(1.06) saturate(1.08);
+}
+.landing-root .l-hero .l-bg > img {
+  object-fit: cover;
+  image-rendering: -webkit-optimize-contrast;
 }
 @keyframes l-kenburns {
   0%   { transform: scale(1.00) translate(0, 0); }
@@ -345,7 +403,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 12px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -397,18 +455,18 @@
 }
 
 /* ── MAP / GLOBE ─────────────────────────── */
-.landing-root .l-map-sec { position: relative; z-index: 1; padding: 120px 0 100px; }
+.landing-root .l-map-sec { position: relative; z-index: 1; padding: 56px 0 88px; }
 .landing-root .l-map-inner {
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 48px;
-  display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  gap: 64px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 36px;
 }
 .landing-root .l-map-text .l-eyebrow-text {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -450,7 +508,7 @@
   padding-top: 12px;
 }
 .landing-root .l-stat-big .l-v {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-weight: 300;
   font-size: 38px;
   line-height: 1;
@@ -471,6 +529,9 @@
 .landing-root .l-globe-wrap {
   position: relative;
   aspect-ratio: 1/1;
+  width: 100%;
+  max-width: min(86vmin, 900px);
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -507,7 +568,7 @@
   font-style: italic;
 }
 .landing-root .l-section-head .l-num {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 11px;
   color: var(--l-dim);
   font-feature-settings: "tnum";
@@ -536,7 +597,7 @@
 }
 .landing-root .l-reg-col:last-child { border-right: 0; }
 .landing-root .l-reg-col h3 {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 11px;
   color: var(--l-line);
   font-weight: 500;
@@ -568,7 +629,7 @@
 .landing-root .l-live-row .l-place { font-size: 17px; color: var(--l-ink); }
 .landing-root .l-live-row .l-px {
   text-align: right;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 13px;
   color: var(--l-line);
   font-feature-settings: "tnum";
@@ -576,7 +637,7 @@
 }
 .landing-root .l-live-row .l-ago {
   grid-column: 2;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   text-align: right;
   font-size: 10.5px;
   color: var(--l-dim-2);
@@ -595,7 +656,11 @@
 .landing-root .l-door .l-bg {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  transform: scale(1.02);
+  will-change: transform;
+}
+.landing-root .l-door .l-bg > img {
+  object-fit: cover;
 }
 .landing-root .l-door .l-veil {
   position: absolute;
@@ -631,7 +696,7 @@
   gap: 48px;
 }
 .landing-root .l-door .l-eyebrow {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 12px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -703,7 +768,7 @@
 }
 .landing-root .l-how-step:last-child { border-right: 0; }
 .landing-root .l-how-step .l-step-no {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 11px;
   color: var(--l-line);
   font-feature-settings: "tnum";
@@ -762,7 +827,7 @@
   font-style: italic;
 }
 .landing-root .l-foot-col h4 {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-manrope), "Inter", sans-serif;
   font-size: 11px;
   color: var(--l-dim);
   margin: 0 0 14px 0;
@@ -790,7 +855,7 @@
 @media (max-width: 1000px) {
   .landing-root .l-nav-links { display: none; }
   .landing-root .l-map-inner { grid-template-columns: 1fr; gap: 40px; }
-  .landing-root .l-globe-wrap { aspect-ratio: 1/1; max-width: 560px; margin: 0 auto; }
+  .landing-root .l-globe-wrap { aspect-ratio: 1/1; max-width: min(90vmin, 640px); margin: 0 auto; }
   .landing-root .l-reg-grid { grid-template-columns: 1fr; }
   .landing-root .l-reg-col { border-right: 0; border-bottom: 1px solid var(--l-hair-2); }
   .landing-root .l-reg-col:last-child { border-bottom: 0; }

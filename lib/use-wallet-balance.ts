@@ -10,7 +10,7 @@ import { useClaimDoneListener } from './claim-events';
  *
  * IMPORTANT: depends on the stringified base58 address, NOT the PublicKey
  * object itself. `useActiveWallet` rebuilds a fresh PublicKey instance every
- * render — using it as a useEffect dep tore the effect down and remounted it
+ * render - using it as a useEffect dep tore the effect down and remounted it
  * on every render, which fired thousands of getBalance requests per second
  * and got us 429-rate-limited.
  */

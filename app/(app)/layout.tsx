@@ -1,7 +1,8 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { AppSidebar } from '@/components/layout/app-sidebar';
+import { AppSidebar, MobileNav } from '@/components/layout/app-sidebar';
+import { GlowBackground } from '@/components/ui/glow-background';
 import { cn } from '@/lib/utils';
 
 /**
@@ -12,31 +13,21 @@ import { cn } from '@/lib/utils';
 export default function AppGroupLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isMap = pathname?.startsWith('/map') ?? false;
-  // /portfolio (Variant A) is a full-bleed standalone page with its OWN
-  // sidebar — skip the shared AppSidebar + padding entirely there.
-  const isStandalone = pathname?.startsWith('/portfolio') ?? false;
-
-  if (isStandalone) {
-    // /portfolio renders its own full-bleed .pf-stage (own sidebar + own sky).
-    return <div className="relative h-screen overflow-hidden">{children}</div>;
-  }
 
   return (
-    <div
-      className="relative min-h-screen w-full bg-cover bg-center bg-fixed"
-      style={{
-        // Shared sky photo behind every (app) page (sky-bg.jpg is the exact
-        // 360_F_98262429… stock image the brief referenced).
-        backgroundImage: "url('/sky-bg.jpg')",
-      }}
-    >
+    <div className="relative min-h-screen w-full">
+      {/* Shared white + soft-glow backdrop for every (app) page. */}
+      <GlowBackground />
       <div className="relative z-10 h-screen overflow-hidden">
         <AppSidebar />
+        <MobileNav />
         <main
           className={cn(
             'relative h-full',
-            // Non-map routes clear the fixed sidebar; /map bleeds full-width.
-            isMap ? '' : 'ml-[268px] overflow-auto text-foreground',
+            // Desktop: non-map routes clear the fixed rail; /map bleeds full.
+            // Mobile: full-width, with top padding to clear the mobile bar
+            // (except /map, which bleeds under the floating bar).
+            isMap ? '' : 'overflow-auto pt-14 text-foreground md:ml-[268px] md:pt-0',
           )}
         >
           {children}

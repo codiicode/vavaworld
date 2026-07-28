@@ -1,20 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { ComputeBudgetProgram, LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
-import { BN, Program, type Idl } from '@coral-xyz/anchor';
+import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
-import { quoteBatch } from '@/lib/quote';
-import { useCounters } from '@/lib/use-counters';
 import { useActiveWallet } from '@/lib/active-wallet';
-import { tilePda, counterPda } from '@/lib/tile-pda';
-import { getConnection, PROGRAM_ID } from '@/lib/anchor-client';
+import { useUserProfile } from '@/lib/use-user-profile';
+import { useHexLocations } from '@/lib/use-hex-locations';
+import { useCountryCounts } from '@/lib/use-country-counts';
+import { getConnection } from '@/lib/anchor-client';
 import { dispatchClaimDone } from '@/lib/claim-events';
-import idl from '@/lib/anchor-idl.json';
-import type { Tiles } from '@/lib/anchor-types';
+import { PRICING, SOL_USD, usdToLamports } from '@/lib/pricing';
 
-const programIdPk = new PublicKey(PROGRAM_ID);
+const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY;
+const treasuryPk = TREASURY_ADDRESS ? new PublicKey(TREASURY_ADDRESS) : null;
 
 const uiLabel: React.CSSProperties = {
   fontFamily: "'Inter', sans-serif",
@@ -43,7 +42,8 @@ export function ClaimModal({
   onConfirmed: (h3s: string[]) => void;
 }) {
   const wallet = useActiveWallet();
-  const counters = useCounters();
+  const profile = useUserProfile();
+  const locations = useHexLocations(selectedHexes);
   const [state, setState] = useState<State>('review');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [txSig, setTxSig] = useState<string>('');
@@ -52,9 +52,56 @@ export function ClaimModal({
     const c = hexCenter(h3);
     return { h3, tier: classifyTier(c.lat, c.lng) };
   });
-  const totalLamports = quoteBatch(items, counters);
-  const totalSol = Number(totalLamports) / LAMPORTS_PER_SOL;
-  const expectedMax = (totalLamports * 102n) / 100n;
+
+  // USD-spec pricing curve per country: floor(n) = 0.10 + n × 0.00001. Each
+  // hex in the same country pays the next floor after the previous one in
+  // the batch. The treasury settles in SOL via SOL_USD reference rate.
+  const isos = items
+    .map((it) => locations.get(it.h3)?.countryCode)
+    .filter((iso): iso is string => Boolean(iso));
+  const countryCounts = useCountryCounts(isos);
+  const localOffset: Record<string, number> = {};
+  const perItemUsd = items.map((it) => {
+    const iso = locations.get(it.h3)?.countryCode ?? 'INTL';
+    const base = countryCounts.get(iso) ?? 0;
+    const off = localOffset[iso] ?? 0;
+    localOffset[iso] = off + 1;
+    return PRICING.BASE_FLOOR_USD + (base + off) * PRICING.SLOPE_PER_CLAIM_USD;
+  });
+  const totalUsd = perItemUsd.reduce((s, u) => s + u, 0);
+  const totalLamports = usdToLamports(totalUsd);
+  const totalSol = Number(totalLamports) / 1_000_000_000;
+
+  // Shareable reveal link - built from the primary (first) hex's location.
+  const buildShareUrl = (): string => {
+    const first = items[0];
+    const loc = first ? locations.get(first.h3) : undefined;
+    const center = first ? hexCenter(first.h3) : { lat: 0, lng: 0 };
+    const by = profile.username ?? (wallet.publicKey ? wallet.publicKey.toBase58() : 'someone');
+    const params = new URLSearchParams({
+      by,
+      place: loc?.place ?? loc?.countryName ?? 'the map',
+      country: loc?.countryCode ?? '',
+      lat: center.lat.toFixed(4),
+      lon: center.lng.toFixed(4),
+      n: String(items.length),
+      sol: totalSol.toFixed(totalSol < 0.01 ? 5 : 3),
+    });
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://vavaworld.fun';
+    return `${origin}/c?${params.toString()}`;
+  };
+
+  const shareOnX = () => {
+    const url = buildShareUrl();
+    const first = items[0];
+    const loc = first ? locations.get(first.h3) : undefined;
+    const where = loc?.place ?? loc?.countryName ?? 'the map';
+    const text = `I just claimed ${items.length} hex${items.length === 1 ? '' : 'es'} in ${where} on VavaWorld 🌍 Hold your ground:`;
+    const u = new URL('https://twitter.com/intent/tweet');
+    u.searchParams.set('text', text);
+    u.searchParams.set('url', url);
+    window.open(u.toString(), '_blank', 'noopener,noreferrer');
+  };
 
   const handleConfirm = async () => {
     if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
@@ -62,65 +109,66 @@ export function ClaimModal({
       setErrorMsg('Wallet not connected');
       return;
     }
+    if (!treasuryPk) {
+      setState('error');
+      setErrorMsg('Treasury address not configured (NEXT_PUBLIC_TREASURY)');
+      return;
+    }
     setState('signing');
+
     try {
       const connection = getConnection();
-      const program = new Program<Tiles>(idl as Idl, { connection });
-      const h3Bns = items.map((it) => new BN(BigInt('0x' + it.h3).toString()));
-      const tilePdas = items.map((it) => tilePda(it.h3, programIdPk)[0]);
 
-      const ix = await program.methods
-        .claim(h3Bns, new BN(expectedMax.toString()))
-        .accounts({
-          claimer: wallet.publicKey,
-          t1Counter: counterPda(1, programIdPk)[0],
-          t2Counter: counterPda(2, programIdPk)[0],
-          t3Counter: counterPda(3, programIdPk)[0],
-        })
-        .remainingAccounts(
-          tilePdas.map((p) => ({ pubkey: p, isWritable: true, isSigner: false })),
-        )
-        .instruction();
+      // One SystemProgram.transfer for the batch total - primary claims now
+      // pay the USD-spec floor in SOL straight to the treasury. The Tile
+      // registry is off-chain in Supabase; on-chain Anchor program is kept
+      // for the future bonding-curve resale path only.
+      const ix = SystemProgram.transfer({
+        fromPubkey: wallet.publicKey,
+        toPubkey: treasuryPk,
+        lamports: Number(totalLamports),
+      });
 
       const { blockhash } = await connection.getLatestBlockhash('confirmed');
-      // The claim instruction's tier classifier walks 102 cities with libm-based
-      // haversine and burns ~550K CUs per tile on BPF. Solana's per-tx max is
-      // 1.4M CUs, so we cap there. Single-tile claims will work; multi-tile
-      // batches >2 are not feasible without optimising the on-chain classifier
-      // (e.g. coarse spatial pre-filter before haversine).
-      const computeUnits = 1_400_000;
       const tx = new Transaction({
         feePayer: wallet.publicKey,
         recentBlockhash: blockhash,
-      })
-        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: computeUnits }))
-        .add(ix);
-
-      // Simulate before sending — if the program rejects, we get the on-chain logs
-      // (Anchor custom errors, account constraint failures, etc.) and can show them
-      // instead of the opaque "simulation failed" message Privy bubbles up.
-      const sim = await connection.simulateTransaction(tx, undefined, [wallet.publicKey]);
-      if (sim.value.err) {
-        const logs = sim.value.logs ?? [];
-        const programLog = logs.find((l) => l.includes('AnchorError') || l.includes('failed:') || l.includes('Program log: Error'));
-        const friendly = programLog ?? `Simulation rejected: ${JSON.stringify(sim.value.err)}`;
-        console.error('[claim] simulation failed', { err: sim.value.err, logs });
-        throw new Error(friendly + (logs.length ? '\n\nFull logs:\n' + logs.join('\n') : ''));
-      }
+      }).add(ix);
 
       const sig = await wallet.signAndSendTransaction(tx);
       await connection.confirmTransaction(sig, 'confirmed');
 
+      // Mirror each hex into Supabase with the per-hex USD quote so the DB
+      // function records the exact floor the user paid. Parallel - order
+      // inside the same country is enforced by the SELECT FOR UPDATE in
+      // claim_hex, so the count walks monotonically regardless of arrival.
+      const owner = wallet.publicKey.toBase58();
+      const mirrorResults = await Promise.allSettled(
+        items.map((it, i) =>
+          fetch('/api/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              h3: it.h3,
+              owner,
+              txHash: sig,
+              quotedPriceUsd: perItemUsd[i],
+            }),
+          }).then((r) => (r.ok ? it.h3 : null)),
+        ),
+      );
+      const succeeded = mirrorResults
+        .map((r) => (r.status === 'fulfilled' ? r.value : null))
+        .filter((h): h is string => h !== null);
+
       setTxSig(sig);
+      dispatchClaimDone({ h3s: succeeded, txSig: sig });
       setState('confirmed');
-      const h3List = items.map((it) => it.h3);
-      onConfirmed(h3List);
-      // Broadcast so /profile + balance + counters refetch immediately even
-      // though they live in separate hook trees.
-      dispatchClaimDone({ h3s: h3List, txSig: sig });
+      onConfirmed(succeeded);
     } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErrorMsg(msg);
       setState('error');
-      setErrorMsg(e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -154,7 +202,7 @@ export function ClaimModal({
       }}
     >
       <div
-        className="w-[460px] p-8"
+        className="relative w-[calc(100vw-24px)] max-w-[460px] overflow-hidden p-6 md:p-8"
         style={{
           background: 'rgba(255, 255, 255, 0.92)',
           backdropFilter: 'blur(14px) saturate(140%)',
@@ -193,8 +241,8 @@ export function ClaimModal({
                 </li>
               ))}
             </ul>
-            <div className="flex items-baseline justify-between mb-7">
-              <span style={uiLabel}>Estimated total</span>
+            <div className="flex items-baseline justify-between mb-2">
+              <span style={uiLabel}>Total</span>
               <span
                 style={{
                   fontFamily: "'Cormorant Garamond', serif",
@@ -206,9 +254,15 @@ export function ClaimModal({
                   fontFeatureSettings: '"tnum"',
                 }}
               >
-                {totalSol.toFixed(4)}
-                <span style={{ ...uiLabel, marginLeft: '8px', fontStyle: 'normal' }}>SOL</span>
+                ${totalUsd.toFixed(totalUsd < 10 ? 4 : 2)}
               </span>
+            </div>
+            <div
+              className="mb-7 flex items-center justify-end gap-1"
+              style={{ ...monoNum, color: 'var(--dim)' }}
+            >
+              <span>≈ {totalSol.toFixed(6)} SOL</span>
+              <span style={{ opacity: 0.5 }}> · @ ${SOL_USD}/SOL</span>
             </div>
             <div className="flex gap-3">
               <button
@@ -240,7 +294,7 @@ export function ClaimModal({
         )}
 
         {state === 'signing' && (
-          <div className="py-12 text-center flex flex-col items-center gap-3">
+          <div className="py-10 text-center flex flex-col items-center gap-3">
             <div
               className="w-2 h-2 rounded-full"
               style={{
@@ -260,12 +314,19 @@ export function ClaimModal({
 
         {state === 'confirmed' && (
           <>
+            <ClaimCelebration />
             <div className="py-8 text-center flex flex-col items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full grid place-items-center"
-                style={{ background: 'var(--signal-soft)', color: 'var(--signal)', fontSize: '20px' }}
-              >
-                ✓
+              <div className="relative grid place-items-center">
+                <span
+                  className="absolute inset-0 rounded-full animate-ping"
+                  style={{ background: 'var(--signal-soft)', animationIterationCount: 2 }}
+                />
+                <div
+                  className="relative w-10 h-10 rounded-full grid place-items-center"
+                  style={{ background: 'var(--signal-soft)', color: 'var(--signal)', fontSize: '20px' }}
+                >
+                  ✓
+                </div>
               </div>
               <div style={{ ...uiLabel, color: 'var(--ink)' }}>
                 {items.length} {items.length === 1 ? 'hex' : 'hexes'} claimed
@@ -279,15 +340,32 @@ export function ClaimModal({
                 View on Solscan →
               </a>
             </div>
-            <button
-              onClick={onClose}
-              className="w-full py-3 transition-colors"
-              style={ghostBtn}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink)')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
-            >
-              Close
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-3 transition-colors"
+                style={ghostBtn}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
+              >
+                Close
+              </button>
+              <button
+                onClick={shareOnX}
+                className="flex-1 py-3 transition-all"
+                style={primaryBtn}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--signal-deep)';
+                  e.currentTarget.style.borderColor = 'var(--signal-deep)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--signal)';
+                  e.currentTarget.style.borderColor = 'var(--signal)';
+                }}
+              >
+                Share your claim
+              </button>
+            </div>
           </>
         )}
 
@@ -326,6 +404,72 @@ export function ClaimModal({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+const CONFETTI_COLORS = ['#1d5e95', '#f59e0b', '#10b981', '#fb7185', '#8b5cf6'];
+
+/**
+ * One-shot confetti burst overlaid on the success state. Pure CSS - each piece
+ * gets a deterministic angle/distance from its index so there's no layout
+ * thrash and nothing to clean up.
+ */
+function ClaimCelebration() {
+  const pieces = Array.from({ length: 18 }, (_, i) => {
+    const angle = (i / 18) * Math.PI * 2;
+    const dist = 90 + (i % 4) * 26;
+    return {
+      tx: Math.cos(angle) * dist,
+      ty: Math.sin(angle) * dist - 30, // bias upward so they arc then fall
+      rot: (i % 2 ? 1 : -1) * (180 + i * 24),
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      delay: (i % 5) * 30,
+    };
+  });
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center overflow-hidden">
+      {pieces.map((p, i) => (
+        <span
+          key={i}
+          className="confetti-piece"
+          style={
+            {
+              background: p.color,
+              '--tx': `${p.tx}px`,
+              '--ty': `${p.ty}px`,
+              '--rot': `${p.rot}deg`,
+              animationDelay: `${p.delay}ms`,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+      <style jsx>{`
+        .confetti-piece {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          border-radius: 2px;
+          opacity: 0;
+          animation: confetti-fly 900ms ease-out forwards;
+        }
+        @keyframes confetti-fly {
+          0% {
+            transform: translate(0, 0) rotate(0deg) scale(0.6);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1);
+            opacity: 0;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .confetti-piece {
+            display: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }

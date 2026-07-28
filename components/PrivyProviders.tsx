@@ -14,11 +14,11 @@ import { useMemo, type ReactNode } from 'react';
  */
 function buildRpcs(httpsUrl: string) {
   // wss equivalent of https://devnet.helius-rpc.com/?api-key=... is
-  // wss://devnet.helius-rpc.com/?api-key=... — Helius accepts both subprotocols
+  // wss://devnet.helius-rpc.com/?api-key=... - Helius accepts both subprotocols
   // on the same host. Public RPC also supports `wss://api.devnet.solana.com`.
   const wssUrl = httpsUrl.replace(/^https?:\/\//, 'wss://');
 
-  // Pick the chain from the URL — same heuristic as inferSolanaChain() in active-wallet.
+  // Pick the chain from the URL - same heuristic as inferSolanaChain() in active-wallet.
   const chain: 'solana:mainnet' | 'solana:devnet' | 'solana:testnet' =
     httpsUrl.includes('devnet') ? 'solana:devnet' :
     httpsUrl.includes('testnet') ? 'solana:testnet' :
@@ -51,13 +51,13 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
     <PrivyProvider
       appId={appId}
       config={{
-        // External wallets (Phantom etc.) live outside Privy — see ConnectButton.
+        // External wallets (Phantom etc.) live outside Privy - see ConnectButton.
         loginMethods: ['email', 'google', 'twitter'],
         appearance: {
           theme: 'light',
-          accentColor: '#7CBFEC',
-          logo: '/logo.jpg',
-          landingHeader: 'Welcome to VAVAWORLD',
+          accentColor: '#14b8a6',
+          logo: '/vavaworld-sphere.png',
+          landingHeader: 'Welcome to VavaWorld',
           showWalletLoginFirst: false,
           walletChainType: 'solana-only',
         },

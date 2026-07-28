@@ -5,17 +5,18 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import {
   CoinbaseWalletAdapter,
-  LedgerWalletAdapter,
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
 
 /**
- * Wallet-standard wallets (Phantom, Solflare, Backpack, Glow, Nightly, etc.)
- * auto-register themselves when their browser extension is installed. We list
- * a few popular adapters explicitly so they also appear in the picker with
- * a "Not installed" link for users who don't have them yet.
+ * Wallet-standard wallets (Phantom, Solflare, Backpack, Glow, OKX, etc.)
+ * auto-register themselves when their browser extension is installed - they'll
+ * appear in the picker without any explicit adapter listing. We list only a
+ * few popular names so they also show with a "Not installed" link; the long
+ * tail (Torus/Ledger/Trezor/etc.) each drags in a heavy SDK into the bundle on
+ * EVERY page for marginal coverage, so they're intentionally omitted.
  */
 export function WalletProviders({ children }: { children: ReactNode }) {
   const endpoint = useMemo(
@@ -27,7 +28,6 @@ export function WalletProviders({ children }: { children: ReactNode }) {
       new PhantomWalletAdapter(),
       new SolflareWalletAdapter(),
       new CoinbaseWalletAdapter(),
-      new LedgerWalletAdapter(),
     ],
     [],
   );

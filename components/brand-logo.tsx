@@ -1,11 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 /**
- * VAVAWORLD sphere mark (public/logo.jpg).
+ * VavaWorld mark - white, alpha-transparent PNG (public/logga transparent.png).
  *
- * The source is a JPG with a white background. We don't have an image
- * pipeline here, so `mix-blend-mode: multiply` drops the white against the
- * light sky / light-glass backdrops it always sits on — pure white → fully
- * transparent, the soft grey vignette → a faint nothing. Square footprint,
- * cover-cropped + centered so the sphere fills the box without distortion.
+ * Background-free, cut tight to the mark - no backdrop. Rendered `contain` in a
+ * square box so it sits cleanly on any surface. Used globally (landing nav +
+ * footer, app sidebar, portfolio sidebar).
  */
 export function BrandLogo({
   size = 28,
@@ -15,21 +14,19 @@ export function BrandLogo({
   className?: string;
 }) {
   return (
-    <span
-      role="img"
-      aria-label="VAVAWORLD"
-      className={className}
+    <img
+      src="/logga transparent.png"
+      alt="VavaWorld"
+      width={size}
+      height={size}
       style={{
         display: 'inline-block',
         width: size,
         height: size,
         flex: 'none',
-        backgroundImage: "url('/logo.jpg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        mixBlendMode: 'multiply',
+        objectFit: 'contain',
       }}
+      className={className}
     />
   );
 }

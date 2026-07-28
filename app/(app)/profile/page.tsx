@@ -7,9 +7,10 @@ import { IdentityCard } from '@/components/profile/identity-card';
 import { TilesTab } from '@/components/profile/tiles-tab';
 import { ActivityTab } from '@/components/profile/activity-tab';
 import { ProfileVersionProvider } from '@/lib/use-user-profile';
+import { SignInGate } from '@/components/auth/sign-in-gate';
 
 /**
- * /profile — light glass surface matching the Claude Design output.
+ * /profile - light glass surface matching the Claude Design output.
  *
  *   1. IdentityCard (avatar + name + meta + Export key / Edit profile + 3 stats)
  *   2. Tabs: Tiles | Activity
@@ -26,7 +27,8 @@ export default function ProfilePage() {
   return (
     <ProfileVersionProvider value={version}>
       <TooltipProvider delayDuration={200}>
-        <div className="mx-auto max-w-[1400px] px-8 py-10">
+        <SignInGate label="profile">
+        <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
           <IdentityCard onSavedBumpVersion={bump} />
 
           <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
@@ -50,6 +52,7 @@ export default function ProfilePage() {
             </TabsContent>
           </Tabs>
         </div>
+        </SignInGate>
       </TooltipProvider>
     </ProfileVersionProvider>
   );

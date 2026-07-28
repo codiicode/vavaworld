@@ -8,7 +8,7 @@ import { useWallet as useAdapterWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { getConnection } from './anchor-client';
 
-/** Privy v3 wants raw bytes — serialize whatever Transaction subtype we're given.
+/** Privy v3 wants raw bytes - serialize whatever Transaction subtype we're given.
  *  Uses duck-typing (`'version' in tx`) rather than `instanceof` to survive cross-chunk
  *  class-identity issues in production bundles. Wraps the result in a fresh `Uint8Array`
  *  so we pass a native typed array (legacy `Transaction.serialize` returns a Buffer). */
@@ -122,7 +122,7 @@ export function useActiveWallet(): ActiveWallet {
       source: null,
       publicKey: null,
       address: null,
-      // ready means the SDK has finished hydrating — only then can we trust "not connected"
+      // ready means the SDK has finished hydrating - only then can we trust "not connected"
       ready,
       connected: false,
       signAndSendTransaction: null,

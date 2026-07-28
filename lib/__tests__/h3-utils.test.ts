@@ -10,7 +10,7 @@ describe('hexesForBounds', () => {
   });
 
   it('caps at safety limit for huge bbox', () => {
-    // World — guard against runaway
+    // World - guard against runaway
     const hexes = hexesForBounds([-180, -85, 180, 85]);
     expect(hexes.length).toBeLessThanOrEqual(20000);
   });
@@ -27,7 +27,7 @@ describe('hexToFeature', () => {
 });
 
 describe('HEX_RES', () => {
-  it('is resolution 9', () => {
-    expect(HEX_RES).toBe(9);
+  it('is resolution 12', () => {
+    expect(HEX_RES).toBe(12);
   });
 });

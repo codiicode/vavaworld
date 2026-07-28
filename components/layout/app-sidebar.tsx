@@ -1,17 +1,21 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BrandLogo } from '@/components/brand-logo';
 import {
   Activity,
   BarChart3,
-  CirclePlus,
+  Coins,
+  Globe,
   Map as MapIcon,
+  Menu,
   Settings,
   ShoppingBag,
   Trophy,
   Wallet,
+  X,
 } from 'lucide-react';
 import { ConnectButton } from '@/components/connect-button';
 import { useActiveWallet } from '@/lib/active-wallet';
@@ -20,7 +24,7 @@ import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { cn } from '@/lib/utils';
 
 function shortAddr(addr: string): string {
-  if (!addr) return '—';
+  if (!addr) return '-';
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
@@ -31,50 +35,58 @@ function gradientFromAddr(addr: string | null): string {
   return `linear-gradient(135deg, hsl(${h1} 70% 60%) 0%, hsl(${h2} 70% 50%) 100%)`;
 }
 
+// Shared glass recipe so the desktop rail and the mobile drawer look identical.
+const GLASS_PANEL: React.CSSProperties = {
+  background:
+    'linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.08) 100%)',
+  backdropFilter: 'blur(30px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+  border: '1px solid rgba(255,255,255,0.45)',
+  boxShadow:
+    '0 18px 50px rgba(40,80,150,0.22), 0 2px 8px rgba(40,80,150,0.12), inset 0 1px 0 rgba(255,255,255,0.65)',
+};
+
 type NavItem = { label: string; href: string; icon: typeof MapIcon };
 const NAV: ReadonlyArray<NavItem> = [
   { label: 'Map', href: '/map', icon: MapIcon },
   { label: 'Portfolio', href: '/portfolio', icon: BarChart3 },
   { label: 'Profile', href: '/profile', icon: Wallet },
   { label: 'Marketplace', href: '/marketplace', icon: ShoppingBag },
-  { label: 'Stake', href: '/stake', icon: CirclePlus },
+  { label: 'Nations', href: '/nations', icon: Globe },
   { label: 'Activity', href: '/activity', icon: Activity },
   { label: 'Leaderboard', href: '/leaderboard', icon: Trophy },
+  { label: 'Staking', href: '/staking', icon: Coins },
 ];
 
 /**
- * Global left rail — light glass over the sky body bg.
- *
- * 232px wide, fixed inside an 18px gutter, so the map can bleed beneath it on
- * /map. Dark text + hairline borders work against either backdrop because the
- * panel itself is white-translucent enough to dominate locally.
+ * Brand + nav + footer. Shared by the desktop rail and the mobile drawer.
+ * `onNavigate` lets the mobile drawer close itself when a link is tapped.
  */
-export function AppSidebar() {
+function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { balance } = useWalletBalance(wallet.publicKey);
+  // The sidebar glass is dark over the map but light over the white-glow app
+  // pages - so the wordmark/logo flip to black off-map to stay visible.
+  const isMap = pathname?.startsWith('/map') ?? false;
 
   return (
-    <aside
-      className="fixed bottom-[18px] left-[18px] top-[18px] z-30 flex w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground"
-      style={{
-        gap: 22,
-        // Same translucent recipe as the portfolio .glass/.panel so the sky
-        // background reads through instead of a near-white panel.
-        background:
-          'linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.08) 100%)',
-        backdropFilter: 'blur(30px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-        border: '1px solid rgba(255,255,255,0.45)',
-        boxShadow:
-          '0 18px 50px rgba(40,80,150,0.22), 0 2px 8px rgba(40,80,150,0.12), inset 0 1px 0 rgba(255,255,255,0.65)',
-      }}
-    >
+    <>
       {/* Brand */}
-      <Link href="/" className="flex items-center gap-3 px-1.5 py-0.5">
-        <BrandLogo size={34} />
-        <span className="text-[14px] font-bold tracking-[0.14em] text-foreground">
+      <Link
+        href="/"
+        onClick={onNavigate}
+        className="flex items-center gap-3 px-1.5 py-0.5"
+      >
+        <BrandLogo size={38} className={isMap ? '' : '[filter:brightness(0)]'} />
+        <span
+          className="text-[11px] tracking-[0.02em]"
+          style={{
+            fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif',
+            color: isMap ? '#ffffff' : '#0b1a2e',
+          }}
+        >
           VAVAWORLD
         </span>
       </Link>
@@ -89,26 +101,27 @@ export function AppSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
-                'relative flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] font-medium leading-none transition-colors duration-150',
+                'relative flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] leading-none transition-colors duration-150',
                 active
-                  ? 'bg-foreground/[0.06] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]'
-                  : 'text-foreground/65 hover:bg-foreground/[0.04] hover:text-foreground',
+                  ? 'font-semibold text-foreground'
+                  : 'font-medium text-foreground/70 hover:bg-foreground/[0.04] hover:text-foreground',
               )}
+              style={
+                active
+                  ? {
+                      background: 'rgba(255,255,255,0.55)',
+                      border: '1px solid rgba(255,255,255,0.65)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
+                    }
+                  : undefined
+              }
             >
               <span className="grid w-[22px] place-items-center opacity-95">
                 <Icon size={20} strokeWidth={1.8} />
               </span>
               <span>{item.label}</span>
-              {active && (
-                <span
-                  className="pointer-events-none absolute left-1 top-1/2 h-[18px] w-[3px] -translate-y-1/2 rounded-[2px]"
-                  style={{
-                    background: 'linear-gradient(180deg, #0ea5e9, #14b8a6)',
-                    boxShadow: '0 0 10px rgba(20, 184, 166, 0.55)',
-                  }}
-                />
-              )}
             </Link>
           );
         })}
@@ -118,6 +131,7 @@ export function AppSidebar() {
       <div className="flex flex-col gap-2.5">
         <Link
           href="/settings"
+          onClick={onNavigate}
           className="flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] font-medium leading-none text-foreground/50 transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
         >
           <span className="grid w-[22px] place-items-center">
@@ -129,9 +143,9 @@ export function AppSidebar() {
         {wallet.ready && wallet.connected && (
           <Link
             href="/profile"
+            onClick={onNavigate}
             className="flex items-center gap-3 rounded-[14px] px-3 py-2.5 transition-colors hover:brightness-105"
             style={{
-              // Matches the portfolio .glass--inset user-card (more see-through).
               background:
                 'linear-gradient(135deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.04) 100%)',
               border: '1px solid rgba(255,255,255,0.45)',
@@ -155,7 +169,7 @@ export function AppSidebar() {
                 {profile.username ? `@${profile.username}` : shortAddr(wallet.address ?? '')}
               </span>
               <span className="truncate text-[11.5px] leading-tight tabular-nums text-foreground/55">
-                {balance !== null ? `${balance.toFixed(3)} SOL` : '— SOL'}
+                {balance !== null ? `${balance.toFixed(3)} SOL` : '- SOL'}
               </span>
             </div>
           </Link>
@@ -163,6 +177,105 @@ export function AppSidebar() {
 
         {wallet.ready && !wallet.connected && <ConnectButton variant="sidebar" />}
       </div>
+    </>
+  );
+}
+
+/**
+ * Global left rail - light glass over the sky body bg. Desktop only (md+);
+ * on mobile the nav lives in {@link MobileNav}'s slide-in drawer instead.
+ */
+export function AppSidebar() {
+  return (
+    <aside
+      className="fixed bottom-[18px] left-[18px] top-[18px] z-30 hidden w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground md:flex"
+      style={{ gap: 22, ...GLASS_PANEL }}
+    >
+      <SidebarInner />
     </aside>
+  );
+}
+
+/**
+ * Mobile-only (<md) top bar with a hamburger that opens the full nav as a
+ * left slide-in drawer. Auto-closes on route change.
+ */
+export function MobileNav() {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isMap = pathname?.startsWith('/map') ?? false;
+
+  // Close on navigation.
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll while the drawer is open.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  return (
+    <>
+      {/* Top bar */}
+      <div
+        className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between px-4 text-foreground md:hidden"
+        style={GLASS_PANEL}
+      >
+        <Link href="/" className="flex items-center gap-2.5">
+          <BrandLogo size={30} className={isMap ? '' : '[filter:brightness(0)]'} />
+          <span
+            className="text-[11px] tracking-[0.02em]"
+            style={{
+              fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif',
+              color: isMap ? '#ffffff' : '#0b1a2e',
+            }}
+          >
+            VAVAWORLD
+          </span>
+        </Link>
+        <button
+          type="button"
+          aria-label="Open menu"
+          onClick={() => setOpen(true)}
+          className="grid h-9 w-9 place-items-center rounded-[10px] text-foreground/80 transition-colors hover:bg-foreground/[0.06]"
+        >
+          <Menu size={22} strokeWidth={1.8} />
+        </button>
+      </div>
+
+      {/* Backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 md:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden
+        />
+      )}
+
+      {/* Drawer */}
+      <aside
+        className={cn(
+          'fixed bottom-0 left-0 top-0 z-50 flex w-[280px] max-w-[85vw] flex-col px-4 pb-4 pt-5 text-foreground transition-transform duration-200 ease-out md:hidden',
+          open ? 'translate-x-0' : '-translate-x-full',
+        )}
+        style={{ gap: 18, ...GLASS_PANEL }}
+      >
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={() => setOpen(false)}
+          className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-[10px] text-foreground/70 transition-colors hover:bg-foreground/[0.06]"
+        >
+          <X size={18} strokeWidth={2} />
+        </button>
+        <SidebarInner onNavigate={() => setOpen(false)} />
+      </aside>
+    </>
   );
 }

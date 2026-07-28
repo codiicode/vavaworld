@@ -12,21 +12,13 @@ export function Door() {
           loop
           muted
           playsInline
-          preload="auto"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
       <div className="l-veil" />
       <div className="l-door-fade-top" />
       <div className="l-door-fade-bot" />
       <div className="l-copy">
-        <span className="l-eyebrow">iii — The passage</span>
         <div className="l-end-row">
           <h2>
             Step through.<br />
@@ -34,12 +26,11 @@ export function Door() {
           </h2>
           <div className="l-right">
             <p>
-              Eighteen thousand cells held. Ninety-nine and nine-eighths of a million remaining.
+              One hundred million cells. Each one held once, in a name, without expiry.
               The register fills only once.
             </p>
             <div className="l-ctas">
               <Link href="/map" className="l-btn l-btn-ghost">Open the map</Link>
-              <a href="#how" className="l-btn l-btn-overlay-ghost">Read the letter</a>
             </div>
           </div>
         </div>

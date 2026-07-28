@@ -3,7 +3,7 @@ import { TIER1_LAT_DELTA_DEG, TIER2_LAT_DELTA_DEG, TOP_100_CITIES } from './citi
 export type Tier = 1 | 2 | 3;
 
 /**
- * Geographic tier classifier — mirrors the on-chain bbox check in
+ * Geographic tier classifier - mirrors the on-chain bbox check in
  * anchor/programs/tiles/src/tier.rs. Each city stores precomputed longitude
  * deltas for the T1 (50 km) and T2 (200 km) radii so this can be a pure
  * bbox compare (no haversine). Off-chain quotes must match the on-chain

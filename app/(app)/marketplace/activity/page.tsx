@@ -11,10 +11,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { mockActivity } from '@/lib/mock-marketplace';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
+import { UserLink } from '@/components/user-link';
 
 /**
- * Full activity log — the "see more" target from the right-rail mini-feed.
+ * Full activity log - the "see more" target from the right-rail mini-feed.
  *
  * Same dense, scannable table style as the main marketplace.
  */
@@ -59,7 +60,7 @@ export default function ActivityPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2.5">
-                    <span className="text-base leading-none">{flagEmoji(a.countryCode)}</span>
+                    <Flag code={a.countryCode} size={15} />
                     <div>
                       <div className="text-sm font-medium leading-tight">{a.city}</div>
                       <div className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
@@ -68,11 +69,11 @@ export default function ActivityPage() {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-mono text-xs">{a.fromAddr}</TableCell>
+                <TableCell><UserLink addr={a.fromAddr} /></TableCell>
                 <TableCell className="w-6 text-muted-foreground">
                   <ArrowRight size={12} />
                 </TableCell>
-                <TableCell className="font-mono text-xs">{a.toAddr}</TableCell>
+                <TableCell><UserLink addr={a.toAddr} /></TableCell>
                 <TableCell className="text-right text-sm font-semibold tabular-nums">
                   {a.price.toFixed(3)} SOL
                 </TableCell>

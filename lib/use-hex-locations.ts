@@ -37,7 +37,7 @@ async function fetchOne(h3: string, token: string): Promise<HexLocation | null> 
   const { lat, lng } = hexCenter(h3);
   const promise = (async (): Promise<HexLocation | null> => {
     try {
-      // Use classic v5 geocoding — it returns context arrays we can mine for country / region
+      // Use classic v5 geocoding - it returns context arrays we can mine for country / region
       const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=place,neighborhood,locality,country&limit=1&access_token=${token}`;
       const r = await fetch(url);
       if (!r.ok) return null;
@@ -109,7 +109,7 @@ async function fetchOne(h3: string, token: string): Promise<HexLocation | null> 
 
 /**
  * Reverse-geocode every hex in `hexes`. Cached per hex-id for the session.
- * Returns the resolved subset — hexes not yet resolved are simply missing.
+ * Returns the resolved subset - hexes not yet resolved are simply missing.
  */
 export function useHexLocations(hexes: Iterable<string>): Map<string, HexLocation> {
   const [resolved, setResolved] = useState<Map<string, HexLocation>>(() => new Map());

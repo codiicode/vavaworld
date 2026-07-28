@@ -8,7 +8,7 @@ import { Program, type Idl } from '@coral-xyz/anchor';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { flagEmoji } from '@/lib/flag-emoji';
+import { Flag } from '@/components/flag';
 import { cn } from '@/lib/utils';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { tilePda } from '@/lib/tile-pda';
@@ -33,7 +33,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Three-tabbed transfer dialog.
- *  - Wallet address: real on-chain `transfer` instruction — the Tile PDA's
+ *  - Wallet address: real on-chain `transfer` instruction - the Tile PDA's
  *    owner field is reassigned, signed by the current owner.
  *  - X handle / Email: still queued-intent stubs (need a pending-transfer
  *    backend the recipient claims on sign-in).
@@ -138,7 +138,7 @@ export function TileTransferDialog({
         const sig = await wallet.signAndSendTransaction(tx);
         await connection.confirmTransaction(sig, 'confirmed');
 
-        // The tile just left this wallet — make /profile + the sidebar refetch.
+        // The tile just left this wallet - make /profile + the sidebar refetch.
         dispatchClaimDone({ h3s: [tile.h3], txSig: sig });
         setSubmitting(false);
         setDone(true);
@@ -149,7 +149,7 @@ export function TileTransferDialog({
       return;
     }
 
-    // X / Email — no backend yet; record intent + show queued confirmation.
+    // X / Email - no backend yet; record intent + show queued confirmation.
     await new Promise((r) => setTimeout(r, 800));
     setSubmitting(false);
     setDone(true);
@@ -164,8 +164,8 @@ export function TileTransferDialog({
           <DialogPrimitive.Title className="text-lg font-semibold tracking-tight">
             Transfer hex
           </DialogPrimitive.Title>
-          <DialogPrimitive.Description className="text-sm text-muted-foreground">
-            {flagEmoji(location?.countryCode) || '🌐'} {place} · Tier {tile.tier}
+          <DialogPrimitive.Description className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Flag code={location?.countryCode} size={14} /> {place} · Tier {tile.tier}
           </DialogPrimitive.Description>
         </div>
 

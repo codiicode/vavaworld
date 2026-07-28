@@ -7,34 +7,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { CountrySelect } from '@/components/country-select';
 
-export type SortKey = 'hexes' | 'volume' | 'value' | 'countries';
-export type FilterKey =
-  | 'worldwide' | 'se' | 'jp' | 'de' | 'us' | 'kr' | 'gb' | 'fr' | 'it'
-  | 'es' | 'br' | 'cn' | 'in' | 'au' | 'ca' | 'nl' | 'pt' | 'no' | 'dk' | 'fi';
-
-const COUNTRY_OPTIONS: ReadonlyArray<{ value: FilterKey; label: string }> = [
-  { value: 'worldwide', label: '🌍 Worldwide' },
-  { value: 'se', label: '🇸🇪 Sweden' },
-  { value: 'jp', label: '🇯🇵 Japan' },
-  { value: 'de', label: '🇩🇪 Germany' },
-  { value: 'us', label: '🇺🇸 United States' },
-  { value: 'kr', label: '🇰🇷 South Korea' },
-  { value: 'gb', label: '🇬🇧 United Kingdom' },
-  { value: 'fr', label: '🇫🇷 France' },
-  { value: 'it', label: '🇮🇹 Italy' },
-  { value: 'es', label: '🇪🇸 Spain' },
-  { value: 'br', label: '🇧🇷 Brazil' },
-  { value: 'cn', label: '🇨🇳 China' },
-  { value: 'in', label: '🇮🇳 India' },
-  { value: 'au', label: '🇦🇺 Australia' },
-  { value: 'ca', label: '🇨🇦 Canada' },
-  { value: 'nl', label: '🇳🇱 Netherlands' },
-  { value: 'pt', label: '🇵🇹 Portugal' },
-  { value: 'no', label: '🇳🇴 Norway' },
-  { value: 'dk', label: '🇩🇰 Denmark' },
-  { value: 'fi', label: '🇫🇮 Finland' },
-];
+export type SortKey = 'hexes' | 'volume' | 'value' | 'countries' | 'bonded';
+/** ISO 3166-1 alpha-2 country code, or 'worldwide' for the all-countries view. */
+export type FilterKey = 'worldwide' | string;
 
 const TRIGGER =
   'bg-white/40 backdrop-blur-md border-white/40 h-11 rounded-xl text-foreground';
@@ -51,6 +28,8 @@ export function LeaderboardFilters({
   filter: FilterKey;
   onFilterChange: (f: FilterKey) => void;
 }) {
+  // Countries / Volume have no per-country equivalent, so they're worldwide-only.
+  const isWorldwide = filter === 'worldwide';
   return (
     <div className="mb-6 grid max-w-2xl grid-cols-2 gap-4">
       <div>
@@ -63,9 +42,14 @@ export function LeaderboardFilters({
           </SelectTrigger>
           <SelectContent className={CONTENT}>
             <SelectItem value="hexes">Most Hexes</SelectItem>
-            <SelectItem value="volume">Trading Volume (24h)</SelectItem>
+            <SelectItem value="bonded">Most $VAVA Bonded</SelectItem>
             <SelectItem value="value">Portfolio Value</SelectItem>
-            <SelectItem value="countries">Most Countries</SelectItem>
+            {isWorldwide && (
+              <SelectItem value="volume">Trading Volume (24h)</SelectItem>
+            )}
+            {isWorldwide && (
+              <SelectItem value="countries">Most Countries</SelectItem>
+            )}
           </SelectContent>
         </Select>
       </div>
@@ -74,18 +58,11 @@ export function LeaderboardFilters({
         <label className="mb-2 block text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
           Filter By
         </label>
-        <Select value={filter} onValueChange={(v) => onFilterChange(v as FilterKey)}>
-          <SelectTrigger className={TRIGGER}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className={CONTENT}>
-            {COUNTRY_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CountrySelect
+          value={filter}
+          onChange={onFilterChange}
+          allOption={{ value: 'worldwide', label: 'Worldwide' }}
+        />
       </div>
     </div>
   );
