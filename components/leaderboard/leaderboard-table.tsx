@@ -46,8 +46,8 @@ export function LeaderboardTable({
           {rows.length === 0
             ? 'No holders match this filter'
             : isWorldwide
-              ? `Showing ${first}-${last} of ${TOTAL_HOLDERS.toLocaleString()} holders`
-              : `Showing ${first}-${last} of ${total.toLocaleString()} holders in ${scopeName}`}
+              ? `Showing ${first}-${last} of ${TOTAL_HOLDERS.toLocaleString('en-US')} holders`
+              : `Showing ${first}-${last} of ${total.toLocaleString('en-US')} holders in ${scopeName}`}
         </span>
       </div>
 

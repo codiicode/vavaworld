@@ -231,10 +231,16 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 
 /**
  * Permanent provenance line. Format:
- *   Claimed at 3:47:21 PM UTC, May 21, 2026 - Hex #18,632 ever claimed.
+ *   Claimed at 3:47:21 PM UTC, May 21, 2026 · the 18,632nd hex ever claimed.
  *
  * Renders deterministically in en-US/UTC so SSR and CSR agree.
  */
+function ordinalSuffix(n: number): string {
+  const v = n % 100;
+  if (v >= 11 && v <= 13) return 'th';
+  return ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th';
+}
+
 function ClaimStamp({ claimedAt, sequence }: { claimedAt: string; sequence: number }) {
   const date = new Date(claimedAt);
   const time = date.toLocaleTimeString('en-US', {
@@ -257,12 +263,13 @@ function ClaimStamp({ claimedAt, sequence }: { claimedAt: string; sequence: numb
         <span className="text-foreground/55">Claimed at </span>
         <span className="font-medium tabular-nums text-foreground">{time} UTC</span>
         <span className="text-foreground/55">, {day}</span>
-        <span className="px-2 text-foreground/30">-</span>
-        <span className="text-foreground/55">Hex </span>
+        <span className="px-2 text-foreground/30">·</span>
+        <span className="text-foreground/55">the </span>
         <span className="font-semibold tabular-nums text-foreground">
-          #{sequence.toLocaleString('en-US')}
+          {sequence.toLocaleString('en-US')}
+          {ordinalSuffix(sequence)}
         </span>
-        <span className="text-foreground/55"> ever claimed.</span>
+        <span className="text-foreground/55"> hex ever claimed.</span>
       </span>
     </div>
   );

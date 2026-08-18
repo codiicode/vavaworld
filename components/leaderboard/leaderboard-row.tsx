@@ -83,7 +83,7 @@ export function LeaderboardRow({ row, scope }: { row: RowView; scope: Scope }) {
 
       <TableCell className="text-right">
         <span className="text-sm font-semibold tabular-nums">
-          {row.hexes.toLocaleString()}
+          {row.hexes.toLocaleString('en-US')}
         </span>
       </TableCell>
 
@@ -98,7 +98,7 @@ export function LeaderboardRow({ row, scope }: { row: RowView; scope: Scope }) {
           {row.valueSOL.toFixed(1)} SOL
         </div>
         <div className="text-[10px] tabular-nums text-foreground/50">
-          ${row.valueUSD.toLocaleString()}
+          ${row.valueUSD.toLocaleString('en-US')}
         </div>
       </TableCell>
 

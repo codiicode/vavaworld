@@ -8,9 +8,9 @@ import { recentClaims } from '@/lib/live-feed';
 // Mock global figures - believable scale, count up on mount. Wire to the
 // indexer's aggregate query when it ships.
 const STATS = [
-  { label: 'Hexes claimed', value: 1_284_920, fmt: (n: number) => Math.round(n).toLocaleString() },
+  { label: 'Hexes claimed', value: 1_284_920, fmt: (n: number) => Math.round(n).toLocaleString('en-US') },
   { label: 'Countries active', value: 19, fmt: (n: number) => String(Math.round(n)) },
-  { label: 'Holders', value: 8_640, fmt: (n: number) => Math.round(n).toLocaleString() },
+  { label: 'Holders', value: 8_640, fmt: (n: number) => Math.round(n).toLocaleString('en-US') },
 ];
 
 const FEED = recentClaims(14);

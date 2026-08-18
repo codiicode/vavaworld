@@ -136,7 +136,7 @@ export function PodiumCard({
           <div className={cn('mt-0.5 flex items-center gap-1.5 text-foreground/65', hexesSize)}>
             <Flag code={isWorldwide ? entry.country : scope} size={isGold ? 16 : 13} />
             <span className="tabular-nums font-medium">
-              {row.hexes.toLocaleString()} hexes
+              {row.hexes.toLocaleString('en-US')} hexes
             </span>
           </div>
         </div>

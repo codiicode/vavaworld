@@ -75,14 +75,14 @@ export default function PublicProfilePage() {
           <Stat
             icon={<Hexagon size={14} strokeWidth={1.6} />}
             label="Hexes owned"
-            value={user.hexes.toLocaleString()}
+            value={user.hexes.toLocaleString('en-US')}
           />
           <Stat
             icon={<Globe size={14} strokeWidth={1.6} />}
             label="Countries"
             value={user.countries.toString()}
           />
-          <Stat label="$VAVA bonded" value={user.bondedVava.toLocaleString()} />
+          <Stat label="$VAVA bonded" value={user.bondedVava.toLocaleString('en-US')} />
         </div>
 
         <Achievements user={user} />

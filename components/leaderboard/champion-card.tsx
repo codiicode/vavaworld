@@ -94,7 +94,7 @@ export function ChampionCard({
                   <Flag code={isWorldwide ? entry.country : scope} size={18} />
                   <CountUp
                     value={row.hexes}
-                    format={(n) => Math.round(n).toLocaleString()}
+                    format={(n) => Math.round(n).toLocaleString('en-US')}
                     className="font-semibold tabular-nums text-foreground"
                   />
                   <span className="text-foreground/60">
