@@ -219,7 +219,7 @@ export default function TokenomicsPage() {
           </section>
 
           {/* CTA */}
-          <div className="mt-12 pb-4">
+          <div className="mt-12 pb-4 text-center">
             <Link
               href="/map"
               className="inline-block rounded-full border border-white/30 bg-white/10 px-10 py-4 text-base font-semibold tracking-[0.08em] text-white backdrop-blur-md transition-all hover:scale-[1.03] hover:bg-white/20"
