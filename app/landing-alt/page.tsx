@@ -11,7 +11,7 @@ const NAV_LINKS = [
   { label: 'Marketplace', href: '/marketplace' },
   { label: 'Leaderboard', href: '/leaderboard' },
   { label: 'How it works', href: '#how' },
-  { label: 'Tokenomics', href: '#' },
+  { label: 'Tokenomics', href: '/tokenomics' },
 ];
 
 /**
