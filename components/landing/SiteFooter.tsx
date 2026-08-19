@@ -46,15 +46,12 @@ export function SiteFooter() {
         <div className="l-foot-col">
           <h4>Elsewhere</h4>
           <ul>
-            <li><a href="https://twitter.com" target="_blank" rel="noreferrer">Twitter</a></li>
+            <li><a href="https://x.com/vavaworldnet" target="_blank" rel="noreferrer">X</a></li>
             <li><a href="https://discord.com" target="_blank" rel="noreferrer">Discord</a></li>
             <li><a href="https://github.com/codiicode/vavaworld" target="_blank" rel="noreferrer">Github</a></li>
             <li><a href="#how">Documentation</a></li>
           </ul>
         </div>
-      </div>
-      <div className="l-foot-bottom" style={{ position: 'relative', zIndex: 1 }}>
-        <span>© 2026 &nbsp;·&nbsp; Stockholm</span>
       </div>
     </footer>
   );
