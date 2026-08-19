@@ -222,10 +222,10 @@ export default function TokenomicsPage() {
           <div className="mt-12 pb-4">
             <Link
               href="/map"
-              className="inline-block rounded-full bg-white px-10 py-4 text-base font-semibold transition-transform hover:scale-[1.03]"
-              style={{ color: '#0a0a0a' }}
+              className="inline-block rounded-full border border-white/30 bg-white/10 px-10 py-4 text-base font-semibold tracking-[0.08em] text-white backdrop-blur-md transition-all hover:scale-[1.03] hover:bg-white/20"
+              style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)' }}
             >
-              Claim your first hex
+              ENTER VAVAWORLD
             </Link>
           </div>
         </main>
