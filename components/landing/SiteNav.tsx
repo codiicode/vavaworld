@@ -29,7 +29,7 @@ export function SiteNav() {
           <Link href="/marketplace">Marketplace</Link>
           <Link href="/leaderboard">Leaderboard</Link>
           <a href="#how">How it works</a>
-          <a href="#" onClick={(e) => e.preventDefault()}>Tokenomics</a>
+          <Link href="/tokenomics">Tokenomics</Link>
         </div>
 
         <div className="l-nav-right">
