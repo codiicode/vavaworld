@@ -50,7 +50,7 @@ respect that when reproducing installs locally.
 
 | Path | Purpose |
 |---|---|
-| `/` | Landing page (separate layout, `app/landing.css`, has its own nav `components/landing/SiteNav.tsx`) |
+| `/` | Landing page: single full-screen video hero, nothing below it (`components/landing/VideoHero.tsx`, styles `app/hero.css`; the nav + wallet actions live inside VideoHero) |
 | `/map` | Full-bleed Mapbox map. Right panel = `glass-right-panel.tsx`. Map sidebar = global `AppSidebar` |
 | `/marketplace` | Hex listings table + filter sidebar. Detail at `/marketplace/[id]` |
 | `/marketplace/activity` | Legacy back-link target from marketplace (still wired) |

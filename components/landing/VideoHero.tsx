@@ -1,17 +1,14 @@
 'use client';
 
 /**
- * Hero concept test bed - NOT wired into the real landing (same pattern as
- * /landing-alt). Single full-screen video hero, nothing below it.
- * The nav mirrors the production Hero.tsx nav 1:1 (same links, same wallet
- * actions) recolored white for the dark video.
+ * The landing page: a single full-screen video hero, nothing below it.
+ * The nav carries the real login / wallet actions.
  */
 
 import Link from 'next/link';
 import { Inter, Instrument_Serif } from 'next/font/google';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useActiveWallet } from '@/lib/active-wallet';
-import './hero-test.css';
 
 const sans = Inter({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], display: 'swap' });
 const serif = Instrument_Serif({ weight: '400', style: ['normal', 'italic'], subsets: ['latin'], display: 'swap' });
@@ -87,7 +84,7 @@ function Nav() {
   );
 }
 
-export default function HeroTestPage() {
+export function VideoHero() {
   return (
     <div className={`${sans.className} bg-[#0a0608]`}>
       <section className="relative h-screen w-full overflow-hidden">

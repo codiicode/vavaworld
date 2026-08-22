@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    // The hero concept page was promoted to the landing page.
+    return [{ source: '/hero-test', destination: '/', permanent: false }];
+  },
   images: {
     // AVIF first (smallest), WebP fallback. Next.js will negotiate via Accept
     // header so legacy browsers still get JPEG.
