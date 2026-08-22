@@ -33,15 +33,7 @@ function Nav() {
 
   return (
     <nav className="absolute inset-x-0 top-0 z-50 mx-auto flex w-full max-w-7xl items-center justify-between px-8 py-6">
-      <Link href="/" className="flex items-center gap-2.5">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo-globe-white.png"
-          alt="VavaWorld"
-          width={34}
-          height={34}
-          style={{ display: 'inline-block', width: 34, height: 34, flex: 'none', objectFit: 'contain' }}
-        />
+      <Link href="/" className="flex items-center">
         <span
           className="text-xl tracking-[0.02em] text-white"
           style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
