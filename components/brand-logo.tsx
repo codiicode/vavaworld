@@ -1,21 +1,24 @@
 /* eslint-disable @next/next/no-img-element */
 /**
- * VavaWorld mark - white, alpha-transparent PNG (public/logga transparent.png).
+ * VavaWorld globe mark, alpha-transparent PNGs extracted from the brand
+ * masters in /content:
+ * - "white" (public/logo-globe-white.png): for dark surfaces
+ * - "color" (public/logo-globe-color.png): blue/dark split, for light surfaces
  *
- * Background-free, cut tight to the mark - no backdrop. Rendered `contain` in a
- * square box so it sits cleanly on any surface. Used globally (landing nav +
- * footer, app sidebar, portfolio sidebar).
+ * Background-free, cut tight to the mark. Rendered `contain` in a square box.
  */
 export function BrandLogo({
   size = 28,
+  variant = 'white',
   className = '',
 }: {
   size?: number;
+  variant?: 'white' | 'color';
   className?: string;
 }) {
   return (
     <img
-      src="/logga transparent.png"
+      src={variant === 'color' ? '/logo-globe-color.png' : '/logo-globe-white.png'}
       alt="VavaWorld"
       width={size}
       height={size}

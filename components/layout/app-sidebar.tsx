@@ -79,7 +79,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
         onClick={onNavigate}
         className="flex items-center gap-3 px-1.5 py-0.5"
       >
-        <BrandLogo size={38} className={isMap ? '' : '[filter:brightness(0)]'} />
+        <BrandLogo size={38} variant={isMap ? 'white' : 'color'} />
         <span
           className="text-[11px] tracking-[0.02em]"
           style={{
@@ -228,7 +228,7 @@ export function MobileNav() {
         style={GLASS_PANEL}
       >
         <Link href="/" className="flex items-center gap-2.5">
-          <BrandLogo size={30} className={isMap ? '' : '[filter:brightness(0)]'} />
+          <BrandLogo size={30} variant={isMap ? 'white' : 'color'} />
           <span
             className="text-[11px] tracking-[0.02em]"
             style={{

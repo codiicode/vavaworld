@@ -5,7 +5,7 @@ export default function NotFound() {
   return (
     <main className="flex min-h-screen items-center justify-center px-5">
       <div className="w-full max-w-md rounded-2xl border border-white/40 bg-white/30 p-8 text-center backdrop-blur-md">
-        <BrandLogo size={44} className="mx-auto brightness-0 opacity-70" />
+        <BrandLogo size={44} variant="color" className="mx-auto" />
         <p className="mt-6 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
           Unclaimed territory
         </p>
