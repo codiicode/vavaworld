@@ -117,9 +117,9 @@ function Hero() {
         <h1
           className={`${serif.className} ht-text-glow text-center text-[36px] font-normal leading-[0.9] tracking-tight text-white md:text-7xl lg:text-[110px]`}
         >
-          The earth, held
+          The oldest currency in <span style={{ fontStyle: 'italic' }}>human history.</span>
           <br />
-          <span style={{ fontStyle: 'italic' }}>in your name.</span>
+          Now digital.
         </h1>
         <p className="mt-5 max-w-xl text-center text-sm text-white/70 md:mt-7 md:text-base">
           One hundred million hexagonal cells on a living map. Each one claimed once, owned without
