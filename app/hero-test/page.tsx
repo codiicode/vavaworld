@@ -113,7 +113,7 @@ function Hero() {
 
       <Nav />
 
-      <div className="absolute inset-0 -mt-[120px] flex flex-col items-center justify-center px-6">
+      <div className="absolute inset-0 -mt-[170px] flex flex-col items-center justify-center px-6">
         <h1
           className={`${serif.className} ht-text-glow text-center text-[36px] font-normal leading-[0.9] tracking-tight text-white md:text-7xl lg:text-[110px]`}
         >
@@ -121,13 +121,9 @@ function Hero() {
           <br />
           Now digital.
         </h1>
-        <p className="mt-5 max-w-xl text-center text-sm text-white/70 md:mt-7 md:text-base">
-          One hundred million hexagonal cells on a living map. Each one claimed once, owned without
-          expiry.
-        </p>
         <Link
           href="/map"
-          className="ht-button-glow mt-6 rounded-full bg-white px-8 py-3.5 text-sm font-medium tracking-wide text-black transition-all duration-300 hover:bg-white/90 md:mt-9"
+          className="ht-button-glow mt-8 rounded-full bg-white px-8 py-3.5 text-sm font-medium tracking-wide text-black transition-all duration-300 hover:bg-white/90 md:mt-10"
         >
           ENTER VAVAWORLD
         </Link>
