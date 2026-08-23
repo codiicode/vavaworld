@@ -89,6 +89,106 @@
     /* Tailwind `font-sans` reads --font-sans; Geist sets --font-geist-sans. Bridge. */
     --font-sans: var(--font-geist-sans);
   }
+
+  /* Dark theme - toggled by ThemeProvider as `dark` on <html> so Radix
+     portals inherit. Same hue family as light (slate-blue), inverted. */
+  .dark {
+    --background:           222 32% 7%;      /* #0B101D */
+    --foreground:           213 30% 94%;     /* #E8EEF9 */
+    --card:                 222 28% 10%;
+    --card-foreground:      213 30% 94%;
+    --popover:              222 28% 11%;
+    --popover-foreground:   213 30% 94%;
+    --primary:              204 75% 66%;
+    --primary-foreground:   222 32% 10%;
+    --secondary:            221 22% 16%;
+    --secondary-foreground: 213 30% 94%;
+    --muted:                221 22% 16%;
+    --muted-foreground:     216 14% 66%;
+    --accent:               205 55% 20%;
+    --accent-foreground:    204 80% 78%;
+    --destructive:          0 62% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border:               218 20% 22%;
+    --input:                218 20% 22%;
+    --ring:                 204 75% 60%;
+
+    /* legacy (profile + ClaimModal) */
+    --bg:          #0b101d;
+    --bg-2:        #0e1526;
+    --panel:       rgba(15, 23, 42, 0.62);
+    --ink:         #e8eef9;
+    --fg:          #e8eef9;
+    --ink-2:       #c9d5ec;
+    --dim:         rgba(232, 238, 249, 0.62);
+    --dim-2:       rgba(232, 238, 249, 0.42);
+    --hairline:    rgba(124, 191, 236, 0.30);
+    --hair-2:      rgba(124, 191, 236, 0.14);
+    --signal:      #7cbfec;
+    --signal-soft: rgba(124, 191, 236, 0.18);
+    --signal-deep: #cfe6fa;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Dark-mode remap of the canonical light-glass utilities.
+   The app surfaces hardcode the glass recipe (bg-white/30 +
+   border-white/40 etc.) in dozens of places; remapping the
+   handful of tokens here flips every page at once. The
+   low-alpha tier (bg-white/10-20, border-white/10-25) is the
+   dark-glass idiom already used over the map - left alone.
+   ───────────────────────────────────────────────────────── */
+.dark .bg-white          { background-color: #101828; }
+.dark .bg-white\/90      { background-color: rgba(13, 20, 36, 0.92); }
+.dark .bg-white\/80      { background-color: rgba(13, 20, 36, 0.85); }
+.dark .bg-white\/60      { background-color: rgba(17, 26, 46, 0.65); }
+.dark .bg-white\/55      { background-color: rgba(17, 26, 46, 0.60); }
+.dark .bg-white\/40      { background-color: rgba(16, 24, 43, 0.52); }
+.dark .bg-white\/30      { background-color: rgba(15, 23, 42, 0.44); }
+.dark .border-white\/45  { border-color: rgba(255, 255, 255, 0.14); }
+.dark .border-white\/40  { border-color: rgba(255, 255, 255, 0.13); }
+.dark .border-white\/30  { border-color: rgba(255, 255, 255, 0.11); }
+.dark .hover\:bg-white\/55:hover { background-color: rgba(37, 51, 82, 0.62); }
+.dark .hover\:bg-white\/40:hover { background-color: rgba(37, 51, 82, 0.55); }
+.dark .text-black        { color: #f4f7fd; }
+.dark .text-slate-600    { color: #9fb0c9; }
+
+/* App sidebar glass (desktop rail + mobile drawer + mobile top bar). */
+.sidebar-glass {
+  background: linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.08) 100%);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow: 0 18px 50px rgba(40,80,150,0.22), 0 2px 8px rgba(40,80,150,0.12), inset 0 1px 0 rgba(255,255,255,0.65);
+}
+.dark .sidebar-glass {
+  background: linear-gradient(135deg, rgba(20,30,52,0.72) 0%, rgba(12,19,36,0.55) 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.10);
+}
+
+/* Active nav item + profile chip inside the sidebar. */
+.sidebar-active {
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.65);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.dark .sidebar-active {
+  background: rgba(124,191,236,0.14);
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+}
+.sidebar-chip {
+  background: linear-gradient(135deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.04) 100%);
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 4px 14px rgba(40,80,150,0.10);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.dark .sidebar-chip {
+  background: linear-gradient(135deg, rgba(28,40,66,0.6) 0%, rgba(16,24,42,0.4) 100%);
+  border: 1px solid rgba(255,255,255,0.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 4px 14px rgba(0,0,0,0.25);
 }
 
 html, body { height: 100%; }
@@ -105,6 +205,13 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1, "ss01" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark mode: same sky photo, multiplied down to a deep navy so the cloud
+   texture survives instead of swapping to a flat gradient. */
+.dark body {
+  background-color: #26324e;
+  background-blend-mode: multiply;
 }
 
 /* Linear-style: no decorative shadows by default. We selectively re-enable for

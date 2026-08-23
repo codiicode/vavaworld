@@ -11,13 +11,16 @@ import {
   Globe,
   Map as MapIcon,
   Menu,
+  Moon,
   Settings,
   ShoppingBag,
+  Sun,
   Trophy,
   Wallet,
   X,
 } from 'lucide-react';
 import { ConnectButton } from '@/components/connect-button';
+import { useTheme } from '@/components/theme-provider';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
@@ -35,16 +38,8 @@ function gradientFromAddr(addr: string | null): string {
   return `linear-gradient(135deg, hsl(${h1} 70% 60%) 0%, hsl(${h2} 70% 50%) 100%)`;
 }
 
-// Shared glass recipe so the desktop rail and the mobile drawer look identical.
-const GLASS_PANEL: React.CSSProperties = {
-  background:
-    'linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.08) 100%)',
-  backdropFilter: 'blur(30px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-  border: '1px solid rgba(255,255,255,0.45)',
-  boxShadow:
-    '0 18px 50px rgba(40,80,150,0.22), 0 2px 8px rgba(40,80,150,0.12), inset 0 1px 0 rgba(255,255,255,0.65)',
-};
+// Shared glass recipe (light + dark variants) lives in globals.css so the
+// desktop rail, mobile drawer and top bar stay identical: .sidebar-glass.
 
 type NavItem = { label: string; href: string; icon: typeof MapIcon };
 const NAV: ReadonlyArray<NavItem> = [
@@ -67,9 +62,11 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { balance } = useWalletBalance(wallet.publicKey);
-  // The sidebar glass is dark over the map but light over the white-glow app
-  // pages - so the wordmark/logo flip to black off-map to stay visible.
+  const { theme, toggle } = useTheme();
+  // The sidebar glass is dark over the map (and in dark mode) but light over
+  // the white-glow app pages - the wordmark/logo flip to stay visible.
   const isMap = pathname?.startsWith('/map') ?? false;
+  const onDark = isMap || theme === 'dark';
 
   return (
     <>
@@ -79,12 +76,12 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
         onClick={onNavigate}
         className="flex items-center gap-3 px-1.5 py-0.5"
       >
-        <BrandLogo size={38} variant={isMap ? 'white' : 'color'} />
+        <BrandLogo size={38} variant={onDark ? 'white' : 'color'} />
         <span
           className="text-[11px] tracking-[0.02em]"
           style={{
             fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif',
-            color: isMap ? '#ffffff' : '#0b1a2e',
+            color: onDark ? '#ffffff' : '#0b1a2e',
           }}
         >
           VAVAWORLD
@@ -105,18 +102,9 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
               className={cn(
                 'relative flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] leading-none transition-colors duration-150',
                 active
-                  ? 'font-semibold text-foreground'
+                  ? 'sidebar-active font-semibold text-foreground'
                   : 'font-medium text-foreground/70 hover:bg-foreground/[0.04] hover:text-foreground',
               )}
-              style={
-                active
-                  ? {
-                      background: 'rgba(255,255,255,0.55)',
-                      border: '1px solid rgba(255,255,255,0.65)',
-                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
-                    }
-                  : undefined
-              }
             >
               <span className="grid w-[22px] place-items-center opacity-95">
                 <Icon size={20} strokeWidth={1.8} />
@@ -129,6 +117,20 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Footer */}
       <div className="flex flex-col gap-2.5">
+        <button
+          type="button"
+          onClick={toggle}
+          className="flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] font-medium leading-none text-foreground/50 transition-colors duration-150 hover:bg-foreground/[0.04] hover:text-foreground"
+        >
+          <span className="grid w-[22px] place-items-center">
+            {theme === 'dark' ? (
+              <Sun size={20} strokeWidth={1.8} />
+            ) : (
+              <Moon size={20} strokeWidth={1.8} />
+            )}
+          </span>
+          <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+        </button>
         <Link
           href="/settings"
           onClick={onNavigate}
@@ -144,16 +146,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
           <Link
             href="/profile"
             onClick={onNavigate}
-            className="flex items-center gap-3 rounded-[14px] px-3 py-2.5 transition-colors hover:brightness-105"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.04) 100%)',
-              border: '1px solid rgba(255,255,255,0.45)',
-              boxShadow:
-                'inset 0 1px 0 rgba(255,255,255,0.45), 0 4px 14px rgba(40,80,150,0.10)',
-              backdropFilter: 'blur(18px)',
-              WebkitBackdropFilter: 'blur(18px)',
-            }}
+            className="sidebar-chip flex items-center gap-3 rounded-[14px] px-3 py-2.5 transition-colors hover:brightness-105"
           >
             <div
               className="h-[34px] w-[34px] flex-none overflow-hidden rounded-[10px]"
@@ -188,8 +181,8 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
 export function AppSidebar() {
   return (
     <aside
-      className="fixed bottom-[18px] left-[18px] top-[18px] z-30 hidden w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground md:flex"
-      style={{ gap: 22, ...GLASS_PANEL }}
+      className="sidebar-glass fixed bottom-[18px] left-[18px] top-[18px] z-30 hidden w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground md:flex"
+      style={{ gap: 22 }}
     >
       <SidebarInner />
     </aside>
@@ -203,7 +196,9 @@ export function AppSidebar() {
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { theme } = useTheme();
   const isMap = pathname?.startsWith('/map') ?? false;
+  const onDark = isMap || theme === 'dark';
 
   // Close on navigation.
   useEffect(() => {
@@ -224,16 +219,15 @@ export function MobileNav() {
     <>
       {/* Top bar */}
       <div
-        className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between px-4 text-foreground md:hidden"
-        style={GLASS_PANEL}
+        className="sidebar-glass fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between px-4 text-foreground md:hidden"
       >
         <Link href="/" className="flex items-center gap-2.5">
-          <BrandLogo size={30} variant={isMap ? 'white' : 'color'} />
+          <BrandLogo size={30} variant={onDark ? 'white' : 'color'} />
           <span
             className="text-[11px] tracking-[0.02em]"
             style={{
               fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif',
-              color: isMap ? '#ffffff' : '#0b1a2e',
+              color: onDark ? '#ffffff' : '#0b1a2e',
             }}
           >
             VAVAWORLD
@@ -261,10 +255,10 @@ export function MobileNav() {
       {/* Drawer */}
       <aside
         className={cn(
-          'fixed bottom-0 left-0 top-0 z-50 flex w-[280px] max-w-[85vw] flex-col px-4 pb-4 pt-5 text-foreground transition-transform duration-200 ease-out md:hidden',
+          'sidebar-glass fixed bottom-0 left-0 top-0 z-50 flex w-[280px] max-w-[85vw] flex-col px-4 pb-4 pt-5 text-foreground transition-transform duration-200 ease-out md:hidden',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
-        style={{ gap: 18, ...GLASS_PANEL }}
+        style={{ gap: 18 }}
       >
         <button
           type="button"
