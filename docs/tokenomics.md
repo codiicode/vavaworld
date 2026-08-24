@@ -17,14 +17,41 @@ mechanics run under the hood of a plain SOL payment.
 
 ## Token launch
 
-- Launch on **Meteora Dynamic Bonding Curve (DBC)**; graduates to a
-  Meteora pool with locked liquidity. No self-funded LP.
-- Swap fee: **1% base**, via fee scheduler starting high (~25–50% for
-  the first minutes/hours to make sniping unprofitable), decaying to 1%.
-  Meteora takes 20% of trading fees; net ~0.8% to us.
-- Swap fees are launch-phase income, not a long-term revenue pillar:
-  once third-party pools exist, volume migrates to the cheapest venue.
-  Primary claims are the business.
+**Decision (2026-08-25): launch on pump.fun.** Meteora DBC is the
+fallback if conditions change (see below).
+
+- **Fair launch on pump.fun**: the platform creates the mint, the full
+  supply sells through their bonding curve, and at ~$69k market cap
+  (~85 SOL raised) the token graduates to PumpSwap with burned LP. No
+  team allocation, no self-funded liquidity, no treasury tokens —
+  "we only own what we bought like everyone else" is part of the story
+  and keeps the securities profile clean.
+- **Swap-fee income:** we do not control pool fees. We earn pump.fun's
+  creator revenue share (0.05% of PumpSwap trades to the creator vault,
+  plus elevated early-phase creator fees under their dynamic-fee
+  program). Treat as pocket change, never a revenue pillar. Primary
+  claims are the business.
+- **Launch conditions (hard requirements):**
+  1. Token and primary claims go live **the same day** — the 15%
+     embedded-VAVA engine must be buying on the bonding curve from
+     minute one. This is also the graduation strategy: <2% of pump.fun
+     tokens graduate, and product-driven buy flow is our edge.
+  2. The buyback keeper routes swaps via **Jupiter** (works against
+     both the pre-graduation curve and PumpSwap) and **TWAPs** its
+     buys in small batches — post-graduation liquidity is thin and
+     lump-sum buys would whip the embedded-value cost basis around.
+  3. No commitments anywhere that depend on owning a token treasury —
+     that door is permanently closed on this path.
+- **Flip conditions → Meteora DBC:** if we decide we need a treasury
+  allocation, sniper-hostile fee scheduling, or configured migration
+  liquidity — or if the product is not launch-ready when the token
+  must ship. The implementation is launchpad-agnostic (Jupiter
+  routing, no hardcoded pool), so this decision stays reversible
+  until launch week.
+- Accepted trade-offs, eyes open: no anti-snipe protection on the
+  curve, platform risk (pump.fun has changed fee terms repeatedly),
+  and pump.fun's memecoin stigma — countered by the fair-launch story
+  and the product itself.
 
 ## Revenue waterfall
 
@@ -32,7 +59,7 @@ mechanics run under the hood of a plain SOL payment.
 
 | Share | Recipient | Mechanism |
 |---|---|---|
-| 15% | The hex itself | Swapped to $VAVA in our pool, locked inside the hex ("embedded VAVA") |
+| 15% | The hex itself | Swapped to $VAVA on-market (Jupiter-routed), locked inside the hex ("embedded VAVA") |
 | 5% | Country president | Paid in SOL, live. No president → falls to treasury |
 | 80% | Treasury | Operations, growth, Federal Land budget (phase 2) |
 
@@ -150,9 +177,10 @@ Treasury-funded floor support that buys land, not just tokens.
 
 ## Phasing
 
-1. **Launch:** DBC launch, primary claims with 15/5/80 split, embedded
-   VAVA + raze, secondary market with 3% fee, presidents + coups,
-   voluntary bonding (discount + stake).
+1. **Launch:** pump.fun fair launch (token + claims same day), primary
+   claims with 15/5/80 split, embedded VAVA + raze, secondary market
+   with 3% fee, presidents + coups, voluntary bonding (discount +
+   stake).
 2. **Phase 2:** Federal Land / State Reserve + auctions.
 3. **Back pocket (not committed):** stimulus drops / world events —
    designed, cut for now.
@@ -161,9 +189,9 @@ Treasury-funded floor support that buys land, not just tokens.
 
 | Parameter | Depends on |
 |---|---|
-| President stake size | Token supply & launch price |
-| Discount bond threshold | Token supply & launch price |
-| Fee scheduler exact curve | Meteora DBC config at launch |
+| President stake size | Market price after launch (pump.fun supply is fixed at 1B) |
+| Discount bond threshold | Market price after launch |
+| Buyback keeper TWAP batch size/interval | Post-graduation pool depth |
 | Federal Land epoch caps | Treasury size at phase 2 |
 
 ## Design principles (why the model looks like this)
@@ -181,5 +209,6 @@ Treasury-funded floor support that buys land, not just tokens.
   by arithmetic (raze haircut, coup capital requirement, wash-claim
   losses).
 - **Fees follow pricing power.** Monopoly venue (secondary) carries
-  3%; competitive venue (swaps) carries 1% and is treated as
-  temporary income.
+  3%; the swap venue is pump.fun's and we take only their creator
+  share — swap income is pocket change by design, claims are the
+  business.

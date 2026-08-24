@@ -62,7 +62,7 @@ const PILLARS = [
 const FEES = [
   { venue: 'Primary claims', fee: 'Full price to the loop', note: '80 / 15 / 5 - world, hex, president' },
   { venue: 'Player-to-player trades', fee: '3%', note: '2% protocol · 1% to the country president. Seller-side - buyers always see clean prices' },
-  { venue: '$VAVA swaps', fee: '1%', note: 'Launch pool on Meteora, sniper-hostile fee curve at open' },
+  { venue: '$VAVA swaps', fee: '0%', note: 'Fair launch on pump.fun - full supply through the public curve, LP burned at graduation. We charge nothing on swaps' },
 ];
 
 export default function TokenomicsPage() {
