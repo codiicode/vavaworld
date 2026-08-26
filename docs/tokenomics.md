@@ -1,57 +1,78 @@
 # $VAVA Tokenomics
 
 Status: agreed design, pre-implementation. Numbers marked **OPEN** are
-deliberately unset until token supply and launch price are fixed.
+deliberately unset until launch price discovery. Launch venue:
+**pump.fun** (decided 2026-08-25).
 
 ## Overview
 
-VavaWorld sells hexes (primary claims, priced in SOL). $VAVA is the SPL
-token that the economy locks value into. The core loop:
+VavaWorld sells hexes (primary claims, priced in SOL). $VAVA is a
+plain SPL token, fair-launched on pump.fun. The core loop:
 
-> Every land purchase automatically buys $VAVA off the market and locks
-> it inside the purchased hex. The land is redeemable for the token;
-> the token gets mechanical, product-driven buy pressure.
+> Every land purchase automatically buys $VAVA off the market and
+> locks it inside the purchased hex. The land is redeemable for the
+> token; the token gets mechanical, product-driven buy pressure.
 
 No user ever needs to touch $VAVA to use the product. All token
-mechanics run under the hood of a plain SOL payment.
+mechanics run under the hood of a plain SOL payment, enforced by our
+own on-chain program — the launchpad only hosts where the token
+trades.
 
-## Token launch
+## Token launch: pump.fun fair launch
 
-**Decision (2026-08-25): launch on pump.fun.** Meteora DBC is the
-fallback if conditions change (see below).
+- pump.fun creates the mint. The **full supply (1B, fixed) sells
+  through the public bonding curve** — no team allocation, no
+  pre-sale, no self-funded LP. At ~$69k market cap (~85 SOL raised)
+  the token graduates to PumpSwap with burned LP.
+- "We only own what we bought like everyone else." That is both the
+  distribution story and a deliberately clean securities profile.
+- **Swap income:** we control no pool fees. We earn pump.fun's
+  creator revenue share (0.05% of PumpSwap trades to the creator
+  vault, plus elevated early-phase creator fees under their
+  dynamic-fee program). Treat as pocket change, never a revenue
+  pillar. **Primary claims are the business.**
 
-- **Fair launch on pump.fun**: the platform creates the mint, the full
-  supply sells through their bonding curve, and at ~$69k market cap
-  (~85 SOL raised) the token graduates to PumpSwap with burned LP. No
-  team allocation, no self-funded liquidity, no treasury tokens —
-  "we only own what we bought like everyone else" is part of the story
-  and keeps the securities profile clean.
-- **Swap-fee income:** we do not control pool fees. We earn pump.fun's
-  creator revenue share (0.05% of PumpSwap trades to the creator vault,
-  plus elevated early-phase creator fees under their dynamic-fee
-  program). Treat as pocket change, never a revenue pillar. Primary
-  claims are the business.
-- **Launch conditions (hard requirements):**
-  1. Token and primary claims go live **the same day** — the 15%
-     embedded-VAVA engine must be buying on the bonding curve from
-     minute one. This is also the graduation strategy: <2% of pump.fun
-     tokens graduate, and product-driven buy flow is our edge.
-  2. The buyback keeper routes swaps via **Jupiter** (works against
-     both the pre-graduation curve and PumpSwap) and **TWAPs** its
-     buys in small batches — post-graduation liquidity is thin and
-     lump-sum buys would whip the embedded-value cost basis around.
-  3. No commitments anywhere that depend on owning a token treasury —
-     that door is permanently closed on this path.
-- **Flip conditions → Meteora DBC:** if we decide we need a treasury
-  allocation, sniper-hostile fee scheduling, or configured migration
-  liquidity — or if the product is not launch-ready when the token
-  must ship. The implementation is launchpad-agnostic (Jupiter
-  routing, no hardcoded pool), so this decision stays reversible
-  until launch week.
-- Accepted trade-offs, eyes open: no anti-snipe protection on the
-  curve, platform risk (pump.fun has changed fee terms repeatedly),
-  and pump.fun's memecoin stigma — countered by the fair-launch story
-  and the product itself.
+### Hard launch conditions
+
+1. **Token and primary claims go live the same day.** The 15%
+   embedded-VAVA engine must be buying on the bonding curve from
+   minute one — fewer than 2% of pump.fun tokens ever graduate, and
+   product-driven buy flow is our graduation edge.
+2. The buyback keeper routes swaps via **Jupiter** (works against
+   both the pre-graduation curve and PumpSwap) and **TWAPs** its buys
+   in small batches — post-graduation liquidity is thin, and lump-sum
+   buys would whip the embedded-value cost basis around.
+3. **No commitments anywhere that depend on owning a token
+   treasury** — that door is permanently closed on this path.
+
+### Accepted trade-offs (eyes open)
+
+No anti-snipe protection on the curve; platform risk (pump.fun has
+changed fee terms repeatedly); memecoin stigma — countered by the
+fair-launch story and the product itself.
+
+### Fallback: Meteora DBC
+
+Only if conditions flip before launch week: we decide we need a
+treasury allocation, sniper-hostile fee scheduling, or configured
+migration liquidity — or the product is not launch-ready when the
+token must ship. The implementation is launchpad-agnostic (Jupiter
+routing, no hardcoded pool), so the venue choice stays reversible
+until launch week.
+
+## Primary claim pricing
+
+Locked, implemented in `lib/pricing.ts` and enforced by `/api/claim`:
+
+```
+price_usd = 0.10 + (country_claim_count × 0.00001)
+```
+
+- Every country has its own counter. First hex in any country: $0.10.
+  Price doubles at 10,000 claims, reaches $1.10 at 100,000.
+- 2% slippage tolerance between quote and payment.
+- The on-chain T1/T2/T3 tier curve in the Anchor program is a separate
+  legacy/resale path — never conflate it with primary pricing.
 
 ## Revenue waterfall
 
@@ -63,24 +84,29 @@ fallback if conditions change (see below).
 | 5% | Country president | Paid in SOL, live. No president → falls to treasury |
 | 80% | Treasury | Operations, growth, Federal Land budget (phase 2) |
 
-The split facing the user is always 15/5/80. Federal Land is funded out
-of the treasury share, not a separate cut.
+The split facing the user is always 15/5/80. Federal Land is funded
+out of the treasury share, not a separate cut.
+
+Decision note (2026-08-25): 20/5/75 was considered and rejected. The
+embedded share can only ever be *raised* without damage — raising it
+later is a free bullish lever; lowering it reads as a rug signal. We
+start at 15 and keep the lever.
 
 ### Secondary market (player-to-player)
 
 - **3% fee, seller-side** (deducted from proceeds; buyers always see
   clean prices): **2% protocol + 1% country president**.
 - The hex's embedded VAVA transfers with the hex, untouched.
-- Hexes trade only through our program — no off-platform venue exists,
-  so this fee has no competitive leakage.
+- Hexes trade only through our program — no off-platform venue
+  exists, so this fee has no competitive leakage.
 
 ## Embedded VAVA & raze
 
-Every claim swaps 15% of the price to $VAVA and locks it **in the hex,
-not with the user**. The hex and its content are inseparable.
+Every claim swaps 15% of the price to $VAVA and locks it **in the
+hex, not with the user**. The hex and its content are inseparable.
 
-- **Transfer:** selling a hex sells its embedded VAVA with it. Nothing
-  unlocks on transfer, ever.
+- **Transfer:** selling a hex sells its embedded VAVA with it.
+  Nothing unlocks on transfer, ever.
 - **Raze:** the only way to extract embedded VAVA. The owner destroys
   the hex: it returns to unclaimed land on the map (re-claimable at
   full primary price), and the owner receives the embedded VAVA minus
@@ -91,21 +117,21 @@ not with the user**. The hex and its content are inseparable.
 Backing without redemption is fiction. Raze makes the floor real:
 
 - A hex listed below its embedded value gets bought and razed by
-  arbitrage for profit. **No hex can trade below ~its token content.**
-  The floor is enforced by greed, not promises.
-- Buyers get land upside plus a built-in downside hedge ("worst case I
-  raze") — lowers the psychological bar for new users.
+  arbitrage for profit. **No hex can trade below ~its token
+  content.** The floor is enforced by greed, not promises.
+- Buyers get land upside plus a built-in downside hedge ("worst case
+  I raze") — lowers the psychological bar for new users.
 - Self-limiting abuse: claim at $100 → immediate raze returns ~$13.50.
   An 86% guaranteed loss needs no cooldown rules.
 
 ### System behavior across market regimes
 
-- **Normal:** hexes are worth more than their content → nobody razes →
-  every new claim locks more supply. Locked supply ratchets up.
+- **Normal:** hexes are worth more than their content → nobody razes
+  → every new claim locks more supply. Locked supply ratchets up.
 - **$VAVA pumps hard:** cheapest hexes' content exceeds their market
-  price → arb razes them → released VAVA dampens the pump → razed land
-  re-enters the map → later re-claimed at full primary price (we earn
-  the 80% margin again, 15% re-locks). Raze-reclaim cycles are
+  price → arb razes them → released VAVA dampens the pump → razed
+  land re-enters the map → later re-claimed at full primary price (we
+  earn the 80% margin again, 15% re-locks). Raze-reclaim cycles are
   recurring revenue on land already sold once.
 
 ## Voluntary bonding
@@ -165,31 +191,44 @@ claimed, never assigned automatically.
 
 Treasury-funded floor support that buys land, not just tokens.
 
-- Protocol bot buys hexes listed **below ~75% of the country's current
-  primary price** (objective, per-country, self-calibrating — no
-  oracle), capped per country per epoch.
+- Protocol bot buys hexes listed **below ~75% of the country's
+  current primary price** (objective, per-country, self-calibrating —
+  no oracle), capped per country per epoch.
 - Bought hexes become **State Reserve**: distinct color on the map,
   not listed on the regular marketplace.
 - Re-released **only via scheduled state auctions**, minimum price 2×
-  purchase price. The reserve buys weakness and sells strength;
-  the spread is treasury profit. A few iconic locations may be
-  designated permanent National Parks for the narrative.
+  purchase price. The reserve buys weakness and sells strength; the
+  spread is treasury profit. A few iconic locations may be designated
+  permanent National Parks for the narrative.
 
 ## Phasing
 
-1. **Launch:** pump.fun fair launch (token + claims same day), primary
-   claims with 15/5/80 split, embedded VAVA + raze, secondary market
-   with 3% fee, presidents + coups, voluntary bonding (discount +
-   stake).
+1. **Launch:** pump.fun fair launch + primary claims same day, with
+   the 15/5/80 split, embedded VAVA + raze, secondary market with 3%
+   fee, presidents + coups, voluntary bonding (discount + stake).
 2. **Phase 2:** Federal Land / State Reserve + auctions.
-3. **Back pocket (not committed):** stimulus drops / world events —
-   designed, cut for now.
+3. **Back pocket (designed, not committed):** stimulus drops / world
+   events; raising the embedded share above 15% as a momentum lever.
+
+## Implementation order (agreed)
+
+1. $VAVA mint integration on devnet (pump.fun creates the real mint
+   at launch; devnet uses a stand-in SPL mint).
+2. 15/5/80 split in the claim flow (president share → treasury until
+   thrones exist).
+3. Embedded VAVA: Jupiter-routed swap (CPI or TWAP keeper), locked in
+   the hex account.
+4. Raze instruction (payout minus 10% burn, hex → unclaimed).
+5. Presidents + coups (throne accounts, stake, 24h window; needs the
+   ownership indexer).
+6. Secondary market program with the 3% fee.
+7. Launch: pump.fun listing + claims live same day.
 
 ## Open parameters
 
 | Parameter | Depends on |
 |---|---|
-| President stake size | Market price after launch (pump.fun supply is fixed at 1B) |
+| President stake size | Market price after launch (supply fixed at 1B) |
 | Discount bond threshold | Market price after launch |
 | Buyback keeper TWAP batch size/interval | Post-graduation pool depth |
 | Federal Land epoch caps | Treasury size at phase 2 |
@@ -202,8 +241,8 @@ Treasury-funded floor support that buys land, not just tokens.
 - **Buy pressure must be mechanical, not promised.** 15% of every
   claim is a price-insensitive, continuous market buy that scales
   exactly with product success.
-- **Every lock needs a real redemption or it's theater.** Raze is what
-  makes "every hex is redeemable for real $VAVA" true.
+- **Every lock needs a real redemption or it's theater.** Raze is
+  what makes "every hex is redeemable for real $VAVA" true.
 - **Costs live in structure, not in rules.** No coup bonds, no
   cooldowns, no anti-abuse bureaucracy — every attack is unprofitable
   by arithmetic (raze haircut, coup capital requirement, wash-claim
@@ -212,3 +251,6 @@ Treasury-funded floor support that buys land, not just tokens.
   3%; the swap venue is pump.fun's and we take only their creator
   share — swap income is pocket change by design, claims are the
   business.
+- **Levers only ratchet up.** Parameters that read as promises
+  (embedded share, haircut) launch at the conservative end; raising
+  them later is free good news, lowering them is never possible.
