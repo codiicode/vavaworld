@@ -94,11 +94,19 @@ start at 15 and keep the lever.
 
 ### Secondary market (player-to-player)
 
-- **3% fee, seller-side** (deducted from proceeds; buyers always see
-  clean prices): **2% protocol + 1% country president**.
+- **5% fee, seller-side** (deducted from proceeds; buyers always see
+  clean prices): seller keeps 95%, **4% protocol + 1% country
+  president**.
+- **Barons (staking tier) trade at 3%**: 2% protocol + 1% president.
+  The president's 1% is never discounted — presidents are
+  load-bearing.
 - The hex's embedded VAVA transfers with the hex, untouched.
 - Hexes trade only through our program — no off-platform venue
   exists, so this fee has no competitive leakage.
+- **No fee-free transfer path.** At 5%, OTC dodging ("I send the hex,
+  you send SOL separately") becomes worth it — so the program exposes
+  no free transfer/gift instruction. Every ownership change settles
+  through the fee-bearing market path.
 
 ## Embedded VAVA & raze
 
@@ -134,17 +142,55 @@ Backing without redemption is fiction. Raze makes the floor real:
   earn the 80% margin again, 15% re-locks). Raze-reclaim cycles are
   recurring revenue on land already sold once.
 
-## Voluntary bonding
+## Staking: Citizens & Tourists
 
-On top of embedded VAVA (which is automatic and per-hex), users can
-bond $VAVA at the account level. Entirely optional.
+On top of embedded VAVA (automatic, per-hex), users can stake $VAVA
+at the account level. Unstaked users are **Tourists** — they can
+claim and trade, nothing more. Staking makes you a **Citizen** of
+VavaWorld. **No yield, by design**: every staking benefit is utility
+(discounts, power, status), never a promised return. A revenue-
+financed "Citizens' dividend" stays in the back pocket as a possible
+future lever, pending legal review.
 
-| Purpose | Rule |
-|---|---|
-| Claim discount | Bond above threshold → **10% off primary claims** (threshold **OPEN**) |
-| Presidency | Eligibility requires a bonded stake (size **OPEN**) |
-| Status | Bonded balance is public — leaderboard column, profile |
-| Unbond delay | **3 days** on all voluntary bonds |
+### Tiers (fixed token amounts, decided 2026-08-28)
+
+| Tier | Stake | Benefits |
+|---|---|---|
+| Tourist | 0 | Claim + trade at standard terms (5% secondary) |
+| **Citizen** | **500,000 $VAVA** | **5% off primary claims** |
+| **Baron** | **1,000,000 $VAVA** | **10% off primary claims** + **secondary fee 3% instead of 5%** |
+| **President-eligible** | **5,000,000 $VAVA** | Throne eligibility (plus the per-country land floor) |
+
+- Cosmetic layer (proposed, not locked): citizens' hexes get a
+  visible glow on the map; barons may name their territory / set a
+  banner. Unstaking turns it off.
+- **Unstake delay: 3 days.** Falling below a tier (unstake in
+  progress) switches its benefits off immediately — same continuity
+  rule as the throne.
+- Staked balance is public: leaderboard column, profile.
+
+### Why fixed token amounts, not USD thresholds
+
+- USD thresholds have a fatal flaw: when the price dips, the required
+  token amount rises and stakers lose status through no action of
+  their own — punishing holders exactly when loyalty matters most.
+- Fixed amounts need no oracle, keep supply-lock math predictable,
+  and let early citizens' status appreciate with the token.
+- The cost: tiers get expensive in USD as market cap grows. Handled
+  by the ratchet lever — **re-tiering downward is always good news**
+  ("citizenship just got cheaper") and can be done anytime; that is
+  the documented adjustment path.
+
+### Supply math (eyes open)
+
+Supply is fixed at 1B. Citizen at 500k = 0.05% of supply → a
+theoretical max of ~2,000 citizens, realistically a few hundred:
+citizenship is deliberately scarce, a premium status rather than a
+mass-market perk. President at 5M × 249 countries = 1.245B > total
+supply — **all thrones can mathematically never be occupied at
+once**; realistically a few dozen presidents. Vacant thrones with
+visibly unclaimed salaries are standing marketing, and the re-tier
+lever applies here too.
 
 ## Presidents
 
@@ -155,9 +201,10 @@ claimed, never assigned automatically.
 
 - Own at least `max(250, 5% of the country's claimed hexes)` in that
   country.
-- Bonded stake of **OPEN** $VAVA.
-- Violate either (sell below floor / unbond) → throne goes vacant
-  immediately.
+- Staked balance of at least **5,000,000 $VAVA** (the
+  President-eligible staking tier).
+- Violate either (sell below floor / unstake below tier) → throne
+  goes vacant immediately.
 
 ### Taking the throne
 
@@ -178,7 +225,8 @@ claimed, never assigned automatically.
 ### Presidential income & powers
 
 - **5% of all primary claims** in the country, in SOL, live.
-- **1% of secondary volume** in the country (from the 3% fee).
+- **1% of secondary volume** in the country (from the 5% fee; the
+  president's cut is identical when barons trade at 3%).
 - Campaign power: may set a claim discount (0–20%) in their country,
   funded from their own fee share — presidents are incentivized to
   drive volume, so they market the product for us.
@@ -205,7 +253,7 @@ Treasury-funded floor support that buys land, not just tokens.
 
 1. **Launch:** pump.fun fair launch + primary claims same day, with
    the 15/5/80 split, embedded VAVA + raze, secondary market with 3%
-   fee, presidents + coups, voluntary bonding (discount + stake).
+   fee, presidents + coups, staking tiers (Citizens & Tourists).
 2. **Phase 2:** Federal Land / State Reserve + auctions.
 3. **Back pocket (designed, not committed):** stimulus drops / world
    events; raising the embedded share above 15% as a momentum lever.
@@ -221,17 +269,17 @@ Treasury-funded floor support that buys land, not just tokens.
 4. Raze instruction (payout minus 10% burn, hex → unclaimed).
 5. Presidents + coups (throne accounts, stake, 24h window; needs the
    ownership indexer).
-6. Secondary market program with the 3% fee.
+6. Secondary market program with the 5% fee (3% for barons).
 7. Launch: pump.fun listing + claims live same day.
 
 ## Open parameters
 
 | Parameter | Depends on |
 |---|---|
-| President stake size | Market price after launch (supply fixed at 1B) |
-| Discount bond threshold | Market price after launch |
 | Buyback keeper TWAP batch size/interval | Post-graduation pool depth |
 | Federal Land epoch caps | Treasury size at phase 2 |
+| Staking cosmetics (glow / territory naming) | Proposed, not locked |
+| Tier re-calibration (downward only) | Market cap growth post-launch |
 
 ## Design principles (why the model looks like this)
 

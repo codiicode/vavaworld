@@ -61,7 +61,7 @@ const PILLARS = [
 
 const FEES = [
   { venue: 'Primary claims', fee: 'Full price to the loop', note: '80 / 15 / 5 - world, hex, president' },
-  { venue: 'Player-to-player trades', fee: '3%', note: '2% protocol · 1% to the country president. Seller-side - buyers always see clean prices' },
+  { venue: 'Player-to-player trades', fee: '5%', note: '4% protocol · 1% to the country president. Seller-side - buyers always see clean prices. Barons trade at 3%' },
   { venue: '$VAVA swaps', fee: '0%', note: 'Fair launch on pump.fun - full supply through the public curve, LP burned at graduation. We charge nothing on swaps' },
 ];
 
