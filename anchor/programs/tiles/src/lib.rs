@@ -30,4 +30,24 @@ pub mod tiles {
     pub fn transfer(ctx: Context<Transfer>, recipient: Pubkey) -> Result<()> {
         transfer_handler(ctx, recipient)
     }
+
+    pub fn init_config(ctx: Context<InitConfig>, keeper: Pubkey) -> Result<()> {
+        init_config_handler(ctx, keeper)
+    }
+
+    pub fn update_mint(ctx: Context<UpdateMint>) -> Result<()> {
+        update_mint_handler(ctx)
+    }
+
+    pub fn lock_mint(ctx: Context<LockMint>) -> Result<()> {
+        lock_mint_handler(ctx)
+    }
+
+    pub fn embed(ctx: Context<Embed>, vava_amount: u64) -> Result<()> {
+        embed_handler(ctx, vava_amount)
+    }
+
+    pub fn raze(ctx: Context<Raze>) -> Result<()> {
+        raze_handler(ctx)
+    }
 }

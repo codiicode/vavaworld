@@ -24,4 +24,20 @@ pub enum TilesError {
     NotOwner,
     #[msg("Invalid transfer recipient")]
     InvalidRecipient,
+    #[msg("Signer is not the config admin")]
+    AdminOnly,
+    #[msg("Signer is not the configured keeper")]
+    KeeperOnly,
+    #[msg("Mint is locked and can never change")]
+    MintLocked,
+    #[msg("Token account mint does not match the configured mint")]
+    MintMismatch,
+    #[msg("Previous mint vault must be empty before switching mints")]
+    VaultNotEmpty,
+    #[msg("Tile has unconverted SOL pending - keeper must embed first")]
+    PendingUnsettled,
+    #[msg("Nothing to embed - tile has no pending SOL")]
+    NothingToEmbed,
+    #[msg("Embed amount must be greater than zero")]
+    EmbedAmountZero,
 }

@@ -1,6 +1,12 @@
 pub mod claim;
+pub mod config;
+pub mod embed;
 pub mod init_counter;
+pub mod raze;
 pub mod transfer;
 pub use claim::*;
+pub use config::*;
+pub use embed::*;
 pub use init_counter::*;
+pub use raze::*;
 pub use transfer::*;

@@ -5,12 +5,12 @@ use anchor_lang::solana_program::{
 };
 
 use crate::constants::{
-    MAX_TILES_PER_TX, TREASURY, T1_INCREMENT, T1_START, T2_INCREMENT, T2_START, T3_INCREMENT,
-    T3_START,
+    BPS_DENOMINATOR, EMBEDDED_BPS, MAX_TILES_PER_TX, TREASURY, T1_INCREMENT, T1_START,
+    T2_INCREMENT, T2_START, T3_INCREMENT, T3_START,
 };
 use crate::errors::TilesError;
 use crate::h3_coords::h3_to_latlng_microdeg;
-use crate::state::{Tile, TierCounter};
+use crate::state::{Config, Tile, TierCounter};
 use crate::tier::classify_tier;
 
 #[derive(Accounts)]
@@ -22,26 +22,33 @@ pub struct Claim<'info> {
     #[account(mut, address = TREASURY @ TilesError::TreasuryMismatch)]
     pub treasury: SystemAccount<'info>,
 
+    #[account(seeds = [b"config"], bump = config.bump)]
+    pub config: Box<Account<'info, Config>>,
+
+    /// CHECK: buyback SOL escrow PDA; receives the 15% embedded share.
+    #[account(mut, seeds = [b"buyback"], bump = config.buyback_bump)]
+    pub buyback_vault: SystemAccount<'info>,
+
     #[account(
         mut,
         seeds = [b"counter".as_ref(), &[1u8]],
         bump = t1_counter.bump,
     )]
-    pub t1_counter: Account<'info, TierCounter>,
+    pub t1_counter: Box<Account<'info, TierCounter>>,
 
     #[account(
         mut,
         seeds = [b"counter".as_ref(), &[2u8]],
         bump = t2_counter.bump,
     )]
-    pub t2_counter: Account<'info, TierCounter>,
+    pub t2_counter: Box<Account<'info, TierCounter>>,
 
     #[account(
         mut,
         seeds = [b"counter".as_ref(), &[3u8]],
         bump = t3_counter.bump,
     )]
-    pub t3_counter: Account<'info, TierCounter>,
+    pub t3_counter: Box<Account<'info, TierCounter>>,
 
     pub system_program: Program<'info, System>,
     // Tile PDAs come via ctx.remaining_accounts in the same order as h3_ids
@@ -89,7 +96,6 @@ pub fn claim_handler<'info>(
             tile_acc.lamports() == 0 && tile_acc.data_is_empty(),
             TilesError::AlreadyClaimed,
         );
-
         // Classify tier
         let (lat, lng) = h3_to_latlng_microdeg(h3_id).ok_or(TilesError::InvalidH3)?;
         let tier = classify_tier(lat, lng);
@@ -119,9 +125,25 @@ pub fn claim_handler<'info>(
     // ---- Slippage check ----
     require!(total <= expected_max_total, TilesError::SlippageExceeded);
 
-    // ---- Transfer SOL claimer → treasury ----
+    // ---- Revenue split (docs/tokenomics.md waterfall) ----
+    // Per-tile: 15% escrowed for the $VAVA buyback (embedded in the hex
+    // by the keeper), the rest to treasury. The president's 5% also
+    // falls to treasury until the throne system ships.
+    let mut embeds: Vec<u64> = Vec::with_capacity(prices.len());
+    let mut total_embed: u64 = 0;
+    for &price in prices.iter() {
+        let e = price
+            .checked_mul(EMBEDDED_BPS)
+            .ok_or(TilesError::Overflow)?
+            / BPS_DENOMINATOR;
+        total_embed = total_embed.checked_add(e).ok_or(TilesError::Overflow)?;
+        embeds.push(e);
+    }
+    let treasury_amount = total.checked_sub(total_embed).ok_or(TilesError::Overflow)?;
+
+    // ---- Transfer SOL claimer → treasury + buyback escrow ----
     let transfer_ix =
-        system_instruction::transfer(&claimer_key, ctx.accounts.treasury.key, total);
+        system_instruction::transfer(&claimer_key, ctx.accounts.treasury.key, treasury_amount);
     invoke(
         &transfer_ix,
         &[
@@ -130,6 +152,21 @@ pub fn claim_handler<'info>(
             ctx.accounts.system_program.to_account_info(),
         ],
     )?;
+    if total_embed > 0 {
+        let escrow_ix = system_instruction::transfer(
+            &claimer_key,
+            ctx.accounts.buyback_vault.key,
+            total_embed,
+        );
+        invoke(
+            &escrow_ix,
+            &[
+                ctx.accounts.claimer.to_account_info(),
+                ctx.accounts.buyback_vault.to_account_info(),
+                ctx.accounts.system_program.to_account_info(),
+            ],
+        )?;
+    }
 
     // ---- Pass 2: create Tile PDAs and write data ----
     let space = 8 + Tile::INIT_SPACE;
@@ -169,6 +206,8 @@ pub fn claim_handler<'info>(
             tier,
             price_paid: price,
             bump,
+            pending_sol: embeds[i],
+            embedded_vava: 0,
         };
 
         let mut data = tile_acc.try_borrow_mut_data()?;

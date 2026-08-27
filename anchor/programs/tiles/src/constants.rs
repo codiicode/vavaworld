@@ -38,6 +38,18 @@ pub const TIER2_RADIUS_KM: u32 = 200;
 pub const MAX_TILES_PER_TX: usize = 20;
 
 // =========================================================================
+// REVENUE SPLIT (basis points) - docs/tokenomics.md waterfall.
+// 15% of every claim is escrowed for the $VAVA buyback (embedded in the
+// hex); 5% is the president's salary (falls to treasury until thrones
+// ship); treasury keeps the rest. Raze pays out embedded VAVA minus a
+// 10% haircut, which is burned.
+// =========================================================================
+pub const EMBEDDED_BPS: u64 = 1_500;
+pub const PRESIDENT_BPS: u64 = 500;
+pub const RAZE_HAIRCUT_BPS: u64 = 1_000;
+pub const BPS_DENOMINATOR: u64 = 10_000;
+
+// =========================================================================
 // 102 CITIES — (lat_µd, lng_µd, t1_lng_delta_µd, t2_lng_delta_µd)
 // =========================================================================
 // Each tuple is one city. Lat/lng in microdegrees. The two trailing values

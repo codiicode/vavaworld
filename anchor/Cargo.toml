@@ -4,7 +4,10 @@ resolver = "2"
 
 [profile.release]
 overflow-checks = true
-lto = "fat"
+# fat LTO miscompiles h3o under platform-tools v1.54 (h3 index ends up as a
+# write address -> "Access violation in unallocated region" in claim).
+# Thin/no LTO generates correct code; binary is slightly larger.
+lto = false
 codegen-units = 1
 [profile.release.build-override]
 opt-level = 3

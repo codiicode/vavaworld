@@ -31,6 +31,13 @@
           "address": "74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X"
         },
         {
+          "name": "config"
+        },
+        {
+          "name": "buyback_vault",
+          "writable": true
+        },
+        {
           "name": "t1_counter",
           "writable": true
         },
@@ -144,6 +151,220 @@
           "type": "pubkey"
         }
       ]
+    },
+    {
+      "name": "init_config",
+      "discriminator": [
+        23,
+        235,
+        115,
+        232,
+        168,
+        96,
+        1,
+        231
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "address": "74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X"
+        },
+        {
+          "name": "config",
+          "writable": true
+        },
+        {
+          "name": "buyback_vault",
+          "writable": true
+        },
+        {
+          "name": "vava_mint"
+        },
+        {
+          "name": "vava_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "keeper",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_mint",
+      "discriminator": [
+        212,
+        203,
+        57,
+        78,
+        75,
+        245,
+        222,
+        5
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true
+        },
+        {
+          "name": "old_vault"
+        },
+        {
+          "name": "new_mint"
+        },
+        {
+          "name": "new_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "lock_mint",
+      "discriminator": [
+        134,
+        175,
+        243,
+        208,
+        99,
+        138,
+        46,
+        61
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "embed",
+      "discriminator": [
+        155,
+        12,
+        52,
+        72,
+        191,
+        45,
+        104,
+        116
+      ],
+      "accounts": [
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config"
+        },
+        {
+          "name": "tile",
+          "writable": true
+        },
+        {
+          "name": "buyback_vault",
+          "writable": true
+        },
+        {
+          "name": "keeper_token",
+          "writable": true
+        },
+        {
+          "name": "vava_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "vava_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "raze",
+      "discriminator": [
+        146,
+        32,
+        45,
+        178,
+        37,
+        92,
+        210,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "tile",
+          "writable": true
+        },
+        {
+          "name": "config"
+        },
+        {
+          "name": "vava_mint",
+          "writable": true
+        },
+        {
+          "name": "vava_vault",
+          "writable": true
+        },
+        {
+          "name": "owner_token",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -171,6 +392,19 @@
         54,
         55,
         207
+      ]
+    },
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
       ]
     }
   ],
@@ -213,12 +447,62 @@
     {
       "code": 6007,
       "name": "InvalidH3",
-      "msg": "Invalid h3 cell — could not derive coordinates"
+      "msg": "Invalid h3 cell \u2014 could not derive coordinates"
     },
     {
       "code": 6008,
       "name": "TierInvalid",
       "msg": "Tier value out of range"
+    },
+    {
+      "code": 6009,
+      "name": "NotOwner",
+      "msg": "Signer is not the current owner of this tile"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidRecipient",
+      "msg": "Invalid transfer recipient"
+    },
+    {
+      "code": 6011,
+      "name": "AdminOnly",
+      "msg": "Signer is not the config admin"
+    },
+    {
+      "code": 6012,
+      "name": "KeeperOnly",
+      "msg": "Signer is not the configured keeper"
+    },
+    {
+      "code": 6013,
+      "name": "MintLocked",
+      "msg": "Mint is locked and can never change"
+    },
+    {
+      "code": 6014,
+      "name": "MintMismatch",
+      "msg": "Token account mint does not match the configured mint"
+    },
+    {
+      "code": 6015,
+      "name": "VaultNotEmpty",
+      "msg": "Previous mint vault must be empty before switching mints"
+    },
+    {
+      "code": 6016,
+      "name": "PendingUnsettled",
+      "msg": "Tile has unconverted SOL pending - keeper must embed first"
+    },
+    {
+      "code": 6017,
+      "name": "NothingToEmbed",
+      "msg": "Nothing to embed - tile has no pending SOL"
+    },
+    {
+      "code": 6018,
+      "name": "EmbedAmountZero",
+      "msg": "Embed amount must be greater than zero"
     }
   ],
   "types": [
@@ -250,6 +534,14 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "pending_sol",
+            "type": "u64"
+          },
+          {
+            "name": "embedded_vava",
+            "type": "u64"
           }
         ]
       }
@@ -269,6 +561,42 @@
           },
           {
             "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Config",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "keeper",
+            "type": "pubkey"
+          },
+          {
+            "name": "vava_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint_locked",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "buyback_bump",
             "type": "u8"
           }
         ]
