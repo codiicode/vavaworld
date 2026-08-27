@@ -157,9 +157,9 @@ future lever, pending legal review.
 | Tier | Stake | Benefits |
 |---|---|---|
 | Tourist | 0 | Claim + trade at standard terms (5% secondary) |
-| **Citizen** | **500,000 $VAVA** | **5% off primary claims** |
-| **Baron** | **1,000,000 $VAVA** | **10% off primary claims** + **secondary fee 3% instead of 5%** |
-| **President-eligible** | **5,000,000 $VAVA** | Throne eligibility (plus the per-country land floor) |
+| **Citizen** | **250,000 $VAVA** | **5% off primary claims** |
+| **Baron** | **500,000 $VAVA** | **10% off primary claims** + **secondary fee 3% instead of 5%** |
+| **President-eligible** | **1,000,000 $VAVA** | Throne eligibility (plus the per-country land floor) |
 
 - Cosmetic layer (proposed, not locked): citizens' hexes get a
   visible glow on the map; barons may name their territory / set a
@@ -183,14 +183,20 @@ future lever, pending legal review.
 
 ### Supply math (eyes open)
 
-Supply is fixed at 1B. Citizen at 500k = 0.05% of supply → a
-theoretical max of ~2,000 citizens, realistically a few hundred:
+Supply is fixed at 1B. Citizen at 250k = 0.025% of supply → a
+theoretical max of ~4,000 citizens, realistically well under that:
 citizenship is deliberately scarce, a premium status rather than a
-mass-market perk. President at 5M × 249 countries = 1.245B > total
-supply — **all thrones can mathematically never be occupied at
-once**; realistically a few dozen presidents. Vacant thrones with
-visibly unclaimed salaries are standing marketing, and the re-tier
-lever applies here too.
+mass-market perk — say it out loud in marketing ("the math only
+allows a few thousand citizenships"). President at 1M × 249
+countries = 249M (25% of supply) if every throne were occupied —
+feasible, though vacant thrones with visibly unclaimed salaries
+remain standing marketing early on.
+
+Structural note: embedded VAVA permanently removes supply as claims
+accumulate (only raze releases it), so the stakeable pool shrinks
+over time and every tier gets scarcer. **Downward re-tiering is not
+optional — it is the inevitable long-run adjustment path**, and it
+always reads as good news.
 
 ## Presidents
 
@@ -201,7 +207,7 @@ claimed, never assigned automatically.
 
 - Own at least `max(250, 5% of the country's claimed hexes)` in that
   country.
-- Staked balance of at least **5,000,000 $VAVA** (the
+- Staked balance of at least **1,000,000 $VAVA** (the
   President-eligible staking tier).
 - Violate either (sell below floor / unstake below tier) → throne
   goes vacant immediately.
