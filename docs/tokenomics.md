@@ -1,8 +1,30 @@
 # $VAVA Tokenomics
 
-Status: agreed design, pre-implementation. Numbers marked **OPEN** are
-deliberately unset until launch price discovery. Launch venue:
-**pump.fun** (decided 2026-08-25).
+Status: **designed and largely built** — the revenue split, embedded
+VAVA + raze, staking, the secondary market and the president/coup
+system are implemented and running on Solana devnet (2026-08-28).
+Remaining before launch: hardening + the pump.fun drop itself. Numbers
+marked **OPEN** are deliberately unset until launch price discovery.
+Launch venue: **pump.fun** (decided 2026-08-25).
+
+## TL;DR
+
+- VavaWorld sells the earth as ~9m hexagons. Primary claims start at
+  **$0.10** and rise with every claim in that country.
+- **15% of every land purchase auto-buys $VAVA on the market and locks
+  it inside the hex you bought.** Land is literally redeemable for the
+  token (raze it: 90% out, 10% burned). Buy pressure is mechanical,
+  not promised.
+- **5%** of every claim is the country president's live salary; **80%**
+  runs the protocol.
+- Stake $VAVA to climb: **Citizen 250k** (5% off claims), **Baron
+  500k** (10% off + trade at 3% instead of 5%), **1M** = eligible to
+  claim a national throne. No yield, by design — staking buys power,
+  not promises.
+- Thrones are taken, not given: own the most land + stake 1M, and
+  defend against public **24-hour coups** from anyone who out-owns you.
+- Fair launch on pump.fun: full 1B supply through the public curve, no
+  team allocation, LP burned at graduation.
 
 ## Overview
 
@@ -264,19 +286,29 @@ Treasury-funded floor support that buys land, not just tokens.
 3. **Back pocket (designed, not committed):** stimulus drops / world
    events; raising the embedded share above 15% as a momentum lever.
 
-## Implementation order (agreed)
+## Implementation status (devnet, 2026-08-28)
 
-1. $VAVA mint integration on devnet (pump.fun creates the real mint
-   at launch; devnet uses a stand-in SPL mint).
-2. 15/5/80 split in the claim flow (president share → treasury until
-   thrones exist).
-3. Embedded VAVA: Jupiter-routed swap (CPI or TWAP keeper), locked in
-   the hex account.
-4. Raze instruction (payout minus 10% burn, hex → unclaimed).
-5. Presidents + coups (throne accounts, stake, 24h window; needs the
-   ownership indexer).
-6. Secondary market program with the 5% fee (3% for barons).
-7. Launch: pump.fun listing + claims live same day.
+1. ✅ Stand-in $VAVA mint with pump.fun-identical properties (6
+   decimals, 1B supply, mint authority revoked). The real pump.fun
+   mint is injected at launch and sealed permanently (`lock_mint`).
+2. ✅ 15/5/80 split live in the on-chain claim flow; the 15% escrows
+   in a buyback vault per tile.
+3. ✅ Embedded VAVA: keeper converts escrowed SOL to market-bought
+   $VAVA locked in the hex account (Jupiter TWAP on mainnet).
+4. ✅ Raze: 90% payout / 10% burned / land returns to unclaimed.
+5. ✅ Staking: stake / 3-day unstake / withdraw on-chain; tier ladder
+   live at /staking.
+6. ✅ Secondary market: quoted 95/4/1 split (97/2/1 for barons, read
+   from on-chain stake), on-chain payment verification, atomic
+   settlement with replay protection, real listings + sales feed.
+7. ✅ Presidents & coups: claim-throne / coup with signed wallet
+   messages, 1M stake verified on-chain, land rules enforced
+   atomically in SQL, 24h windows auto-resolved every minute, live
+   salary counter per reign.
+8. ⬜ Launch hardening: unify claim settlement fully on-chain, close
+   devnet trust-mode endpoints, batch claims >20 tiles, Pyth price
+   oracle, security review.
+9. ⬜ Launch: pump.fun listing + mainnet claims live the same day.
 
 ## Open parameters
 
