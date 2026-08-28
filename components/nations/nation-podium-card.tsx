@@ -7,7 +7,7 @@ import {
   type Nation,
   fmtUsd3,
   fmtInt,
-  fmtCompact,
+
   initials,
 } from '@/lib/mock-nations';
 
@@ -146,7 +146,7 @@ export function NationPodiumCard({
         </div>
       </div>
 
-      {/* Stats - gold gets 3 (Floor / Claims / Bonded), silver gets 2, bronze 1 */}
+      {/* Stats - gold gets 3 (Floor / Claims / Holders), silver gets 2, bronze 1 */}
       <div
         className={cn(
           'grid gap-2.5 border-t border-white/40 pt-2.5',
@@ -158,7 +158,7 @@ export function NationPodiumCard({
           <Stat label="Claims" value={fmtInt(nation.claims)} big={isGold} />
         )}
         {isGold && (
-          <Stat label="Bonded" value={fmtCompact(nation.bondedVava)} big />
+          <Stat label="Holders" value={fmtInt(nation.bonders)} big />
         )}
       </div>
     </Link>

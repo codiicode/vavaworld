@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import Link from 'next/link';
+import { Search, ShoppingBag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -213,8 +214,30 @@ export default function MarketplacePage() {
 
       {/* Grid */}
       {visible.length === 0 ? (
-        <div className="rounded-2xl border border-white/40 bg-white/30 px-6 py-20 text-center text-sm text-foreground/60 backdrop-blur-md">
-          Try widening the search, dropping the tier, or picking a different country.
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/40 bg-white/30 px-6 py-20 text-center backdrop-blur-md">
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <ShoppingBag size={22} strokeWidth={1.6} />
+          </div>
+          {allListings.length === 0 ? (
+            <>
+              <p className="text-base font-semibold text-foreground">No hexes listed yet</p>
+              <p className="max-w-sm text-sm text-foreground/60">
+                The market opens the moment someone lists. Claim land on the map,
+                then list it here to be the first seller.
+              </p>
+              <Link
+                href="/map"
+                className="mt-1 rounded-xl bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              >
+                Claim land
+              </Link>
+            </>
+          ) : (
+            <p className="max-w-sm text-sm text-foreground/60">
+              No listings match these filters. Try widening the search, dropping
+              the tier, or picking a different country.
+            </p>
+          )}
         </div>
       ) : (
         <ListingGrid listings={visible} />

@@ -14,7 +14,7 @@ import {
   type Nation,
   fmtUsd3,
   fmtInt,
-  fmtCompact,
+
   initials,
 } from '@/lib/mock-nations';
 
@@ -49,8 +49,7 @@ export function NationsTable({
             <TableHead className={TH}>President</TableHead>
             <TableHead className={`${TH} text-right`}>Floor</TableHead>
             <TableHead className={`${TH} text-right`}>Claims</TableHead>
-            <TableHead className={`${TH} text-right`}>Bonded $VAVA</TableHead>
-            <TableHead className={`${TH} text-right`}>Bonders</TableHead>
+            <TableHead className={`${TH} text-right`}>Holders</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -92,9 +91,6 @@ export function NationsTable({
               </TableCell>
               <TableCell className="text-right text-sm font-semibold tabular-nums">
                 {fmtInt(n.claims)}
-              </TableCell>
-              <TableCell className="text-right text-sm font-semibold tabular-nums">
-                {fmtCompact(n.bondedVava)}
               </TableCell>
               <TableCell className="text-right text-sm font-semibold tabular-nums">
                 {fmtInt(n.bonders)}

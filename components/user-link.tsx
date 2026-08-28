@@ -1,15 +1,23 @@
+'use client';
+
+import { useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { findUserByAddr } from '@/lib/mock-users';
+import {
+  getCachedUsername,
+  queueAddress,
+  subscribeUsernames,
+} from '@/lib/username-store';
 
 /**
  * Renders a clickable user reference.
  *   - With a username:  @vavaqueen   → /u/vavaqueen
- *   - Without a username: 0xA4B2…82F1 → /u/0xA4B2…82F1
+ *   - Without a username: 4fWA…6b4X  → /u/<address>
  *
  * Callers that already have a username (e.g. leaderboard rows) pass it via
- * `username`. Callers that only have an address let the helper look it up
- * in MOCK_USERS so we stay consistent everywhere.
+ * `username`. Otherwise the address is resolved against real Supabase
+ * profiles (batched, cached), then mock users, then short-formed.
  */
 export function UserLink({
   addr,
@@ -23,7 +31,21 @@ export function UserLink({
   /** Use mono only when falling back to the raw address. */
   mono?: boolean;
 }) {
-  const resolved = username ?? findUserByAddr(addr)?.username;
+  // Live lookup of the real Supabase username (only when no username was
+  // passed in). useSyncExternalStore re-renders this link when its address
+  // resolves from the shared batched cache.
+  const fromStore = useSyncExternalStore(
+    subscribeUsernames,
+    () => getCachedUsername(addr),
+    () => undefined,
+  );
+
+  useEffect(() => {
+    if (!username && addr) queueAddress(addr);
+  }, [username, addr]);
+
+  const resolved =
+    username ?? fromStore ?? findUserByAddr(addr)?.username ?? undefined;
   const isUsername = resolved != null;
   // No username → short-form the raw address so 44-char keys never blow out
   // table rows (e.g. the activity feed).
