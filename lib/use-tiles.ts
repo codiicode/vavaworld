@@ -47,12 +47,32 @@ function decodeTile(buf: Buffer, h3: string): ClaimedTile | null {
 /** Cache: h3 → ClaimedTile (when account exists) | null (fetched but doesn't exist) | undefined (not yet fetched) */
 type Cache = Map<string, ClaimedTile | null>;
 
+// Module-level so the map's claimed-tile cache SURVIVES navigation. The
+// hook's ref used to be per-mount, so leaving /map and returning re-fetched
+// every visible cell (thousands of RPC lookups) from scratch. Persisting it
+// makes re-entering the map paint instantly for already-seen cells.
+// Soft-capped so a session panning the whole world can't grow it unbounded.
+const GLOBAL_TILE_CACHE: Cache = new Map();
+const MAX_CACHE = 60_000;
+
+function capCache() {
+  if (GLOBAL_TILE_CACHE.size <= MAX_CACHE) return;
+  const excess = GLOBAL_TILE_CACHE.size - MAX_CACHE;
+  const it = GLOBAL_TILE_CACHE.keys();
+  for (let i = 0; i < excess; i++) {
+    const k = it.next().value;
+    if (k !== undefined) GLOBAL_TILE_CACHE.delete(k);
+  }
+}
+
 export function useTiles(visibleHexes: string[]): {
   tiles: Cache;
   refresh: (h3s: string[]) => Promise<void>;
 } {
-  const [tiles, setTiles] = useState<Cache>(new Map());
-  const cacheRef = useRef<Cache>(new Map());
+  // Seed initial render from whatever the module cache already holds so a
+  // return visit shows claimed tiles with zero RPC.
+  const [tiles, setTiles] = useState<Cache>(() => new Map(GLOBAL_TILE_CACHE));
+  const cacheRef = useRef<Cache>(GLOBAL_TILE_CACHE);
   const connRef = useRef<Connection>(getConnection());
   // Monotonic token: panning fast queues several fetches against devnet. Only
   // the newest may commit results - older awaits bail after each RPC batch so
@@ -88,6 +108,7 @@ export function useTiles(visibleHexes: string[]): {
         });
       });
     }
+    capCache();
     setTiles(new Map(cacheRef.current));
   }, []);
 
