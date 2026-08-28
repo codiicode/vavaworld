@@ -9,6 +9,7 @@ import { useUserProfile } from '@/lib/use-user-profile';
 import { useHexLocations } from '@/lib/use-hex-locations';
 import { useCountryCounts } from '@/lib/use-country-counts';
 import { getConnection } from '@/lib/anchor-client';
+import { preflight } from '@/lib/preflight';
 import { dispatchClaimDone } from '@/lib/claim-events';
 import { PRICING, SOL_USD } from '@/lib/pricing';
 
@@ -149,6 +150,15 @@ export function ClaimModal({
         feePayer: wallet.publicKey,
         recentBlockhash: blockhash,
       }).add(ix);
+
+      // Balance guard + simulate before the wallet sees it, so a doomed
+      // tx never triggers Phantom's "could be malicious" warning.
+      await preflight({
+        connection,
+        feePayer: wallet.publicKey,
+        tx,
+        lamportsNeeded: Number(totalLamports),
+      });
 
       const sig = await wallet.signAndSendTransaction(tx);
       await connection.confirmTransaction(sig, 'confirmed');

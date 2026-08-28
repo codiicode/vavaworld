@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Flag } from '@/components/flag';
 import type { Listing } from '@/lib/mock-marketplace';
 import { getConnection } from '@/lib/anchor-client';
+import { preflight } from '@/lib/preflight';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { dispatchListingsChanged } from '@/lib/supabase-listings';
 
@@ -102,6 +103,12 @@ export function BuyDialog({
       }
       tx.feePayer = buyer;
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      await preflight({
+        connection,
+        feePayer: buyer,
+        tx,
+        lamportsNeeded: quote.totalLamports,
+      });
       const sig = await wallet.signAndSendTransaction(tx);
       await connection.confirmTransaction(sig, 'confirmed');
 

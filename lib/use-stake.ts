@@ -5,6 +5,7 @@ import { PublicKey, Transaction } from '@solana/web3.js';
 import { AnchorProvider, Program, BN, type Idl, type Wallet } from '@coral-xyz/anchor';
 import idl from './anchor-idl.json';
 import { getConnection } from './anchor-client';
+import { preflight } from './preflight';
 import { useActiveWallet } from './active-wallet';
 import { VAVA_UNIT } from './tokenomics-constants';
 
@@ -129,6 +130,8 @@ export function useStake() {
         const tx = await build(program, owner, cfg.vavaMint);
         tx.feePayer = owner;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        // Balance + simulation guard (staking pays only the network fee).
+        await preflight({ connection, feePayer: owner, tx });
         const sig = await wallet.signAndSendTransaction(tx);
         await connection.confirmTransaction(sig, 'confirmed');
         refresh();
