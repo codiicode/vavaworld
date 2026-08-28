@@ -153,6 +153,26 @@
 .dark .text-black        { color: #f4f7fd; }
 .dark .text-slate-600    { color: #9fb0c9; }
 
+/* Pin the legacy color vars to their LIGHT values regardless of theme.
+   The ClaimModal is built on hardcoded white surfaces + legacy vars
+   (--ink/--signal/--hairline); under .dark those vars flip light and the
+   text vanishes on the white panel. This keeps that surface identical in
+   both modes. */
+.force-light {
+  color-scheme: light;
+  --panel: rgba(255, 255, 255, 0.62);
+  --ink: #0a1a2e;
+  --fg: #0a1a2e;
+  --ink-2: #1a2a44;
+  --dim: rgba(10, 26, 46, 0.62);
+  --dim-2: rgba(10, 26, 46, 0.42);
+  --hairline: rgba(29, 94, 149, 0.30);
+  --hair-2: rgba(29, 94, 149, 0.14);
+  --signal: #1d5e95;
+  --signal-soft: rgba(29, 94, 149, 0.18);
+  --signal-deep: #0f2a4c;
+}
+
 /* App sidebar glass (desktop rail + mobile drawer + mobile top bar). */
 .sidebar-glass {
   background: linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.08) 100%);

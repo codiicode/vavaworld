@@ -219,7 +219,7 @@ export function ClaimModal({
 
   return (
     <div
-      className="fixed inset-0 z-30 grid place-items-center"
+      className="force-light fixed inset-0 z-30 grid place-items-center"
       style={{
         background: 'rgba(29, 94, 149, 0.32)',
         backdropFilter: 'blur(8px)',
