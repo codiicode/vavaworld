@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AtSign, Check, Copy } from 'lucide-react';
+import { AtSign, Check, Copy, LogOut } from 'lucide-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -147,6 +147,14 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
                 onSaved={onSavedBumpVersion}
               />
             )}
+            <button
+              type="button"
+              onClick={() => void wallet.logout()}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/40 bg-white/30 px-3 py-1.5 text-[13px] font-medium text-foreground/70 backdrop-blur-md transition-colors hover:bg-white/50 hover:text-foreground"
+            >
+              <LogOut size={14} strokeWidth={1.8} />
+              Log out
+            </button>
           </div>
           <div className="grid grid-cols-3 gap-6 sm:gap-8">
             <SummaryStat label="Hexes" value={tiles ? String(tiles.length) : '-'} />

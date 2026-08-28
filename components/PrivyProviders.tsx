@@ -56,7 +56,7 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
         appearance: {
           theme: 'light',
           accentColor: '#14b8a6',
-          logo: '/vavaworld-sphere.png',
+          logo: '/logo-globe-color.png',
           landingHeader: 'Welcome to VavaWorld',
           showWalletLoginFirst: false,
           walletChainType: 'solana-only',

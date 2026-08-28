@@ -131,7 +131,10 @@ export function useActiveWallet(): ActiveWallet {
           ? async (message) => adapter.signMessage!(message)
           : null,
         login,
-        logout,
+        // Adapter wallets disconnect via the adapter, not Privy.
+        logout: async () => {
+          await adapter.disconnect();
+        },
       };
     }
 

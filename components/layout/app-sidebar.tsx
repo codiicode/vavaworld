@@ -9,6 +9,7 @@ import {
   BarChart3,
   Coins,
   Globe,
+  LogOut,
   Map as MapIcon,
   Menu,
   Moon,
@@ -143,29 +144,43 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
         </Link>
 
         {wallet.ready && wallet.connected && (
-          <Link
-            href="/profile"
-            onClick={onNavigate}
-            className="sidebar-chip flex items-center gap-3 rounded-[14px] px-3 py-2.5 transition-colors hover:brightness-105"
-          >
-            <div
-              className="h-[34px] w-[34px] flex-none overflow-hidden rounded-[10px]"
-              style={{
-                background: profile.avatarUrl
-                  ? `url(${profile.avatarUrl}) center/cover`
-                  : gradientFromAddr(wallet.address),
-                boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.7)',
+          <div className="sidebar-chip flex items-center gap-3 rounded-[14px] px-3 py-2.5">
+            <Link
+              href="/profile"
+              onClick={onNavigate}
+              className="flex min-w-0 flex-1 items-center gap-3 transition-opacity hover:opacity-80"
+            >
+              <div
+                className="h-[34px] w-[34px] flex-none overflow-hidden rounded-[10px]"
+                style={{
+                  background: profile.avatarUrl
+                    ? `url(${profile.avatarUrl}) center/cover`
+                    : gradientFromAddr(wallet.address),
+                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.7)',
+                }}
+              />
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-[13.5px] font-semibold leading-tight text-foreground">
+                  {profile.username ? `@${profile.username}` : shortAddr(wallet.address ?? '')}
+                </span>
+                <span className="truncate text-[11.5px] leading-tight tabular-nums text-foreground/55">
+                  {balance !== null ? `${balance.toFixed(3)} SOL` : '- SOL'}
+                </span>
+              </div>
+            </Link>
+            <button
+              type="button"
+              aria-label="Log out"
+              title="Log out"
+              onClick={() => {
+                void wallet.logout();
+                onNavigate?.();
               }}
-            />
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate text-[13.5px] font-semibold leading-tight text-foreground">
-                {profile.username ? `@${profile.username}` : shortAddr(wallet.address ?? '')}
-              </span>
-              <span className="truncate text-[11.5px] leading-tight tabular-nums text-foreground/55">
-                {balance !== null ? `${balance.toFixed(3)} SOL` : '- SOL'}
-              </span>
-            </div>
-          </Link>
+              className="grid h-8 w-8 flex-none place-items-center rounded-[9px] text-foreground/55 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+            >
+              <LogOut size={16} strokeWidth={1.8} />
+            </button>
+          </div>
         )}
 
         {wallet.ready && !wallet.connected && <ConnectButton variant="sidebar" />}
