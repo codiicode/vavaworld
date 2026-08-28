@@ -650,6 +650,11 @@ export function MapView({
         style={{ position: 'absolute', inset: 0 }}
         mapStyle={satellite ? SATELLITE_STYLE : MAP_STYLE}
         projection={{ name: 'globe' }}
+        // Kill the 300ms symbol/label cross-fade: it forces a full re-render
+        // every frame while it runs (on top of the 3D buildings), which
+        // stutters pans and drag-selection. Labels just pop in - imperceptible,
+        // and the map stays at full frame rate during interaction.
+        fadeDuration={0}
         onLoad={onLoad}
         onMove={scheduleRefresh}
         // moveend fires after EVERY wheel tick / micro zoom-ease, not just at
