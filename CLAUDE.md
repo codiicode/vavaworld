@@ -145,6 +145,8 @@ Clean up `.shot.js` + `.*.png` before committing.
 
 ## Frequent gotchas
 
+- **Tailwind opacity modifiers must be multiples of 5.** `text-white/52` silently never compiles (no CSS emitted) → the element inherits the theme `--foreground` color, which is dark in light mode. On the always-dark /map chrome this makes text invisible in light mode only. Use /50, /55 etc. Sweep check: `grep -rhoE "-[a-z]+/[0-9]+" components app | awk -F/ '$2 % 5 != 0'`.
+- **/map chrome (sidebar, right panel, search bar) is ALWAYS dark glass** in both themes — never style anything on it with `text-foreground`/theme vars; use fixed white. Verify /map changes in BOTH themes AND with hexes selected (pricing card + mark-closest + rows is the tallest state; the Claim CTA must stay visible).
 - **Edit tool requires Read first** in the same session — Read the file before editing or the edit fails.
 - **`next start` on a busy port** → `EADDRINUSE`. Kill via PowerShell:
   `Get-NetTCPConnection -LocalPort <p> | % { Stop-Process -Id $_.OwningProcess -Force }`
