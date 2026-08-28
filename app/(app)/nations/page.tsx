@@ -13,7 +13,8 @@ import { NationPodiumCard } from '@/components/nations/nation-podium-card';
 import { NationsTable } from '@/components/nations/nations-table';
 import { RankingsSkeleton } from '@/components/rankings-skeleton';
 import { useFirstMountLoading } from '@/lib/use-first-mount-loading';
-import { NATIONS, sortNations, type NationSort } from '@/lib/mock-nations';
+import { sortNations, type NationSort } from '@/lib/mock-nations';
+import { useNations } from '@/lib/use-nations';
 
 const SORT_LABELS: Record<NationSort, string> = {
   claims: 'Most Claims',
@@ -29,18 +30,20 @@ const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40';
 export default function NationsPage() {
   const [sort, setSort] = useState<NationSort>('claims');
   const [query, setQuery] = useState('');
-  const loading = useFirstMountLoading();
+  const firstMount = useFirstMountLoading();
+  const { nations, loading: nationsLoading } = useNations();
+  const loading = firstMount || nationsLoading;
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
     const filtered = q
-      ? NATIONS.filter(
+      ? nations.filter(
           (n) =>
             n.name.toLowerCase().includes(q) || n.iso.toLowerCase().includes(q),
         )
-      : NATIONS;
+      : nations;
     return sortNations(filtered, sort);
-  }, [sort, query]);
+  }, [sort, query, nations]);
 
   const podium = list.slice(0, 3);
   const rest = list.slice(3);

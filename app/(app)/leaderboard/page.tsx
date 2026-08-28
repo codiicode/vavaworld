@@ -13,12 +13,12 @@ import { LeaderboardTable } from '@/components/leaderboard/leaderboard-table';
 import { RankingsSkeleton } from '@/components/rankings-skeleton';
 import { useFirstMountLoading } from '@/lib/use-first-mount-loading';
 import {
-  mockLeaderboard,
   statsForScope,
   ownsInScope,
   type RowView,
   type Scope,
 } from '@/lib/mock-leaderboard';
+import { useLeaderboard } from '@/lib/use-leaderboard';
 import { COUNTRIES } from '@/lib/countries';
 
 const COUNTRY_NAME = new Map(COUNTRIES.map((c) => [c.code, c.name]));
@@ -29,7 +29,9 @@ const GLOBAL_ONLY_SORTS: ReadonlyArray<SortKey> = ['countries', 'volume'];
 export default function LeaderboardPage() {
   const [sort, setSort] = useState<SortKey>('hexes');
   const [filter, setFilter] = useState<FilterKey>('worldwide');
-  const loading = useFirstMountLoading();
+  const firstMount = useFirstMountLoading();
+  const { data: board, loading: boardLoading } = useLeaderboard();
+  const loading = firstMount || boardLoading;
 
   const scope: Scope = filter;
   const isWorldwide = scope === 'worldwide';
@@ -41,7 +43,7 @@ export default function LeaderboardPage() {
   }, [isWorldwide, sort]);
 
   const rows: RowView[] = useMemo(() => {
-    const population = mockLeaderboard.filter((e) => ownsInScope(e, scope));
+    const population = (board?.entries ?? []).filter((e) => ownsInScope(e, scope));
 
     // In a country scope the #1 bonder holds the presidency - flag them so the
     // crown can follow that person regardless of the active sort.
@@ -86,7 +88,7 @@ export default function LeaderboardPage() {
     });
 
     return resolved.map((r, i) => ({ ...r, rank: i + 1 }));
-  }, [sort, scope, isWorldwide]);
+  }, [sort, scope, isWorldwide, board]);
 
   const podium = rows.slice(0, 3);
   const tableRows = rows.slice(3);
@@ -135,6 +137,7 @@ export default function LeaderboardPage() {
             scope={scope}
             scopeName={scopeName}
             total={rows.length}
+            totalHolders={board?.totalHolders}
           />
         </>
       )}

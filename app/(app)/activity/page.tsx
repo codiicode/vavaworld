@@ -21,7 +21,8 @@ import {
 import { Flag } from '@/components/flag';
 import { UserLink } from '@/components/user-link';
 import { cn } from '@/lib/utils';
-import { mockActivity, type ActivityItem } from '@/lib/mock-marketplace';
+import { type ActivityItem } from '@/lib/mock-marketplace';
+import { useActivity } from '@/lib/use-activity';
 
 type ActionFilter = 'all' | 'buy' | 'sell';
 
@@ -32,15 +33,16 @@ const TH = 'text-[10px] uppercase tracking-[0.08em] font-medium text-foreground/
 
 export default function ActivityPage() {
   const [action, setAction] = useState<ActionFilter>('all');
+  const { items } = useActivity();
 
   const rows = useMemo<ActivityItem[]>(() => {
-    if (action === 'all') return [...mockActivity];
-    return mockActivity.filter((a) => a.action === action);
-  }, [action]);
+    if (action === 'all') return [...items];
+    return items.filter((a) => a.action === action);
+  }, [action, items]);
 
-  const buys = mockActivity.filter((a) => a.action === 'buy').length;
-  const sells = mockActivity.filter((a) => a.action === 'sell').length;
-  const volume = mockActivity.reduce((s, a) => s + a.price, 0);
+  const buys = items.filter((a) => a.action === 'buy').length;
+  const sells = items.filter((a) => a.action === 'sell').length;
+  const volume = items.reduce((s, a) => s + a.price, 0);
 
   return (
     <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
@@ -98,7 +100,7 @@ export default function ActivityPage() {
           <span className="text-xs tabular-nums text-foreground/60">
             {rows.length === 0
               ? 'No events match this filter'
-              : `Showing ${rows.length} of ${mockActivity.length}`}
+              : `Showing ${rows.length} of ${items.length}`}
           </span>
         </div>
 

@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { LeaderboardRow } from './leaderboard-row';
-import { TOTAL_HOLDERS, type RowView, type Scope } from '@/lib/mock-leaderboard';
+import { type RowView, type Scope } from '@/lib/mock-leaderboard';
 
 const TH =
   'text-[10px] uppercase tracking-[0.08em] font-medium text-foreground/60';
@@ -18,11 +18,13 @@ export function LeaderboardTable({
   scope,
   scopeName,
   total,
+  totalHolders,
 }: {
   rows: RowView[];
   scope: Scope;
   scopeName: string | null;
   total: number;
+  totalHolders?: number;
 }) {
   const isWorldwide = scope === 'worldwide';
   const first = rows[0]?.rank ?? 0;
@@ -46,7 +48,7 @@ export function LeaderboardTable({
           {rows.length === 0
             ? 'No holders match this filter'
             : isWorldwide
-              ? `Showing ${first}-${last} of ${TOTAL_HOLDERS.toLocaleString('en-US')} holders`
+              ? `Showing ${first}-${last} of ${(totalHolders ?? total).toLocaleString('en-US')} holders`
               : `Showing ${first}-${last} of ${total.toLocaleString('en-US')} holders in ${scopeName}`}
         </span>
       </div>

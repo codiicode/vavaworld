@@ -2,12 +2,23 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, Crown, Globe, Hexagon } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Flag } from '@/components/flag';
 import { Achievements } from '@/components/profile/achievements';
 import { ShareProfile } from '@/components/profile/share-profile';
-import { findUserByHandle, type MockUser } from '@/lib/mock-users';
+import type { MockUser } from '@/lib/mock-users';
+
+type OwnerData = {
+  address: string;
+  username: string | null;
+  flagCountryCode: string | null;
+  avatarUrl: string | null;
+  joinedAt: string | null;
+  hexes: number;
+  countries: number;
+};
 
 /**
  * Public profile - read-only view of another player. Resolves a /u/[handle]
@@ -21,7 +32,35 @@ import { findUserByHandle, type MockUser } from '@/lib/mock-users';
 export default function PublicProfilePage() {
   const params = useParams<{ handle: string }>();
   const decoded = decodeURIComponent(params.handle);
-  const user: MockUser = findUserByHandle(params.handle) ?? stubUser(decoded);
+  const [owner, setOwner] = useState<OwnerData | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/owner?handle=${encodeURIComponent(decoded)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((json) => {
+        if (alive) setOwner(json as OwnerData);
+      })
+      .catch(() => {
+        if (alive) setOwner(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [decoded]);
+
+  const user: MockUser = owner
+    ? {
+        addr: owner.address,
+        username: owner.username ?? undefined,
+        country: owner.flagCountryCode ?? 'us',
+        joined: owner.joinedAt ?? '2026-01-01',
+        hexes: owner.hexes,
+        countries: owner.countries,
+        bondedVava: 0,
+      }
+    : stubUser(decoded);
+  const avatarUrl = owner?.avatarUrl ?? null;
 
   const display = user.username ? `@${user.username}` : user.addr;
 
@@ -39,6 +78,7 @@ export default function PublicProfilePage() {
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-5">
             <Avatar className="h-16 w-16 ring-2 ring-white/50">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={display} />}
               <AvatarFallback
                 className="text-base font-medium text-white"
                 style={{ background: gradientFromAddr(user.addr) }}
@@ -89,7 +129,7 @@ export default function PublicProfilePage() {
       </div>
 
       <p className="mt-6 text-center text-[11px] text-foreground/55">
-        Full activity feed for this user lands when the on-chain indexer ships.
+        Live holdings from the VavaWorld register.
       </p>
     </div>
   );
@@ -122,9 +162,9 @@ function fmtJoined(iso: string): string {
   return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
-/** Build a stub user for handles not in MOCK_USERS so navigation works. */
+/** Stub while loading / for handles with no register entry - never 404s. */
 function stubUser(handle: string): MockUser {
-  const isAddr = handle.startsWith('0x');
+  const isAddr = handle.length > 25;
   return {
     addr: isAddr ? handle : '-',
     username: isAddr ? undefined : handle,
