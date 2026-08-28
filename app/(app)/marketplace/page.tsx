@@ -12,13 +12,8 @@ import {
 } from '@/components/ui/select';
 import { CountrySelect } from '@/components/country-select';
 import { ListingGrid } from '@/components/marketplace/listing-grid';
-import {
-  mockChipCounts,
-  mockListings,
-  mockMarketStats,
-  type Listing,
-  type Tier,
-} from '@/lib/mock-marketplace';
+import { type Listing, type Tier } from '@/lib/mock-marketplace';
+import { useMarketStats } from '@/lib/use-market-stats';
 import {
   useActiveListings,
   useListingsVersion,
@@ -71,10 +66,8 @@ export default function MarketplacePage() {
     () => dbListings.map((l) => toListing(l, dbLocations)),
     [dbListings, dbLocations],
   );
-  const allListings = useMemo<ReadonlyArray<Listing>>(
-    () => [...realListings, ...mockListings],
-    [realListings],
-  );
+  const allListings = realListings;
+  const stats = useMarketStats(version);
 
   const visible = useMemo(() => {
     let xs: ReadonlyArray<Listing> = allListings;
@@ -132,15 +125,21 @@ export default function MarketplacePage() {
 
       {/* Stat strip */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Floor" value={`${mockMarketStats.floor.toFixed(3)} SOL`} />
-        <Stat label="Volume (24h)" value={`${mockMarketStats.volume24h} SOL`} />
+        <Stat
+          label="Floor"
+          value={stats?.floorSol != null ? `${stats.floorSol.toFixed(3)} SOL` : '—'}
+        />
+        <Stat
+          label="Volume (24h)"
+          value={stats ? `${stats.volume24hSol.toFixed(2)} SOL` : '—'}
+        />
         <Stat
           label="Listed"
-          value={mockMarketStats.listedCount.toLocaleString('en-US')}
+          value={stats ? stats.activeListings.toLocaleString('en-US') : '—'}
         />
         <Stat
           label="Sales (24h)"
-          value={mockChipCounts.new24h.toLocaleString('en-US')}
+          value={stats ? stats.sales24h.toLocaleString('en-US') : '—'}
         />
       </div>
 

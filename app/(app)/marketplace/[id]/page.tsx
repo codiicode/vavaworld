@@ -7,7 +7,7 @@ import { ArrowLeft, Clock, Hexagon, Loader2, TrendingDown, TrendingUp } from 'lu
 import { Button } from '@/components/ui/button';
 import { BuyDialog } from '@/components/marketplace/buy-dialog';
 import { StreetViewButton } from '@/components/marketplace/street-view-button';
-import { mockListings, type Listing } from '@/lib/mock-marketplace';
+import { type Listing } from '@/lib/mock-marketplace';
 import { Flag } from '@/components/flag';
 import { UserLink } from '@/components/user-link';
 import { hexStaticMapUrl } from '@/lib/static-map';
@@ -33,18 +33,10 @@ export default function TileDetailPage() {
   const [cancelling, setCancelling] = useState(false);
   const wallet = useActiveWallet();
 
-  // Synchronous mock lookup.
-  const mock = useMemo(
-    () => mockListings.find((l) => l.id === params.id) ?? null,
-    [params.id],
-  );
+  // Real listings only - resolve from Supabase.
+  const mock = null as Listing | null;
 
-  // If no mock match, try Supabase. Mark resolving complete either way.
   useEffect(() => {
-    if (mock) {
-      setResolving(false);
-      return;
-    }
     let cancelled = false;
     setResolving(true);
     fetchListing(params.id).then((row) => {
@@ -55,7 +47,7 @@ export default function TileDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [mock, params.id]);
+  }, [params.id]);
 
   // Reverse-geocode the real listing so we can fill city/neighborhood.
   const dbHexSet = useMemo(() => (dbRow ? new Set([dbRow.h3_id]) : new Set<string>()), [dbRow]);

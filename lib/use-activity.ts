@@ -7,15 +7,16 @@ import { COUNTRIES } from './countries';
 const COUNTRY_NAME = new Map(COUNTRIES.map((c) => [c.code, c.name]));
 
 type ApiEvent = {
-  type: 'claim';
+  type: 'claim' | 'sale';
   h3Id: string;
-  owner: string;
-  username: string | null;
+  from: string | null;
+  fromUsername: string | null;
+  to: string;
+  toUsername: string | null;
   countryIso: string;
   countryName: string;
-  priceUsd: number;
   priceSol: number;
-  claimedAt: string;
+  at: string;
 };
 
 function relAgo(iso: string): string {
@@ -30,9 +31,8 @@ function relAgo(iso: string): string {
 }
 
 /**
- * Real activity feed from /api/activity (primary claims). Mapped into
- * the ActivityItem shape the feed table renders: a claim is a "buy"
- * from the world itself (empty fromAddr renders as a dash).
+ * Real activity feed: primary claims render as "buy" (from the world
+ * itself - empty fromAddr shows a dash), secondary sales as "sell".
  */
 export function useActivity(): { items: ActivityItem[]; loading: boolean } {
   const [items, setItems] = useState<ActivityItem[]>([]);
@@ -45,16 +45,16 @@ export function useActivity(): { items: ActivityItem[]; loading: boolean } {
       .then((json: { events: ApiEvent[] }) => {
         if (!alive) return;
         setItems(
-          (json.events ?? []).map((e) => ({
-            id: e.h3Id,
+          (json.events ?? []).map((e, i) => ({
+            id: `${e.type}-${e.h3Id}-${i}`,
             countryCode: e.countryIso,
             city: COUNTRY_NAME.get(e.countryIso) ?? e.countryName,
             neighborhood: `${e.h3Id.slice(0, 5)}…${e.h3Id.slice(-4)}`,
-            fromAddr: '',
-            toAddr: e.owner,
+            fromAddr: e.from ?? '',
+            toAddr: e.to,
             price: e.priceSol,
-            ago: relAgo(e.claimedAt),
-            action: 'buy' as const,
+            ago: relAgo(e.at),
+            action: e.type === 'sale' ? ('sell' as const) : ('buy' as const),
           })),
         );
       })
