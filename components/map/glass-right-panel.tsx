@@ -231,7 +231,7 @@ export function GlassRightPanel({
           <div className="truncate text-[14px] font-semibold text-white">
             {wallet.connected ? shortAddr(wallet.address ?? '') : 'Not connected'}
           </div>
-          <div className="mt-0.5 truncate text-[11.5px] tabular-nums text-white/52">
+          <div className="mt-0.5 truncate text-[11.5px] tabular-nums text-white/55">
             {wallet.connected
               ? balance !== null
                 ? `${balance.toFixed(3)} SOL`
@@ -243,7 +243,7 @@ export function GlassRightPanel({
           <button
             type="button"
             onClick={() => wallet.logout()}
-            className="grid place-items-center text-white/52 transition-colors hover:text-white"
+            className="grid place-items-center text-white/55 transition-colors hover:text-white"
             aria-label="Disconnect"
           >
             <ChevronDown size={16} />
@@ -270,7 +270,7 @@ export function GlassRightPanel({
               onClick={() => setTab(t.id)}
               className={cn(
                 'relative cursor-pointer border-0 bg-transparent px-0 pb-[4px] pt-1 text-[13.5px] font-semibold tracking-[0.02em] transition-colors duration-150',
-                active ? 'text-white' : 'text-white/52 hover:text-white/80',
+                active ? 'text-white' : 'text-white/55 hover:text-white/80',
               )}
             >
               {t.label}
@@ -390,13 +390,17 @@ function SelectionBody({
 
   return (
     <>
-      <div className="relative z-[1] flex flex-col gap-3">
+      {/* min-h-0 + overflow-y-auto: with the pricing card, mark-closest grid
+          and the hex list stacked, the column can exceed the panel height -
+          without this the panel's overflow-hidden silently clips the Claim
+          CTA below. The content scrolls; the CTA stays pinned. */}
+      <div className="relative z-[1] flex min-h-0 flex-col gap-3 overflow-y-auto">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-white/52">
+          <span className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-white/55">
             Selected
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-xs tabular-nums tracking-[0.04em] text-white/52">
+            <span className="text-xs tabular-nums tracking-[0.04em] text-white/55">
               {count} / 1000
             </span>
             {!empty && (
@@ -426,7 +430,7 @@ function SelectionBody({
 
         {hasSeed && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/52">
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-white/55">
               Mark closest
             </span>
             <div className="grid grid-cols-4 gap-1.5">
@@ -475,7 +479,7 @@ function SelectionBody({
         )}
 
         {empty ? (
-          <p className="text-[13.5px] leading-[1.45] text-white/72">
+          <p className="text-[13.5px] leading-[1.45] text-white/70">
             Click a hex to select. Shift-click to add more. Ctrl-drag for an area.
           </p>
         ) : (
@@ -512,7 +516,7 @@ function SelectionBody({
                 ))}
               </div>
             ) : (
-              <div className="-mx-1 flex max-h-[260px] flex-col overflow-y-auto">
+              <div className="-mx-1 flex flex-col">
                 {items.map((it, i) => {
                   const loc = locations.get(it.h3);
                   const title = loc?.neighborhood ?? loc?.place ?? loc?.countryName ?? 'Locating…';
@@ -531,7 +535,7 @@ function SelectionBody({
                           <span className="truncate text-[13px] font-medium leading-tight text-white">
                             {title}
                           </span>
-                          <span className="mt-0.5 truncate text-[10.5px] leading-tight tabular-nums text-white/52">
+                          <span className="mt-0.5 truncate text-[10.5px] leading-tight tabular-nums text-white/55">
                             {Math.abs(it.lat).toFixed(3)}°{it.lat >= 0 ? 'N' : 'S'},{' '}
                             {Math.abs(it.lng).toFixed(3)}°{it.lng >= 0 ? 'E' : 'W'}
                           </span>
@@ -559,7 +563,7 @@ function SelectionBody({
                             e.stopPropagation();
                             onRemove(it.h3);
                           }}
-                          className="text-white/52 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
+                          className="text-white/55 opacity-0 transition-opacity hover:text-white group-hover:opacity-100"
                           aria-label="Remove"
                         >
                           <X size={14} />
@@ -621,7 +625,7 @@ function ClaimedHexView({
 
   return (
     <>
-      <div className="relative z-[1] flex flex-col gap-3">
+      <div className="relative z-[1] flex min-h-0 flex-col gap-3 overflow-y-auto">
         <div className="flex items-center justify-between">
           <span className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-amber-200">
             Already claimed
@@ -629,7 +633,7 @@ function ClaimedHexView({
           <button
             type="button"
             onClick={onClear}
-            className="rounded-md p-1 text-white/52 transition-colors hover:bg-white/[0.06] hover:text-white"
+            className="rounded-md p-1 text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white"
             aria-label="Clear selection"
           >
             <X size={14} />
@@ -661,7 +665,7 @@ function ClaimedHexView({
 
           <div className="grid grid-cols-2 gap-3 border-t border-white/15 pt-3 text-[11px]">
             <div>
-              <div className="uppercase tracking-wider text-white/52">Owner</div>
+              <div className="uppercase tracking-wider text-white/55">Owner</div>
               <Link
                 href={`/u/${encodeURIComponent(tile.owner)}`}
                 className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-white transition-colors hover:text-amber-200"
@@ -671,17 +675,17 @@ function ClaimedHexView({
               </Link>
             </div>
             <div>
-              <div className="uppercase tracking-wider text-white/52">Claimed</div>
+              <div className="uppercase tracking-wider text-white/55">Claimed</div>
               <div className="mt-0.5 text-[12.5px] font-medium text-white">{ago}</div>
             </div>
             <div>
-              <div className="uppercase tracking-wider text-white/52">Paid</div>
+              <div className="uppercase tracking-wider text-white/55">Paid</div>
               <div className="mt-0.5 text-[12.5px] font-medium tabular-nums text-white">
                 {paidSol.toFixed(3)} SOL
               </div>
             </div>
             <div>
-              <div className="uppercase tracking-wider text-white/52">Status</div>
+              <div className="uppercase tracking-wider text-white/55">Status</div>
               <div className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-emerald-300">
                 <CheckCircle2 size={12} />
                 Owned

@@ -112,44 +112,44 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
       className="rounded-[14px] p-3.5"
       style={{
         background:
-          'linear-gradient(135deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.10) 100%)',
-        border: '1px solid rgba(255,255,255,0.45)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+          'linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.06) 100%)',
+        border: '1px solid rgba(255,255,255,0.16)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
       }}
     >
       <div className="mb-2 flex items-center gap-2">
         <Flag code={data?.countryIso} size={18} />
-        <span className="truncate text-[14px] font-semibold text-foreground">
+        <span className="truncate text-[14px] font-semibold text-white">
           {data?.countryName ?? (loading ? 'Locating…' : '-')}
         </span>
-        {loading && <Loader2 size={13} className="animate-spin text-foreground/50" />}
+        {loading && <Loader2 size={13} className="animate-spin text-white/50" />}
       </div>
 
       {err && !data && (
-        <p className="text-[12px] text-red-600/80">{err}</p>
+        <p className="text-[12px] text-rose-300">{err}</p>
       )}
 
       {data && (
         <>
           <div className="flex items-end justify-between">
             <div>
-              <div className="text-[11px] uppercase tracking-[0.08em] text-foreground/55">
+              <div className="text-[11px] uppercase tracking-[0.08em] text-white/55">
                 Current floor
               </div>
-              <div className="text-[22px] font-bold leading-tight tabular-nums text-foreground">
+              <div className="text-[22px] font-bold leading-tight tabular-nums text-white">
                 ${fmt(data.currentFloor)}
               </div>
-              <div className="mt-0.5 text-[11px] tabular-nums text-foreground/55">
+              <div className="mt-0.5 text-[11px] tabular-nums text-white/55">
                 Next claim ${fmt(data.nextFloor)}
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[11px] uppercase tracking-[0.08em] text-foreground/55">
+              <div className="text-[11px] uppercase tracking-[0.08em] text-white/55">
                 Claims
               </div>
-              <div className="text-[15px] font-semibold tabular-nums text-foreground">
+              <div className="text-[15px] font-semibold tabular-nums text-white">
                 {grouped(data.claimCount)}
               </div>
             </div>
@@ -158,17 +158,17 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
           {data.claimed ? (
             <div
               className="mt-3 rounded-[10px] px-3 py-2 text-[12.5px]"
-              style={{ background: 'rgba(255,255,255,0.30)' }}
+              style={{ background: 'rgba(255,255,255,0.10)' }}
             >
               <div className="flex justify-between">
-                <span className="text-foreground/60">Owner</span>
-                <span className="font-medium text-foreground">
+                <span className="text-white/60">Owner</span>
+                <span className="font-medium text-white">
                   {short(data.claimed.owner)}
                 </span>
               </div>
               <div className="mt-0.5 flex justify-between">
-                <span className="text-foreground/60">Paid</span>
-                <span className="font-semibold tabular-nums text-foreground">
+                <span className="text-white/60">Paid</span>
+                <span className="font-semibold tabular-nums text-white">
                   ${fmt(data.claimed.purchasePrice)}
                 </span>
               </div>
@@ -190,7 +190,7 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
                   ? `Claim for $${fmt(data.currentFloor)}`
                   : 'Connect wallet to claim'}
               </button>
-              {err && <p className="mt-1.5 text-[12px] text-red-600/80">{err}</p>}
+              {err && <p className="mt-1.5 text-[12px] text-rose-300">{err}</p>}
             </>
           )}
         </>

@@ -21,7 +21,7 @@ export default function MapLoading() {
       {/* Right glass panel */}
       <div className="absolute bottom-[18px] right-[18px] top-[18px] hidden w-[300px] animate-pulse rounded-[22px] bg-white/10 md:block" />
       {/* Zoom controls */}
-      <div className="absolute bottom-[18px] left-1/2 h-11 w-40 -translate-x-1/2 animate-pulse rounded-full bg-white/12 md:left-[300px]" />
+      <div className="absolute bottom-[18px] left-1/2 h-11 w-40 -translate-x-1/2 animate-pulse rounded-full bg-white/10 md:left-[300px]" />
     </div>
   );
 }

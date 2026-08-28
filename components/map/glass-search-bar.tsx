@@ -121,7 +121,7 @@ export function GlassSearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | nu
   return (
     <div className="pointer-events-auto relative w-full">
       <div className="glass relative flex h-[52px] items-center gap-3 rounded-full px-[18px]">
-        <Search size={18} strokeWidth={2} className="relative z-[1] text-white/52" />
+        <Search size={18} strokeWidth={2} className="relative z-[1] text-white/55" />
         <input
           ref={inputRef}
           type="text"
@@ -148,14 +148,14 @@ export function GlassSearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | nu
             }
           }}
           placeholder="Search any place on Earth…"
-          className="relative z-[1] flex-1 bg-transparent text-[14.5px] tracking-[0.01em] text-white placeholder:text-white/52 focus:outline-none"
+          className="relative z-[1] flex-1 bg-transparent text-[14.5px] tracking-[0.01em] text-white placeholder:text-white/55 focus:outline-none"
         />
         {q && (
           <button
             type="button"
             onClick={clear}
             aria-label="Clear search"
-            className="relative z-[1] grid h-6 w-6 place-items-center rounded-full text-white/52 transition-colors hover:bg-white/10 hover:text-white"
+            className="relative z-[1] grid h-6 w-6 place-items-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white"
           >
             <X size={14} strokeWidth={2} />
           </button>
@@ -172,7 +172,7 @@ export function GlassSearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | nu
               className={`relative z-[1] cursor-pointer border-l-2 px-4 py-2.5 text-[13.5px] transition-colors ${
                 i === active
                   ? 'border-l-[var(--brand)] bg-white/[0.06] text-white'
-                  : 'border-l-transparent text-white/72'
+                  : 'border-l-transparent text-white/70'
               }`}
               style={
                 i < results.length - 1
