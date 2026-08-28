@@ -40,4 +40,12 @@ pub enum TilesError {
     NothingToEmbed,
     #[msg("Embed amount must be greater than zero")]
     EmbedAmountZero,
+    #[msg("Amount must be greater than zero")]
+    AmountZero,
+    #[msg("Not enough active stake")]
+    InsufficientStake,
+    #[msg("Unstake cooldown has not elapsed")]
+    UnstakeNotReady,
+    #[msg("No pending unstake to withdraw")]
+    NothingPending,
 }

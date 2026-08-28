@@ -50,4 +50,20 @@ pub mod tiles {
     pub fn raze(ctx: Context<Raze>) -> Result<()> {
         raze_handler(ctx)
     }
+
+    pub fn init_stake_vault(ctx: Context<InitStakeVault>) -> Result<()> {
+        init_stake_vault_handler(ctx)
+    }
+
+    pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
+        stake_handler(ctx, amount)
+    }
+
+    pub fn begin_unstake(ctx: Context<BeginUnstake>, amount: u64) -> Result<()> {
+        begin_unstake_handler(ctx, amount)
+    }
+
+    pub fn withdraw_unstaked(ctx: Context<WithdrawUnstaked>) -> Result<()> {
+        withdraw_unstaked_handler(ctx)
+    }
 }

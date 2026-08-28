@@ -27,6 +27,22 @@ pub struct TierCounter {
 }
 // Disc 8 + 10 = 18 bytes
 
+/// Per-wallet $VAVA stake. Tier thresholds (Citizen/Baron/President) are
+/// interpreted by consumers - the program only tracks amounts. Unstaking
+/// is two-step: begin_unstake starts the 3-day clock, withdraw_unstaked
+/// releases after it. Re-calling begin_unstake resets the clock for the
+/// whole pending amount.
+#[account]
+#[derive(InitSpace)]
+pub struct StakeAccount {
+    pub owner: Pubkey,              // 32
+    pub amount: u64,                // 8  - actively staked (counts for tiers)
+    pub pending_amount: u64,        // 8  - in unstake cooldown
+    pub unstake_available_at: i64,  // 8
+    pub bump: u8,                   // 1
+}
+// Disc 8 + 57 = 65 bytes
+
 /// Global protocol config. The $VAVA mint is INJECTED, never hardcoded:
 /// devnet runs a stand-in SPL mint with pump.fun-identical properties
 /// (6 decimals, 1B supply, mint authority revoked); on launch day the
