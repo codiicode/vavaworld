@@ -7,6 +7,7 @@ import { MapView } from '@/components/MapView';
 import { GlassRightPanel } from '@/components/map/glass-right-panel';
 import { GlassSearchBar } from '@/components/map/glass-search-bar';
 import { MapStyleToggle } from '@/components/map/map-style-toggle';
+import { MapPerspectiveToggle } from '@/components/map/map-perspective-toggle';
 import { MapZoomControls } from '@/components/map/map-zoom-controls';
 import { LiveClaimsFeed } from '@/components/map/live-claims-feed';
 import { hexCenter } from '@/lib/h3-utils';
@@ -155,6 +156,7 @@ export default function Page() {
         <div className="min-w-0 flex-1">
           <GlassSearchBar mapRef={mapRef} />
         </div>
+        <MapPerspectiveToggle mapRef={mapRef} />
         <MapStyleToggle satellite={satellite} onChange={setSatellite} />
       </div>
 
