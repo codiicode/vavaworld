@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import bs58 from 'bs58';
 import { usePrivy } from '@privy-io/react-auth';
-import { useWallets as usePrivySolanaWallets, useSignAndSendTransaction } from '@privy-io/react-auth/solana';
+import { useWallets as usePrivySolanaWallets, useSignAndSendTransaction, useSignMessage } from '@privy-io/react-auth/solana';
 import { useWallet as useAdapterWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { getConnection } from './anchor-client';
@@ -42,6 +42,8 @@ export type ActiveWallet = {
   connected: boolean;
   /** Sign and send a built transaction. Returns the signature string. */
   signAndSendTransaction: ((tx: Transaction | VersionedTransaction) => Promise<string>) | null;
+  /** Sign an arbitrary message (throne actions etc). Returns raw 64-byte sig. */
+  signMessage: ((message: Uint8Array) => Promise<Uint8Array>) | null;
   /** Open Privy login modal */
   login: () => void;
   /** Open Privy logout */
@@ -58,6 +60,7 @@ export function useActiveWallet(): ActiveWallet {
   const { ready, authenticated, login, logout } = usePrivy();
   const { wallets: privyWallets } = usePrivySolanaWallets();
   const { signAndSendTransaction: privySignAndSend } = useSignAndSendTransaction();
+  const { signMessage: privySignMessage } = useSignMessage();
   const adapter = useAdapterWallet();
 
   const privyWallet = privyWallets[0] ?? null;
@@ -91,6 +94,17 @@ export function useActiveWallet(): ActiveWallet {
             throw e;
           }
         },
+        signMessage: async (message) => {
+          const result = await privySignMessage({
+            message,
+            wallet: privyWallet,
+            chain: inferSolanaChain(),
+          } as never);
+          const sig = (result as { signature?: Uint8Array | string })?.signature ?? result;
+          if (typeof sig === 'string') return bs58.decode(sig);
+          if (sig instanceof Uint8Array) return sig;
+          throw new Error('Privy returned no signature');
+        },
         login,
         logout,
       };
@@ -113,6 +127,9 @@ export function useActiveWallet(): ActiveWallet {
           );
           return signature;
         },
+        signMessage: adapter.signMessage
+          ? async (message) => adapter.signMessage!(message)
+          : null,
         login,
         logout,
       };
@@ -126,8 +143,9 @@ export function useActiveWallet(): ActiveWallet {
       ready,
       connected: false,
       signAndSendTransaction: null,
+      signMessage: null,
       login,
       logout,
     };
-  }, [ready, privyConnected, privyWallet, privySignAndSend, adapter, adapterConnected, login, logout]);
+  }, [ready, privyConnected, privyWallet, privySignAndSend, privySignMessage, adapter, adapterConnected, login, logout]);
 }

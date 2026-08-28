@@ -11,6 +11,7 @@ export type ApiNation = {
   topOwner: string | null;
   topOwnerUsername: string | null;
   topOwnerHexes: number;
+  president?: string | null;
 };
 
 function shortAddr(addr: string): string {
@@ -24,7 +25,10 @@ function shortAddr(addr: string): string {
  * holder - the throne candidate once presidents go live.
  */
 export function apiToNation(r: ApiNation): Nation {
-  const presidentName = r.topOwnerUsername ?? (r.topOwner ? shortAddr(r.topOwner) : '—');
+  // A real throne holder outranks the top-owner candidate display.
+  const presidentName = r.president
+    ? shortAddr(r.president)
+    : r.topOwnerUsername ?? (r.topOwner ? shortAddr(r.topOwner) : '—');
   return {
     iso: r.iso.toUpperCase(),
     name: r.name,
@@ -35,7 +39,7 @@ export function apiToNation(r: ApiNation): Nation {
     bonders: r.holders,
     president: {
       username: presidentName,
-      wallet: r.topOwner ?? '',
+      wallet: r.president ?? r.topOwner ?? '',
       bondedVava: 0,
       monthlyUsd: 0,
       earnedThisMonthUsd: 0,

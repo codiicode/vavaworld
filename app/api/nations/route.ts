@@ -23,8 +23,17 @@ type CountryRow = {
  */
 export async function GET() {
   const sb = getServerSupabase();
-  const { data, error } = await sb.rpc('country_stats');
+  const [{ data, error }, { data: thrones }] = await Promise.all([
+    sb.rpc('country_stats'),
+    sb.from('thrones').select('country_iso,holder'),
+  ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const throneBy = new Map(
+    ((thrones ?? []) as Array<{ country_iso: string; holder: string }>).map((t) => [
+      t.country_iso,
+      t.holder,
+    ]),
+  );
 
   const nations = ((data ?? []) as CountryRow[]).map((r) => ({
     iso: r.iso_code.toLowerCase(),
@@ -36,6 +45,7 @@ export async function GET() {
     topOwner: r.top_owner,
     topOwnerUsername: r.top_owner_username,
     topOwnerHexes: Number(r.top_owner_hexes ?? 0),
+    president: throneBy.get(r.iso_code) ?? null,
   }));
 
   return NextResponse.json({ nations });

@@ -5,7 +5,7 @@ import { getServerSupabase } from '@/lib/supabase-server';
 import { calculateFloor } from '@/lib/pricing';
 import { apiToNation } from '@/lib/nation-map';
 import { CountryHeaderCard } from '@/components/nations/country-header-card';
-import { PresidentHeroCard } from '@/components/nations/president-hero-card';
+import { ThronePanel } from '@/components/nations/throne-panel';
 import { YourPositionCard } from '@/components/nations/your-position-card';
 import { ActivityFeedCard } from '@/components/nations/activity-feed-card';
 
@@ -53,7 +53,7 @@ export default async function CountryPage({ params }: { params: { iso: string } 
 
       <div className="flex flex-col gap-6">
         <CountryHeaderCard nation={nation} />
-        <PresidentHeroCard nation={nation} />
+        <ThronePanel iso={iso} />
         <YourPositionCard nation={nation} />
         <ActivityFeedCard nation={nation} />
       </div>
