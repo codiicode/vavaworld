@@ -106,6 +106,11 @@ function applyStandardConfig(map: MapboxMap): void {
 // identity stays res-12 (HEX_RES) - we never coarsen the rendered grid, so a
 // clicked cell is always the exact claimable cell.
 const MIN_ZOOM_FOR_HEXES = 16;
+// Max span (degrees, ~1.1 km) of the res-12 hex grid we paint around the
+// map centre. Caps the near-field so a tilted/zoomed-out viewport can't
+// ask for a horizon-sized region. ~14k cells generated worst case,
+// sliced to the SAFETY_CAP - fast to build, render, and query.
+const MAX_HEX_SPAN_DEG = 0.01;
 
 // Render the map to a fixed PIXEL BUDGET rather than the screen's native
 // resolution. The map paints clientW*clientH*dpr^2 pixels per frame, so a big
@@ -287,11 +292,21 @@ export function MapView({
     }
     const b = map.getBounds();
     if (!b) return;
+    // Clamp the query box to a near-field window around the map centre.
+    // A tilted (3D) or slightly-zoomed-out frustum reports bounds that
+    // reach the horizon - covering that at res-12 is millions of cells
+    // (multi-second freeze) and, worse, forces a coarser resolution so
+    // clicked cells stop being the claimable res-12 cell. Painting only
+    // the near field keeps the grid at res-12, bounds the cell count,
+    // and behaves identically flat / satellite / tilted. Hexes far
+    // toward the horizon are sub-pixel and unclickable anyway.
+    const c = map.getCenter();
+    const half = MAX_HEX_SPAN_DEG / 2;
     const bbox: [number, number, number, number] = [
-      b.getWest(),
-      b.getSouth(),
-      b.getEast(),
-      b.getNorth(),
+      Math.max(b.getWest(), c.lng - half),
+      Math.max(b.getSouth(), c.lat - half),
+      Math.min(b.getEast(), c.lng + half),
+      Math.min(b.getNorth(), c.lat + half),
     ];
     const ids = hexesForBounds(bbox);
     setVisibleHexes((prev) => (sameViewport(prev, ids) ? prev : ids));
