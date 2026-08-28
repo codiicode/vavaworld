@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Map, { type MapRef, type MapMouseEvent } from 'react-map-gl/mapbox';
 import type { Feature, FeatureCollection, Polygon, Position } from 'geojson';
-import type { GeoJSONSource } from 'mapbox-gl';
+import type { GeoJSONSource, Map as MapboxMap } from 'mapbox-gl';
 import { hexCenter, hexToFeature, hexesForBounds } from '@/lib/h3-utils';
 import { TIER_FILL, type Tier, classifyTier } from '@/lib/tier';
 import { useTiles } from '@/lib/use-tiles';
@@ -75,6 +75,30 @@ const AGG_LABEL = 'country-agg-label';
 // style.load handler re-installs the hex layers + re-applies feature-state.
 const SATELLITE_STYLE = 'mapbox://styles/mapbox/satellite-streets-v12';
 const MAP_STYLE = 'mapbox://styles/mapbox/standard';
+
+/**
+ * Force the Mapbox Standard base into its most realistic, full-colour
+ * config: daytime light, the default (coloured) theme, and 3D objects
+ * on - so real textured landmark models (Eiffel Tower brown, etc.) and
+ * buildings render as they look when the camera is tilted. No-ops on
+ * the satellite raster style (its 'basemap' import has no such props),
+ * hence the per-property try/catch.
+ */
+function applyStandardConfig(map: MapboxMap): void {
+  const set = (prop: string, value: unknown) => {
+    try {
+      (map as unknown as {
+        setConfigProperty: (importId: string, prop: string, value: unknown) => void;
+      }).setConfigProperty('basemap', prop, value);
+    } catch {
+      /* not the Standard style (satellite) - ignore */
+    }
+  };
+  set('lightPreset', 'day');
+  set('theme', 'default');
+  set('show3dObjects', true);
+  set('showPointOfInterestLabels', true);
+}
 
 // Render individual hexes only at zoom >= 16. At z14-15 a res-12 cell is ~1px
 // (invisible) yet the viewport holds tens of thousands of them; gating at 16
@@ -473,10 +497,12 @@ export function MapView({
     map.boxZoom.disable();
 
     installHexLayers();
+    applyStandardConfig(map);
 
     // Safety net: if a style ever reloads (we no longer trigger it), re-add.
     map.on('style.load', () => {
       installHexLayers();
+      applyStandardConfig(map);
       repaintGrid();
       refreshHexes();
     });
