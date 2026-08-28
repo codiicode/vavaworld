@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { meetsPresidentStake, verifySignedAction } from '@/lib/server-verify';
 
+const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -94,8 +96,8 @@ export async function POST(req: Request) {
   const sb = getServerSupabase();
   const { data, error } =
     action === 'claim'
-      ? await sb.rpc('claim_throne', { p_iso: iso, p_holder: address })
-      : await sb.rpc('attempt_coup', { p_iso: iso, p_challenger: address });
+      ? await sb.rpc('claim_throne', { p_iso: iso, p_holder: address, p_secret: API_SECRET })
+      : await sb.rpc('attempt_coup', { p_iso: iso, p_challenger: address, p_secret: API_SECRET });
 
   if (error) {
     return NextResponse.json({ error: error.message.replace(/^.*?: /, '') }, { status: 409 });

@@ -103,56 +103,6 @@
       ]
     },
     {
-      "name": "transfer",
-      "discriminator": [
-        163,
-        52,
-        200,
-        231,
-        140,
-        3,
-        69,
-        186
-      ],
-      "accounts": [
-        {
-          "name": "tile",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  105,
-                  108,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "tile.h3_id",
-                "account": "Tile"
-              }
-            ]
-          }
-        },
-        {
-          "name": "owner",
-          "signer": true,
-          "relations": [
-            "tile"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "recipient",
-          "type": "pubkey"
-        }
-      ]
-    },
-    {
       "name": "init_config",
       "discriminator": [
         23,

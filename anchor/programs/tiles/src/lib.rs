@@ -27,10 +27,6 @@ pub mod tiles {
         claim_handler(ctx, h3_ids, expected_max_total)
     }
 
-    pub fn transfer(ctx: Context<Transfer>, recipient: Pubkey) -> Result<()> {
-        transfer_handler(ctx, recipient)
-    }
-
     pub fn init_config(ctx: Context<InitConfig>, keeper: Pubkey) -> Result<()> {
         init_config_handler(ctx, keeper)
     }

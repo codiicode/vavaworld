@@ -132,10 +132,12 @@ export function TileListDialog({
                       throw new Error(j.error ?? 'Could not register hex');
                     }
 
+                    if (!wallet.signMessage) throw new Error('Wallet cannot sign messages');
                     await createListing({
                       h3: tile.h3,
                       seller: wallet.address,
                       priceSol: numeric,
+                      signMessage: wallet.signMessage,
                     });
                     dispatchListingsChanged();
                     setDone(true);

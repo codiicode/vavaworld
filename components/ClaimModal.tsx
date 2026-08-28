@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
@@ -10,7 +10,7 @@ import { useHexLocations } from '@/lib/use-hex-locations';
 import { useCountryCounts } from '@/lib/use-country-counts';
 import { getConnection } from '@/lib/anchor-client';
 import { dispatchClaimDone } from '@/lib/claim-events';
-import { PRICING, SOL_USD, usdToLamports } from '@/lib/pricing';
+import { PRICING, SOL_USD } from '@/lib/pricing';
 
 const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY;
 const treasuryPk = TREASURY_ADDRESS ? new PublicKey(TREASURY_ADDRESS) : null;
@@ -69,7 +69,22 @@ export function ClaimModal({
     return PRICING.BASE_FLOOR_USD + (base + off) * PRICING.SLOPE_PER_CLAIM_USD;
   });
   const totalUsd = perItemUsd.reduce((s, u) => s + u, 0);
-  const totalLamports = usdToLamports(totalUsd);
+  // Live SOL/USD from Pyth (server-cached); falls back to the reference
+  // rate so the modal always renders.
+  const [solUsd, setSolUsd] = useState<number>(SOL_USD);
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/sol-price')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (alive && j?.solUsd) setSolUsd(j.solUsd);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const totalLamports = BigInt(Math.round((totalUsd / solUsd) * 1_000_000_000));
   const totalSol = Number(totalLamports) / 1_000_000_000;
 
   // Shareable reveal link - built from the primary (first) hex's location.
@@ -262,7 +277,7 @@ export function ClaimModal({
               style={{ ...monoNum, color: 'var(--dim)' }}
             >
               <span>≈ {totalSol.toFixed(6)} SOL</span>
-              <span style={{ opacity: 0.5 }}> · @ ${SOL_USD}/SOL</span>
+              <span style={{ opacity: 0.5 }}> · @ ${solUsd.toFixed(2)}/SOL</span>
             </div>
             <div className="flex gap-3">
               <button

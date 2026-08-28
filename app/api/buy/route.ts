@@ -14,6 +14,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const PROGRAM_ID = new PublicKey((idl as { address: string }).address);
+const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
 const TREASURY = process.env.NEXT_PUBLIC_TREASURY ?? '74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X';
 const LAMPORTS = 1_000_000_000;
 
@@ -123,6 +124,9 @@ export async function POST(req: Request) {
   if (!tx || tx.meta?.err) {
     return NextResponse.json({ error: 'Transaction not found or failed' }, { status: 400 });
   }
+  if (tx.blockTime && Date.now() / 1000 - tx.blockTime > 15 * 60) {
+    return NextResponse.json({ error: 'Payment tx too old' }, { status: 400 });
+  }
 
   // Buyer must have signed and paid.
   const keys = tx.transaction.message.getAccountKeys().staticAccountKeys.map((k) => k.toBase58());
@@ -156,6 +160,7 @@ export async function POST(req: Request) {
     p_buyer: buyer,
     p_tx_hash: txSig,
     p_fee_bps: quote.feeBps,
+    p_secret: API_SECRET,
   });
   if (error) {
     const msg = error.message.includes('duplicate key')

@@ -1,7 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import bs58 from 'bs58';
 import { getSupabase } from './supabase';
+
+const bs58encode = (bytes: Uint8Array) => bs58.encode(bytes);
 
 /** Row shape returned by `public.listings`. */
 export type DbListing = {
@@ -69,43 +72,57 @@ export async function fetchListing(id: string): Promise<DbListing | null> {
   return data ?? null;
 }
 
-/** Insert a new active listing. Throws on conflict (already-listed hex). */
+/**
+ * Create a listing through the API. Requires the seller's wallet to
+ * sign an intent message - direct table writes are closed (ownership
+ * enforced atomically in SQL, signature proves the seller asked).
+ */
 export async function createListing(args: {
   h3: string;
   seller: string;
   priceSol: number;
+  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
 }): Promise<DbListing> {
-  const sb = getSupabase();
-  if (!sb) throw new Error('Supabase not configured');
-  const { data, error } = await sb
-    .from('listings')
-    .insert({
-      h3_id: args.h3,
+  const message = `vava:list:${args.h3}:${args.priceSol}:${args.seller}:ts=${Date.now()}`;
+  const sig = await args.signMessage(new TextEncoder().encode(message));
+  const res = await fetch('/api/list', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      h3: args.h3,
       seller: args.seller,
-      price_sol: args.priceSol,
-      status: 'active',
-    })
-    .select()
-    .single<DbListing>();
-  if (error) {
-    if (error.code === '23505') throw new Error('This hex is already listed');
-    if (error.code === '23514') throw new Error('Invalid price');
-    if (error.code === '23503') throw new Error('Hex not found in our records');
-    throw new Error(error.message);
-  }
-  return data;
+      priceSol: args.priceSol,
+      message,
+      signature: bs58encode(sig),
+    }),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error ?? 'List failed');
+  return json.listing as DbListing;
 }
 
-/** Cancel an active listing - sets status to cancelled. */
-export async function cancelListing(id: string): Promise<void> {
-  const sb = getSupabase();
-  if (!sb) throw new Error('Supabase not configured');
-  const { error } = await sb
-    .from('listings')
-    .update({ status: 'cancelled', closed_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('status', 'active');
-  if (error) throw new Error(error.message);
+/** Cancel an active listing through the API (signed intent). */
+export async function cancelListing(args: {
+  id: string;
+  seller: string;
+  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
+}): Promise<void> {
+  const message = `vava:delist:${args.id}:${args.seller}:ts=${Date.now()}`;
+  const sig = await args.signMessage(new TextEncoder().encode(message));
+  const res = await fetch('/api/delist', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      listingId: args.id,
+      seller: args.seller,
+      message,
+      signature: bs58encode(sig),
+    }),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({} as { error?: string }));
+    throw new Error(json.error ?? 'Delist failed');
+  }
 }
 
 /**

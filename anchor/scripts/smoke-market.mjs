@@ -15,12 +15,25 @@ import {
   sendAndConfirmTransaction,
 } from '@solana/web3.js';
 import { latLngToCell } from 'h3-js';
+import nacl from 'tweetnacl';
+import bs58 from 'bs58';
 
 const API = 'http://localhost:3111';
 const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
-const seller = Keypair.fromSecretKey(Uint8Array.from(
+// CLI wallet is the TREASURY - the seller must be a separate wallet or
+// the payment-verification (treasury balance delta) nets to zero.
+const cli = Keypair.fromSecretKey(Uint8Array.from(
   JSON.parse(readFileSync(join(homedir(), '.config', 'solana', 'id.json'), 'utf-8')),
 ));
+const seller = Keypair.generate();
+const addr = () => seller.publicKey.toBase58();
+{
+  const fund = new Transaction().add(SystemProgram.transfer({
+    fromPubkey: cli.publicKey, toPubkey: seller.publicKey, lamports: 50_000_000,
+  }));
+  await sendAndConfirmTransaction(connection, fund, [cli]);
+  console.log('seller funded ✓', addr());
+}
 
 // 1. claim a fresh remote hex as seller (pay quote in SOL to treasury, then commit)
 const lat = -44.9 + Math.random() * 0.3;
@@ -31,9 +44,11 @@ console.log('hex:', h3);
 const floorRes = await fetch(`${API}/api/hex-floor?h3=${h3}`).then((r) => r.json());
 console.log('floor:', floorRes.currentFloor, 'USD, country', floorRes.countryIso);
 
-// Payment: claims are SOL to treasury (we are treasury; self-transfer keeps flow honest)
+// Payment: claims are SOL to treasury at the LIVE Pyth rate (server
+// verifies the paid USD against the same rate).
+const { solUsd } = await fetch(`${API}/api/sol-price`).then((r) => r.json());
 const priceUsd = floorRes.currentFloor;
-const lamports = Math.max(1, Math.round((priceUsd / 150) * 1e9));
+const lamports = Math.max(1, Math.round((priceUsd / solUsd) * 1e9 * 1.03));
 const TREASURY = new PublicKey('74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X');
 const payTx = new Transaction().add(SystemProgram.transfer({
   fromPubkey: seller.publicKey, toPubkey: TREASURY, lamports,
@@ -50,29 +65,49 @@ const claimRes = await fetch(`${API}/api/claim`, {
 if (claimRes.error) throw new Error('claim failed: ' + claimRes.error);
 console.log('claimed as seller ✓');
 
-// 2. list it (direct Supabase insert via anon key, same as the app does)
+// 2. list it through the signed API (direct table writes are closed)
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPA_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const listRes = await fetch(`${SUPA_URL}/rest/v1/listings`, {
+const listMsg = `vava:list:${h3}:0.01:${addr()}:ts=${Date.now()}`;
+const listSig = bs58.encode(nacl.sign.detached(new TextEncoder().encode(listMsg), seller.secretKey));
+const listRes = await fetch(`${API}/api/list`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    h3, seller: addr(), priceSol: 0.01, message: listMsg, signature: listSig,
+  }),
+}).then((r) => r.json());
+const listing = listRes.listing;
+if (!listing?.id) throw new Error('listing failed: ' + JSON.stringify(listRes));
+console.log('listed via signed API ✓', listing.id);
+
+// negative: direct table insert must now be rejected (policies dropped)
+const direct = await fetch(`${SUPA_URL}/rest/v1/listings`, {
   method: 'POST',
   headers: {
     apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`,
     'Content-Type': 'application/json', Prefer: 'return=representation',
   },
-  body: JSON.stringify({
-    h3_id: h3, seller: seller.publicKey.toBase58(), price_sol: 0.01, status: 'active',
-  }),
-}).then((r) => r.json());
-const listing = Array.isArray(listRes) ? listRes[0] : listRes;
-if (!listing?.id) throw new Error('listing failed: ' + JSON.stringify(listRes));
-console.log('listed ✓', listing.id);
+  body: JSON.stringify({ h3_id: h3, seller: addr(), price_sol: 0.01, status: 'active' }),
+});
+if (direct.ok) throw new Error('DIRECT LISTING INSERT SHOULD FAIL');
+console.log('direct table insert rejected ✓');
+
+// negative: direct claim_hex without the API secret must be rejected
+const rpcDirect = await fetch(`${SUPA_URL}/rest/v1/rpc/claim_hex`, {
+  method: 'POST',
+  headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ p_h3: h3, p_country_iso: 'NZ', p_owner: addr(), p_tx_hash: 'x', p_quoted_price_usd: null, p_paid_usd: null, p_secret: 'wrong' }),
+});
+if (rpcDirect.ok) throw new Error('DIRECT claim_hex SHOULD FAIL');
+console.log('direct claim_hex rejected ✓');
 
 // 3. throwaway buyer funded from seller wallet
 const buyer = Keypair.generate();
 const fundTx = new Transaction().add(SystemProgram.transfer({
-  fromPubkey: seller.publicKey, toPubkey: buyer.publicKey, lamports: 20_000_000,
+  fromPubkey: cli.publicKey, toPubkey: buyer.publicKey, lamports: 20_000_000,
 }));
-await sendAndConfirmTransaction(connection, fundTx, [seller]);
+await sendAndConfirmTransaction(connection, fundTx, [cli]);
 console.log('buyer funded ✓', buyer.publicKey.toBase58());
 
 // 4. quote → pay → settle

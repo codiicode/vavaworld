@@ -75,7 +75,7 @@ const claimHex = async (h3) => {
   const r = await fetch(`${SUPA_URL}/rest/v1/rpc/claim_hex`, {
     method: 'POST',
     headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ p_h3: h3, p_country_iso: ISO, p_owner: addr, p_tx_hash: null, p_quoted_price_usd: null }),
+    body: JSON.stringify({ p_h3: h3, p_country_iso: ISO, p_owner: addr, p_tx_hash: null, p_quoted_price_usd: null, p_paid_usd: null, p_secret: process.env.INDEXER_API_SECRET }),
   });
   if (!r.ok) {
     const t = await r.text();

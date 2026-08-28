@@ -1,42 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { AtSign, Loader2, Mail, Wallet } from 'lucide-react';
+import { Info } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { PublicKey, Transaction } from '@solana/web3.js';
-import { Program, type Idl } from '@coral-xyz/anchor';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Flag } from '@/components/flag';
-import { cn } from '@/lib/utils';
-import { useActiveWallet } from '@/lib/active-wallet';
-import { tilePda } from '@/lib/tile-pda';
-import { getConnection, PROGRAM_ID } from '@/lib/anchor-client';
-import { dispatchClaimDone } from '@/lib/claim-events';
-import idl from '@/lib/anchor-idl.json';
-import type { Tiles } from '@/lib/anchor-types';
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
-const programIdPk = new PublicKey(PROGRAM_ID);
-
-type Method = 'wallet' | 'x' | 'email';
-
-const METHODS: ReadonlyArray<{ id: Method; label: string; icon: typeof Wallet; placeholder: string }> = [
-  { id: 'wallet', label: 'Wallet address', icon: Wallet, placeholder: 'Solana address…' },
-  { id: 'x', label: 'X handle', icon: AtSign, placeholder: '@handle' },
-  { id: 'email', label: 'Email', icon: Mail, placeholder: 'name@example.com' },
-];
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 /**
- * Three-tabbed transfer dialog.
- *  - Wallet address: real on-chain `transfer` instruction - the Tile PDA's
- *    owner field is reassigned, signed by the current owner.
- *  - X handle / Email: still queued-intent stubs (need a pending-transfer
- *    backend the recipient claims on sign-in).
+ * Free wallet-to-wallet transfers are deliberately CLOSED
+ * (docs/tokenomics.md: "no fee-free transfer path" - at a 5% market
+ * fee, free transfers would become the OTC loophole that drains the
+ * marketplace). Ownership changes settle through the fee-bearing
+ * market: list the hex, have the recipient buy it.
  */
 export function TileTransferDialog({
   tile,
@@ -45,231 +22,51 @@ export function TileTransferDialog({
   onOpenChange,
 }: {
   tile: ClaimedTile | null;
-  location: HexLocation | null;
+  location?: HexLocation | null;
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
-  const wallet = useActiveWallet();
-  const [method, setMethod] = useState<Method>('wallet');
-  const [value, setValue] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   if (!tile) return null;
-  const place = location?.neighborhood ?? location?.place ?? location?.countryName ?? 'Unmapped';
-
-  const close = () => {
-    onOpenChange(false);
-    window.setTimeout(() => {
-      setValue('');
-      setMethod('wallet');
-      setDone(false);
-      setError(null);
-    }, 200);
-  };
-
-  const validate = (): string | null => {
-    const trimmed = value.trim();
-    if (!trimmed) return 'Recipient required';
-    if (method === 'wallet') {
-      try {
-        new PublicKey(trimmed);
-        return null;
-      } catch {
-        return 'Not a valid Solana address';
-      }
-    }
-    if (method === 'x') {
-      const handle = trimmed.replace(/^@/, '');
-      if (!/^[A-Za-z0-9_]{1,15}$/.test(handle)) return 'Invalid X handle';
-      return null;
-    }
-    if (method === 'email') {
-      if (!EMAIL_RE.test(trimmed)) return 'Invalid email';
-      return null;
-    }
-    return null;
-  };
-
-  const submit = async () => {
-    const err = validate();
-    if (err) {
-      setError(err);
-      return;
-    }
-    setError(null);
-    setSubmitting(true);
-
-    if (method === 'wallet') {
-      try {
-        if (!tile) throw new Error('No tile');
-        if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
-          throw new Error('Wallet not connected');
-        }
-        const recipient = new PublicKey(value.trim());
-        const connection = getConnection();
-        const program = new Program<Tiles>(idl as Idl, { connection });
-        const [tilePk] = tilePda(tile.h3, programIdPk);
-
-        const ix = await program.methods
-          .transfer(recipient)
-          .accounts({ tile: tilePk, owner: wallet.publicKey })
-          .instruction();
-
-        const { blockhash } = await connection.getLatestBlockhash('confirmed');
-        const tx = new Transaction({
-          feePayer: wallet.publicKey,
-          recentBlockhash: blockhash,
-        }).add(ix);
-
-        const sim = await connection.simulateTransaction(tx, undefined, [wallet.publicKey]);
-        if (sim.value.err) {
-          const logs = sim.value.logs ?? [];
-          const programLog = logs.find(
-            (l) =>
-              l.includes('AnchorError') ||
-              l.includes('failed:') ||
-              l.includes('Program log: Error'),
-          );
-          throw new Error(programLog ?? `Simulation rejected: ${JSON.stringify(sim.value.err)}`);
-        }
-
-        const sig = await wallet.signAndSendTransaction(tx);
-        await connection.confirmTransaction(sig, 'confirmed');
-
-        // The tile just left this wallet - make /profile + the sidebar refetch.
-        dispatchClaimDone({ h3s: [tile.h3], txSig: sig });
-        setSubmitting(false);
-        setDone(true);
-      } catch (e: unknown) {
-        setSubmitting(false);
-        setError(e instanceof Error ? e.message : String(e));
-      }
-      return;
-    }
-
-    // X / Email - no backend yet; record intent + show queued confirmation.
-    await new Promise((r) => setTimeout(r, 800));
-    setSubmitting(false);
-    setDone(true);
-  };
-
-  const Icon = METHODS.find((m) => m.id === method)!.icon;
 
   return (
-    <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(next) : close())}>
-      <DialogContent className="sm:max-w-[460px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[420px]">
         <div className="space-y-1.5">
           <DialogPrimitive.Title className="text-lg font-semibold tracking-tight">
-            Transfer hex
+            Transfers settle through the market
           </DialogPrimitive.Title>
-          <DialogPrimitive.Description className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Flag code={location?.countryCode} size={14} /> {place} · Tier {tile.tier}
+          <DialogPrimitive.Description className="text-sm text-muted-foreground">
+            Every ownership change carries the marketplace fee - that rule is
+            what makes each hex&apos;s embedded $VAVA floor real.
           </DialogPrimitive.Description>
         </div>
 
-        {!done ? (
-          <>
-            <div className="space-y-4">
-              {/* Method picker */}
-              <div className="grid grid-cols-3 gap-2 rounded-md bg-muted/40 p-1">
-                {METHODS.map((m) => {
-                  const active = method === m.id;
-                  const MIcon = m.icon;
-                  return (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => {
-                        setMethod(m.id);
-                        setValue('');
-                        setError(null);
-                      }}
-                      className={cn(
-                        'flex flex-col items-center gap-1 rounded px-2 py-2 text-[11px] font-medium transition-colors',
-                        active
-                          ? 'bg-background text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
-                          : 'text-muted-foreground hover:text-foreground',
-                      )}
-                    >
-                      <MIcon size={14} />
-                      {m.label}
-                    </button>
-                  );
-                })}
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 rounded-md border border-border bg-muted/40 p-3">
+            {location?.countryCode && <Flag code={location.countryCode} size={22} />}
+            <div className="flex-1">
+              <div className="text-sm font-medium">
+                {location?.place ?? location?.countryName ?? 'Your hex'}
               </div>
+              <div className="font-mono text-xs text-muted-foreground">{tile.h3}</div>
+            </div>
+          </div>
 
-              {/* Recipient input */}
-              <div>
-                <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                  Send to
-                </label>
-                <div className="relative">
-                  <Icon
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  />
-                  <Input
-                    autoFocus
-                    value={value}
-                    onChange={(e) => {
-                      setValue(e.target.value);
-                      setError(null);
-                    }}
-                    placeholder={METHODS.find((m) => m.id === method)!.placeholder}
-                    className="h-10 pl-9 text-sm"
-                  />
-                </div>
-                {error && (
-                  <p className="mt-1.5 text-[11px] text-red-600">{error}</p>
-                )}
-                {method !== 'wallet' && !error && (
-                  <p className="mt-1.5 text-[11px] text-muted-foreground">
-                    Recipient claims the hex by signing in with this{' '}
-                    {method === 'x' ? 'X account' : 'email'}.
-                  </p>
-                )}
-              </div>
-            </div>
+          <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+            <Info size={14} className="mt-0.5 flex-shrink-0" />
+            <p className="leading-relaxed">
+              To hand this hex to someone: <b>list it for sale</b> at your
+              chosen price and let them buy it. The seller fee is 5% (3% for
+              barons); the hex&apos;s embedded $VAVA travels with it.
+            </p>
+          </div>
+        </div>
 
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button variant="ghost" onClick={close} disabled={submitting}>
-                Cancel
-              </Button>
-              <Button disabled={submitting} onClick={submit}>
-                {submitting && <Loader2 className="mr-2 animate-spin" size={14} />}
-                Send
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col items-center gap-3 py-6 text-center">
-              <div
-                className="grid h-10 w-10 place-items-center rounded-full text-lg"
-                style={{ background: 'rgba(94,234,212,0.18)', color: 'var(--brand, #5eead4)' }}
-              >
-                ✓
-              </div>
-              <p className="text-sm font-medium">
-                {method === 'wallet' ? 'Hex transferred' : 'Transfer queued'}
-              </p>
-              <p className="max-w-sm text-xs text-muted-foreground">
-                {method === 'wallet' ? 'Ownership moved on-chain to ' : 'We notified '}
-                <span className="font-mono text-foreground">
-                  {method === 'wallet' ? `${value.slice(0, 4)}…${value.slice(-4)}` : value}
-                </span>
-                {method !== 'wallet'
-                  ? '. They claim the hex on sign-in.'
-                  : '. It no longer appears in your portfolio.'}
-              </p>
-            </div>
-            <Button variant="outline" onClick={close} className="w-full">
-              Close
-            </Button>
-          </>
-        )}
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Got it
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
