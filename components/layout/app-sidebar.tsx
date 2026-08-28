@@ -194,9 +194,14 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
  * on mobile the nav lives in {@link MobileNav}'s slide-in drawer instead.
  */
 export function AppSidebar() {
+  const pathname = usePathname();
+  const isMap = pathname?.startsWith('/map') ?? false;
   return (
     <aside
-      className="sidebar-glass fixed bottom-[18px] left-[18px] top-[18px] z-30 hidden w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground md:flex"
+      className={cn(
+        'sidebar-glass fixed bottom-[18px] left-[18px] top-[18px] z-30 hidden w-[232px] flex-col rounded-[22px] px-4 pb-4 pt-[22px] text-foreground md:flex',
+        isMap && 'on-map-dark',
+      )}
       style={{ gap: 22 }}
     >
       <SidebarInner />
@@ -234,7 +239,10 @@ export function MobileNav() {
     <>
       {/* Top bar */}
       <div
-        className="sidebar-glass fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between px-4 text-foreground md:hidden"
+        className={cn(
+          'sidebar-glass fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between px-4 text-foreground md:hidden',
+          isMap && 'on-map-dark',
+        )}
       >
         <Link href="/" className="flex items-center gap-2.5">
           <BrandLogo size={30} variant={onDark ? 'white' : 'color'} />
@@ -271,6 +279,7 @@ export function MobileNav() {
       <aside
         className={cn(
           'sidebar-glass fixed bottom-0 left-0 top-0 z-50 flex w-[280px] max-w-[85vw] flex-col px-4 pb-4 pt-5 text-foreground transition-transform duration-200 ease-out md:hidden',
+          isMap && 'on-map-dark',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
         style={{ gap: 18 }}
