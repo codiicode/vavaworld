@@ -45,7 +45,7 @@ pub const MAX_TILES_PER_TX: usize = 20;
 // 10% haircut, which is burned.
 // =========================================================================
 pub const EMBEDDED_BPS: u64 = 1_500;
-pub const UNSTAKE_DELAY_SECS: i64 = 259_200; // 3 days
+pub const UNSTAKE_DELAY_SECS: i64 = 86_400; // 24 hours
 pub const PRESIDENT_BPS: u64 = 500;
 pub const RAZE_HAIRCUT_BPS: u64 = 1_000;
 pub const BPS_DENOMINATOR: u64 = 10_000;

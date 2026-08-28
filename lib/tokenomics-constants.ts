@@ -48,7 +48,7 @@ export const PRESIDENT_PRIMARY_BPS = 500;
 export const RAZE_HAIRCUT_BPS = 1_000;
 
 /** Unstake cooldown. */
-export const UNSTAKE_DELAY_SECS = 259_200; // 3 days
+export const UNSTAKE_DELAY_SECS = 86_400; // 24 hours
 
 /** Presidency: land floor + coup window. */
 export const PRESIDENT_MIN_HEXES = 250;

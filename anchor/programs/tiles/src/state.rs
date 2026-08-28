@@ -29,7 +29,7 @@ pub struct TierCounter {
 
 /// Per-wallet $VAVA stake. Tier thresholds (Citizen/Baron/President) are
 /// interpreted by consumers - the program only tracks amounts. Unstaking
-/// is two-step: begin_unstake starts the 3-day clock, withdraw_unstaked
+/// is two-step: begin_unstake starts the 24h clock, withdraw_unstaked
 /// releases after it. Re-calling begin_unstake resets the clock for the
 /// whole pending amount.
 #[account]

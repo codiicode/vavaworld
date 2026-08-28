@@ -55,7 +55,7 @@ export default function StakingPage() {
         <p className="mt-1.5 max-w-2xl text-sm text-foreground/70">
           Stake $VAVA to become a Citizen of VavaWorld. No yield, no promises —
           staking buys power: cheaper land, cheaper trading, and a seat at a
-          national throne. Unstaking takes 3 days.
+          national throne. Unstaking takes 24 hours.
         </p>
       </div>
 
@@ -168,7 +168,7 @@ export default function StakingPage() {
                 value={unstakeAmt}
                 onChange={setUnstakeAmt}
                 max={state?.staked ?? 0}
-                cta="Start 3-day unstake"
+                cta="Start 24h unstake"
                 disabled={busy}
                 onSubmit={(n) => {
                   void beginUnstake(n);
@@ -176,7 +176,7 @@ export default function StakingPage() {
                 }}
               />
               <p className="mt-2 text-[11px] text-foreground/55">
-                Starting a new unstake resets the 3-day clock for everything
+                Starting a new unstake resets the 24h clock for everything
                 already pending. Dropping below a tier removes its benefits
                 immediately.
               </p>

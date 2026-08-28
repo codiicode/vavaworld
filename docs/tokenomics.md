@@ -186,7 +186,7 @@ future lever, pending legal review.
 - Cosmetic layer (proposed, not locked): citizens' hexes get a
   visible glow on the map; barons may name their territory / set a
   banner. Unstaking turns it off.
-- **Unstake delay: 3 days.** Falling below a tier (unstake in
+- **Unstake delay: 24 hours.** Falling below a tier (unstake in
   progress) switches its benefits off immediately — same continuity
   rule as the throne.
 - Staked balance is public: leaderboard column, profile.
@@ -296,7 +296,7 @@ Treasury-funded floor support that buys land, not just tokens.
 3. ✅ Embedded VAVA: keeper converts escrowed SOL to market-bought
    $VAVA locked in the hex account (Jupiter TWAP on mainnet).
 4. ✅ Raze: 90% payout / 10% burned / land returns to unclaimed.
-5. ✅ Staking: stake / 3-day unstake / withdraw on-chain; tier ladder
+5. ✅ Staking: stake / 24h unstake / withdraw on-chain; tier ladder
    live at /staking.
 6. ✅ Secondary market: quoted 95/4/1 split (97/2/1 for barons, read
    from on-chain stake), on-chain payment verification, atomic

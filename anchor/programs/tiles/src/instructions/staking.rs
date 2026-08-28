@@ -66,7 +66,7 @@ pub fn stake_handler(ctx: Context<Stake>, amount: u64) -> Result<()> {
 }
 
 /// Start the unstake cooldown for part or all of the active stake.
-/// Resets the 3-day clock for the entire pending amount - documented
+/// Resets the 24h clock for the entire pending amount - documented
 /// behavior, keeps the account model trivial.
 #[derive(Accounts)]
 pub struct BeginUnstake<'info> {
