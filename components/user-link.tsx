@@ -24,8 +24,14 @@ export function UserLink({
   mono?: boolean;
 }) {
   const resolved = username ?? findUserByAddr(addr)?.username;
-  const handle = resolved ?? addr;
   const isUsername = resolved != null;
+  // No username → short-form the raw address so 44-char keys never blow out
+  // table rows (e.g. the activity feed).
+  const label = isUsername
+    ? `@${resolved}`
+    : addr.length > 12
+    ? `${addr.slice(0, 4)}…${addr.slice(-4)}`
+    : addr;
 
   return (
     <Link
@@ -40,7 +46,7 @@ export function UserLink({
         className,
       )}
     >
-      {isUsername ? `@${handle}` : handle}
+      {label}
     </Link>
   );
 }
