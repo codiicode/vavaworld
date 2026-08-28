@@ -23,7 +23,7 @@ const grouped = (n: number) => n.toLocaleString('en-US');
 /**
  * Primary-claim pricing for the active hex. Shows the live country floor
  * (3 decimals), claim count, and either a Claim button or the owner +
- * price paid. Polls every 5s so the floor tracks claims elsewhere.
+ * price paid. Polls every 15s (served from the CDN cache) so the floor tracks claims elsewhere.
  */
 export function HexPricingCard({ h3 }: { h3: string | null }) {
   const wallet = useActiveWallet();
@@ -61,11 +61,11 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
     setLoading(true);
     load().finally(() => setLoading(false));
     // Live floor updates - but pause polling while the tab is hidden so a
-    // backgrounded map doesn't keep hammering /api/hex-floor every 5s.
+    // backgrounded map doesn't keep hammering /api/hex-floor on the interval.
     const tick = () => {
       if (!document.hidden) void load();
     };
-    const t = window.setInterval(tick, 5000);
+    const t = window.setInterval(tick, 15000);
     const onVis = () => {
       if (!document.hidden) void load();
     };

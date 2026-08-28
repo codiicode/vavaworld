@@ -1,6 +1,12 @@
 {
   "installCommand": "npm install --legacy-peer-deps",
   "crons": [
-    { "path": "/api/keepalive", "schedule": "0 5 * * *" }
+    {
+      "path": "/api/keepalive",
+      "schedule": "0 5 * * *"
+    }
+  ],
+  "regions": [
+    "arn1"
   ]
 }

@@ -37,16 +37,18 @@ export function useCounters(): Counters {
 
   const fetchAll = useCallback(async () => {
     const conn = getConnection();
-    for (const tier of [1, 2, 3] as const) {
-      try {
-        const [pda] = counterPda(tier, programIdPk);
-        const ai = await conn.getAccountInfo(pda);
-        if (!ai) continue;
-        const sold = decodeCounter(ai.data as Buffer);
-        setCounters((c) => ({ ...c, [tier]: sold }));
-      } catch {
-        /* one tier failed - keep going */
-      }
+    try {
+      const pdas = ([1, 2, 3] as const).map((tier) => counterPda(tier, programIdPk)[0]);
+      const infos = await conn.getMultipleAccountsInfo(pdas);
+      setCounters((c) => {
+        const next = { ...c };
+        infos.forEach((ai, i) => {
+          if (ai) next[([1, 2, 3] as const)[i]] = decodeCounter(ai.data as Buffer);
+        });
+        return next;
+      });
+    } catch {
+      /* RPC hiccup - keep the previous values */
     }
   }, []);
 

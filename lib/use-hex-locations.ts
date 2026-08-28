@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { cellToParent } from 'h3-js';
 import { hexCenter } from './h3-utils';
 
 export type HexLocation = {
@@ -20,7 +21,15 @@ export type HexLocation = {
 
 // Module-level cache survives unmount/remount, scoped to the browser session.
 const cache = new Map<string, HexLocation>();
-const inflight = new Map<string, Promise<HexLocation | null>>();
+
+// Geocoding is shared per res-9 parent cell (~174 m edge): res-12 hexes are
+// metres apart, so a 1000-hex selection is one city block - geocoding each
+// hex individually meant up to 1000 Mapbox calls for identical answers
+// (slow, and it burns the geocoding quota). One call per parent covers all.
+const GEO_RES = 9;
+type GeoFields = Pick<HexLocation, 'countryCode' | 'countryName' | 'place' | 'neighborhood' | 'display'>;
+const parentCache = new Map<string, GeoFields>();
+const inflight = new Map<string, Promise<GeoFields | null>>();
 
 type MapboxFeature = {
   text?: string;
@@ -32,10 +41,26 @@ type MapboxFeature = {
 
 async function fetchOne(h3: string, token: string): Promise<HexLocation | null> {
   if (cache.has(h3)) return cache.get(h3)!;
-  if (inflight.has(h3)) return inflight.get(h3)!;
-
   const { lat, lng } = hexCenter(h3);
-  const promise = (async (): Promise<HexLocation | null> => {
+  const parent = cellToParent(h3, GEO_RES);
+
+  const cachedGeo = parentCache.get(parent);
+  if (cachedGeo) {
+    const loc: HexLocation = { h3, lat, lng, ...cachedGeo };
+    cache.set(h3, loc);
+    return loc;
+  }
+
+  const geo = await (inflight.get(parent) ?? fetchParentGeo(parent, token));
+  if (!geo) return null;
+  const loc: HexLocation = { h3, lat, lng, ...geo };
+  cache.set(h3, loc);
+  return loc;
+}
+
+function fetchParentGeo(parent: string, token: string): Promise<GeoFields | null> {
+  const { lat, lng } = hexCenter(parent);
+  const promise = (async (): Promise<GeoFields | null> => {
     try {
       // Use classic v5 geocoding - it returns context arrays we can mine for country / region
       const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=place,neighborhood,locality,country&limit=1&access_token=${token}`;
@@ -44,18 +69,15 @@ async function fetchOne(h3: string, token: string): Promise<HexLocation | null> 
       const data: { features?: MapboxFeature[] } = await r.json();
       const feat = data.features?.[0];
       if (!feat) {
-        const loc: HexLocation = {
-          h3,
-          lat,
-          lng,
+        const geo: GeoFields = {
           countryCode: null,
           countryName: null,
           place: null,
           neighborhood: null,
           display: 'Unmapped',
         };
-        cache.set(h3, loc);
-        return loc;
+        parentCache.set(parent, geo);
+        return geo;
       }
       // Pull country + city out of the feature + its context chain.
       let countryCode: string | null = null;
@@ -85,25 +107,16 @@ async function fetchOne(h3: string, token: string): Promise<HexLocation | null> 
         place && countryName ? `${place}, ${countryName}` :
         countryName ? countryName :
         place ?? 'Unmapped';
-      const loc: HexLocation = {
-        h3,
-        lat,
-        lng,
-        countryCode,
-        countryName,
-        place,
-        neighborhood,
-        display,
-      };
-      cache.set(h3, loc);
-      return loc;
+      const geo: GeoFields = { countryCode, countryName, place, neighborhood, display };
+      parentCache.set(parent, geo);
+      return geo;
     } catch {
       return null;
     } finally {
-      inflight.delete(h3);
+      inflight.delete(parent);
     }
   })();
-  inflight.set(h3, promise);
+  inflight.set(parent, promise);
   return promise;
 }
 

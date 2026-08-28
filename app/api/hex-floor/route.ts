@@ -19,8 +19,12 @@ export async function GET(req: Request) {
   }
   try {
     const data = await getHexFloor(h3);
+    // CDN-cache per hex: clients poll their selected hex on an interval, so
+    // s-maxage collapses every browser's polls into ~1 origin hit per window
+    // and stale-while-revalidate keeps responses instant while refreshing.
+    // The floor moves $0.00001 per claim - seconds of staleness is invisible.
     return NextResponse.json(data, {
-      headers: { 'Cache-Control': 'no-store' },
+      headers: { 'Cache-Control': 's-maxage=5, stale-while-revalidate=30' },
     });
   } catch (e) {
     return NextResponse.json(
