@@ -263,12 +263,23 @@ body {
   pointer-events: none;
 }
 
+/* The map right panel floats over the map, whose brightness varies wildly
+   (bright satellite, snow, water glare, the pale Standard style). The plain
+   .glass frost is too translucent there, so its white text washes out over
+   light areas. Pin a reliably dark base under the panel so the white text
+   always reads, matching how it already looks over the dimmed satellite and
+   the adjacent white-text search bar / live-claim chips. */
+.glass-panel {
+  background:
+    linear-gradient(135deg, rgba(12, 18, 34, 0.74) 0%, rgba(10, 15, 28, 0.66) 100%) !important;
+}
+
 .glass-panel::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(120% 60% at 50% -10%, rgba(255, 255, 255, 0.18), transparent 60%);
+  background: radial-gradient(120% 60% at 50% -10%, rgba(255, 255, 255, 0.10), transparent 60%);
   pointer-events: none;
 }
 
