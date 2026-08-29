@@ -3,16 +3,17 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Crown, Globe, Hexagon, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Coins, Crown, Globe, Hexagon, ShieldCheck, TrendingDown, TrendingUp, User as UserIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Flag } from '@/components/flag';
-import { Achievements } from '@/components/profile/achievements';
 import { ShareProfile } from '@/components/profile/share-profile';
 import type { MockUser } from '@/lib/mock-users';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { hexStaticMapUrl } from '@/lib/static-map';
 import { useHexLocations } from '@/lib/use-hex-locations';
+import { useStakedTier } from '@/lib/use-staked-tier';
+import { TIERS, type TierKey } from '@/lib/tokenomics-constants';
 import { cn } from '@/lib/utils';
 
 type OwnerData = {
@@ -72,6 +73,7 @@ export default function PublicProfilePage() {
       }
     : stubUser(decoded);
   const avatarUrl = owner?.avatarUrl ?? null;
+  const tier = useStakedTier(owner?.address ?? (decoded.length >= 32 ? decoded : null));
 
   const display = user.username ? `@${user.username}` : user.addr;
 
@@ -104,12 +106,7 @@ export default function PublicProfilePage() {
                   {display}
                 </h1>
                 <Flag code={user.country} size={18} />
-                {(user.presidentOf?.length ?? 0) > 0 && (
-                  <span className="flex items-center gap-1 rounded-full border border-amber-300/60 bg-gradient-to-br from-amber-300/40 to-orange-400/25 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-amber-700">
-                    <Crown size={11} className="fill-amber-400" />
-                    President
-                  </span>
-                )}
+                <TierBadge tier={tier} />
               </div>
               <div className="flex items-center gap-3 text-[11px] text-foreground/55">
                 <span className="font-mono">{user.addr}</span>
@@ -163,8 +160,6 @@ export default function PublicProfilePage() {
           />
         </div>
 
-        <Achievements user={user} />
-
         {owner?.recentHexes && owner.recentHexes.length > 0 && (
           <PropertyGrid hexes={owner.recentHexes} totalHexes={owner.hexes} />
         )}
@@ -202,6 +197,44 @@ export default function PublicProfilePage() {
         Live holdings from the VAVAWORLD register.
       </p>
     </div>
+  );
+}
+
+const TIER_BADGE: Record<
+  TierKey,
+  { icon: typeof UserIcon; cls: string; fill?: boolean }
+> = {
+  tourist: {
+    icon: UserIcon,
+    cls: 'border-white/50 bg-white/40 text-foreground/70',
+  },
+  citizen: {
+    icon: ShieldCheck,
+    cls: 'border-teal-400/50 bg-teal-400/15 text-teal-700 dark:text-teal-300',
+  },
+  baron: {
+    icon: Coins,
+    cls: 'border-violet-400/50 bg-violet-400/15 text-violet-700 dark:text-violet-300',
+  },
+  president: {
+    icon: Crown,
+    cls: 'border-amber-300/60 bg-gradient-to-br from-amber-300/40 to-orange-400/25 text-amber-700',
+    fill: true,
+  },
+};
+
+/** The ONLY badge system: the wallet's staking tier. */
+function TierBadge({ tier }: { tier: TierKey }) {
+  const meta = TIER_BADGE[tier];
+  const Icon = meta.icon;
+  const label = TIERS.find((t) => t.key === tier)?.name ?? 'Tourist';
+  return (
+    <span
+      className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide ${meta.cls}`}
+    >
+      <Icon size={11} className={meta.fill ? 'fill-amber-400' : undefined} />
+      {tier === 'president' ? 'President' : label}
+    </span>
   );
 }
 
