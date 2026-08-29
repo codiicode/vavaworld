@@ -5,6 +5,7 @@
  * The nav carries the real login / wallet actions.
  */
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Inter, Instrument_Serif } from 'next/font/google';
 import { useActiveWallet } from '@/lib/active-wallet';
@@ -32,12 +33,14 @@ const NAV_LINKS = [
 
 function Nav() {
   const wallet = useActiveWallet();
+  // Mobile-only dropdown: desktop shows the inline link row instead.
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="absolute inset-x-0 top-0 z-50 mx-auto flex w-full max-w-7xl items-center justify-between px-8 py-6">
+    <nav className="absolute inset-x-0 top-0 z-50 mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-5 md:px-8 md:py-6">
       <Link href="/" className="flex items-center">
         <span
-          className="text-xl tracking-[0.02em] text-white"
+          className="text-[15px] tracking-[0.02em] text-white md:text-xl"
           style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
         >
           VAVAWORLD
@@ -59,7 +62,7 @@ function Nav() {
       <div className="flex items-center gap-3">
         {!wallet.ready && <span style={{ width: 96 }} />}
         {wallet.ready && wallet.connected && (
-          <Link href="/profile" className={`${GLASS_PILL} px-6 py-2.5 text-sm`} style={GLASS_INSET}>
+          <Link href="/profile" className={`${GLASS_PILL} whitespace-nowrap px-4 py-2.5 text-sm md:px-6`} style={GLASS_INSET}>
             Profile
           </Link>
         )}
@@ -67,13 +70,62 @@ function Nav() {
           <button
             type="button"
             onClick={wallet.login}
-            className={`${GLASS_PILL} px-6 py-2.5 text-sm`}
+            className={`${GLASS_PILL} whitespace-nowrap px-4 py-2.5 text-sm md:px-6`}
             style={GLASS_INSET}
           >
             Log in
           </button>
         )}
+        <button
+          type="button"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          onClick={() => setMenuOpen((v) => !v)}
+          className={`${GLASS_PILL} grid h-[42px] w-[42px] place-items-center md:hidden`}
+          style={GLASS_INSET}
+        >
+          {menuOpen ? (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden>
+              <path d="M1 1h16M1 7h16M1 13h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          )}
+        </button>
       </div>
+
+      {menuOpen && (
+        <>
+          {/* Tap-outside catcher under the panel */}
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setMenuOpen(false)}
+            className="fixed inset-0 z-40 cursor-default bg-black/40 md:hidden"
+          />
+          <div
+            className="absolute inset-x-4 top-[86px] z-50 flex flex-col overflow-hidden rounded-2xl border border-white/15 md:hidden"
+            style={{
+              background: 'linear-gradient(160deg, rgba(16,22,38,0.92), rgba(8,12,24,0.94))',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12)',
+            }}
+          >
+            {NAV_LINKS.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                className="border-b border-white/[0.07] px-6 py-4 text-[15px] text-white/85 transition-colors last:border-b-0 hover:bg-white/[0.06] hover:text-white"
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </>
+      )}
     </nav>
   );
 }
