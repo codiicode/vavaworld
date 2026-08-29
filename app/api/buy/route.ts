@@ -1,7 +1,16 @@
 import { NextResponse } from 'next/server';
-import { Connection, PublicKey } from '@solana/web3.js';
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  TransactionInstruction,
+  sendAndConfirmTransaction,
+} from '@solana/web3.js';
+import bs58 from 'bs58';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getRpcUrl } from '@/lib/anchor-client';
+import { tilePda } from '@/lib/tile-pda';
 import {
   SECONDARY_FEE_BPS,
   PRESIDENT_SECONDARY_BPS,
@@ -50,6 +59,48 @@ async function sellerFeeBps(connection: Connection, seller: string): Promise<num
     return amount >= baronThreshold ? SECONDARY_FEE_BPS.baron : SECONDARY_FEE_BPS.standard;
   } catch {
     return SECONDARY_FEE_BPS.standard;
+  }
+}
+
+/**
+ * Keep the on-chain tile owner in sync after a listing sale (which
+ * settles via verified wallet transfers, not through the program).
+ * Without this, a previous owner's stale on-chain tile could still
+ * satisfy accept_bid's ownership check. Keeper-signed sync_owner.
+ */
+async function syncOwnerOnChain(
+  connection: Connection,
+  h3: string,
+  newOwner: string,
+): Promise<string | null> {
+  try {
+    const secret = process.env.KEEPER_SECRET_KEY;
+    if (!secret) return null;
+    const keeper = Keypair.fromSecretKey(bs58.decode(secret.trim()));
+    const [configPda] = PublicKey.findProgramAddressSync([Buffer.from('config')], PROGRAM_ID);
+    const disc = Buffer.from(
+      (idl as { instructions: Array<{ name: string; discriminator: number[] }> }).instructions.find(
+        (i) => i.name === 'sync_owner',
+      )!.discriminator,
+    );
+    const data = Buffer.alloc(8 + 8 + 32);
+    disc.copy(data, 0);
+    data.writeBigUInt64LE(BigInt('0x' + h3), 8);
+    new PublicKey(newOwner).toBuffer().copy(data, 16);
+    const ix = new TransactionInstruction({
+      programId: PROGRAM_ID,
+      keys: [
+        { pubkey: keeper.publicKey, isSigner: true, isWritable: false },
+        { pubkey: configPda, isSigner: false, isWritable: false },
+        { pubkey: tilePda(h3, PROGRAM_ID)[0], isSigner: false, isWritable: true },
+      ],
+      data,
+    });
+    const tx = new Transaction().add(ix);
+    return await sendAndConfirmTransaction(connection, tx, [keeper], { commitment: 'confirmed' });
+  } catch (e) {
+    console.error('sync_owner failed', e);
+    return null;
   }
 }
 
@@ -178,5 +229,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 409 });
   }
 
-  return NextResponse.json({ ok: true, sale: data });
+  const syncSig = await syncOwnerOnChain(connection, quote.h3Id, buyer);
+  return NextResponse.json({ ok: true, sale: data, syncSig });
 }

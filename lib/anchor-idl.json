@@ -510,6 +510,194 @@
           "type": "pubkey"
         }
       ]
+    },
+    {
+      "name": "place_bid",
+      "discriminator": [
+        238,
+        77,
+        148,
+        91,
+        200,
+        151,
+        92,
+        146
+      ],
+      "accounts": [
+        {
+          "name": "bidder",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "tile"
+        },
+        {
+          "name": "bid_escrow",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "h3_id",
+          "type": "u64"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancel_bid",
+      "discriminator": [
+        40,
+        243,
+        190,
+        217,
+        208,
+        253,
+        86,
+        206
+      ],
+      "accounts": [
+        {
+          "name": "bidder",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "bid_escrow",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "h3_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "decline_bid",
+      "discriminator": [
+        16,
+        153,
+        18,
+        122,
+        245,
+        219,
+        143,
+        244
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true
+        },
+        {
+          "name": "tile"
+        },
+        {
+          "name": "bidder",
+          "writable": true
+        },
+        {
+          "name": "bid_escrow",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "h3_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "accept_bid",
+      "discriminator": [
+        196,
+        191,
+        1,
+        229,
+        144,
+        172,
+        122,
+        227
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "tile",
+          "writable": true
+        },
+        {
+          "name": "bidder",
+          "writable": true
+        },
+        {
+          "name": "bid_escrow",
+          "writable": true
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "seller_stake"
+        }
+      ],
+      "args": [
+        {
+          "name": "h3_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "sync_owner",
+      "discriminator": [
+        46,
+        5,
+        232,
+        198,
+        59,
+        158,
+        160,
+        119
+      ],
+      "accounts": [
+        {
+          "name": "keeper",
+          "signer": true
+        },
+        {
+          "name": "config"
+        },
+        {
+          "name": "tile",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "h3_id",
+          "type": "u64"
+        },
+        {
+          "name": "new_owner",
+          "type": "pubkey"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -564,6 +752,19 @@
         192,
         255
       ]
+    },
+    {
+      "name": "BidEscrow",
+      "discriminator": [
+        146,
+        219,
+        14,
+        4,
+        42,
+        183,
+        243,
+        215
+      ]
     }
   ],
   "errors": [
@@ -605,7 +806,7 @@
     {
       "code": 6007,
       "name": "InvalidH3",
-      "msg": "Invalid h3 cell \u2014 could not derive coordinates"
+      "msg": "Invalid h3 cell — could not derive coordinates"
     },
     {
       "code": 6008,
@@ -799,6 +1000,34 @@
           },
           {
             "name": "unstake_available_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BidEscrow",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bidder",
+            "type": "pubkey"
+          },
+          {
+            "name": "h3_id",
+            "type": "u64"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "created_at",
             "type": "i64"
           },
           {

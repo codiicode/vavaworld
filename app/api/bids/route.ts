@@ -1,45 +1,58 @@
 import { NextResponse } from 'next/server';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { getServerSupabase } from '@/lib/supabase-server';
-import { verifySignedAction } from '@/lib/server-verify';
+import { getRpcUrl } from '@/lib/anchor-client';
+import { bidEscrowPda } from '@/lib/tile-pda';
+import idl from '@/lib/anchor-idl.json';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
+const PROGRAM_ID = new PublicKey((idl as { address: string }).address);
 
 /**
- * POST /api/bids { h3, bidder, priceSol, message, signature }
- * Message: "vava:bid:<h3>:<priceSol>:<bidder>:ts=<ms>"
- * Bids are free signed intents (no escrow) - money only moves when an
- * accepted bid is settled through /api/buy's verified payment path.
+ * POST /api/bids { h3, bidder }
+ * Mirrors an ON-CHAIN bid escrow into the database and notifies the
+ * owner. The escrow PDA is the source of truth: it only exists if the
+ * bidder's SOL is actually locked, so no signature is needed here -
+ * anyone can trigger the mirror, it can only mirror reality. Re-mirrors
+ * of an unchanged escrow are no-ops (no duplicate notifications).
  */
 export async function POST(req: Request) {
-  let body: {
-    h3?: string;
-    bidder?: string;
-    priceSol?: number;
-    message?: string;
-    signature?: string;
-  };
+  let body: { h3?: string; bidder?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'invalid json' }, { status: 400 });
   }
-  const { h3, bidder, priceSol, message, signature } = body;
-  if (!h3 || !bidder || !priceSol || !message || !signature) {
-    return NextResponse.json(
-      { error: 'h3, bidder, priceSol, message, signature required' },
-      { status: 400 },
-    );
+  const { h3, bidder } = body;
+  if (!h3 || !bidder || !/^[0-9a-fA-F]{15,17}$/.test(h3)) {
+    return NextResponse.json({ error: 'h3, bidder required' }, { status: 400 });
   }
-  const sig = verifySignedAction({
-    address: bidder,
-    message,
-    signatureB58: signature,
-    expectPrefix: `vava:bid:${h3}:${priceSol}:${bidder}:`,
-  });
-  if (!sig.ok) return NextResponse.json({ error: sig.error }, { status: 401 });
+  let bidderPk: PublicKey;
+  try {
+    bidderPk = new PublicKey(bidder);
+  } catch {
+    return NextResponse.json({ error: 'invalid bidder address' }, { status: 400 });
+  }
+
+  // Source of truth: the escrow PDA and its locked amount.
+  const connection = new Connection(getRpcUrl(), 'confirmed');
+  const escrow = await connection.getAccountInfo(bidEscrowPda(h3, bidderPk, PROGRAM_ID)[0]);
+  if (!escrow || !escrow.owner.equals(PROGRAM_ID) || escrow.data.length < 48) {
+    return NextResponse.json({ error: 'No on-chain bid escrow found for this hex/bidder' }, { status: 404 });
+  }
+  // BidEscrow layout: 8 disc + 32 bidder + 8 h3 + 8 amount (LE)
+  const escrowBidder = new PublicKey(escrow.data.subarray(8, 40));
+  if (!escrowBidder.equals(bidderPk)) {
+    return NextResponse.json({ error: 'Escrow bidder mismatch' }, { status: 400 });
+  }
+  const amount = escrow.data.readBigUInt64LE(48);
+  const priceSol = Number(amount) / 1e9;
+  if (priceSol <= 0) {
+    return NextResponse.json({ error: 'Escrow is empty' }, { status: 400 });
+  }
 
   const sb = getServerSupabase();
   const { data, error } = await sb.rpc('place_bid', {

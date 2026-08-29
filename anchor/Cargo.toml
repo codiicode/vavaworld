@@ -6,9 +6,13 @@ resolver = "2"
 overflow-checks = true
 # fat LTO miscompiles h3o under platform-tools v1.54 (h3 index ends up as a
 # write address -> "Access violation in unallocated region" in claim).
-# Thin/no LTO generates correct code; binary is slightly larger.
-lto = false
+# Thin/no LTO generates correct code; thin keeps the binary small enough
+# to fit the devnet deploy budget. NEVER set "fat".
+lto = "thin"
 codegen-units = 1
+# Size-optimized: the deployed programdata budget on devnet is tight and
+# opt-level z keeps behavior identical (validated by the smoke suite).
+opt-level = "z"
 [profile.release.build-override]
 opt-level = 3
 incremental = false

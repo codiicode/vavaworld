@@ -43,6 +43,21 @@ pub struct StakeAccount {
 }
 // Disc 8 + 57 = 65 bytes
 
+/// SOL escrowed behind a live offer on a claimed hex. The PDA account
+/// itself holds the lamports (rent + amount), so funds are locked the
+/// moment the bid is placed: accept splits them seller/treasury and
+/// flips the tile atomically, cancel/decline refunds by closing.
+#[account]
+#[derive(InitSpace)]
+pub struct BidEscrow {
+    pub bidder: Pubkey,   // 32
+    pub h3_id: u64,       // 8
+    pub amount: u64,      // 8 - escrowed lamports on top of rent
+    pub created_at: i64,  // 8
+    pub bump: u8,         // 1
+}
+// Disc 8 + 57 = 65 bytes
+
 /// Global protocol config. The $VAVA mint is INJECTED, never hardcoded:
 /// devnet runs a stand-in SPL mint with pump.fun-identical properties
 /// (6 decimals, 1B supply, mint authority revoked); on launch day the

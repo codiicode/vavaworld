@@ -7,14 +7,15 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Flag } from '@/components/flag';
 import { useActiveWallet } from '@/lib/active-wallet';
-import { placeBid } from '@/lib/bids';
+import { placeBidOnChain } from '@/lib/bid-chain';
 
 type Phase = 'input' | 'signing' | 'done' | 'error';
 
 /**
  * Make an offer on any claimed hex - listed or not, and below ask is
- * fine. The bid is a signed intent; the owner gets notified and can
- * accept (which reserves the hex for you at your price) or decline.
+ * fine. The offered SOL is locked in an on-chain escrow the moment the
+ * bid is placed: accept settles instantly, decline/withdraw refunds
+ * automatically.
  */
 export function BidDialog({
   h3,
@@ -63,18 +64,17 @@ export function BidDialog({
 
   const submit = async () => {
     if (!valid) return;
-    if (!wallet.connected || !wallet.publicKey || !wallet.signMessage) {
+    if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
       setError('Connect a wallet first');
       return;
     }
     setError(null);
     setPhase('signing');
     try {
-      await placeBid({
+      await placeBidOnChain({
+        wallet,
         h3,
-        bidder: wallet.publicKey.toBase58(),
-        priceSol: parsed,
-        signMessage: wallet.signMessage,
+        lamports: Math.round(parsed * 1e9),
       });
       setPhase('done');
       onPlaced?.();
@@ -93,8 +93,8 @@ export function BidDialog({
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="text-sm text-muted-foreground">
             {phase === 'done'
-              ? 'The owner has been notified. If they accept, the hex is reserved for you at your price.'
-              : 'Name your price. No funds move unless the owner accepts and you complete the purchase.'}
+              ? 'Your SOL is locked in escrow and the owner has been notified. Accept makes the hex yours instantly; decline refunds you automatically.'
+              : 'Name your price. The amount is held in a secure on-chain escrow - refunded in full if the owner declines or you withdraw.'}
           </DialogPrimitive.Description>
         </div>
 
@@ -145,7 +145,7 @@ export function BidDialog({
           {phase === 'done' && (
             <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-900 dark:text-emerald-200">
               <CheckCircle2 size={15} />
-              Offer of {parsed.toFixed(3)} SOL placed.
+              {parsed.toFixed(3)} SOL locked in escrow - offer live.
             </div>
           )}
 

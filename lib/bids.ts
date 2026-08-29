@@ -1,8 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import bs58 from 'bs58';
 
+/**
+ * Database mirror of the on-chain bid escrows. All actions (place,
+ * cancel, decline, accept) settle on-chain first - see lib/bid-chain.ts
+ * - and are then mirrored here for querying + notifications.
+ */
 export type DbBid = {
   id: string;
   h3_id: string;
@@ -12,60 +16,6 @@ export type DbBid = {
   created_at: string;
   closed_at: string | null;
 };
-
-/**
- * Place a bid on a claimed hex (listed or not). A signed intent, no
- * escrow - money only moves when the owner accepts and the bidder
- * settles through the verified buy flow.
- */
-export async function placeBid(args: {
-  h3: string;
-  bidder: string;
-  priceSol: number;
-  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
-}): Promise<DbBid> {
-  const message = `vava:bid:${args.h3}:${args.priceSol}:${args.bidder}:ts=${Date.now()}`;
-  const sig = await args.signMessage(new TextEncoder().encode(message));
-  const res = await fetch('/api/bids', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      h3: args.h3,
-      bidder: args.bidder,
-      priceSol: args.priceSol,
-      message,
-      signature: bs58.encode(sig),
-    }),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? 'Bid failed');
-  return json.bid as DbBid;
-}
-
-/** Accept/decline (owner) or cancel (bidder) a bid - signed intent. */
-export async function respondBid(args: {
-  bidId: string;
-  actor: string;
-  action: 'accept' | 'decline' | 'cancel';
-  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
-}): Promise<DbBid> {
-  const message = `vava:bid-${args.action}:${args.bidId}:${args.actor}:ts=${Date.now()}`;
-  const sig = await args.signMessage(new TextEncoder().encode(message));
-  const res = await fetch('/api/bids/respond', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      bidId: args.bidId,
-      actor: args.actor,
-      action: args.action,
-      message,
-      signature: bs58.encode(sig),
-    }),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? `Bid ${args.action} failed`);
-  return json.bid as DbBid;
-}
 
 /** Active bids on one hex, highest first. `refresh()` refetches after a write. */
 export function useBidsForHex(h3: string | null) {

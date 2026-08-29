@@ -15,9 +15,10 @@ import {
 import { Flag } from '@/components/flag';
 import { UserLink } from '@/components/user-link';
 import { useActiveWallet } from '@/lib/active-wallet';
+import type { ActiveWallet } from '@/lib/wallet-context';
 import { useNotifications, type DbNotification } from '@/lib/use-notifications';
 import { useHexLocations } from '@/lib/use-hex-locations';
-import { respondBid } from '@/lib/bids';
+import { acceptBidOnChain, declineBidOnChain } from '@/lib/bid-chain';
 
 const CARD = 'rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md';
 
@@ -91,8 +92,7 @@ export default function NotificationsPage() {
                 (n.payload.h3_id ? locations.get(n.payload.h3_id)?.countryCode : undefined) ??
                 undefined
               }
-              viewer={wallet.address}
-              signMessage={wallet.signMessage}
+              wallet={wallet}
             />
           ))}
         </div>
@@ -105,14 +105,12 @@ function NotificationRow({
   n,
   place,
   countryCode,
-  viewer,
-  signMessage,
+  wallet,
 }: {
   n: DbNotification;
   place: string | null;
   countryCode?: string;
-  viewer: string | null;
-  signMessage: ((m: Uint8Array) => Promise<Uint8Array>) | null;
+  wallet: ActiveWallet;
 }) {
   const [acting, setActing] = useState<'accept' | 'decline' | null>(null);
   const [outcome, setOutcome] = useState<'accepted' | 'declined' | null>(null);
@@ -123,11 +121,17 @@ function NotificationRow({
   const hexHref = p.h3_id ? `/h/${encodeURIComponent(p.h3_id)}` : '/map';
 
   const act = async (action: 'accept' | 'decline') => {
-    if (!p.bid_id || !viewer || !signMessage) return;
+    if (!p.bid_id || !p.h3_id || !p.bidder || !wallet.signAndSendTransaction) return;
     setError(null);
     setActing(action);
     try {
-      await respondBid({ bidId: p.bid_id, actor: viewer, action, signMessage });
+      // On-chain settlement: accept splits the escrow (95% to you) and
+      // hands over the hex atomically; decline refunds the bidder.
+      if (action === 'accept') {
+        await acceptBidOnChain({ wallet, h3: p.h3_id, bidId: p.bid_id, bidder: p.bidder });
+      } else {
+        await declineBidOnChain({ wallet, h3: p.h3_id, bidId: p.bid_id, bidder: p.bidder });
+      }
       setOutcome(action === 'accept' ? 'accepted' : 'declined');
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -167,7 +171,7 @@ function NotificationRow({
                 <>
                   Your <b className="tabular-nums">{Number(p.price_sol).toFixed(3)} SOL</b> offer on{' '}
                   <HexLink href={hexHref} label={where} countryCode={countryCode} /> was accepted -
-                  complete the purchase to take ownership.
+                  the hex is yours.
                 </>
               )}
               {n.type === 'bid_declined' && (
@@ -230,19 +234,18 @@ function NotificationRow({
           )}
           {outcome === 'accepted' && (
             <p className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-300">
-              Accepted - the hex is reserved for the bidder at their price until they complete the
-              purchase.
+              Sold - the escrowed SOL landed in your wallet and the hex transferred to the buyer.
             </p>
           )}
           {outcome === 'declined' && (
-            <p className="mt-2 text-xs text-foreground/60">Declined.</p>
+            <p className="mt-2 text-xs text-foreground/60">Declined - the bidder was refunded.</p>
           )}
-          {n.type === 'bid_accepted' && p.listing_id && (
+          {n.type === 'bid_accepted' && (
             <Link
-              href={`/marketplace/${p.listing_id}`}
+              href={hexHref}
               className="mt-2.5 inline-flex h-8 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-emerald-500"
             >
-              Complete purchase
+              View your hex
               <ArrowUpRight size={12} />
             </Link>
           )}

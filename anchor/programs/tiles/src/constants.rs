@@ -50,6 +50,14 @@ pub const PRESIDENT_BPS: u64 = 500;
 pub const RAZE_HAIRCUT_BPS: u64 = 1_000;
 pub const BPS_DENOMINATOR: u64 = 10_000;
 
+// Secondary-market fee, seller-side (docs/tokenomics.md): 5% standard,
+// 3% for barons (>= 500k $VAVA actively staked, base units at 6 dp).
+// The president's 1% lives inside the fee and routes to treasury until
+// thrones settle on-chain.
+pub const SECONDARY_FEE_BPS_STANDARD: u64 = 500;
+pub const SECONDARY_FEE_BPS_BARON: u64 = 300;
+pub const BARON_STAKE_THRESHOLD: u64 = 500_000_000_000;
+
 // =========================================================================
 // 102 CITIES — (lat_µd, lng_µd, t1_lng_delta_µd, t2_lng_delta_µd)
 // =========================================================================

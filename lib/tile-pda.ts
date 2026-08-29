@@ -7,6 +7,19 @@ export function tilePda(h3Hex: string, programId: PublicKey): [PublicKey, number
   return PublicKey.findProgramAddressSync([Buffer.from('tile'), buf], programId);
 }
 
+export function bidEscrowPda(
+  h3Hex: string,
+  bidder: PublicKey,
+  programId: PublicKey,
+): [PublicKey, number] {
+  const buf = Buffer.alloc(8);
+  buf.writeBigUInt64LE(BigInt('0x' + h3Hex), 0);
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from('bid'), buf, bidder.toBuffer()],
+    programId,
+  );
+}
+
 export function counterPda(tier: 1 | 2 | 3, programId: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from('counter'), Buffer.from([tier])],

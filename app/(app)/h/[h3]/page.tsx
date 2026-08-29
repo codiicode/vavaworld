@@ -12,7 +12,8 @@ import { Flag } from '@/components/flag';
 import { StreetViewButton } from '@/components/marketplace/street-view-button';
 import { UserLink } from '@/components/user-link';
 import { useActiveWallet } from '@/lib/active-wallet';
-import { respondBid, useBidsForHex, type DbBid } from '@/lib/bids';
+import { useBidsForHex, type DbBid } from '@/lib/bids';
+import { acceptBidOnChain, cancelBidOnChain, declineBidOnChain } from '@/lib/bid-chain';
 import { hexCenter } from '@/lib/h3-utils';
 import { hexStaticMapUrl } from '@/lib/static-map';
 import { classifyTier } from '@/lib/tier';
@@ -342,11 +343,19 @@ function BidsCard({
   const isOwner = viewer === owner;
 
   const act = async (bid: DbBid, action: 'accept' | 'decline' | 'cancel') => {
-    if (!viewer || !wallet.signMessage) return;
+    if (!viewer || !wallet.signAndSendTransaction) return;
     setError(null);
     setActingOn(bid.id);
     try {
-      await respondBid({ bidId: bid.id, actor: viewer, action, signMessage: wallet.signMessage });
+      // Every action settles on-chain: accept splits the escrow and
+      // flips the tile atomically, decline/cancel refund the bidder.
+      if (action === 'accept') {
+        await acceptBidOnChain({ wallet, h3, bidId: bid.id, bidder: bid.bidder });
+      } else if (action === 'decline') {
+        await declineBidOnChain({ wallet, h3, bidId: bid.id, bidder: bid.bidder });
+      } else {
+        await cancelBidOnChain({ wallet, h3, bidId: bid.id });
+      }
       refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

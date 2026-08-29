@@ -52,4 +52,8 @@ pub enum TilesError {
     UnstakeNotReady,
     #[msg("No pending unstake to withdraw")]
     NothingPending,
+    #[msg("Cannot bid on your own tile")]
+    SelfBid,
+    #[msg("Bid escrow is empty")]
+    BidEmpty,
 }
