@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Instrument_Serif } from 'next/font/google';
 import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
@@ -14,24 +15,18 @@ import { getConnection } from '@/lib/anchor-client';
 import { preflight } from '@/lib/preflight';
 import { dispatchClaimDone } from '@/lib/claim-events';
 import { PRICING, SOL_USD } from '@/lib/pricing';
+import { Flag } from '@/components/flag';
+
+const totalSerif = Instrument_Serif({ weight: '400', style: 'italic', subsets: ['latin'], display: 'swap' });
 
 const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY;
 const treasuryPk = TREASURY_ADDRESS ? new PublicKey(TREASURY_ADDRESS) : null;
 
-const uiLabel: React.CSSProperties = {
-  fontFamily: "'Inter', sans-serif",
-  fontSize: '11px',
-  letterSpacing: '0.22em',
-  textTransform: 'uppercase',
-  color: 'var(--dim)',
-  fontWeight: 500,
-};
-
-const monoNum: React.CSSProperties = {
-  fontFamily: "'Inter', sans-serif",
-  fontSize: '12px',
-  fontFeatureSettings: '"tnum"',
-};
+// Fixed white-on-dark-glass, matching the /map chrome the modal floats over.
+const EYEBROW =
+  'text-[11px] font-semibold uppercase tracking-[0.2em] text-white/55';
+const DARK_PILL =
+  'rounded-full border border-white/20 bg-white/[0.06] text-white transition-colors hover:bg-white/[0.12]';
 
 type State = 'review' | 'signing' | 'confirmed' | 'error';
 
@@ -210,140 +205,183 @@ export function ClaimModal({
     }
   };
 
-  const primaryBtn: React.CSSProperties = {
-    fontFamily: "'Inter', sans-serif",
-    fontSize: '13.5px',
-    fontWeight: 500,
-    background: 'var(--signal)',
-    color: '#ffffff',
-    border: '1.5px solid var(--signal)',
-    borderRadius: 999,
-  };
-
-  const ghostBtn: React.CSSProperties = {
-    fontFamily: "'Inter', sans-serif",
-    fontSize: '13.5px',
-    fontWeight: 500,
-    border: '1px solid var(--hairline)',
-    background: 'transparent',
-    color: 'var(--ink)',
-    borderRadius: 999,
-  };
+  // Group claimable hexes per country for the review list - a wall of raw
+  // h3 ids says nothing; flag + place + running price does.
+  const groups = (() => {
+    const m = new Map<
+      string,
+      {
+        iso: string;
+        name: string;
+        rows: Array<{ h3: string; label: string; tier: 1 | 2 | 3; usd: number }>;
+        usd: number;
+      }
+    >();
+    items.forEach((it, i) => {
+      const loc = locations.get(it.h3);
+      const iso = (loc?.countryCode ?? 'intl').toLowerCase();
+      const g = m.get(iso) ?? {
+        iso,
+        name: loc?.countryName ?? 'Locating…',
+        rows: [],
+        usd: 0,
+      };
+      if (loc?.countryName) g.name = loc.countryName;
+      g.rows.push({
+        h3: it.h3,
+        label: loc?.neighborhood ?? loc?.place ?? loc?.countryName ?? '…',
+        tier: it.tier,
+        usd: perItemUsd[i],
+      });
+      g.usd += perItemUsd[i];
+      m.set(iso, g);
+    });
+    return Array.from(m.values());
+  })();
+  const showRows = items.length <= 12;
 
   return (
     <div
-      className="force-light fixed inset-0 z-30 grid place-items-center"
+      className="fixed inset-0 z-[60] grid place-items-center p-4"
       style={{
-        background: 'rgba(29, 94, 149, 0.32)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
+        background: 'rgba(4, 8, 18, 0.55)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
       }}
     >
       <div
-        className="relative w-[calc(100vw-24px)] max-w-[460px] overflow-hidden p-6 md:p-8"
+        className="relative flex max-h-[86vh] w-full max-w-[440px] flex-col overflow-hidden rounded-[24px] p-6 text-white md:p-7"
         style={{
-          background: 'rgba(255, 255, 255, 0.92)',
-          backdropFilter: 'blur(14px) saturate(140%)',
-          WebkitBackdropFilter: 'blur(14px) saturate(140%)',
-          border: '1.5px solid var(--hairline)',
-          borderRadius: 18,
+          background:
+            'linear-gradient(150deg, rgba(16, 24, 44, 0.94) 0%, rgba(9, 14, 28, 0.96) 100%)',
+          border: '1px solid rgba(255,255,255,0.14)',
+          boxShadow:
+            '0 32px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.14)',
+          backdropFilter: 'blur(28px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(28px) saturate(160%)',
         }}
       >
-        <div className="flex items-baseline justify-between mb-6">
-          <h2 style={uiLabel}>Claim · {items.length} {items.length === 1 ? 'hex' : 'hexes'}</h2>
+        {/* Soft top shine, same trick as .glass-panel::after */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(130% 55% at 50% -12%, rgba(94,234,212,0.10), transparent 60%)',
+          }}
+        />
+
+        <div className="relative mb-5 flex items-start justify-between">
+          <div>
+            <div className={EYEBROW}>Claim land</div>
+            <div className="mt-1.5 text-[22px] font-semibold leading-tight tracking-tight">
+              {items.length} {items.length === 1 ? 'hex' : 'hexes'}
+              {groups.length === 1 && groups[0].name !== 'Locating…' && (
+                <span className="text-white/60"> · {groups[0].name}</span>
+              )}
+            </div>
+          </div>
           <button
             onClick={onClose}
-            style={{ ...uiLabel, color: 'var(--dim-2)', cursor: 'pointer' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--ink)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--dim-2)')}
             aria-label="Close"
+            className="grid h-9 w-9 flex-none place-items-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white"
           >
-            ✕
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
           </button>
         </div>
 
         {state === 'review' && (
           <>
             {excludedCount > 0 && (
-              <p
-                className="mb-4 rounded-md px-3 py-2 text-[12px] leading-relaxed"
-                style={{
-                  background: 'rgba(245, 158, 11, 0.12)',
-                  border: '1px solid rgba(245, 158, 11, 0.35)',
-                  color: '#92400e',
-                }}
-              >
+              <p className="relative mb-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3.5 py-2.5 text-[12px] leading-relaxed text-amber-100">
                 {excludedCount} selected {excludedCount === 1 ? 'hex is' : 'hexes are'} already
-                owned by someone else and excluded - you only pay for the {items.length} below.
+                owned and excluded - you only pay for the {items.length} below.
               </p>
             )}
+
             {items.length === 0 ? (
-              <p className="mb-5 text-[13px]" style={{ color: 'var(--dim)' }}>
+              <p className="relative mb-5 text-[13.5px] text-white/65">
                 Every hex in this selection is already owned. Pick free hexes to claim.
               </p>
             ) : (
-            <ul
-              className="max-h-64 overflow-y-auto mb-5"
-              style={{ borderTop: '1px solid var(--hair-2)', borderBottom: '1px solid var(--hair-2)' }}
-            >
-              {items.map((it) => (
-                <li
-                  key={it.h3}
-                  className="flex justify-between px-1 py-2.5"
-                  style={{ borderBottom: '1px solid var(--hair-2)' }}
-                >
-                  <span style={{ ...monoNum, color: 'var(--ink-2)' }}>{it.h3}</span>
-                  <span style={{ ...uiLabel, fontSize: '10px' }}>T{it.tier}</span>
-                </li>
-              ))}
-            </ul>
+              <div className="relative -mx-1 mb-5 min-h-0 flex-1 overflow-y-auto px-1">
+                <div className="flex flex-col gap-2.5">
+                  {groups.map((g) => (
+                    <div
+                      key={g.iso}
+                      className="rounded-2xl border border-white/10 bg-white/[0.05] px-3.5 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <Flag code={g.iso} size={20} />
+                          <span className="truncate text-[14.5px] font-semibold">{g.name}</span>
+                          <span className="flex-none rounded-full bg-white/10 px-2 py-0.5 text-[11px] tabular-nums text-white/70">
+                            {g.rows.length} {g.rows.length === 1 ? 'hex' : 'hexes'}
+                          </span>
+                        </div>
+                        <span className="flex-none text-[14px] font-semibold tabular-nums">
+                          ${g.usd.toFixed(g.usd < 10 ? 4 : 2)}
+                        </span>
+                      </div>
+                      {showRows && (
+                        <div className="mt-2.5 flex flex-col border-t border-white/10 pt-1">
+                          {g.rows.map((r) => (
+                            <div
+                              key={r.h3}
+                              className="flex items-center justify-between gap-3 py-[7px]"
+                            >
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span
+                                  className="flex-none rounded px-1.5 py-0.5 font-mono text-[9.5px] font-medium uppercase tracking-wider"
+                                  style={{
+                                    background: 'rgba(94, 234, 212, 0.14)',
+                                    color: 'var(--brand)',
+                                  }}
+                                >
+                                  T{r.tier}
+                                </span>
+                                <span className="truncate text-[13px] text-white/85">
+                                  {r.label}
+                                </span>
+                              </div>
+                              <span className="flex-none text-[12.5px] tabular-nums text-white/70">
+                                ${r.usd.toFixed(4)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
-            <div className="flex items-baseline justify-between mb-2">
-              <span style={uiLabel}>Total</span>
-              <span
-                style={{
-                  fontFamily: "'Cormorant Garamond', serif",
-                  fontStyle: 'italic',
-                  fontWeight: 400,
-                  fontSize: '36px',
-                  lineHeight: 1,
-                  color: 'var(--signal)',
-                  fontFeatureSettings: '"tnum"',
-                }}
-              >
-                ${totalUsd.toFixed(totalUsd < 10 ? 4 : 2)}
-              </span>
+
+            <div className="relative flex items-end justify-between border-t border-white/10 pt-4">
+              <span className={EYEBROW}>Total</span>
+              <div className="text-right">
+                <div
+                  className={`${totalSerif.className} text-[34px] italic leading-none tabular-nums`}
+                  style={{ color: '#5eead4', textShadow: '0 0 24px rgba(94,234,212,0.35)' }}
+                >
+                  ${totalUsd.toFixed(totalUsd < 10 ? 4 : 2)}
+                </div>
+                <div className="mt-1.5 text-[11.5px] tabular-nums text-white/50">
+                  ≈ {totalSol.toFixed(6)} SOL · ${solUsd.toFixed(2)}/SOL
+                </div>
+              </div>
             </div>
-            <div
-              className="mb-7 flex items-center justify-end gap-1"
-              style={{ ...monoNum, color: 'var(--dim)' }}
-            >
-              <span>≈ {totalSol.toFixed(6)} SOL</span>
-              <span style={{ opacity: 0.5 }}> · @ ${solUsd.toFixed(2)}/SOL</span>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="flex-1 py-3 transition-colors"
-                style={ghostBtn}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink)')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
-              >
+
+            <div className="relative mt-5 flex gap-3">
+              <button onClick={onClose} className={`${DARK_PILL} flex-1 py-3 text-[13.5px] font-medium`}>
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={items.length === 0}
-                className="flex-1 py-3 transition-all disabled:cursor-not-allowed disabled:opacity-40"
-                style={primaryBtn}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--signal-deep)';
-                  e.currentTarget.style.borderColor = 'var(--signal-deep)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'var(--signal)';
-                  e.currentTarget.style.borderColor = 'var(--signal)';
-                }}
+                className="glass glass--cta relative flex-1 rounded-full py-3 text-[13.5px] font-bold tracking-[0.02em] transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+                style={{ border: '1px solid rgba(255,255,255,0.24)' }}
               >
                 Confirm claim
               </button>
@@ -352,19 +390,16 @@ export function ClaimModal({
         )}
 
         {state === 'signing' && (
-          <div className="py-10 text-center flex flex-col items-center gap-3">
+          <div className="relative flex flex-col items-center gap-4 py-12 text-center">
             <div
-              className="w-2 h-2 rounded-full"
-              style={{
-                background: 'var(--signal)',
-                animation: 'pulse 1.6s ease-in-out infinite',
-              }}
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ background: '#5eead4', animation: 'claim-pulse 1.6s ease-in-out infinite' }}
             />
-            <span style={uiLabel}>Signing transaction…</span>
+            <span className={EYEBROW}>Confirm in your wallet…</span>
             <style jsx>{`
-              @keyframes pulse {
-                0%, 100% { opacity: 1; transform: scale(1); }
-                50% { opacity: 0.35; transform: scale(0.85); }
+              @keyframes claim-pulse {
+                0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 18px rgba(94,234,212,0.6); }
+                50% { opacity: 0.35; transform: scale(0.8); box-shadow: 0 0 4px rgba(94,234,212,0.2); }
               }
             `}</style>
           </div>
@@ -373,53 +408,43 @@ export function ClaimModal({
         {state === 'confirmed' && (
           <>
             <ClaimCelebration />
-            <div className="py-8 text-center flex flex-col items-center gap-3">
+            <div className="relative flex flex-col items-center gap-3 py-8 text-center">
               <div className="relative grid place-items-center">
                 <span
-                  className="absolute inset-0 rounded-full animate-ping"
-                  style={{ background: 'var(--signal-soft)', animationIterationCount: 2 }}
+                  className="absolute inset-0 animate-ping rounded-full"
+                  style={{ background: 'rgba(94,234,212,0.25)', animationIterationCount: 2 }}
                 />
                 <div
-                  className="relative w-10 h-10 rounded-full grid place-items-center"
-                  style={{ background: 'var(--signal-soft)', color: 'var(--signal)', fontSize: '20px' }}
+                  className="relative grid h-12 w-12 place-items-center rounded-full text-xl"
+                  style={{
+                    background: 'rgba(94,234,212,0.16)',
+                    color: '#5eead4',
+                    border: '1px solid rgba(94,234,212,0.4)',
+                  }}
                 >
                   ✓
                 </div>
               </div>
-              <div style={{ ...uiLabel, color: 'var(--ink)' }}>
+              <div className="text-[17px] font-semibold">
                 {items.length} {items.length === 1 ? 'hex' : 'hexes'} claimed
               </div>
               <a
                 href={`https://solscan.io/tx/${txSig}?cluster=devnet`}
                 target="_blank"
                 rel="noreferrer"
-                style={{ ...uiLabel, color: 'var(--signal)', textDecoration: 'underline' }}
+                className="text-[12px] font-medium text-white/55 underline underline-offset-4 transition-colors hover:text-white"
               >
                 View on Solscan →
               </a>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="flex-1 py-3 transition-colors"
-                style={ghostBtn}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--ink)')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--hairline)')}
-              >
+            <div className="relative flex gap-3">
+              <button onClick={onClose} className={`${DARK_PILL} flex-1 py-3 text-[13.5px] font-medium`}>
                 Close
               </button>
               <button
                 onClick={shareOnX}
-                className="flex-1 py-3 transition-all"
-                style={primaryBtn}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--signal-deep)';
-                  e.currentTarget.style.borderColor = 'var(--signal-deep)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'var(--signal)';
-                  e.currentTarget.style.borderColor = 'var(--signal)';
-                }}
+                className="glass glass--cta relative flex-1 rounded-full py-3 text-[13.5px] font-bold tracking-[0.02em] transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0"
+                style={{ border: '1px solid rgba(255,255,255,0.24)' }}
               >
                 Share your claim
               </button>
@@ -429,23 +454,14 @@ export function ClaimModal({
 
         {state === 'error' && (
           <>
-            <div className="py-4 mb-4">
-              <div style={{ ...uiLabel, color: '#b91c1c', marginBottom: '10px' }}>Error</div>
-              <pre
-                className="whitespace-pre-wrap overflow-y-auto"
-                style={{
-                  maxHeight: 280,
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: '11px',
-                  color: 'var(--ink-2)',
-                  lineHeight: 1.5,
-                }}
-              >
+            <div className="relative mb-4 py-2">
+              <div className={`${EYEBROW} mb-2.5 !text-rose-300`}>Error</div>
+              <pre className="max-h-[260px] overflow-y-auto whitespace-pre-wrap text-[11.5px] leading-relaxed text-white/75">
                 {errorMsg}
               </pre>
             </div>
-            <div className="flex gap-3">
-              <button onClick={onClose} className="flex-1 py-3 transition-colors" style={ghostBtn}>
+            <div className="relative flex gap-3">
+              <button onClick={onClose} className={`${DARK_PILL} flex-1 py-3 text-[13.5px] font-medium`}>
                 Cancel
               </button>
               <button
@@ -453,8 +469,8 @@ export function ClaimModal({
                   setState('review');
                   setErrorMsg('');
                 }}
-                className="flex-1 py-3 transition-all"
-                style={primaryBtn}
+                className="glass glass--cta relative flex-1 rounded-full py-3 text-[13.5px] font-bold tracking-[0.02em]"
+                style={{ border: '1px solid rgba(255,255,255,0.24)' }}
               >
                 Try again
               </button>
