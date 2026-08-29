@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
-import { SOL_USD } from '@/lib/pricing';
+import { getSolUsd } from '@/lib/sol-price';
 
 export const runtime = 'nodejs';
 export const revalidate = 30;
@@ -25,6 +25,7 @@ type MatrixRow = { owner: string; country_iso: string; purchase_price: number };
  * volume24h, rankDelta) are 0 until those systems ship.
  */
 export async function GET() {
+  const SOL_USD = await getSolUsd();
   const sb = getServerSupabase();
 
   const [{ data: rows, error: e1 }, { data: matrix, error: e2 }, { data: globals, error: e3 }] =

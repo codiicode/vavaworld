@@ -17,6 +17,7 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { SignInGate } from '@/components/auth/sign-in-gate';
 import { useUserTiles } from '@/lib/use-user-tiles';
+import { useSolPrice } from '@/lib/use-sol-price';
 import { useHexLocations } from '@/lib/use-hex-locations';
 import { useCounters } from '@/lib/use-counters';
 import { quoteOne } from '@/lib/quote';
@@ -24,7 +25,6 @@ import { groupTilesByClaim } from '@/lib/tile-groups';
 import { cn } from '@/lib/utils';
 import type { ClaimedTile } from '@/types/tile';
 
-const SOL_USD = 150;
 const fmtUsd = (n: number) =>
   n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -48,6 +48,7 @@ function timeAgo(unixSec: number): string {
  * is no jarring nuance shift when navigating in.
  */
 export default function PortfolioPage() {
+  const SOL_USD = useSolPrice();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { tiles } = useUserTiles();
@@ -142,7 +143,7 @@ export default function PortfolioPage() {
       activity,
       propertyCount: tileGroups.length,
     };
-  }, [tiles, counters, locations]);
+  }, [tiles, counters, locations, SOL_USD]);
 
   const displayName = profile.username
     ? `@${profile.username}`

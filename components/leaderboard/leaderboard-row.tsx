@@ -17,7 +17,7 @@ export function LeaderboardRow({ row, scope }: { row: RowView; scope: Scope }) {
   const isWorldwide = scope === 'worldwide';
   const positive = entry.volume24h > 0;
   const handle = entry.username.replace(/^@/, '');
-  const href = `/u/${encodeURIComponent(handle)}`;
+  const href = `/u/${encodeURIComponent(entry.verified ? handle : entry.walletAddress)}`;
   const president = !isWorldwide && row.isPresident;
 
   return (
@@ -53,7 +53,7 @@ export function LeaderboardRow({ row, scope }: { row: RowView; scope: Scope }) {
               onClick={(e) => e.stopPropagation()}
               className="truncate text-sm font-medium underline-offset-2 hover:underline"
             >
-              @{handle}
+              {entry.verified ? `@${handle}` : handle}
             </Link>
             {entry.verified && (
               <BadgeCheck className="h-4 w-4 flex-shrink-0 text-emerald-500" aria-label="Verified" />

@@ -74,7 +74,7 @@ export function PodiumCard({
 
   return (
     <Link
-      href={`/u/${encodeURIComponent(handle)}`}
+      href={`/u/${encodeURIComponent(entry.verified ? handle : entry.walletAddress)}`}
       className={cn(
         'group relative block rounded-2xl border backdrop-blur-md transition-transform duration-200 hover:-translate-y-0.5',
         v.border,
@@ -124,7 +124,7 @@ export function PodiumCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className={cn('truncate font-semibold tracking-tight text-foreground', nameSize)}>
-              @{handle}
+              {entry.verified ? `@${handle}` : handle}
             </span>
             {entry.verified && (
               <BadgeCheck

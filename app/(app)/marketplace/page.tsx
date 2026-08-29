@@ -41,8 +41,8 @@ const TIER_OPTIONS: ReadonlyArray<{ value: 'all' | Tier; label: string }> = [
 ];
 
 const TRIGGER =
-  'bg-white/40 backdrop-blur-md border-white/40 h-11 rounded-xl text-foreground';
-const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40';
+  'bg-white/40 backdrop-blur-md border-white/40 h-11 rounded-xl text-foreground dark:bg-white/10 dark:border-white/15';
+const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40 dark:bg-slate-900/95 dark:border-white/15';
 
 /**
  * Marketplace - minimal, glass-card grid matching the leaderboard / profile vibe.

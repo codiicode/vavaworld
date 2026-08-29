@@ -83,7 +83,7 @@ export function NationsTable({
                     className="h-7 w-7 ring-white/40"
                     textClassName="text-[11px]"
                   />
-                  <span className="truncate text-sm">@{n.president.username}</span>
+                  <span className="truncate text-sm">{n.president.username}</span>
                 </Link>
               </TableCell>
               <TableCell className="text-right text-sm font-semibold tabular-nums">

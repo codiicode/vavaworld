@@ -57,17 +57,14 @@ export function useUserTiles(): {
     (async () => {
       try {
         const conn = getConnection();
-        console.log('[useUserTiles] querying for owner:', addressKey, 'program:', PROGRAM_ID);
         const accs = await conn.getProgramAccounts(new PublicKey(PROGRAM_ID), {
           filters: [
             { dataSize: 66 },
             { memcmp: { offset: 8, bytes: addressKey } },
           ],
         });
-        console.log('[useUserTiles] got', accs.length, 'raw accounts');
         if (id !== reqIdRef.current) return;
         const out: ClaimedTile[] = [];
-        let decodeFailures = 0;
         for (const acc of accs) {
           try {
             const decoded = coder.decode<DecodedTile>('Tile', acc.account.data);
@@ -80,11 +77,9 @@ export function useUserTiles(): {
               bump: decoded.bump,
             });
           } catch (e) {
-            decodeFailures += 1;
             console.warn('[useUserTiles] decode failed for', acc.pubkey.toBase58(), e);
           }
         }
-        console.log('[useUserTiles] decoded', out.length, 'tiles, failed', decodeFailures);
         out.sort((a, b) => b.claimedAt - a.claimedAt);
         setTiles(out);
       } catch (e) {

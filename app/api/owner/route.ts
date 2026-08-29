@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
-import { SOL_USD } from '@/lib/pricing';
+import { getSolUsd } from '@/lib/sol-price';
 
 export const runtime = 'nodejs';
 export const revalidate = 30;
@@ -12,6 +12,7 @@ export const revalidate = 30;
  * nothing returns zeros (never 404s - the UI renders a stub).
  */
 export async function GET(req: Request) {
+  const SOL_USD = await getSolUsd();
   const handle = new URL(req.url).searchParams.get('handle')
     ?? new URL(req.url).searchParams.get('address');
   if (!handle) {

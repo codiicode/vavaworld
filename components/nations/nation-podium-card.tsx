@@ -141,7 +141,7 @@ export function NationPodiumCard({
               initial={initials(nation.president.username)}
               className={cn(avatarSize, 'flex-none ring-1 ring-white/60')}
             />
-            <span className="truncate">@{nation.president.username}</span>
+            <span className="truncate">{nation.president.username}</span>
           </div>
         </div>
       </div>

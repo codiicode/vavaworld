@@ -18,6 +18,7 @@ type OwnerData = {
   joinedAt: string | null;
   hexes: number;
   countries: number;
+  byCountry?: Array<{ iso: string; name: string; hexes: number; spentUsd: number }>;
 };
 
 /**
@@ -126,6 +127,31 @@ export default function PublicProfilePage() {
         </div>
 
         <Achievements user={user} />
+
+        {owner?.byCountry && owner.byCountry.length > 0 && (
+          <div className="mt-6 border-t border-white/30 pt-5">
+            <div className="mb-3 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
+              Holdings by country
+            </div>
+            <div className="flex flex-col gap-2">
+              {owner.byCountry.map((c) => (
+                <Link
+                  key={c.iso}
+                  href={`/nations/${c.iso}`}
+                  className="flex items-center justify-between rounded-xl border border-white/40 bg-white/25 px-3.5 py-2.5 backdrop-blur-md transition-colors hover:bg-white/40"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Flag code={c.iso} size={18} />
+                    <span className="text-sm font-medium text-foreground">{c.name}</span>
+                  </span>
+                  <span className="text-sm tabular-nums text-foreground/70">
+                    {c.hexes.toLocaleString('en-US')} {c.hexes === 1 ? 'hex' : 'hexes'}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <p className="mt-6 text-center text-[11px] text-foreground/55">

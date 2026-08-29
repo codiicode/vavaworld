@@ -26,9 +26,15 @@ function shortAddr(addr: string): string {
  */
 export function apiToNation(r: ApiNation): Nation {
   // A real throne holder outranks the top-owner candidate display.
+  // Prefix @ ONLY for real usernames - addresses and the vacant dash must
+  // never render as "@74fW…" / "@—" (the cards print this string verbatim).
   const presidentName = r.president
     ? shortAddr(r.president)
-    : r.topOwnerUsername ?? (r.topOwner ? shortAddr(r.topOwner) : '—');
+    : r.topOwnerUsername
+      ? `@${r.topOwnerUsername}`
+      : r.topOwner
+        ? shortAddr(r.topOwner)
+        : '—';
   return {
     iso: r.iso.toUpperCase(),
     name: r.name,

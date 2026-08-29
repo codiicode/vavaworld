@@ -40,7 +40,6 @@ export function ChallengePresidencyModal({
           <Button
             onClick={() => {
               // TODO: wire to the real bonding flow when it exists.
-              console.log('[nations] challenge presidency →', countryName);
               onOpenChange(false);
             }}
           >
@@ -83,7 +82,6 @@ export function BondMoreModal({
           </Button>
           <Button
             onClick={() => {
-              console.log('[nations] bond more →', countryName);
               onOpenChange(false);
             }}
           >

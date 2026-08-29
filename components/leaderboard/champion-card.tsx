@@ -36,7 +36,7 @@ export function ChampionCard({
       />
 
       <Link
-        href={`/u/${encodeURIComponent(handle)}`}
+        href={`/u/${encodeURIComponent(entry.verified ? handle : entry.walletAddress)}`}
         className="group relative block overflow-hidden rounded-[1.55rem] p-[1.5px] transition-transform duration-200 hover:-translate-y-0.5"
         style={{ boxShadow: '0 28px 70px -24px rgba(245,158,11,0.6)' }}
       >
@@ -84,7 +84,7 @@ export function ChampionCard({
                 </div>
                 <div className="mt-1 flex items-center gap-2">
                   <span className="truncate bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent md:text-[2.25rem]">
-                    @{handle}
+                    {entry.verified ? `@${handle}` : handle}
                   </span>
                   {entry.verified && (
                     <BadgeCheck className="h-6 w-6 flex-shrink-0 text-emerald-500" aria-label="Verified" />

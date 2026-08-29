@@ -65,7 +65,7 @@ export function CountrySelect({
         <button
           type="button"
           className={cn(
-            'flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-white/40 bg-white/40 px-3 text-left text-sm text-foreground backdrop-blur-md transition-colors hover:bg-white/50',
+            'flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-white/40 bg-white/40 px-3 text-left text-sm text-foreground backdrop-blur-md transition-colors hover:bg-white/50 dark:border-white/15 dark:bg-white/10 dark:hover:bg-white/15',
             triggerClassName,
           )}
         >
@@ -97,7 +97,7 @@ export function CountrySelect({
                     onChange('');
                   }
                 }}
-                className="rounded p-0.5 text-foreground/50 hover:bg-black/5 hover:text-foreground"
+                className="rounded p-0.5 text-foreground/50 hover:bg-black/5 hover:text-foreground dark:hover:bg-white/10"
                 aria-label="Clear country"
               >
                 <X size={12} />
@@ -110,12 +110,12 @@ export function CountrySelect({
 
       <PopoverContent
         className={cn(
-          'w-[--radix-popover-trigger-width] border-white/40 bg-white/90 p-0 backdrop-blur-xl',
+          'w-[--radix-popover-trigger-width] border-white/40 bg-white/90 p-0 backdrop-blur-xl dark:border-white/15 dark:bg-slate-900/95',
           contentClassName,
         )}
         align={align}
       >
-        <div className="flex items-center gap-2 border-b border-black/10 px-3">
+        <div className="flex items-center gap-2 border-b border-black/10 px-3 dark:border-white/10">
           <Search size={14} className="text-foreground/40" />
           <input
             autoFocus

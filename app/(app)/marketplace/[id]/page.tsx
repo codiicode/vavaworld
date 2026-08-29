@@ -13,6 +13,7 @@ import { UserLink } from '@/components/user-link';
 import { hexStaticMapUrl } from '@/lib/static-map';
 import { hexCenter } from '@/lib/h3-utils';
 import { useHexLocations } from '@/lib/use-hex-locations';
+import { useSolPrice } from '@/lib/use-sol-price';
 import { classifyTier } from '@/lib/tier';
 import { useActiveWallet } from '@/lib/active-wallet';
 import {
@@ -28,6 +29,7 @@ export default function TileDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [buyOpen, setBuyOpen] = useState(false);
+  const solUsd = useSolPrice();
   const [dbRow, setDbRow] = useState<DbListing | null>(null);
   const [resolving, setResolving] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -56,8 +58,8 @@ export default function TileDetailPage() {
   const listing: Listing | null = useMemo(() => {
     if (mock) return mock;
     if (!dbRow) return null;
-    return dbToListing(dbRow, dbLocations);
-  }, [mock, dbRow, dbLocations]);
+    return dbToListing(dbRow, dbLocations, solUsd);
+  }, [mock, dbRow, dbLocations, solUsd]);
 
   if (resolving) {
     return (
@@ -202,8 +204,8 @@ export default function TileDetailPage() {
 
             {!isOwn && (
               <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-                Buying settles on-chain via the secondary-market program. That
-                contract isn&apos;t deployed yet - buys will go live with it.
+                Buying settles on-chain via the secondary-market program: your
+                SOL and the hex change hands in one atomic transaction.
               </p>
             )}
           </div>
@@ -260,13 +262,17 @@ function ClaimStamp({ claimedAt, sequence }: { claimedAt: string; sequence: numb
         <span className="text-foreground/55">Claimed at </span>
         <span className="font-medium tabular-nums text-foreground">{time} UTC</span>
         <span className="text-foreground/55">, {day}</span>
-        <span className="px-2 text-foreground/30">·</span>
-        <span className="text-foreground/55">the </span>
-        <span className="font-semibold tabular-nums text-foreground">
-          {sequence.toLocaleString('en-US')}
-          {ordinalSuffix(sequence)}
-        </span>
-        <span className="text-foreground/55"> hex ever claimed.</span>
+        {sequence > 0 && (
+          <>
+            <span className="px-2 text-foreground/30">·</span>
+            <span className="text-foreground/55">the </span>
+            <span className="font-semibold tabular-nums text-foreground">
+              {sequence.toLocaleString('en-US')}
+              {ordinalSuffix(sequence)}
+            </span>
+            <span className="text-foreground/55"> hex ever claimed.</span>
+          </>
+        )}
       </span>
     </div>
   );
@@ -275,6 +281,7 @@ function ClaimStamp({ claimedAt, sequence }: { claimedAt: string; sequence: numb
 function dbToListing(
   l: DbListing,
   locations: ReturnType<typeof useHexLocations>,
+  solUsd: number,
 ): Listing {
   const c = hexCenter(l.h3_id);
   const loc = locations.get(l.h3_id);
@@ -289,7 +296,7 @@ function dbToListing(
     lng: c.lng,
     tier: classifyTier(c.lat, c.lng),
     price,
-    priceUsd: Math.round(price * 150),
+    priceUsd: Math.round(price * solUsd),
     change24h: 0,
     lastSale: null,
     listedAgo: '-',
