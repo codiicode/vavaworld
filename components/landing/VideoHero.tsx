@@ -16,8 +16,11 @@ const GLASS_INSET = { boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)' };
 const sans = Inter({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], display: 'swap' });
 const serif = Instrument_Serif({ weight: '400', style: ['normal', 'italic'], subsets: ['latin'], display: 'swap' });
 
-const VIDEO_URL =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260613_180732_a54afbf6-b30d-470e-861f-669871f09f67.mp4';
+// Self-hosted: the original 13MB 4K file lived on the AI provider's
+// CloudFront bucket (out of our control - link-rot risk) and every
+// visitor downloaded all of it. Re-encoded to 1080p CRF28 = 0.9MB,
+// visually identical for a dark background loop.
+const VIDEO_URL = '/videos/hero.mp4';
 
 const NAV_LINKS = [
   { label: 'Buy land', href: '/map' },
@@ -87,6 +90,7 @@ export function VideoHero() {
           loop
           playsInline
           preload="auto"
+          poster="/videos/hero-poster.jpg"
         />
         <div className="absolute inset-0 bg-black/20" />
 

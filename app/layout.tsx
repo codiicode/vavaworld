@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 import 'flag-icons/css/flag-icons.min.css';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={GeistSans.variable}>
       <body className="font-sans">
         <Providers>{children}</Providers>
+        <SpeedInsights />
       </body>
     </html>
   );
