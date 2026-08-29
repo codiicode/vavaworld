@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Clock, Hexagon, Loader2, TrendingDown, TrendingUp } from 'lucide-react';
+import { BidDialog } from '@/components/bid-dialog';
 import { Button } from '@/components/ui/button';
 import { BuyDialog } from '@/components/marketplace/buy-dialog';
 import { StreetViewButton } from '@/components/marketplace/street-view-button';
@@ -29,6 +30,7 @@ export default function TileDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [buyOpen, setBuyOpen] = useState(false);
+  const [bidOpen, setBidOpen] = useState(false);
   const solUsd = useSolPrice();
   const [dbRow, setDbRow] = useState<DbListing | null>(null);
   const [resolving, setResolving] = useState(true);
@@ -191,9 +193,16 @@ export default function TileDetailPage() {
                   Cancel listing
                 </Button>
               ) : (
-                <Button className="flex-1" onClick={() => setBuyOpen(true)}>
-                  Buy now
-                </Button>
+                <>
+                  <Button className="flex-1" onClick={() => setBuyOpen(true)}>
+                    Buy now
+                  </Button>
+                  {isReal && wallet.connected && (
+                    <Button variant="outline" onClick={() => setBidOpen(true)}>
+                      Make an offer
+                    </Button>
+                  )}
+                </>
               )}
               <StreetViewButton
                 lat={listing.lat}
@@ -213,6 +222,14 @@ export default function TileDetailPage() {
       </div>
 
       <BuyDialog listing={listing} open={buyOpen} onOpenChange={setBuyOpen} />
+      <BidDialog
+        h3={listing.h3}
+        placeLabel={`${listing.city} · ${listing.neighborhood}`}
+        countryCode={listing.countryCode}
+        askSol={listing.price}
+        open={bidOpen}
+        onOpenChange={setBidOpen}
+      />
     </div>
   );
 }

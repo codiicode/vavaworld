@@ -26,6 +26,7 @@ type Quote = {
   feeBps: number;
   transfers: Array<{ to: string; lamports: number; label: string }>;
   totalLamports: number;
+  reservedFor: string | null;
 };
 
 /**
@@ -56,9 +57,9 @@ async function buildQuote(listingId: string): Promise<Quote | { error: string; s
   const sb = getServerSupabase();
   const { data: listing, error } = await sb
     .from('listings')
-    .select('id,h3_id,seller,price_sol,status')
+    .select('id,h3_id,seller,price_sol,status,reserved_for')
     .eq('id', listingId)
-    .maybeSingle<{ id: string; h3_id: string; seller: string; price_sol: number; status: string }>();
+    .maybeSingle<{ id: string; h3_id: string; seller: string; price_sol: number; status: string; reserved_for: string | null }>();
   if (error) return { error: error.message, status: 500 };
   if (!listing || listing.status !== 'active') return { error: 'Listing is not active', status: 404 };
 
@@ -83,15 +84,23 @@ async function buildQuote(listingId: string): Promise<Quote | { error: string; s
       { to: TREASURY, lamports: presidentLamports, label: 'president' },
     ],
     totalLamports: priceLamports,
+    reservedFor: listing.reserved_for,
   };
 }
 
-/** GET /api/buy?listingId= → the exact transfers the buyer must make. */
+/** GET /api/buy?listingId=&buyer= → the exact transfers the buyer must make. */
 export async function GET(req: Request) {
-  const listingId = new URL(req.url).searchParams.get('listingId');
+  const url = new URL(req.url);
+  const listingId = url.searchParams.get('listingId');
+  const buyer = url.searchParams.get('buyer');
   if (!listingId) return NextResponse.json({ error: 'listingId required' }, { status: 400 });
   const quote = await buildQuote(listingId);
   if ('error' in quote) return NextResponse.json({ error: quote.error }, { status: quote.status });
+  // Reservation check is advisory here (buyer is client-supplied) - the
+  // hard enforcement lives in settle_sale.
+  if (quote.reservedFor && buyer && buyer !== quote.reservedFor) {
+    return NextResponse.json({ error: 'This listing is reserved for the accepted bidder' }, { status: 403 });
+  }
   return NextResponse.json(quote);
 }
 

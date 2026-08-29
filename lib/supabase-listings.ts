@@ -16,6 +16,8 @@ export type DbListing = {
   listed_at: string;
   closed_at: string | null;
   buyer: string | null;
+  /** Set when the listing came from an accepted bid - only this address can buy. */
+  reserved_for: string | null;
 };
 
 /**
@@ -35,10 +37,13 @@ export function useActiveListings(version = 0) {
     let cancelled = false;
     setLoading(true);
     (async () => {
+      // Reserved listings (accepted bids) are private to their bidder -
+      // they never show on the public marketplace.
       const { data, error } = await sb
         .from('listings')
         .select('*')
         .eq('status', 'active')
+        .is('reserved_for', null)
         .order('listed_at', { ascending: false });
       if (cancelled) return;
       if (error) {

@@ -7,6 +7,7 @@ import { BrandLogo } from '@/components/brand-logo';
 import {
   Activity,
   BarChart3,
+  Bell,
   Coins,
   Globe,
   LogOut,
@@ -23,6 +24,7 @@ import {
 import { ConnectButton } from '@/components/connect-button';
 import { useTheme } from '@/components/theme-provider';
 import { useActiveWallet } from '@/lib/active-wallet';
+import { useNotifications } from '@/lib/use-notifications';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { cn } from '@/lib/utils';
@@ -63,6 +65,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { balance } = useWalletBalance(wallet.publicKey);
+  const { unread } = useNotifications(wallet.address);
   const { theme, toggle } = useTheme();
   // The sidebar glass is dark over the map (and in dark mode) but light over
   // the white-glow app pages - the wordmark/logo flip to stay visible.
@@ -118,6 +121,26 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Footer */}
       <div className="flex flex-col gap-2.5">
+        <Link
+          href="/notifications"
+          onClick={onNavigate}
+          className={cn(
+            'flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] leading-none transition-colors duration-150',
+            pathname === '/notifications'
+              ? 'sidebar-active font-semibold text-foreground'
+              : 'font-medium text-foreground/50 hover:bg-foreground/[0.04] hover:text-foreground',
+          )}
+        >
+          <span className="relative grid w-[22px] place-items-center">
+            <Bell size={20} strokeWidth={1.8} />
+            {unread > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-[15px] min-w-[15px] place-items-center rounded-full bg-red-500 px-[3px] text-[9px] font-bold leading-none text-white">
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
+          </span>
+          <span>Notifications</span>
+        </Link>
         <button
           type="button"
           onClick={toggle}

@@ -14,6 +14,7 @@ import { useCountryCounts } from '@/lib/use-country-counts';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { PRICING } from '@/lib/pricing';
+import { BidDialog } from '@/components/bid-dialog';
 import { Flag } from '@/components/flag';
 import { HexPricingCard } from '@/components/map/hex-pricing-card';
 import { cn } from '@/lib/utils';
@@ -661,6 +662,9 @@ function ClaimedHexView({
   const ago = formatAgo(Date.now() - info.claimedAtMs);
   const ownerLabel = info.username ? `@${info.username}` : shortAddr(info.owner);
   const ownerHandle = info.username ?? info.owner;
+  const wallet = useActiveWallet();
+  const [bidOpen, setBidOpen] = useState(false);
+  const canBid = wallet.connected && wallet.address !== info.owner;
 
   return (
     <>
@@ -734,13 +738,23 @@ function ClaimedHexView({
         </div>
 
         <p className="text-[12.5px] leading-relaxed text-white/60">
-          This hex isn&apos;t available to claim. Visit the owner&apos;s profile
-          to see their other properties - if they list it for sale, it&apos;ll
-          appear on the marketplace.
+          {canBid
+            ? 'This hex is taken - but everything has a price. Make the owner an offer, listed or not.'
+            : "This hex isn't available to claim. Visit the owner's profile to see their other properties - if they list it for sale, it'll appear on the marketplace."}
         </p>
       </div>
 
       <div className="relative z-[1] flex-1" />
+
+      {canBid && (
+        <button
+          type="button"
+          onClick={() => setBidOpen(true)}
+          className="relative z-[1] mb-2 flex h-[52px] w-full items-center justify-center rounded-[14px] bg-emerald-500 text-[14px] font-bold tracking-[0.02em] text-emerald-950 transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0"
+        >
+          Make an offer
+        </button>
+      )}
 
       <div className="relative z-[1] grid grid-cols-2 gap-2">
         <Link
@@ -758,6 +772,14 @@ function ClaimedHexView({
           Owner
         </Link>
       </div>
+
+      <BidDialog
+        h3={item.h3}
+        placeLabel={title}
+        countryCode={location?.countryCode}
+        open={bidOpen}
+        onOpenChange={setBidOpen}
+      />
     </>
   );
 }

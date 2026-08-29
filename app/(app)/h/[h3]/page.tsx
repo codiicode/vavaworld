@@ -3,13 +3,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, Clock, ExternalLink, Hexagon, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, ExternalLink, Gavel, Hexagon, Loader2, X } from 'lucide-react';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import { BorshAccountsCoder, type Idl } from '@coral-xyz/anchor';
+import { BidDialog } from '@/components/bid-dialog';
 import { Button } from '@/components/ui/button';
 import { Flag } from '@/components/flag';
 import { StreetViewButton } from '@/components/marketplace/street-view-button';
 import { UserLink } from '@/components/user-link';
+import { useActiveWallet } from '@/lib/active-wallet';
+import { respondBid, useBidsForHex, type DbBid } from '@/lib/bids';
 import { hexCenter } from '@/lib/h3-utils';
 import { hexStaticMapUrl } from '@/lib/static-map';
 import { classifyTier } from '@/lib/tier';
@@ -216,6 +219,16 @@ export default function HexDetailPage() {
             <ListingCard listing={listing} />
           )}
 
+          {claimed && (
+            <BidsCard
+              h3={h3}
+              owner={tile!.owner}
+              placeLabel={`${city} · ${neighborhood}`}
+              countryCode={loc?.countryCode ?? undefined}
+              askSol={listing ? Number(listing.price_sol) : null}
+            />
+          )}
+
           <div className="flex flex-wrap gap-2">
             <Link
               href={`/map#${h3}`}
@@ -297,6 +310,143 @@ function UnclaimedCard({ h3 }: { h3: string }) {
       <Link href={`/map#${h3}`}>
         <Button className="w-full">Claim on the map</Button>
       </Link>
+    </div>
+  );
+}
+
+/**
+ * Open offers on this hex + the entry point for making one. Owners see
+ * accept/decline on each bid, bidders can withdraw their own, everyone
+ * else connected can place an offer - listed or not.
+ */
+function BidsCard({
+  h3,
+  owner,
+  placeLabel,
+  countryCode,
+  askSol,
+}: {
+  h3: string;
+  owner: string;
+  placeLabel: string;
+  countryCode?: string;
+  askSol: number | null;
+}) {
+  const wallet = useActiveWallet();
+  const { bids, refresh } = useBidsForHex(h3);
+  const [bidOpen, setBidOpen] = useState(false);
+  const [actingOn, setActingOn] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const viewer = wallet.address;
+  const isOwner = viewer === owner;
+
+  const act = async (bid: DbBid, action: 'accept' | 'decline' | 'cancel') => {
+    if (!viewer || !wallet.signMessage) return;
+    setError(null);
+    setActingOn(bid.id);
+    try {
+      await respondBid({ bidId: bid.id, actor: viewer, action, signMessage: wallet.signMessage });
+      refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setActingOn(null);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-white/40 bg-white/30 p-5 backdrop-blur-md">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
+          <Gavel size={12} />
+          Offers
+        </span>
+        <span className="text-[11px] text-foreground/50">
+          {bids.length === 0 ? 'None yet' : `${bids.length} open`}
+        </span>
+      </div>
+
+      {bids.length > 0 && (
+        <div className="mb-3 flex flex-col divide-y divide-white/40">
+          {bids.slice(0, 5).map((b) => (
+            <div key={b.id} className="flex items-center justify-between gap-3 py-2 first:pt-0">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold tabular-nums text-foreground">
+                  {Number(b.price_sol).toFixed(3)} SOL
+                </div>
+                <div className="truncate text-[11px] text-foreground/55">
+                  <UserLink addr={b.bidder} />
+                </div>
+              </div>
+              <div className="flex flex-none items-center gap-1.5">
+                {isOwner && (
+                  <>
+                    <button
+                      type="button"
+                      disabled={actingOn !== null}
+                      onClick={() => void act(b, 'accept')}
+                      className="inline-flex h-7 items-center gap-1 rounded-md bg-emerald-600 px-2.5 text-[11px] font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
+                    >
+                      {actingOn === b.id ? (
+                        <Loader2 size={11} className="animate-spin" />
+                      ) : (
+                        <CheckCircle2 size={11} />
+                      )}
+                      Accept
+                    </button>
+                    <button
+                      type="button"
+                      disabled={actingOn !== null}
+                      onClick={() => void act(b, 'decline')}
+                      className="inline-flex h-7 items-center gap-1 rounded-md border border-white/40 bg-white/30 px-2.5 text-[11px] font-medium text-foreground transition-colors hover:bg-white/40 disabled:opacity-50"
+                    >
+                      <X size={11} />
+                      Decline
+                    </button>
+                  </>
+                )}
+                {!isOwner && viewer === b.bidder && (
+                  <button
+                    type="button"
+                    disabled={actingOn !== null}
+                    onClick={() => void act(b, 'cancel')}
+                    className="inline-flex h-7 items-center gap-1 rounded-md border border-white/40 bg-white/30 px-2.5 text-[11px] font-medium text-foreground transition-colors hover:bg-white/40 disabled:opacity-50"
+                  >
+                    {actingOn === b.id ? <Loader2 size={11} className="animate-spin" /> : <X size={11} />}
+                    Withdraw
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {error && <p className="mb-2 text-xs text-red-600 dark:text-red-300">{error}</p>}
+
+      {!isOwner && wallet.connected && (
+        <Button variant="outline" className="w-full" onClick={() => setBidOpen(true)}>
+          <Gavel size={14} className="mr-1.5" />
+          Make an offer
+        </Button>
+      )}
+      {!wallet.connected && bids.length === 0 && (
+        <p className="text-xs leading-relaxed text-foreground/60">
+          Connect your wallet to make the owner an offer - the hex doesn&apos;t
+          need to be listed.
+        </p>
+      )}
+
+      <BidDialog
+        h3={h3}
+        placeLabel={placeLabel}
+        countryCode={countryCode}
+        askSol={askSol}
+        open={bidOpen}
+        onOpenChange={setBidOpen}
+        onPlaced={refresh}
+      />
     </div>
   );
 }

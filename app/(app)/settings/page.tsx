@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Bell, Globe2, Map as MapIcon, Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/components/theme-provider';
 import { PREF_KEYS } from '@/lib/preferences';
@@ -95,17 +96,20 @@ export default function SettingsPage() {
           </Row>
         </Section>
 
-        {/* Notifications - the flagship, teased */}
+        {/* Notifications */}
         <Section icon={<Bell size={15} />} title="Notifications">
           <div className="rounded-xl border border-white/40 bg-white/20 px-4 py-4">
-            <p className="text-sm font-medium text-foreground">Coming with launch</p>
+            <p className="text-sm font-medium text-foreground">In-app notifications are live</p>
             <p className="mt-1 max-w-md text-xs leading-relaxed text-foreground/60">
-              Get alerted the moment a coup starts in your country, your throne is
-              challenged, you&apos;re outbid on a listing, or someone claims next to
-              your land.
+              Offers on your land, accepted bids, and sales land in{' '}
+              <Link href="/notifications" className="font-medium text-foreground underline-offset-2 hover:underline">
+                your notifications
+              </Link>
+              . Email and push alerts - coups, throne challenges, claims near
+              your land - come with launch.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {['Coup started', 'Throne challenged', 'Outbid', 'Claim nearby'].map((t) => (
+              {['Offer received', 'Offer accepted', 'Hex sold', 'Outbid'].map((t) => (
                 <span
                   key={t}
                   className="rounded-full border border-white/40 bg-white/30 px-2.5 py-1 text-[11px] font-medium text-foreground/60"
