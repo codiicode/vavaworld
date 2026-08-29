@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivyUser } from './wallet-context';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useSupabaseProfile } from '@/lib/supabase-profile';
 
@@ -51,7 +51,7 @@ export const ProfileVersionProvider = ProfileVersionContext.Provider;
  * display the signed-in user.
  */
 export function useUserProfile(): UserProfile {
-  const { user, ready } = usePrivy();
+  const { user, ready } = usePrivyUser();
   const wallet = useActiveWallet();
   const version = useContext(ProfileVersionContext);
   const { profile: db } = useSupabaseProfile(wallet.address, version);

@@ -1,7 +1,6 @@
 'use client';
 
 import { Mail, Wallet, Lock } from 'lucide-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useActiveWallet } from '@/lib/active-wallet';
 
 /**
@@ -22,8 +21,7 @@ export function SignInGate({
   children: React.ReactNode;
 }) {
   const wallet = useActiveWallet();
-  const { setVisible: openWalletModal } = useWalletModal();
-
+  
   if (!wallet.ready) {
     return <div className="min-h-screen" aria-hidden />;
   }
@@ -79,7 +77,7 @@ export function SignInGate({
 
           <button
             type="button"
-            onClick={() => openWalletModal(true)}
+            onClick={wallet.openWalletModal}
             className="flex items-center gap-3 rounded-xl border border-white/45 bg-white/40 px-4 py-3 text-left transition-colors hover:bg-white/55"
           >
             <Wallet size={16} className="flex-none text-foreground/65" />

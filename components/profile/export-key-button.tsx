@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Key } from 'lucide-react';
-import { useExportWallet } from '@privy-io/react-auth/solana';
 import { Button } from '@/components/ui/button';
 import { useActiveWallet } from '@/lib/active-wallet';
 
@@ -19,11 +18,16 @@ import { useActiveWallet } from '@/lib/active-wallet';
  */
 export function ExportKeyButton() {
   const wallet = useActiveWallet();
-  const { exportWallet } = useExportWallet();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!wallet.ready || !wallet.connected || wallet.source !== 'privy' || !wallet.address) {
+  if (
+    !wallet.ready ||
+    !wallet.connected ||
+    wallet.source !== 'privy' ||
+    !wallet.address ||
+    !wallet.exportWallet
+  ) {
     return null;
   }
 
@@ -32,7 +36,7 @@ export function ExportKeyButton() {
     setBusy(true);
     setError(null);
     try {
-      await exportWallet({ address: wallet.address });
+      await wallet.exportWallet!(wallet.address);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Export failed');
     } finally {

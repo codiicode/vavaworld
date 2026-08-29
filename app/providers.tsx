@@ -1,18 +1,18 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { PrivyProviders } from '@/components/PrivyProviders';
-import { WalletProviders } from '@/components/WalletProviders';
 import { ThemeProvider } from '@/components/theme-provider';
+import { WalletStateProvider } from '@/lib/wallet-context';
 
+// The heavy wallet stack (Privy + wallet-adapter) is NOT wrapped around the
+// app anymore - WalletStateProvider is a light shim that dynamically loads
+// components/wallet/wallet-engine after hydration. Keep it that way: a
+// static import of either SDK from anything in the page tree puts ~200kB
+// back into every page's first load.
 export function Providers({ children }: { children: ReactNode }) {
-  // Flags are real SVGs (see components/flag.tsx) - no emoji, no webfont
-  // polyfill needed; emoji flags don't render on Windows anyway.
   return (
     <ThemeProvider>
-      <PrivyProviders>
-        <WalletProviders>{children}</WalletProviders>
-      </PrivyProviders>
+      <WalletStateProvider>{children}</WalletStateProvider>
     </ThemeProvider>
   );
 }

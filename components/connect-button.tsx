@@ -1,7 +1,6 @@
 'use client';
 
 import { Mail, Wallet } from 'lucide-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { cn } from '@/lib/utils';
@@ -26,7 +25,6 @@ export function ConnectButton({
   className?: string;
 }) {
   const wallet = useActiveWallet();
-  const { setVisible } = useWalletModal();
 
   if (!wallet.ready) return null;
   if (wallet.connected) return null;
@@ -63,7 +61,7 @@ export function ConnectButton({
         </button>
         <button
           type="button"
-          onClick={() => setVisible(true)}
+          onClick={wallet.openWalletModal}
           className="flex w-full items-start gap-3 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-muted"
         >
           <Wallet size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
