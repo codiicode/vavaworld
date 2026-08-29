@@ -75,14 +75,14 @@ respect that when reproducing installs locally.
 - **Token name:** Always `$VAVA` site-wide (never bare "VAVA token"). Title in `app/layout.tsx` is `$VAVA`.
 - **User references:** Show `@username` when set, fall back to wallet address. Always a link to `/u/[handle]`. Use `<UserLink addr={...} username={...} />` from `components/user-link.tsx`. Single source of truth for mock users is `lib/mock-users.ts` (`MOCK_USERS`); `mock-marketplace.ts` derives `SELLERS` from it.
 - **Mock data:** `lib/mock-leaderboard.ts`, `lib/mock-marketplace.ts`, `lib/mock-nations.ts`, `lib/mock-users.ts`. Most UI is mock-driven today; real data lands when the indexer ships.
-- **Pricing:** Per-country PRIMARY claims are off-chain via Supabase `claim_hex` function — NOT the on-chain tier curve. The on-chain curve is for the bonding-curve resale path. Don't conflate.
+- **Pricing & settlement:** Primary claims are PRICED by the per-country USD curve (Supabase claim_count) but SETTLED on-chain: /api/quote signs (claimer, h3s, prices, expiry) with the keeper key (`KEEPER_SECRET_KEY`), the client sends [ed25519-verify, claim] via `lib/claim-chain.ts` (chunks of 10), the program splits 85/15 (treasury/buyback escrow) and creates Tile PDAs, then /api/claim mirrors to Supabase via its PDA-verified mirror path. The program REJECTS unquoted prices - never bypass /api/quote.
 - **Comments:** Don't write WHAT comments. Only WHY when non-obvious (constraint, invariant, workaround). No "added for X" / "used by Y" references — those rot.
 
 ## On-chain (`anchor/programs/tiles`)
 
 - Program ID (devnet): `G8MsXTtabmQnfPd4PZ7dDLYtRPhFDqRs93ExhhsSDkwM`
 - `constants.rs`:
-  - `MAX_TILES_PER_TX = 20` — **hard cap on-chain.** UI displays `1000` but a single TX with >20 reverts with `h3_ids length out of range [1,20]`. Batching in `ClaimModal` is NOT implemented yet. If user asks to actually claim >20, build client-side batching that splits into N TX of ≤20.
+  - `MAX_TILES_PER_TX = 20` on-chain; the client chunks at 10 (`CLAIM_CHUNK` in lib/claim-chain.ts, matching /api/quote's MAX_PER_QUOTE) - large selections become N sequential quote+tx rounds in ClaimModal.
   - Pricing tiers T1/T2/T3 with bonding-curve increments.
   - 102 cities table for the on-chain tier classifier (integer bbox, not haversine).
 - Compute budget limit ~1.4M CU + TX size 1232 B means a single claim can realistically never exceed ~25–40 tiles regardless of program changes.
