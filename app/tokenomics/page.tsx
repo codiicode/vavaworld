@@ -50,7 +50,7 @@ const PILLARS = [
   {
     n: 'iii.',
     title: 'Supply that only tightens.',
-    body: 'Claimed land is never unowned again. Its sealed $VAVA travels with every resale, out of circulation for as long as the hex stands. Over a trillion cells, each one a vault.',
+    body: 'Claimed land is never unowned again. Its sealed $VAVA travels with every resale, out of circulation for as long as the hex stands. Every claimed hex is a vault.',
   },
   {
     n: 'iv.',
