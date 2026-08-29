@@ -9,6 +9,7 @@ import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
 import { useTiles } from '@/lib/use-tiles';
+import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { useCountryCounts } from '@/lib/use-country-counts';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
@@ -16,7 +17,6 @@ import { PRICING } from '@/lib/pricing';
 import { Flag } from '@/components/flag';
 import { HexPricingCard } from '@/components/map/hex-pricing-card';
 import { cn } from '@/lib/utils';
-import type { ClaimedTile } from '@/types/tile';
 
 function shortAddr(addr: string): string {
   if (!addr) return '-';
@@ -69,17 +69,37 @@ export function GlassRightPanel({
   const { balance } = useWalletBalance(wallet.publicKey);
   const locations = useHexLocations(selectedHexes);
 
-  // Find out which of the selected hexes are already claimed (on-chain PDA hit).
+  // Which selected hexes are already claimed? Union of the on-chain PDA
+  // fetch and the off-chain Supabase ledger (primary claims settle there
+  // today - checking only the chain misses them completely).
   const selectedArr = useMemo(() => Array.from(selectedHexes), [selectedHexes]);
   const { tiles: claimedCache } = useTiles(selectedArr);
+  const registry = useClaimedRegistry();
   const claimedTiles = useMemo(() => {
-    const m = new Map<string, ClaimedTile>();
+    const m = new Map<string, ClaimedView>();
     for (const h of selectedArr) {
       const t = claimedCache.get(h);
-      if (t) m.set(h, t);
+      if (t) {
+        m.set(h, {
+          owner: t.owner,
+          username: null,
+          paidLabel: `${(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(3)} SOL`,
+          claimedAtMs: t.claimedAt * 1000,
+        });
+        continue;
+      }
+      const r = registry.get(h);
+      if (r) {
+        m.set(h, {
+          owner: r.owner,
+          username: r.username,
+          paidLabel: `$${r.priceUsd.toFixed(4)}`,
+          claimedAtMs: r.claimedAt,
+        });
+      }
     }
     return m;
-  }, [selectedArr, claimedCache]);
+  }, [selectedArr, claimedCache, registry]);
 
   const items = Array.from(selectedHexes).map((h3) => {
     const c = hexCenter(h3);
@@ -292,7 +312,7 @@ export function GlassRightPanel({
       {tab === 'selection' && (
         count === 1 && claimedTiles.has(items[0]!.h3) ? (
           <ClaimedHexView
-            tile={claimedTiles.get(items[0]!.h3)!}
+            info={claimedTiles.get(items[0]!.h3)!}
             item={items[0]!}
             location={locations.get(items[0]!.h3) ?? null}
             onClear={() => onRemoveHex(items[0]!.h3)}
@@ -310,6 +330,7 @@ export function GlassRightPanel({
             onClaim={onClaim}
             onSelectClosest={onSelectClosest}
             walletConnected={wallet.connected}
+            onConnect={() => wallet.login()}
           />
         )
       )}
@@ -320,6 +341,14 @@ export function GlassRightPanel({
 
 type Item = { h3: string; lat: number; lng: number; tier: 1 | 2 | 3 };
 
+/** Claimed-hex display info, source-agnostic (on-chain SOL or off-chain USD). */
+type ClaimedView = {
+  owner: string;
+  username: string | null;
+  paidLabel: string;
+  claimedAtMs: number;
+};
+
 function SelectionBody({
   count,
   items,
@@ -327,6 +356,7 @@ function SelectionBody({
   locations,
   claimedTiles,
   hasSeed,
+  onConnect,
   onRemove,
   onClearAll,
   onClaim,
@@ -337,8 +367,9 @@ function SelectionBody({
   items: ReadonlyArray<Item>;
   perItemUsd: ReadonlyArray<number>;
   locations: ReturnType<typeof useHexLocations>;
-  claimedTiles: Map<string, ClaimedTile>;
+  claimedTiles: Map<string, ClaimedView>;
   hasSeed: boolean;
+  onConnect: () => void;
   onRemove: (h3: string) => void;
   onClearAll: () => void;
   onClaim: () => void;
@@ -582,8 +613,10 @@ function SelectionBody({
 
       <button
         type="button"
-        onClick={empty || max || allClaimed || !walletConnected ? undefined : onClaim}
-        disabled={empty || max || allClaimed || !walletConnected}
+        onClick={
+          empty || max || allClaimed ? undefined : walletConnected ? onClaim : onConnect
+        }
+        disabled={empty || max || allClaimed}
         className="glass glass--cta relative z-[1] flex h-[52px] items-center justify-center rounded-[14px] text-[14px] font-bold tracking-[0.04em] transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         style={{
           border: '1px solid rgba(255,255,255,0.24)',
@@ -607,21 +640,20 @@ function SelectionBody({
 
 /** Detail view shown when a single already-claimed hex is selected. */
 function ClaimedHexView({
-  tile,
+  info,
   item,
   location,
   onClear,
 }: {
-  tile: ClaimedTile;
+  info: ClaimedView;
   item: Item;
   location: HexLocation | null;
   onClear: () => void;
 }) {
   const title = location?.neighborhood ?? location?.place ?? location?.countryName ?? 'This hex';
-  const paidSol = Number(tile.pricePaid) / LAMPORTS_PER_SOL;
-  const ageMs = Date.now() - tile.claimedAt * 1000;
-  const ago = formatAgo(ageMs);
-  const ownerShort = shortAddr(tile.owner);
+  const ago = formatAgo(Date.now() - info.claimedAtMs);
+  const ownerLabel = info.username ? `@${info.username}` : shortAddr(info.owner);
+  const ownerHandle = info.username ?? info.owner;
 
   return (
     <>
@@ -659,7 +691,7 @@ function ClaimedHexView({
               className="rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider"
               style={{ background: 'rgba(94, 234, 212, 0.16)', color: 'var(--brand)' }}
             >
-              T{tile.tier}
+              T{item.tier}
             </span>
           </div>
 
@@ -667,10 +699,10 @@ function ClaimedHexView({
             <div>
               <div className="uppercase tracking-wider text-white/55">Owner</div>
               <Link
-                href={`/u/${encodeURIComponent(tile.owner)}`}
+                href={`/u/${encodeURIComponent(ownerHandle)}`}
                 className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-white transition-colors hover:text-amber-200"
               >
-                <span className="font-mono">{ownerShort}</span>
+                <span className={info.username ? '' : 'font-mono'}>{ownerLabel}</span>
                 <ExternalLink size={11} />
               </Link>
             </div>
@@ -681,7 +713,7 @@ function ClaimedHexView({
             <div>
               <div className="uppercase tracking-wider text-white/55">Paid</div>
               <div className="mt-0.5 text-[12.5px] font-medium tabular-nums text-white">
-                {paidSol.toFixed(3)} SOL
+                {info.paidLabel}
               </div>
             </div>
             <div>
@@ -712,7 +744,7 @@ function ClaimedHexView({
           Hex details
         </Link>
         <Link
-          href={`/u/${encodeURIComponent(tile.owner)}`}
+          href={`/u/${encodeURIComponent(ownerHandle)}`}
           className="glass flex h-[52px] items-center justify-center rounded-[14px] text-[13.5px] font-semibold tracking-[0.02em] text-white transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0"
           style={{ border: '1px solid rgba(255,255,255,0.24)' }}
         >

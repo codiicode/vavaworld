@@ -7,6 +7,7 @@ import type { GeoJSONSource, Map as MapboxMap } from 'mapbox-gl';
 import { hexCenter, hexToFeature, hexesForBounds } from '@/lib/h3-utils';
 import { TIER_FILL, type Tier, classifyTier } from '@/lib/tier';
 import { useTiles } from '@/lib/use-tiles';
+import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { ownerColor } from '@/lib/owner-color';
 import { PublicKey } from '@solana/web3.js';
 
@@ -165,6 +166,11 @@ export function MapView({
   const [settledHexes, setSettledHexes] = useState<string[]>([]);
   const [zoomedIn, setZoomedIn] = useState(false);
   const { tiles, refresh } = useTiles(settledHexes);
+  // Off-chain claims (the Supabase primary-claim ledger) - the PDA fetch
+  // above only sees on-chain claims and misses these entirely.
+  const claimedRegistry = useClaimedRegistry();
+  const registryRef = useRef(claimedRegistry);
+  registryRef.current = claimedRegistry;
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const aggFetchedAt = useRef(0);
@@ -196,6 +202,12 @@ export function MapView({
   } | null>(null);
 
   const skipClickRef = useRef(false);
+  // Mapbox decides click-vs-drag by NET displacement between mousedown and
+  // mouseup (clickTolerance). A pan that ends near where it started - very
+  // common when nudging the camera - nets out below the tolerance and fires
+  // a click, toggling a hex the user never meant to touch. Track whether a
+  // drag actually happened during this gesture and veto the click if so.
+  const gestureDraggedRef = useRef(false);
 
   useEffect(() => {
     if (refreshTilesRef) refreshTilesRef.current = refresh;
@@ -273,13 +285,13 @@ export function MapView({
       const sel = selectedRef.current;
       const tl = tilesRef.current;
       for (const id of ids) {
-        const claimed = tl.get(id);
+        const owner = tl.get(id)?.owner ?? registryRef.current.get(id)?.owner ?? null;
         map.setFeatureState(
           { source: SOURCE_ID, id },
           {
             selected: sel.has(id),
-            claimed: !!claimed,
-            ownerColor: claimed ? getOwnerColor(claimed.owner) : null,
+            claimed: owner !== null,
+            ownerColor: owner ? getOwnerColor(owner) : null,
           },
         );
       }
@@ -429,13 +441,13 @@ export function MapView({
     const map = mapRef.current?.getMap();
     if (!ready || !map) return;
     for (const id of visibleRef.current) {
-      const claimed = tiles.get(id);
+      const owner = tiles.get(id)?.owner ?? claimedRegistry.get(id)?.owner ?? null;
       map.setFeatureState(
         { source: SOURCE_ID, id },
-        { claimed: !!claimed, ownerColor: claimed ? getOwnerColor(claimed.owner) : null },
+        { claimed: owner !== null, ownerColor: owner ? getOwnerColor(owner) : null },
       );
     }
-  }, [ready, tiles, mapRef]);
+  }, [ready, tiles, claimedRegistry, mapRef]);
 
   // Idempotent: re-runs after a style toggle (which wipes custom layers).
   const installHexLayers = useCallback(() => {
@@ -475,6 +487,14 @@ export function MapView({
       paint: {
         'fill-color': [
           'case',
+          // Selected AND claimed: amber - the user must SEE that this cell
+          // belongs to someone else even inside a teal selection.
+          [
+            'all',
+            ['boolean', ['feature-state', 'selected'], false],
+            ['boolean', ['feature-state', 'claimed'], false],
+          ],
+          '#f59e0b',
           ['boolean', ['feature-state', 'selected'], false],
           '#5eead4',
           ['coalesce', ['feature-state', 'ownerColor'], '#888'],
@@ -638,6 +658,7 @@ export function MapView({
         skipClickRef.current = false;
         return;
       }
+      if (gestureDraggedRef.current) return; // pan gesture, not a click
       const map = mapRef.current?.getMap();
       if (!map) return;
       const feats = map.queryRenderedFeatures(e.point, { layers: [FILL_LAYER] });
@@ -714,7 +735,14 @@ export function MapView({
         // debounce so the heavy rebuild runs once after motion settles, not
         // dozens of times mid-gesture.
         onMoveEnd={scheduleRefresh}
+        onMouseDown={() => {
+          gestureDraggedRef.current = false;
+        }}
+        onDragStart={() => {
+          gestureDraggedRef.current = true;
+        }}
         onClick={onClick}
+        clickTolerance={5}
         interactiveLayerIds={[FILL_LAYER]}
       />
       <div

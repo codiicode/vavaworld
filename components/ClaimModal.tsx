@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { useHexLocations } from '@/lib/use-hex-locations';
+import { useTiles } from '@/lib/use-tiles';
+import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { useCountryCounts } from '@/lib/use-country-counts';
 import { getConnection } from '@/lib/anchor-client';
 import { preflight } from '@/lib/preflight';
@@ -49,7 +51,18 @@ export function ClaimModal({
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [txSig, setTxSig] = useState<string>('');
 
-  const items = Array.from(selectedHexes).map((h3) => {
+  // NEVER charge for hexes someone already owns: the selection can contain
+  // claimed cells (area select / mark-closest sweeps them up). Without this
+  // filter the user pays SOL for the whole batch and the claimed hex's
+  // mirror insert then fails - money spent, nothing received.
+  const allSelected = useMemo(() => Array.from(selectedHexes), [selectedHexes]);
+  const { tiles: onchainClaimed } = useTiles(allSelected);
+  const offchainClaimed = useClaimedRegistry();
+  const claimable = allSelected.filter(
+    (h3) => !onchainClaimed.get(h3) && !offchainClaimed.has(h3),
+  );
+  const excludedCount = allSelected.length - claimable.length;
+  const items = claimable.map((h3) => {
     const c = hexCenter(h3);
     return { h3, tier: classifyTier(c.lat, c.lng) };
   });
@@ -251,6 +264,24 @@ export function ClaimModal({
 
         {state === 'review' && (
           <>
+            {excludedCount > 0 && (
+              <p
+                className="mb-4 rounded-md px-3 py-2 text-[12px] leading-relaxed"
+                style={{
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
+                  color: '#92400e',
+                }}
+              >
+                {excludedCount} selected {excludedCount === 1 ? 'hex is' : 'hexes are'} already
+                owned by someone else and excluded - you only pay for the {items.length} below.
+              </p>
+            )}
+            {items.length === 0 ? (
+              <p className="mb-5 text-[13px]" style={{ color: 'var(--dim)' }}>
+                Every hex in this selection is already owned. Pick free hexes to claim.
+              </p>
+            ) : (
             <ul
               className="max-h-64 overflow-y-auto mb-5"
               style={{ borderTop: '1px solid var(--hair-2)', borderBottom: '1px solid var(--hair-2)' }}
@@ -266,6 +297,7 @@ export function ClaimModal({
                 </li>
               ))}
             </ul>
+            )}
             <div className="flex items-baseline justify-between mb-2">
               <span style={uiLabel}>Total</span>
               <span
@@ -301,7 +333,8 @@ export function ClaimModal({
               </button>
               <button
                 onClick={handleConfirm}
-                className="flex-1 py-3 transition-all"
+                disabled={items.length === 0}
+                className="flex-1 py-3 transition-all disabled:cursor-not-allowed disabled:opacity-40"
                 style={primaryBtn}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'var(--signal-deep)';
