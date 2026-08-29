@@ -197,10 +197,7 @@ export function GlassRightPanel({
                 onClick={onClaim}
                 disabled={!wallet.connected || claimableCountMobile === 0}
                 className="glass glass--cta flex h-10 items-center justify-center rounded-full px-4 text-[13px] font-bold tracking-[0.04em] disabled:opacity-50"
-                style={{
-                  border: '1px solid rgba(255,255,255,0.24)',
-                  color: '#042f2e',
-                }}
+                style={{ border: '1px solid rgba(255,255,255,0.30)' }}
               >
                 Claim
               </button>
@@ -625,12 +622,8 @@ function SelectionBody({
           empty || max || allClaimed ? undefined : walletConnected ? onClaim : onConnect
         }
         disabled={empty || max || allClaimed}
-        className="glass glass--cta relative z-[1] flex h-[52px] items-center justify-center rounded-[14px] text-[14px] font-bold tracking-[0.04em] transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-        style={{
-          border: '1px solid rgba(255,255,255,0.24)',
-          color: '#042f2e',
-          textShadow: '0 1px 0 rgba(255,255,255,0.25)',
-        }}
+        className="glass glass--cta relative z-[1] flex h-[52px] items-center justify-center rounded-[14px] text-[14px] font-bold tracking-[0.04em] transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 disabled:saturate-50 disabled:hover:translate-y-0"
+        style={{ border: '1px solid rgba(255,255,255,0.30)' }}
       >
         {empty
           ? 'Select at least one hex'

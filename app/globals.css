@@ -345,10 +345,17 @@ body {
 .glass--cta {
   --glass-alpha: 0.18;
   --glass-alpha-2: 0.10;
-  background:
-    linear-gradient(135deg, rgba(94, 234, 212, 0.32), rgba(56, 189, 248, 0.22)),
-    rgba(255, 255, 255, 0.06);
-  color: #042f2e;
+  /* The claim CTA is the most important control on the site - it glows,
+     it never sinks into the dark glass around it. Same gradient as the
+     pricing card's claim button for consistency. */
+  background: linear-gradient(135deg, #0ea5e9, #14b8a6);
+  color: #ffffff;
+  box-shadow:
+    0 10px 28px -8px rgba(20, 184, 166, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.glass--cta:hover:not(:disabled) {
+  background: linear-gradient(135deg, #38bdf8, #2dd4bf);
 }
 
 ::selection { background: hsl(var(--primary) / 0.3); color: hsl(var(--foreground)); }
