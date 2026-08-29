@@ -3,12 +3,17 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Crown, Globe, Hexagon } from 'lucide-react';
+import { ArrowLeft, Crown, Globe, Hexagon, TrendingDown, TrendingUp } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Flag } from '@/components/flag';
 import { Achievements } from '@/components/profile/achievements';
 import { ShareProfile } from '@/components/profile/share-profile';
 import type { MockUser } from '@/lib/mock-users';
+import { hexCenter } from '@/lib/h3-utils';
+import { classifyTier } from '@/lib/tier';
+import { hexStaticMapUrl } from '@/lib/static-map';
+import { useHexLocations } from '@/lib/use-hex-locations';
+import { cn } from '@/lib/utils';
 
 type OwnerData = {
   address: string;
@@ -18,7 +23,12 @@ type OwnerData = {
   joinedAt: string | null;
   hexes: number;
   countries: number;
-  byCountry?: Array<{ iso: string; name: string; hexes: number; spentUsd: number }>;
+  totalSpentUsd?: number;
+  portfolioValueUsd?: number;
+  returnUsd?: number;
+  returnPct?: number;
+  byCountry?: Array<{ iso: string; name: string; hexes: number; spentUsd: number; valueUsd?: number }>;
+  recentHexes?: Array<{ h3: string; iso: string; paidUsd: number; claimedAt: string }>;
 };
 
 /**
@@ -112,7 +122,35 @@ export default function PublicProfilePage() {
           <ShareProfile user={user} />
         </div>
 
-        <div className="mt-6 grid grid-cols-3 gap-4 border-t border-white/30 pt-5">
+        <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/30 pt-5 sm:grid-cols-4">
+          <Stat label="Portfolio value" value={fmtUsd(owner?.portfolioValueUsd ?? 0)} />
+          <div>
+            <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-foreground/55">
+              Total return
+            </div>
+            <div
+              className={cn(
+                'mt-1 flex flex-wrap items-baseline gap-x-1.5 text-xl font-semibold tabular-nums tracking-tight',
+                (owner?.returnUsd ?? 0) >= 0
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-red-600 dark:text-red-400',
+              )}
+            >
+              <span className="flex items-center gap-1">
+                {(owner?.returnUsd ?? 0) >= 0 ? (
+                  <TrendingUp size={15} strokeWidth={2} />
+                ) : (
+                  <TrendingDown size={15} strokeWidth={2} />
+                )}
+                {(owner?.returnUsd ?? 0) >= 0 ? '+' : '-'}
+                {fmtUsd(Math.abs(owner?.returnUsd ?? 0))}
+              </span>
+              <span className="text-xs font-medium">
+                ({(owner?.returnUsd ?? 0) >= 0 ? '+' : ''}
+                {(owner?.returnPct ?? 0).toFixed(1)}%)
+              </span>
+            </div>
+          </div>
           <Stat
             icon={<Hexagon size={14} strokeWidth={1.6} />}
             label="Hexes owned"
@@ -123,10 +161,13 @@ export default function PublicProfilePage() {
             label="Countries"
             value={user.countries.toString()}
           />
-          <Stat label="$VAVA bonded" value={user.bondedVava.toLocaleString('en-US')} />
         </div>
 
         <Achievements user={user} />
+
+        {owner?.recentHexes && owner.recentHexes.length > 0 && (
+          <PropertyGrid hexes={owner.recentHexes} totalHexes={owner.hexes} />
+        )}
 
         {owner?.byCountry && owner.byCountry.length > 0 && (
           <div className="mt-6 border-t border-white/30 pt-5">
@@ -146,6 +187,9 @@ export default function PublicProfilePage() {
                   </span>
                   <span className="text-sm tabular-nums text-foreground/70">
                     {c.hexes.toLocaleString('en-US')} {c.hexes === 1 ? 'hex' : 'hexes'}
+                    {typeof c.valueUsd === 'number' && (
+                      <span className="ml-2 font-medium text-foreground">{fmtUsd(c.valueUsd)}</span>
+                    )}
                   </span>
                 </Link>
               ))}
@@ -157,6 +201,80 @@ export default function PublicProfilePage() {
       <p className="mt-6 text-center text-[11px] text-foreground/55">
         Live holdings from the VAVAWORLD register.
       </p>
+    </div>
+  );
+}
+
+function fmtUsd(n: number): string {
+  return `$${n.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: n < 100 ? 2 : 0,
+  })}`;
+}
+
+/** Marketplace-style satellite cards for the owner's most recent hexes. */
+function PropertyGrid({
+  hexes,
+  totalHexes,
+}: {
+  hexes: NonNullable<OwnerData['recentHexes']>;
+  totalHexes: number;
+}) {
+  const ids = hexes.map((h) => h.h3);
+  const locations = useHexLocations(ids);
+  return (
+    <div className="mt-6 border-t border-white/30 pt-5">
+      <div className="mb-3 flex items-baseline justify-between">
+        <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
+          Properties
+        </div>
+        {totalHexes > hexes.length && (
+          <div className="text-[11px] text-foreground/50">
+            showing {hexes.length} most recent of {totalHexes.toLocaleString('en-US')}
+          </div>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        {hexes.map((h) => {
+          const c = hexCenter(h.h3);
+          const loc = locations.get(h.h3);
+          const img = hexStaticMapUrl({ lat: c.lat, lng: c.lng, width: 400, height: 260, zoom: 17 });
+          const tier = classifyTier(c.lat, c.lng);
+          return (
+            <Link
+              key={h.h3}
+              href={`/h/${encodeURIComponent(h.h3)}`}
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md transition-colors hover:bg-white/40"
+            >
+              <div className="relative aspect-[3/2] overflow-hidden bg-foreground/[0.04]">
+                {img && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={img}
+                    alt={`Satellite view of ${loc?.place ?? h.iso.toUpperCase()}`}
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                    loading="lazy"
+                  />
+                )}
+                <span className="absolute right-2 top-2 rounded border border-primary/30 bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary backdrop-blur-sm">
+                  T{tier}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2 p-2.5">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <Flag code={h.iso} size={14} />
+                  <span className="truncate text-[12.5px] font-medium leading-tight text-foreground">
+                    {loc?.neighborhood ?? loc?.place ?? loc?.countryName ?? '…'}
+                  </span>
+                </div>
+                <span className="flex-none text-[12px] font-semibold tabular-nums text-foreground/80">
+                  ${h.paidUsd.toFixed(4)}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
