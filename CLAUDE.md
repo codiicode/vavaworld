@@ -80,7 +80,7 @@ respect that when reproducing installs locally.
 
 ## On-chain (`anchor/programs/tiles`)
 
-- Program ID (devnet): `GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt`
+- Program ID (devnet): `G8MsXTtabmQnfPd4PZ7dDLYtRPhFDqRs93ExhhsSDkwM`
 - `constants.rs`:
   - `MAX_TILES_PER_TX = 20` — **hard cap on-chain.** UI displays `1000` but a single TX with >20 reverts with `h3_ids length out of range [1,20]`. Batching in `ClaimModal` is NOT implemented yet. If user asks to actually claim >20, build client-side batching that splits into N TX of ≤20.
   - Pricing tiers T1/T2/T3 with bonding-curve increments.
@@ -92,7 +92,7 @@ respect that when reproducing installs locally.
 ```
 NEXT_PUBLIC_MAPBOX_TOKEN=pk....
 NEXT_PUBLIC_RPC_URL=https://api.devnet.solana.com
-NEXT_PUBLIC_PROGRAM_ID=GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt
+NEXT_PUBLIC_PROGRAM_ID=G8MsXTtabmQnfPd4PZ7dDLYtRPhFDqRs93ExhhsSDkwM
 NEXT_PUBLIC_TREASURY=<devnet wallet>
 NEXT_PUBLIC_PRIVY_APP_ID=<privy id>
 NEXT_PUBLIC_SUPABASE_URL=<supabase project url>

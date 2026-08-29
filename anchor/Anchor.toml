@@ -6,10 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-tiles = "GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt"
+tiles = "G8MsXTtabmQnfPd4PZ7dDLYtRPhFDqRs93ExhhsSDkwM"
 
 [programs.devnet]
-tiles = "GNfEEPYES1k2sZnoBfWbA51zYZVSyeB46te6EyL8CzBt"
+tiles = "G8MsXTtabmQnfPd4PZ7dDLYtRPhFDqRs93ExhhsSDkwM"
 
 [registry]
 url = "https://api.apr.dev"
