@@ -38,7 +38,6 @@ not coarsen the rendered cells, so a clicked cell is always the claimable cell.
 | Chain | Solana **devnet**, Anchor 1.0.2 program at `anchor/programs/tiles` |
 | Wallet | Privy (`@privy-io/react-auth`) embedded wallet + Phantom/Solflare/Backpack via wallet-adapter |
 | Off-chain data | Supabase (`@supabase/supabase-js`) — profiles, claim_hex pricing fn, etc. |
-| Charts | Recharts |
 | Icons | lucide-react |
 | Tests | Vitest (`lib/__tests__/`) |
 | Deploy | Vercel (`vavaworld` project, owner `leo-jankovics-projects`) |
@@ -53,7 +52,6 @@ respect that when reproducing installs locally.
 | `/` | Landing page: single full-screen video hero, nothing below it (`components/landing/VideoHero.tsx`, styles `app/hero.css`; the nav + wallet actions live inside VideoHero) |
 | `/map` | Full-bleed Mapbox map. Right panel = `glass-right-panel.tsx`. Map sidebar = global `AppSidebar` |
 | `/marketplace` | Hex listings table + filter sidebar. Detail at `/marketplace/[id]` |
-| `/marketplace/activity` | Legacy back-link target from marketplace (still wired) |
 | `/activity` | Site-wide live buy/sell feed (matches /leaderboard styling) |
 | `/leaderboard` | Top holders. Filters: hexes / bonded / volume / value / countries |
 | `/profile` | YOUR profile (reads connected wallet via `useUserProfile`) |
