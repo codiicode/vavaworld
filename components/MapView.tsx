@@ -221,6 +221,49 @@ export function MapView({
     [],
   );
 
+  // Off-main-thread grid builder. The worker does polygonToCells + boundary
+  // + tier for the viewport (40-90ms of CPU); the main thread only receives
+  // the finished FeatureCollection. pendingGridRef carries the worker-built
+  // geometry to the setData effect so it never has to rebuild synchronously.
+  const gridWorkerRef = useRef<Worker | null>(null);
+  const gridSeqRef = useRef(0);
+  const pendingGridRef = useRef<{ ids: string[]; fc: FeatureCollection<Polygon> } | null>(null);
+  const setVisibleHexesRef = useRef<typeof setVisibleHexes>(setVisibleHexes);
+  setVisibleHexesRef.current = setVisibleHexes;
+  useEffect(() => {
+    if (typeof Worker === 'undefined') return;
+    const w = new Worker(new URL('../lib/hex-grid.worker.ts', import.meta.url));
+    w.onmessage = (
+      e: MessageEvent<{
+        seq: number;
+        cells: string[];
+        features: Feature<Polygon>[];
+        meta: Array<[string, number, number, number]>;
+      }>,
+    ) => {
+      const { seq, cells, features, meta } = e.data;
+      if (seq !== gridSeqRef.current) return; // stale viewport
+      for (let i = 0; i < meta.length; i++) {
+        const [h3, lat, lng, tier] = meta[i];
+        if (!hexMetaCache.has(h3)) {
+          hexMetaCache.set(h3, {
+            coords: (features[i].geometry.coordinates[0] ?? []) as Position[],
+            lat,
+            lng,
+            tier: tier as Tier,
+          });
+        }
+      }
+      pendingGridRef.current = { ids: cells, fc: { type: 'FeatureCollection', features } };
+      setVisibleHexesRef.current((prev) => (sameViewport(prev, cells) ? prev : cells));
+    };
+    gridWorkerRef.current = w;
+    return () => {
+      gridWorkerRef.current = null;
+      w.terminate();
+    };
+  }, []);
+
   // Push selection + claimed/owner into Mapbox feature-state for the given ids.
   // setData clears feature-state, so this must run after every geometry rebuild.
   const applyFeatureState = useCallback(
@@ -308,6 +351,12 @@ export function MapView({
       Math.min(b.getEast(), c.lng + half),
       Math.min(b.getNorth(), c.lat + half),
     ];
+    const w = gridWorkerRef.current;
+    if (w) {
+      w.postMessage({ seq: ++gridSeqRef.current, bbox });
+      return;
+    }
+    // No-Worker fallback: the old synchronous path.
     const ids = hexesForBounds(bbox);
     setVisibleHexes((prev) => (sameViewport(prev, ids) ? prev : ids));
   }, [mapRef, loadAgg]);
@@ -351,7 +400,10 @@ export function MapView({
     if (!ready || !map) return;
     const src = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
     if (!src) return;
-    src.setData(buildGeometry(visibleHexes));
+    const pending = pendingGridRef.current;
+    src.setData(
+      pending && pending.ids === visibleHexes ? pending.fc : buildGeometry(visibleHexes),
+    );
     applyFeatureState(visibleHexes);
     prevSelectedRef.current = new Set(selectedRef.current);
   }, [ready, visibleHexes, buildGeometry, applyFeatureState, mapRef]);

@@ -170,6 +170,7 @@ working trees. Existing worktree dir: `.claude/worktrees`.
 
 - `app/` — routes (App Router). `(app)/` is the auth-gated group with shared layout.
 - `components/` — feature folders (`map/`, `marketplace/`, `leaderboard/`, `nations/`, `profile/`, `landing/`) + global ones at top level (`brand-logo`, `flag`, `user-link`, `ClaimModal`, etc.) + `ui/` for shadcn primitives.
+- `lib/hex-grid.worker.ts` — Web Worker that builds the /map hex grid (polygonToCells + boundaries + tier, 40-90ms CPU) off the main thread. MapView posts a bbox, receives the finished FeatureCollection. Keep heavy per-viewport geometry work HERE, not in MapView.
 - `lib/` — utilities, hooks (`use-*.ts`), Solana client wiring (`anchor-client.ts`, `anchor-idl.json`, `tile-pda.ts`), Supabase clients (`supabase.ts` client / `supabase-server.ts` server), pricing/quote logic, mock datasets, geo helpers (`h3-utils`, `cities`, `geocoding`, `tier`).
 - `anchor/programs/tiles/` — on-chain Rust program.
 - `docs/superpowers/` — house docs.
