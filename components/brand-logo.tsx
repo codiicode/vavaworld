@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 /**
- * VavaWorld globe mark, alpha-transparent PNGs extracted from the brand
+ * VAVAWORLD globe mark, alpha-transparent PNGs extracted from the brand
  * masters in /content:
  * - "white" (public/logo-globe-white.png): for dark surfaces
  * - "color" (public/logo-globe-color.png): blue/dark split, for light surfaces
@@ -19,7 +19,7 @@ export function BrandLogo({
   return (
     <img
       src={variant === 'color' ? '/logo-globe-color.png' : '/logo-globe-white.png'}
-      alt="VavaWorld"
+      alt="VAVAWORLD"
       width={size}
       height={size}
       style={{

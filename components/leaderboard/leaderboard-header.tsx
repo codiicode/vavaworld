@@ -8,7 +8,7 @@ export function LeaderboardHeader() {
         Leaderboard
       </h1>
       <p className="mt-1 text-sm text-foreground/70">
-        Top hex holders across VavaWorld
+        Top hex holders across VAVAWORLD
       </p>
     </div>
   );

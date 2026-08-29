@@ -29,7 +29,7 @@ export function generateMetadata({ searchParams }: { searchParams: SP }): Metada
   });
   if (c.sol) ogParams.set('sol', c.sol);
   const ogUrl = `/api/og/claim?${ogParams.toString()}`;
-  const title = `${c.by.startsWith('@') ? c.by : '@' + c.by} claimed ${c.place} on VavaWorld`;
+  const title = `${c.by.startsWith('@') ? c.by : '@' + c.by} claimed ${c.place} on VAVAWORLD`;
   const description = `${c.n.toLocaleString('en-US')} hex${c.n === 1 ? '' : 'es'} claimed${
     c.sol ? ` for ◎ ${c.sol} SOL` : ''
   }. Claim your own ground on the live world map.`;

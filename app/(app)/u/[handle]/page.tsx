@@ -155,7 +155,7 @@ export default function PublicProfilePage() {
       </div>
 
       <p className="mt-6 text-center text-[11px] text-foreground/55">
-        Live holdings from the VavaWorld register.
+        Live holdings from the VAVAWORLD register.
       </p>
     </div>
   );

@@ -38,7 +38,7 @@ export async function GET(req: Request) {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 30, fontWeight: 800, letterSpacing: 6, color: '#ffffff' }}>
-            VavaWorld
+            VAVAWORLD
           </span>
           <span style={{ fontSize: 24, color: '#5eead4', letterSpacing: 2 }}>vavaworld.fun</span>
         </div>

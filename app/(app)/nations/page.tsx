@@ -58,7 +58,7 @@ export default function NationsPage() {
           Nations
         </h1>
         <p className="mt-1 text-sm text-foreground/70">
-          Governance across the VavaWorld
+          Governance across VAVAWORLD
         </p>
       </div>
 

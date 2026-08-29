@@ -119,7 +119,7 @@ export default function MarketplacePage() {
             Marketplace
           </h1>
           <p className="mt-1 text-sm text-foreground/70">
-            Buy and sell hexes across VavaWorld
+            Buy and sell hexes across VAVAWORLD
           </p>
         </div>
       </div>

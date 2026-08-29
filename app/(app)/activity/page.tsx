@@ -55,7 +55,7 @@ export default function ActivityPage() {
             Activity
           </h1>
           <p className="mt-1 text-sm text-foreground/70">
-            Every buy and sell across VavaWorld, as it happens
+            Every buy and sell across VAVAWORLD, as it happens
           </p>
         </div>
         <div className="flex items-center gap-1.5 rounded-full border border-white/40 bg-white/30 px-3 py-1.5 backdrop-blur-md">

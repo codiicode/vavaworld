@@ -53,7 +53,7 @@ export default function StakingPage() {
           Citizens &amp; Tourists
         </h1>
         <p className="mt-1.5 max-w-2xl text-sm text-foreground/70">
-          Stake $VAVA to become a Citizen of VavaWorld. No yield, no promises —
+          Stake $VAVA to become a Citizen of VAVAWORLD. No yield, no promises —
           staking buys power: cheaper land, cheaper trading, and a seat at a
           national throne. Unstaking takes 24 hours.
         </p>
