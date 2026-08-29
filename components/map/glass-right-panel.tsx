@@ -127,6 +127,11 @@ export function GlassRightPanel({
 
   // Quick mobile-summary totals so the collapsed bar can show price preview
   // without rendering the full list.
+  const claimedCountMobile = items.reduce(
+    (s, it) => (claimedTiles.has(it.h3) ? s + 1 : s),
+    0,
+  );
+  const claimableCountMobile = count - claimedCountMobile;
   const claimableTotalUsdMobile = items.reduce(
     (s, it, i) => (claimedTiles.has(it.h3) ? s : s + perItemUsd[i]),
     0,
@@ -177,7 +182,9 @@ export function GlassRightPanel({
               <div className="truncate text-[13px] font-semibold text-white">
                 {count === 0
                   ? 'Tap a hex to select'
-                  : `${count} selected · $${claimableTotalUsdMobile.toFixed(claimableTotalUsdMobile < 10 ? 4 : 2)}`}
+                  : claimableCountMobile === 0
+                    ? `${count} selected · already owned`
+                    : `${count} selected · $${claimableTotalUsdMobile.toFixed(claimableTotalUsdMobile < 10 ? 4 : 2)}`}
               </div>
               <div className="mt-0.5 truncate text-[11px] text-white/55">
                 {count === 0 ? 'Map is fully interactive' : 'Tap to expand'}
@@ -187,7 +194,7 @@ export function GlassRightPanel({
               <button
                 type="button"
                 onClick={onClaim}
-                disabled={!wallet.connected}
+                disabled={!wallet.connected || claimableCountMobile === 0}
                 className="glass glass--cta flex h-10 items-center justify-center rounded-full px-4 text-[13px] font-bold tracking-[0.04em] disabled:opacity-50"
                 style={{
                   border: '1px solid rgba(255,255,255,0.24)',

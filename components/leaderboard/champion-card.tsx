@@ -98,7 +98,7 @@ export function ChampionCard({
                     className="font-semibold tabular-nums text-foreground"
                   />
                   <span className="text-foreground/60">
-                    {isWorldwide ? 'hexes' : `hexes in ${scopeName}`}
+                    {isWorldwide ? (row.hexes === 1 ? 'hex' : 'hexes') : `${row.hexes === 1 ? 'hex' : 'hexes'} in ${scopeName}`}
                   </span>
                 </div>
               </div>
