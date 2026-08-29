@@ -6,29 +6,28 @@ import { BrandLogo } from '@/components/brand-logo';
 const sans = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700'], display: 'swap' });
 const serif = Instrument_Serif({ weight: '400', style: ['normal', 'italic'], subsets: ['latin'], display: 'swap' });
 
-const VIDEO_URL =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260228_065522_522e2295-ba22-457e-8fdb-fbcd68109c73.mp4';
+const VIDEO_URL = '/videos/meadow.mp4';
 
 export const metadata: Metadata = {
   title: 'How it works',
-  description: 'Three small, deliberate acts - from any place on the earth to a cell that is permanently yours.',
+  description: 'Search, claim, own. How buying land on VAVAWORLD works.',
 };
 
 const STEPS = [
   {
     n: 'i.',
-    title: 'Find a place on the earth.',
-    body: 'Real coordinates, true scale. Any place not yet taken - a house, a corner, a clearing in a forest.',
+    title: 'Find your spot.',
+    body: 'Search any place on Earth and zoom in. The whole map is divided into hexes about the size of a house - if nobody owns one yet, you can claim it.',
   },
   {
     n: 'ii.',
-    title: 'Take it, in one transaction.',
-    body: 'A small sum, settled in a moment. No subscription, no lease, no committee - first asked, first received.',
+    title: 'Claim it.',
+    body: 'Pay with SOL straight from your wallet - prices start around $0.10 per hex and rise a little with every claim in that country. First come, first served.',
   },
   {
     n: 'iii.',
-    title: 'It is yours, permanently.',
-    body: 'Transferable, inheritable, non-revocable. Pass it to a child or a friend, or back into the market, in your own time.',
+    title: "It's yours.",
+    body: 'The hex is registered to your wallet - nobody can take it from you. Keep it, show it on your profile, or sell it on the marketplace whenever you want.',
   },
 ];
 
@@ -85,7 +84,7 @@ export default function HowItWorksPage() {
             </span>
           </h1>
           <p className="mt-5 max-w-xl text-base text-white/65 sm:text-lg">
-            Three small, deliberate acts. From any place on the earth to a cell that is permanently yours.
+            Three steps, a few seconds each. From anywhere on Earth to land that is yours.
           </p>
 
           <div className="mt-12 grid gap-5 md:grid-cols-3">

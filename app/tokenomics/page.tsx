@@ -6,8 +6,7 @@ import { BrandLogo } from '@/components/brand-logo';
 const sans = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700'], display: 'swap' });
 const serif = Instrument_Serif({ weight: '400', style: ['normal', 'italic'], subsets: ['latin'], display: 'swap' });
 
-const VIDEO_URL =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260228_065522_522e2295-ba22-457e-8fdb-fbcd68109c73.mp4';
+const VIDEO_URL = '/videos/meadow.mp4';
 
 export const metadata: Metadata = {
   title: 'Tokenomics',
@@ -21,18 +20,18 @@ const SPLIT = [
   {
     pct: '80%',
     label: 'The world',
-    body: 'Funds the protocol - the map, the markets, and the treasury that buys land back to defend its floor.',
+    body: 'Runs VAVAWORLD: the map, the marketplace, and a treasury that can buy land back when prices dip.',
   },
   {
     pct: '15%',
     label: 'Locked in your hex',
-    body: 'Instantly market-buys $VAVA and seals it inside the land you just claimed. Your hex now holds real tokens.',
+    body: 'Buys $VAVA on the open market the moment you claim, and locks those tokens inside your new hex. Your land literally contains tokens.',
     accent: true,
   },
   {
     pct: '5%',
     label: 'Your president',
-    body: "Paid live to the country's sitting president. No president yet? The salary is waiting for whoever takes the throne.",
+    body: "Goes to the president of the country you claimed in. No president yet? The money waits for whoever takes the throne.",
   },
 ];
 
@@ -40,29 +39,41 @@ const PILLARS = [
   {
     n: 'i.',
     title: 'Land that buys the token.',
-    body: 'Every single claim routes 15% of its price into an on-market $VAVA buy - automatic, continuous, and sealed into the hex itself. The more of the world gets claimed, the more $VAVA gets bought and locked. Demand is written into the protocol, not into promises.',
+    body: '15% of every land purchase buys $VAVA on the open market and locks it inside the hex. The more land gets claimed, the more tokens get bought and taken out of circulation. That demand is built into the system - it does not depend on anyone keeping a promise.',
   },
   {
     n: 'ii.',
-    title: 'A floor you can touch.',
-    body: 'Your hex is redeemable: raze it, and its sealed $VAVA is released to you. That single rule gives every hex on earth a hard value floor - if land ever trades below the tokens inside it, buying it is free money. The floor holds itself.',
+    title: 'A real price floor.',
+    body: 'You can raze (demolish) your hex at any time and take out the $VAVA locked inside it. That means a hex can never be worth less than its tokens: if one ever traded below that, anyone could buy it, raze it, and pocket the difference. So it never does.',
   },
   {
     n: 'iii.',
     title: 'Supply that only tightens.',
-    body: 'Claimed land is never unowned again. Its sealed $VAVA travels with every resale, out of circulation for as long as the hex stands. Every claimed hex is a vault.',
+    body: 'Claimed land never becomes unowned again. When a hex is resold, the $VAVA locked inside moves with it - those tokens stay out of circulation for as long as the hex exists.',
   },
   {
     n: 'iv.',
     title: 'Thrones worth fighting for.',
-    body: 'Hold the most land, stake your $VAVA, and take a country. Presidents earn 5% of every claim in their nation, live and in public - and hold the throne until someone out-owns them and dares to coup. 249 countries. 249 open seats.',
+    body: 'Own enough land in a country and stake 1,000,000 $VAVA, and you can take its throne. Presidents earn 5% of every claim in their country - and keep the seat until someone who owns more land stages a coup. 249 countries, 249 thrones.',
   },
 ];
 
 const FEES = [
-  { venue: 'Primary claims', fee: 'Full price to the loop', note: '80 / 15 / 5 - world, hex, president' },
-  { venue: 'Player-to-player trades', fee: '5%', note: '4% protocol · 1% to the country president. Seller-side - buyers always see clean prices. Barons trade at 3%' },
-  { venue: '$VAVA swaps', fee: '0%', note: 'Fair launch on pump.fun - full supply through the public curve, LP burned at graduation. We charge nothing on swaps' },
+  {
+    venue: 'Buying new land',
+    fee: '0% extra',
+    note: 'The whole price goes into the 80 / 15 / 5 split above. Nothing is added on top.',
+  },
+  {
+    venue: 'Player-to-player trades',
+    fee: '5%',
+    note: "Paid by the seller: 4% to the protocol, 1% to the country's president. Buyers pay exactly the listed price. Barons (500K+ $VAVA staked) pay 3% instead.",
+  },
+  {
+    venue: '$VAVA swaps',
+    fee: '0%',
+    note: 'Fair launch on pump.fun: the full supply goes through the public curve and the liquidity is burned. We take nothing on swaps.',
+  },
 ];
 
 export default function TokenomicsPage() {
@@ -125,9 +136,9 @@ export default function TokenomicsPage() {
             </span>
           </h1>
           <p className="mt-5 max-w-2xl text-base text-white/65 sm:text-lg">
-            Every hex you buy, buys $VAVA - sealed inside the land itself, redeemable by you,
-            carried with every trade. No staking forms, no second checkout. You buy the world;
-            the world buys the token.
+            When you buy land, part of the price automatically buys $VAVA and locks it inside
+            your hex. No staking forms, no second purchase - it all happens inside the one
+            payment. You buy land; the land buys the token.
           </p>
 
           {/* The split */}
@@ -157,14 +168,14 @@ export default function TokenomicsPage() {
               ))}
             </div>
             <p className="mt-3 text-xs text-white/45">
-              One price, one click. The buyer never pays a token surcharge - the loop runs inside the price.
+              You pay one price. The split happens behind the scenes - there is never an extra fee on top.
             </p>
           </section>
 
           {/* Pillars */}
           <section className="mt-14">
             <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-white/50">
-              Four rules, one flywheel
+              Four rules
             </h2>
             <div className="mt-4 grid gap-5 md:grid-cols-2">
               {PILLARS.map((p) => (
@@ -213,8 +224,9 @@ export default function TokenomicsPage() {
               <span style={{ color: TEAL }}>$VAVA</span>.&rdquo;
             </p>
             <p className="mx-auto mt-3 max-w-xl text-sm text-white/60">
-              Not a roadmap line - a rule of the protocol. Raze your hex and its sealed tokens are
-              yours. Which is exactly why almost nobody ever will.
+              That is not a roadmap promise - it is how the protocol works. Raze your hex and
+              the tokens inside are yours. Most people never will: the land is usually worth
+              more than the tokens inside it.
             </p>
           </section>
 
