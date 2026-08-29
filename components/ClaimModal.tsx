@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Instrument_Serif } from 'next/font/google';
-import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { useActiveWallet } from '@/lib/active-wallet';
@@ -13,6 +13,7 @@ import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { useCountryCounts } from '@/lib/use-country-counts';
 import { getConnection } from '@/lib/anchor-client';
 import { preflight } from '@/lib/preflight';
+import { chunkHexes, fetchQuote, buildClaimTransaction } from '@/lib/claim-chain';
 import { dispatchClaimDone } from '@/lib/claim-events';
 import { PRICING, SOL_USD } from '@/lib/pricing';
 import { Flag } from '@/components/flag';
@@ -142,60 +143,64 @@ export function ClaimModal({
 
     try {
       const connection = getConnection();
-
-      // One SystemProgram.transfer for the batch total - primary claims now
-      // pay the USD-spec floor in SOL straight to the treasury. The Tile
-      // registry is off-chain in Supabase; on-chain Anchor program is kept
-      // for the future bonding-curve resale path only.
-      const ix = SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: treasuryPk,
-        lamports: Number(totalLamports),
-      });
-
-      const { blockhash } = await connection.getLatestBlockhash('confirmed');
-      const tx = new Transaction({
-        feePayer: wallet.publicKey,
-        recentBlockhash: blockhash,
-      }).add(ix);
-
-      // Balance guard + simulate before the wallet sees it, so a doomed
-      // tx never triggers Phantom's "could be malicious" warning.
-      await preflight({
-        connection,
-        feePayer: wallet.publicKey,
-        tx,
-        lamportsNeeded: Number(totalLamports),
-      });
-
-      const sig = await wallet.signAndSendTransaction(tx);
-      await connection.confirmTransaction(sig, 'confirmed');
-
-      // Mirror each hex into Supabase with the per-hex USD quote so the DB
-      // function records the exact floor the user paid. Parallel - order
-      // inside the same country is enforced by the SELECT FOR UPDATE in
-      // claim_hex, so the count walks monotonically regardless of arrival.
       const owner = wallet.publicKey.toBase58();
-      const mirrorResults = await Promise.allSettled(
-        items.map((it, i) =>
-          fetch('/api/claim', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              h3: it.h3,
-              owner,
-              txHash: sig,
-              quotedPriceUsd: perItemUsd[i],
-            }),
-          }).then((r) => (r.ok ? it.h3 : null)),
-        ),
-      );
-      const succeeded = mirrorResults
-        .map((r) => (r.status === 'fulfilled' ? r.value : null))
-        .filter((h): h is string => h !== null);
 
-      setTxSig(sig);
-      dispatchClaimDone({ h3s: succeeded, txSig: sig });
+      // On-chain settlement: each chunk gets a keeper-signed quote from
+      // /api/quote, then one program transaction that splits the price
+      // 85/15 (treasury / buyback escrow) and creates the Tile PDAs.
+      // Without the quote signature the program rejects the claim, so
+      // pricing can never be bypassed.
+      const succeeded: string[] = [];
+      let lastSig = '';
+      // ~rent per Tile PDA + fee margin, on top of the quoted price.
+      const PER_TILE_OVERHEAD = 2_000_000;
+
+      for (const chunk of chunkHexes(items.map((it) => it.h3))) {
+        const quote = await fetchQuote(chunk, owner);
+        const { tx, totalLamports: chunkLamports } = buildClaimTransaction(
+          quote,
+          wallet.publicKey,
+        );
+        const { blockhash } = await connection.getLatestBlockhash('confirmed');
+        tx.feePayer = wallet.publicKey;
+        tx.recentBlockhash = blockhash;
+
+        // Balance guard + simulate before the wallet sees it, so a doomed
+        // tx never triggers Phantom's "could be malicious" warning.
+        await preflight({
+          connection,
+          feePayer: wallet.publicKey,
+          tx,
+          lamportsNeeded:
+            Number(chunkLamports) + chunk.length * PER_TILE_OVERHEAD,
+        });
+
+        const sig = await wallet.signAndSendTransaction(tx);
+        await connection.confirmTransaction(sig, 'confirmed');
+        lastSig = sig;
+
+        // Mirror into Supabase (registry + pricing ledger). No txHash:
+        // the server verifies the on-chain Tile PDA instead.
+        const mirrors = await Promise.allSettled(
+          chunk.map((h3, i) =>
+            fetch('/api/claim', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                h3,
+                owner,
+                quotedPriceUsd: quote.perHexUsd[i],
+              }),
+            }).then((r) => (r.ok ? h3 : null)),
+          ),
+        );
+        for (const m of mirrors) {
+          if (m.status === 'fulfilled' && m.value) succeeded.push(m.value);
+        }
+      }
+
+      setTxSig(lastSig);
+      dispatchClaimDone({ h3s: succeeded, txSig: lastSig });
       setState('confirmed');
       onConfirmed(succeeded);
     } catch (e: unknown) {

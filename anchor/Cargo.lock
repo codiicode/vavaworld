@@ -2135,6 +2135,9 @@ dependencies = [
  "anchor-spl",
  "h3o",
  "libm",
+ "solana-instructions-sysvar",
+ "solana-sdk-ids",
+ "solana-sha256-hasher",
 ]
 
 [[package]]

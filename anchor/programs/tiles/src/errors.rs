@@ -38,6 +38,10 @@ pub enum TilesError {
     PendingUnsettled,
     #[msg("Nothing to embed - tile has no pending SOL")]
     NothingToEmbed,
+    #[msg("Price quote has expired")]
+    QuoteExpired,
+    #[msg("Price quote signature missing or invalid")]
+    QuoteInvalid,
     #[msg("Embed amount must be greater than zero")]
     EmbedAmountZero,
     #[msg("Amount must be greater than zero")]

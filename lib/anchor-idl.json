@@ -50,6 +50,10 @@
           "writable": true
         },
         {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -62,8 +66,14 @@
           }
         },
         {
-          "name": "expected_max_total",
-          "type": "u64"
+          "name": "prices",
+          "type": {
+            "vec": "u64"
+          }
+        },
+        {
+          "name": "quote_expiry",
+          "type": "i64"
         }
       ]
     },
@@ -471,6 +481,35 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "update_keeper",
+      "discriminator": [
+        36,
+        13,
+        12,
+        225,
+        221,
+        94,
+        23,
+        151
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "new_keeper",
+          "type": "pubkey"
+        }
+      ]
     }
   ],
   "accounts": [

@@ -4,10 +4,11 @@ use anchor_lang::solana_program::{
     system_instruction,
 };
 
-use crate::constants::{
-    BPS_DENOMINATOR, EMBEDDED_BPS, MAX_TILES_PER_TX, TREASURY, T1_INCREMENT, T1_START,
-    T2_INCREMENT, T2_START, T3_INCREMENT, T3_START,
-};
+use solana_instructions_sysvar::load_instruction_at_checked;
+use solana_sdk_ids::ed25519_program;
+use solana_sha256_hasher::hashv;
+
+use crate::constants::{BPS_DENOMINATOR, EMBEDDED_BPS, MAX_TILES_PER_TX, TREASURY};
 use crate::errors::TilesError;
 use crate::h3_coords::h3_to_latlng_microdeg;
 use crate::state::{Config, Tile, TierCounter};
@@ -50,38 +51,90 @@ pub struct Claim<'info> {
     )]
     pub t3_counter: Box<Account<'info, TierCounter>>,
 
+    /// CHECK: the instructions sysvar, address-checked; read to verify the
+    /// keeper's ed25519 price-quote signature in this transaction.
+    #[account(address = solana_sdk_ids::sysvar::instructions::ID)]
+    pub instructions_sysvar: AccountInfo<'info>,
+
     pub system_program: Program<'info, System>,
     // Tile PDAs come via ctx.remaining_accounts in the same order as h3_ids
 }
 
+/// Domain separator for quote messages - bump on any format change.
+const QUOTE_DOMAIN: &[u8] = b"VAVA_CLAIM_V1";
+
 pub fn claim_handler<'info>(
     ctx: Context<'info, Claim<'info>>,
     h3_ids: Vec<u64>,
-    expected_max_total: u64,
+    prices: Vec<u64>,
+    quote_expiry: i64,
 ) -> Result<()> {
     // ---- Validation ----
     require!(
         !h3_ids.is_empty() && h3_ids.len() <= MAX_TILES_PER_TX,
         TilesError::BatchSizeInvalid
     );
+    require!(prices.len() == h3_ids.len(), TilesError::QuoteInvalid);
     require!(
         ctx.remaining_accounts.len() == h3_ids.len(),
         TilesError::PdaInvalid
     );
 
     let now = Clock::get()?.unix_timestamp;
+    require!(now <= quote_expiry, TilesError::QuoteExpired);
     let claimer_key = ctx.accounts.claimer.key();
     let program_id = ctx.program_id;
 
-    // ---- Pass 1: validate PDAs, classify tier, compute prices ----
+    // ---- Verify the keeper-signed price quote ----
+    // Primary-claim pricing is the per-country USD curve, which lives
+    // off-chain. The server (keeper key) signs sha256(domain, claimer,
+    // expiry, h3s, prices) and the client prepends an ed25519-program
+    // instruction carrying that signature. Without a valid quote the
+    // program rejects the claim, so nobody can settle land outside the
+    // official pricing.
+    {
+        let mut msg: Vec<u8> = Vec::with_capacity(13 + 32 + 8 + h3_ids.len() * 16);
+        msg.extend_from_slice(QUOTE_DOMAIN);
+        msg.extend_from_slice(claimer_key.as_ref());
+        msg.extend_from_slice(&quote_expiry.to_le_bytes());
+        for (h3, price) in h3_ids.iter().zip(prices.iter()) {
+            msg.extend_from_slice(&h3.to_le_bytes());
+            msg.extend_from_slice(&price.to_le_bytes());
+        }
+        let expected_hash = hashv(&[&msg]).to_bytes();
+
+        let ix = load_instruction_at_checked(0, &ctx.accounts.instructions_sysvar)
+            .map_err(|_| TilesError::QuoteInvalid)?;
+        require_keys_eq!(ix.program_id, ed25519_program::ID, TilesError::QuoteInvalid);
+        let d = &ix.data;
+        // ed25519 single-signature layout: 2-byte header + 7 u16 fields.
+        require!(d.len() >= 16 && d[0] == 1, TilesError::QuoteInvalid);
+        let rd_u16 = |off: usize| u16::from_le_bytes([d[off], d[off + 1]]) as usize;
+        let sig_ix_idx = rd_u16(4);
+        let pk_off = rd_u16(6);
+        let pk_ix_idx = rd_u16(8);
+        let msg_off = rd_u16(10);
+        let msg_len = rd_u16(12);
+        let msg_ix_idx = rd_u16(14);
+        // All references must point into THIS ed25519 instruction's own data.
+        let same = u16::MAX as usize;
+        require!(
+            sig_ix_idx == same && pk_ix_idx == same && msg_ix_idx == same,
+            TilesError::QuoteInvalid
+        );
+        require!(msg_len == 32 && d.len() >= msg_off + 32, TilesError::QuoteInvalid);
+        require!(d.len() >= pk_off + 32, TilesError::QuoteInvalid);
+        require!(
+            d[pk_off..pk_off + 32] == ctx.accounts.config.keeper.to_bytes(),
+            TilesError::QuoteInvalid
+        );
+        require!(d[msg_off..msg_off + 32] == expected_hash, TilesError::QuoteInvalid);
+    }
+
+    // ---- Pass 1: validate PDAs, classify tier, sum the quoted prices ----
     let mut tiers: Vec<u8> = Vec::with_capacity(h3_ids.len());
-    let mut prices: Vec<u64> = Vec::with_capacity(h3_ids.len());
     let mut bumps: Vec<u8> = Vec::with_capacity(h3_ids.len());
     let mut total: u64 = 0;
-
-    let t1_sold_start = ctx.accounts.t1_counter.sold;
-    let t2_sold_start = ctx.accounts.t2_counter.sold;
-    let t3_sold_start = ctx.accounts.t3_counter.sold;
 
     for (i, &h3_id) in h3_ids.iter().enumerate() {
         let tile_acc = &ctx.remaining_accounts[i];
@@ -96,34 +149,18 @@ pub fn claim_handler<'info>(
             tile_acc.lamports() == 0 && tile_acc.data_is_empty(),
             TilesError::AlreadyClaimed,
         );
-        // Classify tier
+        // Classify tier (recorded on the tile + drives the counters)
         let (lat, lng) = h3_to_latlng_microdeg(h3_id).ok_or(TilesError::InvalidH3)?;
         let tier = classify_tier(lat, lng);
+        require!((1..=3).contains(&tier), TilesError::TierInvalid);
 
-        // Per-tier local offset within this batch
-        let local_offset: u64 = tiers.iter().filter(|&&t| t == tier).count() as u64;
-        let (start, increment, base_sold) = match tier {
-            1 => (T1_START, T1_INCREMENT, t1_sold_start),
-            2 => (T2_START, T2_INCREMENT, t2_sold_start),
-            3 => (T3_START, T3_INCREMENT, t3_sold_start),
-            _ => return err!(TilesError::TierInvalid),
-        };
-
-        let n = base_sold
-            .checked_add(local_offset)
+        total = total
+            .checked_add(prices[i])
             .ok_or(TilesError::Overflow)?;
-        let inc = increment.checked_mul(n).ok_or(TilesError::Overflow)?;
-        let price = start.checked_add(inc).ok_or(TilesError::Overflow)?;
-
-        total = total.checked_add(price).ok_or(TilesError::Overflow)?;
 
         tiers.push(tier);
-        prices.push(price);
         bumps.push(bump);
     }
-
-    // ---- Slippage check ----
-    require!(total <= expected_max_total, TilesError::SlippageExceeded);
 
     // ---- Revenue split (docs/tokenomics.md waterfall) ----
     // Per-tile: 15% escrowed for the $VAVA buyback (embedded in the hex

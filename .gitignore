@@ -47,3 +47,5 @@ anchor/.anchor/
 
 .vercel
 pc-*.png
+anchor/keeper-keypair.json
+anchor/tiles-keypair-v3.json

@@ -133,3 +133,19 @@ pub fn lock_mint_handler(ctx: Context<LockMint>) -> Result<()> {
     ctx.accounts.config.mint_locked = true;
     Ok(())
 }
+
+/// Rotate the keeper key (admin). The keeper signs primary-claim price
+/// quotes server-side and runs the buyback bot.
+#[derive(Accounts)]
+pub struct UpdateKeeper<'info> {
+    #[account(address = config.admin @ TilesError::AdminOnly)]
+    pub admin: Signer<'info>,
+
+    #[account(mut, seeds = [b"config"], bump = config.bump)]
+    pub config: Box<Account<'info, Config>>,
+}
+
+pub fn update_keeper_handler(ctx: Context<UpdateKeeper>, new_keeper: Pubkey) -> Result<()> {
+    ctx.accounts.config.keeper = new_keeper;
+    Ok(())
+}

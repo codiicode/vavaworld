@@ -22,9 +22,10 @@ pub mod tiles {
     pub fn claim<'info>(
         ctx: Context<'info, Claim<'info>>,
         h3_ids: Vec<u64>,
-        expected_max_total: u64,
+        prices: Vec<u64>,
+        quote_expiry: i64,
     ) -> Result<()> {
-        claim_handler(ctx, h3_ids, expected_max_total)
+        claim_handler(ctx, h3_ids, prices, quote_expiry)
     }
 
     pub fn init_config(ctx: Context<InitConfig>, keeper: Pubkey) -> Result<()> {
@@ -33,6 +34,10 @@ pub mod tiles {
 
     pub fn update_mint(ctx: Context<UpdateMint>) -> Result<()> {
         update_mint_handler(ctx)
+    }
+
+    pub fn update_keeper(ctx: Context<UpdateKeeper>, new_keeper: Pubkey) -> Result<()> {
+        update_keeper_handler(ctx, new_keeper)
     }
 
     pub fn lock_mint(ctx: Context<LockMint>) -> Result<()> {
