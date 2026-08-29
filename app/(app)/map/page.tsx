@@ -12,6 +12,7 @@ import { MapZoomControls } from '@/components/map/map-zoom-controls';
 import { LiveClaimsFeed } from '@/components/map/live-claims-feed';
 import { hexCenter } from '@/lib/h3-utils';
 import { expandFromSeed } from '@/lib/hex-expand';
+import { getMapStyle } from '@/lib/preferences';
 
 // The claim flow pulls in Anchor + web3.js + pricing - none of which the map
 // needs until the user actually opens it. Load that chunk on demand so it
@@ -36,8 +37,12 @@ export default function Page() {
   const [seed, setSeed] = useState<string | null>(null);
   const [showClaim, setShowClaim] = useState(false);
   // Satellite is a raster overlay toggled on a single persistent base style -
-  // see MapView. Default on (matches the previous satellite-first view).
+  // see MapView. Default on; the user's saved Settings preference is applied
+  // right after mount (hydration-safe - localStorage isn't read during SSR).
   const [satellite, setSatellite] = useState(true);
+  useEffect(() => {
+    setSatellite(getMapStyle() === 'satellite');
+  }, []);
   const mapRef = useRef<MapRef | null>(null);
   const refreshTilesRef = useRef<((h3s: string[]) => void) | null>(null);
 

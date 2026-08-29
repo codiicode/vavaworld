@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { RefObject } from 'react';
 import type { MapRef } from 'react-map-gl/mapbox';
+import { getMapView } from '@/lib/preferences';
 
 /**
  * 2D / 3D camera toggle (the Apple-Maps-style pill). Eases the map pitch
@@ -16,6 +17,11 @@ const TILT_PITCH = 60;
 
 export function MapPerspectiveToggle({ mapRef }: { mapRef: RefObject<MapRef | null> }) {
   const [is3d, setIs3d] = useState(false);
+  // Reflect the saved default view so the pill's label is right on open
+  // (MapView applies the actual pitch).
+  useEffect(() => {
+    setIs3d(getMapView() === '3d');
+  }, []);
 
   const toggle = () => {
     const map = mapRef.current?.getMap();

@@ -9,6 +9,7 @@ import { TIER_FILL, type Tier, classifyTier } from '@/lib/tier';
 import { useTiles } from '@/lib/use-tiles';
 import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { ownerColor } from '@/lib/owner-color';
+import { getMapView } from '@/lib/preferences';
 import { PublicKey } from '@solana/web3.js';
 
 // Per-hex geometry/tier cache. h3 IDs are deterministic so coords + center +
@@ -585,6 +586,12 @@ export function MapView({
 
     installHexLayers();
     applyStandardConfig(map);
+
+    // Apply the saved default view (Settings → Map): tilt to 3D on open if
+    // that's the user's preference.
+    if (getMapView() === '3d') {
+      map.easeTo({ pitch: 60, duration: 0 });
+    }
 
     // Safety net: if a style ever reloads (we no longer trigger it), re-add.
     map.on('style.load', () => {
