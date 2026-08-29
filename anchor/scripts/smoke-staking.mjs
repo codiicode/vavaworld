@@ -71,8 +71,8 @@ await program.methods.beginUnstake(new BN((100_000n * UNIT).toString()))
 s = await program.account.stakeAccount.fetch(stakeAccount);
 console.log('after begin_unstake: active', s.amount.toString(), 'pending', s.pendingAmount.toString());
 const eta = Number(s.unstakeAvailableAt) - Math.floor(Date.now() / 1000);
-console.log('cooldown remaining :', Math.round(eta / 3600), 'h (expect ~72)');
-if (eta < 71 * 3600 || eta > 73 * 3600) throw new Error('COOLDOWN WRONG');
+console.log('cooldown remaining :', Math.round(eta / 3600), 'h (expect ~24)');
+if (eta < 23 * 3600 || eta > 25 * 3600) throw new Error('COOLDOWN WRONG');
 
 // 4. withdraw too early must fail
 try {
