@@ -593,6 +593,19 @@ export function MapView({
       map.easeTo({ pitch: 60, duration: 0 });
     }
 
+    // Landing sequence: open on the globe (continuous with the landing
+    // page's Earth), then fly down to the Eiffel Tower at hex zoom so the
+    // first thing every visitor sees is famous, claimable land. Reduced
+    // motion skips the flight.
+    const EIFFEL = { center: [2.29448, 48.85837] as [number, number], zoom: 16.4 };
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      map.jumpTo(EIFFEL);
+    } else {
+      window.setTimeout(() => {
+        map.flyTo({ ...EIFFEL, duration: 4200, essential: false, curve: 1.6 });
+      }, 600);
+    }
+
     // Safety net: if a style ever reloads (we no longer trigger it), re-add.
     map.on('style.load', () => {
       installHexLayers();
@@ -726,7 +739,7 @@ export function MapView({
       <Map
         ref={mapRef}
         mapboxAccessToken={token}
-        initialViewState={{ longitude: 13.405, latitude: 52.52, zoom: 10 }}
+        initialViewState={{ longitude: 2.29, latitude: 24, zoom: 1.6 }}
         style={{ position: 'absolute', inset: 0 }}
         mapStyle={satellite ? SATELLITE_STYLE : MAP_STYLE}
         projection={{ name: 'globe' }}
