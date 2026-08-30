@@ -12,7 +12,7 @@ Two Railway services, both pointing at `github.com/codiicode/vavaworld`:
 | **keeper** | `railway.keeper.json` | `npm run keeper` | Buyback bot: converts escrowed SOL into embedded $VAVA |
 
 The repo is already prepared for this: `.npmrc` pins `legacy-peer-deps`,
-`package.json` pins Node `>=20.9.0`, `npm start` binds to Railway's injected
+`package.json` pins Node `>=22.11.0`, `npm start` binds to Railway's injected
 `$PORT`, and `sharp` is installed (self-hosted Next.js needs it for
 `next/image`; Vercel used to provide it).
 
@@ -52,10 +52,13 @@ copy from the dashboard). Copy them across; don't regenerate `KEEPER_SECRET_KEY`
 without also running `update_keeper` on-chain — the program checks the quote
 signature against the key stored in its config.
 
-### Health check
+### Region
 
-`railway.json` points the health check at `/api/sol-price`. It is cheap and
-touches no secrets, so a failing check means the app itself is down.
+Set the service region to **EU West** (Settings → Regions, or
+`railway service scale --service vavaworld eu-west=1`). Supabase is in
+`eu-north-1`; a US region puts a transatlantic round trip on every query.
+Check for leftover replicas in other regions — they cost double and take
+half the traffic.
 
 ---
 
