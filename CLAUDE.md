@@ -104,6 +104,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
 
 ## Deploy flow (memorize this)
 
+**The repo deploys to BOTH Vercel and Railway from the same `main`.** Railway
+setup + env vars are documented in `docs/railway-deploy.md` (two services: the
+Next.js app, and the keeper buyback bot via `railway.keeper.json`). Keep the
+app host-agnostic: no `@vercel/*` runtime APIs, `npm start` must honour `$PORT`,
+and installs rely on `.npmrc` rather than a Vercel-only install command.
+
 Vercel auto-deploys `main` from GitHub (`codiicode/vavaworld`). Pushing IS
 the deploy — there is no manual CLI step, no alias step:
 
