@@ -85,6 +85,21 @@ buyback loop still to be written.
 
 ---
 
+## 2b. If deploys sit at NEEDS_APPROVAL
+
+Railway can flag pushes as coming from an "external contributor" and hold
+every deployment behind a manual Deploy button, even when the commit author
+is the repo owner. Reconnecting the source from the CLI (authenticated as the
+workspace owner) clears it:
+
+```bash
+railway service source connect --repo codiicode/vavaworld --branch main --service vavaworld
+```
+
+After that, pushes to `main` build automatically. Verify with an empty commit:
+`git commit --allow-empty -m "test" && git push` — the service status should
+go to `BUILDING`, not `NEEDS_APPROVAL`.
+
 ## 3. The one real regression vs Vercel: CDN caching
 
 Seven API routes set `s-maxage` / `stale-while-revalidate` headers. On Vercel
