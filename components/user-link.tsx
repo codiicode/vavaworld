@@ -64,7 +64,7 @@ export function UserLink({
     ? `${addr.slice(0, 4)}…${addr.slice(-4)}`
     : addr;
 
-  return (
+  const link = (
     <Link
       href={`/u/${encodeURIComponent(isUsername ? resolved! : addr)}`}
       className={cn(
@@ -74,12 +74,20 @@ export function UserLink({
           : mono
           ? 'font-mono text-xs text-foreground/75'
           : 'text-xs text-foreground/75',
-        xHandle && 'inline-flex items-center gap-1',
-        className,
+        xHandle ? undefined : className,
       )}
     >
       {label}
-      {xHandle && <XBadge handle={xHandle} size={10} />}
     </Link>
+  );
+
+  if (!xHandle) return link;
+  // The badge is its own anchor (opens the X profile) - it must be a
+  // sibling of the profile link, never nested inside it.
+  return (
+    <span className={cn('inline-flex items-center gap-1', className)}>
+      {link}
+      <XBadge handle={xHandle} size={10} />
+    </span>
   );
 }
