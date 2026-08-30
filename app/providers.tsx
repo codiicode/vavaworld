@@ -3,6 +3,7 @@
 import { type ReactNode } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { WalletStateProvider } from '@/lib/wallet-context';
+import { XAutoVerify } from '@/components/x-auto-verify';
 
 // The heavy wallet stack (Privy + wallet-adapter) is NOT wrapped around the
 // app anymore - WalletStateProvider is a light shim that dynamically loads
@@ -12,7 +13,10 @@ import { WalletStateProvider } from '@/lib/wallet-context';
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
-      <WalletStateProvider>{children}</WalletStateProvider>
+      <WalletStateProvider>
+        <XAutoVerify />
+        {children}
+      </WalletStateProvider>
     </ThemeProvider>
   );
 }
