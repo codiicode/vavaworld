@@ -24,14 +24,19 @@ export async function POST(req: Request) {
   const sb = getServerSupabase();
   const { data, error } = await sb
     .from('profiles')
-    .select('wallet_address,username')
-    .in('wallet_address', addresses)
-    .not('username', 'is', null);
+    .select('wallet_address,username,x_handle')
+    .in('wallet_address', addresses);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const usernames: Record<string, string> = {};
-  for (const row of (data ?? []) as Array<{ wallet_address: string; username: string }>) {
-    usernames[row.wallet_address] = row.username;
+  const x: Record<string, string> = {};
+  for (const row of (data ?? []) as Array<{
+    wallet_address: string;
+    username: string | null;
+    x_handle: string | null;
+  }>) {
+    if (row.username) usernames[row.wallet_address] = row.username;
+    if (row.x_handle) x[row.wallet_address] = row.x_handle;
   }
-  return NextResponse.json({ usernames });
+  return NextResponse.json({ usernames, x });
 }

@@ -45,7 +45,8 @@ function inferSolanaChain(): 'solana:mainnet' | 'solana:devnet' | 'solana:testne
  * fallback for power users who connect Phantom directly.
  */
 export function WalletBridge() {
-  const { ready, authenticated, login, logout, user } = usePrivy();
+  const { ready, authenticated, login, logout, user, linkTwitter, unlinkTwitter, getAccessToken } =
+    usePrivy();
   const { wallets: privyWallets } = usePrivySolanaWallets();
   const { signAndSendTransaction: privySignAndSend } = useSignAndSendTransaction();
   const { signMessage: privySignMessage } = useSignMessage();
@@ -172,6 +173,10 @@ export function WalletBridge() {
   latestRef.current = wallet;
   const userRef = useRef(user ?? null);
   userRef.current = user ?? null;
+  // Privy hook functions are identity-unstable across renders - publish
+  // stable wrappers that delegate through a ref (same pattern as wallet).
+  const privyFnsRef = useRef({ linkTwitter, unlinkTwitter, getAccessToken });
+  privyFnsRef.current = { linkTwitter, unlinkTwitter, getAccessToken };
 
   const source = wallet.source;
   const address = wallet.address;
@@ -199,7 +204,16 @@ export function WalletBridge() {
       openWalletModal: () => latestRef.current.openWalletModal(),
       exportWallet: canExport ? (a) => latestRef.current.exportWallet!(a) : null,
     };
-    publish({ wallet: snapshot, privy: { user: userRef.current, ready } });
+    publish({
+      wallet: snapshot,
+      privy: {
+        user: userRef.current,
+        ready,
+        linkTwitter: () => privyFnsRef.current.linkTwitter(),
+        unlinkTwitter: (subject: string) => privyFnsRef.current.unlinkTwitter(subject),
+        getAccessToken: () => privyFnsRef.current.getAccessToken(),
+      },
+    });
   }, [
     publish,
     source,

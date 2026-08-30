@@ -29,6 +29,10 @@ export type DbProfile = {
   flag_country_code: string | null;
   avatar_url: string | null;
   bio: string | null;
+  /** Server-verified X handle (Privy OAuth) - not client-writable. */
+  x_handle: string | null;
+  x_subject: string | null;
+  x_verified_at: string | null;
   created_at: string;
   updated_at: string;
 };

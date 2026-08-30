@@ -4,8 +4,10 @@ import { useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { findUserByAddr } from '@/lib/mock-users';
+import { XBadge } from '@/components/x-badge';
 import {
   getCachedUsername,
+  getCachedXHandle,
   queueAddress,
   subscribeUsernames,
 } from '@/lib/username-store';
@@ -39,10 +41,17 @@ export function UserLink({
     () => getCachedUsername(addr),
     () => undefined,
   );
+  // Server-verified X handle (Privy OAuth) - drives the X badge. Always
+  // queued so the badge shows even when a username was passed in.
+  const xHandle = useSyncExternalStore(
+    subscribeUsernames,
+    () => getCachedXHandle(addr),
+    () => undefined,
+  );
 
   useEffect(() => {
-    if (!username && addr) queueAddress(addr);
-  }, [username, addr]);
+    if (addr) queueAddress(addr);
+  }, [addr]);
 
   const resolved =
     username ?? fromStore ?? findUserByAddr(addr)?.username ?? undefined;
@@ -65,10 +74,12 @@ export function UserLink({
           : mono
           ? 'font-mono text-xs text-foreground/75'
           : 'text-xs text-foreground/75',
+        xHandle && 'inline-flex items-center gap-1',
         className,
       )}
     >
       {label}
+      {xHandle && <XBadge handle={xHandle} size={10} />}
     </Link>
   );
 }

@@ -11,6 +11,7 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { useUserTiles } from '@/lib/use-user-tiles';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
+import { ConnectX } from './connect-x';
 import { EditProfileDialog } from './edit-profile-dialog';
 import { ExportKeyButton } from './export-key-button';
 
@@ -130,6 +131,8 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
                 </>
               )}
             </div>
+
+            <ConnectX onChanged={onSavedBumpVersion} />
           </div>
         </div>
 

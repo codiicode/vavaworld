@@ -53,7 +53,16 @@ export type ActiveWallet = {
   exportWallet: ((address: string) => Promise<void>) | null;
 };
 
-export type PrivyUserState = { user: PrivyUser | null; ready: boolean };
+export type PrivyUserState = {
+  user: PrivyUser | null;
+  ready: boolean;
+  /** Opens the X (Twitter) OAuth link flow. Null until the engine loads. */
+  linkTwitter?: (() => void) | null;
+  /** Unlinks the X account with the given subject id. */
+  unlinkTwitter?: ((subject: string) => Promise<unknown>) | null;
+  /** Privy auth token for server-side verification calls. */
+  getAccessToken?: (() => Promise<string | null>) | null;
+};
 
 type Published = { wallet: ActiveWallet; privy: PrivyUserState };
 
