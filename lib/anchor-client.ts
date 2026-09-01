@@ -7,7 +7,10 @@ import type { WalletContextState } from '@solana/wallet-adapter-react';
 export const PROGRAM_ID = (idl as { address: string }).address;
 
 export function getRpcUrl(): string {
-  return process.env.NEXT_PUBLIC_RPC_URL ?? 'https://api.devnet.solana.com';
+  // Server-side prefers RPC_URL (an unrestricted key): the browser key is
+  // domain-locked at Helius, and server calls carry no Origin header so
+  // they'd be rejected. RPC_URL is never exposed to the client bundle.
+  return process.env.RPC_URL ?? process.env.NEXT_PUBLIC_RPC_URL ?? 'https://api.devnet.solana.com';
 }
 
 export function getConnection(): Connection {
