@@ -1,52 +1,32 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { BorshAccountsCoder, type Idl } from '@coral-xyz/anchor';
-import { PublicKey } from '@solana/web3.js';
-import idl from './anchor-idl.json';
-import { counterPda } from './tile-pda';
-import { getConnection, PROGRAM_ID } from './anchor-client';
+import { getPublicClient, TILES_ABI, TILES_ADDRESS } from './evm';
 import { useClaimDoneListener } from './claim-events';
-
-const programIdPk = new PublicKey(PROGRAM_ID);
-const coder = new BorshAccountsCoder(idl as Idl);
 
 export type Counters = { 1: bigint; 2: bigint; 3: bigint };
 
-function decodeCounter(buf: Buffer): bigint {
-  try {
-    const decoded = coder.decode<{ sold: { toString: () => string } }>('TierCounter', buf);
-    return BigInt(decoded.sold.toString());
-  } catch {
-    return 0n;
-  }
-}
-
-/**
- * Reads the three TierCounter PDAs.
- *
- * Originally subscribed to live updates via `onAccountChange`, but Helius RPC
- * URLs carry a query-string API key which the web3.js WSS client mangles. The
- * resulting connection failures retry in a tight loop and swamp the browser.
- * Polling every 30s is plenty for pricing UI.
- */
+/** Sold-per-tier straight from the contract's tierCounts array. */
 const POLL_MS = 30_000;
 
 export function useCounters(): Counters {
   const [counters, setCounters] = useState<Counters>({ 1: 0n, 2: 0n, 3: 0n });
 
   const fetchAll = useCallback(async () => {
-    const conn = getConnection();
+    if (!TILES_ADDRESS) return;
+    const client = getPublicClient();
     try {
-      const pdas = ([1, 2, 3] as const).map((tier) => counterPda(tier, programIdPk)[0]);
-      const infos = await conn.getMultipleAccountsInfo(pdas);
-      setCounters((c) => {
-        const next = { ...c };
-        infos.forEach((ai, i) => {
-          if (ai) next[([1, 2, 3] as const)[i]] = decodeCounter(ai.data as Buffer);
-        });
-        return next;
-      });
+      const [a, b, c] = await Promise.all(
+        [0n, 1n, 2n].map((i) =>
+          client.readContract({
+            address: TILES_ADDRESS,
+            abi: TILES_ABI,
+            functionName: 'tierCounts',
+            args: [i],
+          }),
+        ),
+      );
+      setCounters({ 1: BigInt(a as bigint), 2: BigInt(b as bigint), 3: BigInt(c as bigint) });
     } catch {
       /* RPC hiccup - keep the previous values */
     }

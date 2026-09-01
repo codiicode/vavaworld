@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, Clock, ExternalLink, Gavel, Hexagon, Loader2, X } from 'lucide-react';
-import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { BorshAccountsCoder, type Idl } from '@coral-xyz/anchor';
+
 import { BidDialog } from '@/components/bid-dialog';
 import { Button } from '@/components/ui/button';
 import { Flag } from '@/components/flag';
@@ -18,38 +17,29 @@ import { hexCenter } from '@/lib/h3-utils';
 import { hexStaticMapUrl } from '@/lib/static-map';
 import { classifyTier } from '@/lib/tier';
 import { useHexLocations } from '@/lib/use-hex-locations';
-import { getConnection, PROGRAM_ID } from '@/lib/anchor-client';
-import { tilePda } from '@/lib/tile-pda';
-import idl from '@/lib/anchor-idl.json';
+import { getPublicClient, h3ToUint64, TILES_ABI, TILES_ADDRESS } from '@/lib/evm';
 import { getSupabase } from '@/lib/supabase';
 import type { DbListing } from '@/lib/supabase-listings';
 import type { ClaimedTile } from '@/types/tile';
 import type { Tier } from '@/lib/tier';
 
-import { useUsdFmt } from '@/lib/usd';
-const programIdPk = new PublicKey(PROGRAM_ID);
-const coder = new BorshAccountsCoder(idl as Idl);
+import { fmtUsdValue, useUsdFmt } from '@/lib/usd';
+import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 
-function decodeTile(buf: Buffer, h3: string): ClaimedTile | null {
-  try {
-    const d = coder.decode<{
-      owner: PublicKey;
-      claimed_at: { toNumber: () => number };
-      tier: number;
-      price_paid: { toString: () => string };
-      bump: number;
-    }>('Hex', buf);
-    return {
-      h3,
-      owner: d.owner.toBase58(),
-      tier: d.tier as Tier,
-      claimedAt: d.claimed_at.toNumber(),
-      pricePaid: BigInt(d.price_paid.toString()),
-      bump: d.bump,
-    };
-  } catch {
-    return null;
-  }
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
+
+type HexTuple = readonly [string, number, number, boolean, bigint, bigint];
+
+function toClaimedTile(h3: string, hex: HexTuple): ClaimedTile | null {
+  const owner = hex[0];
+  if (!owner || owner === ZERO_ADDR) return null;
+  return {
+    h3,
+    owner,
+    tier: (Number(hex[2]) || 3) as Tier,
+    claimedAt: Number(hex[1]),
+    paidUsd: 0,
+  };
 }
 
 function looksLikeH3(s: string): boolean {
@@ -96,11 +86,15 @@ export default function HexDetailPage() {
     let cancelled = false;
     (async () => {
       try {
-        const conn = getConnection();
-        const [pda] = tilePda(h3, programIdPk);
-        const ai = await conn.getAccountInfo(pda);
+        const client = getPublicClient();
+        const hex = (await client.readContract({
+          address: TILES_ADDRESS,
+          abi: TILES_ABI,
+          functionName: 'hexes',
+          args: [h3ToUint64(h3)],
+        })) as unknown as HexTuple;
         if (cancelled) return;
-        setTile(ai ? decodeTile(ai.data as Buffer, h3) : null);
+        setTile(toClaimedTile(h3, hex));
       } catch {
         if (!cancelled) setTile(null);
       }
@@ -260,8 +254,9 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 }
 
 function OwnerCard({ tile }: { tile: ClaimedTile }) {
-  const usd = useUsdFmt();
-  const paidSol = Number(tile.pricePaid) / LAMPORTS_PER_SOL;
+  // Paid price lives in the registry (Claimed event mirror), not on-chain.
+  const registry = useClaimedRegistry();
+  const paidUsd = registry.get(tile.h3)?.priceUsd ?? null;
   return (
     <div className="rounded-2xl border border-white/40 bg-white/30 p-5 backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between">
@@ -290,7 +285,7 @@ function OwnerCard({ tile }: { tile: ClaimedTile }) {
             Originally paid
           </div>
           <div className="font-medium tabular-nums text-foreground">
-            {usd(paidSol)}
+            {paidUsd != null ? fmtUsdValue(paidUsd) : ' - '}
           </div>
         </div>
       </div>

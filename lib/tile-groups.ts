@@ -1,4 +1,3 @@
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { hexCenter } from './h3-utils';
 import type { Tier } from './tier';
 import type { HexLocation } from './use-hex-locations';
@@ -16,8 +15,8 @@ export type TileGroup = {
   tiles: ClaimedTile[];
   /** Unix seconds - the moment of purchase. */
   claimedAt: number;
-  /** Total SOL paid across the property. */
-  totalSol: number;
+  /** Total dollars paid across the property. */
+  totalUsd: number;
   /** Most common tier - used for the tile badge. */
   representativeTier: Tier;
   /** Mean lat/lng across all hex centers - preview map center. */
@@ -51,8 +50,7 @@ export function groupTilesByClaim(
   const out: TileGroup[] = [];
   for (const [claimedAt, list] of buckets) {
     const sorted = [...list].sort((a, b) => (a.h3 < b.h3 ? -1 : 1));
-    const totalSol =
-      sorted.reduce((s, t) => s + Number(t.pricePaid), 0) / LAMPORTS_PER_SOL;
+    const totalUsd = sorted.reduce((s, t) => s + t.paidUsd, 0);
 
     const centers = sorted.map((t) => hexCenter(t.h3));
     const centerLat = centers.reduce((s, c) => s + c.lat, 0) / centers.length;
@@ -105,7 +103,7 @@ export function groupTilesByClaim(
       key: String(claimedAt),
       tiles: sorted,
       claimedAt,
-      totalSol,
+      totalUsd,
       representativeTier,
       centerLat,
       centerLng,

@@ -6,7 +6,6 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Flag } from '@/components/flag';
 import { useActiveWallet } from '@/lib/active-wallet';
 import {
@@ -16,7 +15,7 @@ import {
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
-import { useUsdFmt } from '@/lib/usd';
+import { fmtUsdValue, useUsdFmt } from '@/lib/usd';
 /**
  * "List for sale" dialog opened from the tile row "..." menu.
  *
@@ -49,7 +48,7 @@ export function TileListDialog({
   const valid = Number.isFinite(numeric) && numeric > 0;
   const fee = valid ? numeric * 0.025 : 0;
   const proceeds = valid ? numeric - fee : 0;
-  const paidSol = Number(tile.pricePaid) / LAMPORTS_PER_SOL;
+  const paidUsd = tile.paidUsd;
   const place = location?.neighborhood ?? location?.place ?? location?.countryName ?? 'Unmapped';
 
   const close = () => {
@@ -84,13 +83,13 @@ export function TileListDialog({
                 <Input
                   autoFocus
                   inputMode="decimal"
-                  placeholder={paidSol > 0 ? paidSol.toFixed(3) : '0.000'}
+                  placeholder={paidUsd > 0 ? paidUsd.toFixed(2) : '0.00'}
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   className="h-10 text-base tabular-nums"
                 />
                 <p className="mt-1 text-[11px] text-muted-foreground tabular-nums">
-                  You paid {usd(paidSol)}
+                  You paid {fmtUsdValue(paidUsd)}
                 </p>
               </div>
 

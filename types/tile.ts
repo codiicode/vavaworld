@@ -12,6 +12,5 @@ export type ClaimedTile = {
   owner: string;          // base58 pubkey
   tier: Tier;
   claimedAt: number;      // unix seconds
-  pricePaid: bigint;
-  bump: number;
+  paidUsd: number;        // dollars - from the claim mirror (registry)
 };

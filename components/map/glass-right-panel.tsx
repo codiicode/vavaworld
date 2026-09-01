@@ -3,7 +3,6 @@
 import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
 import { useTiles } from '@/lib/use-tiles';
@@ -68,7 +67,7 @@ export function GlassRightPanel({
         m.set(h, {
           owner: t.owner,
           username: null,
-          paidLabel: `${(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(3)} SOL`,
+          paidLabel: registry.get(h)?.priceUsd != null ? `$${registry.get(h)!.priceUsd.toFixed(2)}` : ' - ',
           claimedAtMs: t.claimedAt * 1000,
           imageUrl: registry.get(h)?.imageUrl ?? null,
         });

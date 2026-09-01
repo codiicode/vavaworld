@@ -48,7 +48,7 @@ import { TileDetailsDialog } from './tile-details-dialog';
 import { TileListDialog } from './tile-list-dialog';
 import { TileTransferDialog } from './tile-transfer-dialog';
 
-import { useUsdFmt } from '@/lib/usd';
+import { fmtUsdValue } from '@/lib/usd';
 type DialogKind = 'details' | 'list' | 'transfer';
 type DialogState = { kind: DialogKind; tile: ClaimedTile } | null;
 
@@ -320,7 +320,7 @@ function GroupRow({
       </TableCell>
       <TableCell className="text-right">
         <span className="text-sm font-medium tabular-nums text-foreground">
-          {g.totalSol.toFixed(3)}
+          {g.totalUsd.toFixed(2)}
         </span>
         <span className="ml-1 text-xs text-foreground/55">USD</span>
       </TableCell>
@@ -368,7 +368,6 @@ function GroupCard({
   group: TileGroup;
   onAction: (kind: DialogKind, tile: ClaimedTile) => void;
 }) {
-  const usd = useUsdFmt();
   const router = useRouter();
   const img = hexStaticMapUrl({
     lat: g.centerLat,
@@ -473,7 +472,7 @@ function GroupCard({
             {isSingle ? 'Paid' : 'Total paid'}
           </span>
           <span className="text-sm font-medium tabular-nums text-foreground">
-            {usd(g.totalSol)}
+            {fmtUsdValue(g.totalUsd)}
           </span>
         </div>
       </div>

@@ -4,13 +4,12 @@ import { Copy, ExternalLink } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
 import { Flag } from '@/components/flag';
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
-import { useUsdFmt } from '@/lib/usd';
+import { fmtUsdValue } from '@/lib/usd';
 /**
  * Read-only tile info card. Triggered from the row "..." menu → Details.
  * Shows the on-chain fields plus the geocoded place name so collectors can
@@ -27,10 +26,9 @@ export function TileDetailsDialog({
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
-  const usd = useUsdFmt();
   if (!tile) return null;
   const c = hexCenter(tile.h3);
-  const price = (Number(tile.pricePaid) / LAMPORTS_PER_SOL).toFixed(3);
+  const price = tile.paidUsd;
   const claimedAt = new Date(tile.claimedAt * 1000);
   const place =
     location?.neighborhood ??
@@ -79,7 +77,7 @@ export function TileDetailsDialog({
             </span>
           </Row>
           <Row label="Price paid" bold>
-            <span className="tabular-nums">{usd(Number(price))}</span>
+            <span className="tabular-nums">{fmtUsdValue(price)}</span>
           </Row>
         </dl>
 
