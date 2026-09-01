@@ -58,8 +58,11 @@ export function PageShell({
         <div className="mx-auto flex w-full max-w-[1180px] items-center justify-between gap-4 px-5 py-4 md:px-8">
           <Link href="/" className="flex min-h-[44px] flex-none items-center gap-2.5">
             <BrandLogo size={22} variant="white" />
-            <span className="text-[13px] font-semibold uppercase tracking-[0.28em] text-white">
-              Vavaworld
+            <span
+              className="text-[15px] text-white"
+              style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
+            >
+              VAVAWORLD
             </span>
           </Link>
 
@@ -95,7 +98,16 @@ export function PageShell({
 
       <footer className="border-t border-white/[0.07] bg-black">
         <div className="mx-auto flex w-full max-w-[1180px] flex-col items-center justify-between gap-4 px-5 py-8 text-[12.5px] text-white/38 md:flex-row md:px-8">
-          <span>© {new Date().getFullYear()} VAVAWORLD · $VAVA</span>
+          <span className="flex items-center gap-2.5">
+            <BrandLogo size={18} variant="white" />
+            <span
+              className="text-[13px] text-white"
+              style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
+            >
+              VAVAWORLD
+            </span>
+            <span>© {new Date().getFullYear()} · $VAVA</span>
+          </span>
           <div className="flex items-center gap-6">
             <Link href="/docs" className="inline-flex min-h-[44px] items-center transition-colors hover:text-white/70">
               Docs

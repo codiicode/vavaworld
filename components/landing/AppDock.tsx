@@ -70,7 +70,12 @@ export function AppDock() {
     <div className={`app-dock ${on ? 'on' : ''}`} aria-hidden={!on}>
       <Link href="/" className="dock-mark">
         <BrandLogo size={20} variant="white" />
-        <span className="hidden lg:inline">Vavaworld</span>
+        <span
+          className="hidden text-[11px] lg:inline"
+          style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
+        >
+          VAVAWORLD
+        </span>
       </Link>
 
       <nav className="dock-links">

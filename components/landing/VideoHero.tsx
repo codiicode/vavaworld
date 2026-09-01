@@ -54,8 +54,11 @@ function Nav() {
     >
       <Link href="/" className="flex items-center gap-2.5">
         <BrandLogo size={22} variant="white" />
-        <span className="text-[13px] font-semibold uppercase tracking-[0.28em] text-white">
-          Vavaworld
+        <span
+          className="text-[15px] text-white"
+          style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
+        >
+          VAVAWORLD
         </span>
       </Link>
 

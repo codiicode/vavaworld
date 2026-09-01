@@ -328,7 +328,16 @@ export function LandingSections() {
             className="flex flex-col items-center justify-between gap-4 py-8 text-[12.5px] md:flex-row"
             style={{ borderTop: '1px solid var(--rule)', color: 'var(--ink-3)' }}
           >
-            <span>© {new Date().getFullYear()} VAVAWORLD · $VAVA</span>
+          <span className="flex items-center gap-2.5">
+            <BrandLogo size={18} variant="white" />
+            <span
+              className="text-[13px] text-white"
+              style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
+            >
+              VAVAWORLD
+            </span>
+            <span>© {new Date().getFullYear()} · $VAVA</span>
+          </span>
             <Link href="/#how" className="foot-link">
               How it works
             </Link>
