@@ -69,7 +69,7 @@ export function MapDock() {
   const pathname = usePathname();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
-  const { balance } = useWalletBalance(wallet.publicKey);
+  const { balance } = useWalletBalance(wallet.address);
   const { unread } = useNotifications(wallet.address);
   const [moreOpen, setMoreOpen] = useState(false);
 

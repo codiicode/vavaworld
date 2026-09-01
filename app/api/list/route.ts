@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   if (!h3 || !seller || !priceSol || !message || !signature) {
     return NextResponse.json({ error: 'h3, seller, priceSol, message, signature required' }, { status: 400 });
   }
-  const sig = verifySignedAction({
+  const sig = await verifySignedAction({
     address: seller,
     message,
     signatureB58: signature,

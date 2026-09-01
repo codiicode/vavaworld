@@ -340,7 +340,7 @@ function BidsCard({
   const isOwner = viewer === owner;
 
   const act = async (bid: DbBid, action: 'accept' | 'decline' | 'cancel') => {
-    if (!viewer || !wallet.signAndSendTransaction) return;
+    if (!viewer || !wallet.writeContract) return;
     setError(null);
     setActingOn(bid.id);
     try {

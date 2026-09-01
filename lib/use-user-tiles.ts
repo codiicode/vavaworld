@@ -35,7 +35,7 @@ export function useUserTiles(): {
   loading: boolean;
   refetch: () => void;
 } {
-  const { publicKey, connected } = useActiveWallet();
+  const { address, connected } = useActiveWallet();
   const [tiles, setTiles] = useState<ClaimedTile[] | null>(null);
   const [loading, setLoading] = useState(false);
   const reqIdRef = useRef(0);
@@ -45,7 +45,7 @@ export function useUserTiles(): {
   // Stringify before using as a useEffect dep - `useActiveWallet` rebuilds the
   // PublicKey object every render, which would tear down + remount the effect
   // each render and storm getProgramAccounts (same bug as in use-wallet-balance).
-  const addressKey = publicKey?.toBase58() ?? null;
+  const addressKey = address ?? null;
 
   useEffect(() => {
     if (!connected || !addressKey) {

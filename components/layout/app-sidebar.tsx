@@ -64,7 +64,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
-  const { balance } = useWalletBalance(wallet.publicKey);
+  const { balance } = useWalletBalance(wallet.address);
   const { unread } = useNotifications(wallet.address);
   const { theme, toggle } = useTheme();
   // The sidebar glass is dark over the map (and in dark mode) but light over
@@ -331,7 +331,7 @@ export function TopNav() {
   const pathname = usePathname();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
-  const { balance } = useWalletBalance(wallet.publicKey);
+  const { balance } = useWalletBalance(wallet.address);
   const { unread } = useNotifications(wallet.address);
   const { theme, toggle } = useTheme();
 

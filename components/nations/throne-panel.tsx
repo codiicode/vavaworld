@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Crown, Loader2, Swords } from 'lucide-react';
-import bs58 from 'bs58';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { UserLink } from '@/components/user-link';
 import { TIERS } from '@/lib/tokenomics-constants';
@@ -65,7 +64,7 @@ export function ThronePanel({ iso }: { iso: string }) {
     setError(null);
     try {
       const message = `vava:throne:${action}:${iso}:${wallet.address}:ts=${Date.now()}`;
-      const sig = await wallet.signMessage(new TextEncoder().encode(message));
+      const sig = await wallet.signMessage(message);
       const res = await fetch('/api/thrones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -74,7 +73,7 @@ export function ThronePanel({ iso }: { iso: string }) {
           countryIso: iso,
           address: wallet.address,
           message,
-          signature: bs58.encode(sig),
+          signature: sig,
         }),
       });
       const json = await res.json();

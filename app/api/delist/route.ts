@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   if (!listingId || !seller || !message || !signature) {
     return NextResponse.json({ error: 'listingId, seller, message, signature required' }, { status: 400 });
   }
-  const sig = verifySignedAction({
+  const sig = await verifySignedAction({
     address: seller,
     message,
     signatureB58: signature,

@@ -78,7 +78,7 @@ export async function POST(req: Request) {
   }
   const iso = countryIso.toUpperCase();
 
-  const sig = verifySignedAction({
+  const sig = await verifySignedAction({
     address,
     message,
     signatureB58: signature,

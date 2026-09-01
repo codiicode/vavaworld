@@ -1,10 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import bs58 from 'bs58';
 import { getSupabase } from './supabase';
-
-const bs58encode = (bytes: Uint8Array) => bs58.encode(bytes);
 
 /** Row shape returned by `public.listings`. */
 export type DbListing = {
@@ -86,10 +83,10 @@ export async function createListing(args: {
   h3: string;
   seller: string;
   priceSol: number;
-  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
+  signMessage: (message: string) => Promise<string>;
 }): Promise<DbListing> {
   const message = `vava:list:${args.h3}:${args.priceSol}:${args.seller}:ts=${Date.now()}`;
-  const sig = await args.signMessage(new TextEncoder().encode(message));
+  const signature = await args.signMessage(message);
   const res = await fetch('/api/list', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -98,7 +95,7 @@ export async function createListing(args: {
       seller: args.seller,
       priceSol: args.priceSol,
       message,
-      signature: bs58encode(sig),
+      signature,
     }),
   });
   const json = await res.json();
@@ -110,10 +107,10 @@ export async function createListing(args: {
 export async function cancelListing(args: {
   id: string;
   seller: string;
-  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
+  signMessage: (message: string) => Promise<string>;
 }): Promise<void> {
   const message = `vava:delist:${args.id}:${args.seller}:ts=${Date.now()}`;
-  const sig = await args.signMessage(new TextEncoder().encode(message));
+  const signature = await args.signMessage(message);
   const res = await fetch('/api/delist', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -121,7 +118,7 @@ export async function cancelListing(args: {
       listingId: args.id,
       seller: args.seller,
       message,
-      signature: bs58encode(sig),
+      signature,
     }),
   });
   if (!res.ok) {

@@ -1,106 +1,43 @@
 import { NextResponse } from 'next/server';
-import {
-  Connection,
-  Keypair,
-  PublicKey,
-  Transaction,
-  TransactionInstruction,
-  sendAndConfirmTransaction,
-} from '@solana/web3.js';
-import bs58 from 'bs58';
 import { getServerSupabase } from '@/lib/supabase-server';
-import { getRpcUrl } from '@/lib/anchor-client';
-import { tilePda } from '@/lib/tile-pda';
-import {
-  SECONDARY_FEE_BPS,
-  PRESIDENT_SECONDARY_BPS,
-  TIERS,
-  VAVA_UNIT,
-} from '@/lib/tokenomics-constants';
-import idl from '@/lib/anchor-idl.json';
+import { getPublicClient, h3ToUint64, TILES_ABI, TILES_ADDRESS } from '@/lib/evm';
+import { SECONDARY_FEE_BPS, TIERS, VAVA_UNIT } from '@/lib/tokenomics-constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PROGRAM_ID = new PublicKey((idl as { address: string }).address);
 const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
-const TREASURY = process.env.NEXT_PUBLIC_TREASURY ?? '74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X';
-const LAMPORTS = 1_000_000_000;
+/** Native-coin base unit used by the quote payload: 1e9 (gwei), so the
+ *  client multiplies by 1e9 for wei. Kept "lamports"-named for UI compat. */
+const UNITS = 1_000_000_000;
 
 type Quote = {
   listingId: string;
   h3Id: string;
   seller: string;
-  priceSol: number;
+  priceSol: number; // native coin (ETH) - field name kept for UI compat
   feeBps: number;
   transfers: Array<{ to: string; lamports: number; label: string }>;
   totalLamports: number;
   reservedFor: string | null;
 };
 
-/**
- * The seller's fee tier comes from their ON-CHAIN stake: barons
- * (>= 500k staked $VAVA) sell at 3%, everyone else at 5%. The
- * president's 1% is inside the fee and never discounted; it routes to
- * the treasury until thrones ship (block C swaps the recipient).
- */
-async function sellerFeeBps(connection: Connection, seller: string): Promise<number> {
+/** Baron sellers (>= 500k staked $VAVA on the contract) sell at 3%. */
+async function sellerFeeBps(seller: string): Promise<number> {
   try {
-    const owner = new PublicKey(seller);
-    const [stakePda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('stake'), owner.toBuffer()],
-      PROGRAM_ID,
-    );
-    const info = await connection.getAccountInfo(stakePda);
-    if (!info) return SECONDARY_FEE_BPS.standard;
-    // StakeAccount layout: 8 disc + 32 owner + 8 amount + ...
-    const amount = info.data.readBigUInt64LE(40);
-    const baronThreshold = BigInt(TIERS.find((t) => t.key === 'baron')!.threshold) * BigInt(VAVA_UNIT);
+    const client = getPublicClient();
+    const s = (await client.readContract({
+      address: TILES_ADDRESS,
+      abi: TILES_ABI,
+      functionName: 'stakes',
+      args: [seller as `0x${string}`],
+    })) as [bigint, bigint, bigint] | { amount: bigint };
+    const amount = Array.isArray(s) ? s[0] : s.amount;
+    const baronThreshold =
+      BigInt(TIERS.find((t) => t.key === 'baron')!.threshold) * BigInt(VAVA_UNIT);
     return amount >= baronThreshold ? SECONDARY_FEE_BPS.baron : SECONDARY_FEE_BPS.standard;
   } catch {
     return SECONDARY_FEE_BPS.standard;
-  }
-}
-
-/**
- * Keep the on-chain tile owner in sync after a listing sale (which
- * settles via verified wallet transfers, not through the program).
- * Without this, a previous owner's stale on-chain tile could still
- * satisfy accept_bid's ownership check. Keeper-signed sync_owner.
- */
-async function syncOwnerOnChain(
-  connection: Connection,
-  h3: string,
-  newOwner: string,
-): Promise<string | null> {
-  try {
-    const secret = process.env.KEEPER_SECRET_KEY;
-    if (!secret) return null;
-    const keeper = Keypair.fromSecretKey(bs58.decode(secret.trim()));
-    const [configPda] = PublicKey.findProgramAddressSync([Buffer.from('config')], PROGRAM_ID);
-    const disc = Buffer.from(
-      (idl as { instructions: Array<{ name: string; discriminator: number[] }> }).instructions.find(
-        (i) => i.name === 'sync_owner',
-      )!.discriminator,
-    );
-    const data = Buffer.alloc(8 + 8 + 32);
-    disc.copy(data, 0);
-    data.writeBigUInt64LE(BigInt('0x' + h3), 8);
-    new PublicKey(newOwner).toBuffer().copy(data, 16);
-    const ix = new TransactionInstruction({
-      programId: PROGRAM_ID,
-      keys: [
-        { pubkey: keeper.publicKey, isSigner: true, isWritable: false },
-        { pubkey: configPda, isSigner: false, isWritable: false },
-        { pubkey: tilePda(h3, PROGRAM_ID)[0], isSigner: false, isWritable: true },
-      ],
-      data,
-    });
-    const tx = new Transaction().add(ix);
-    return await sendAndConfirmTransaction(connection, tx, [keeper], { commitment: 'confirmed' });
-  } catch (e) {
-    console.error('sync_owner failed', e);
-    return null;
   }
 }
 
@@ -110,56 +47,54 @@ async function buildQuote(listingId: string): Promise<Quote | { error: string; s
     .from('listings')
     .select('id,h3_id,seller,price_sol,status,reserved_for')
     .eq('id', listingId)
-    .maybeSingle<{ id: string; h3_id: string; seller: string; price_sol: number; status: string; reserved_for: string | null }>();
+    .maybeSingle<{
+      id: string;
+      h3_id: string;
+      seller: string;
+      price_sol: number;
+      status: string;
+      reserved_for: string | null;
+    }>();
   if (error) return { error: error.message, status: 500 };
-  if (!listing || listing.status !== 'active') return { error: 'Listing is not active', status: 404 };
+  if (!listing) return { error: 'Listing not found', status: 404 };
+  if (listing.status !== 'active') return { error: 'Listing is not active', status: 409 };
 
-  const connection = new Connection(getRpcUrl(), 'confirmed');
-  const feeBps = await sellerFeeBps(connection, listing.seller);
-  const priceLamports = Math.round(Number(listing.price_sol) * LAMPORTS);
-
-  const presidentLamports = Math.floor((priceLamports * PRESIDENT_SECONDARY_BPS) / 10_000);
-  const protocolLamports = Math.floor((priceLamports * (feeBps - PRESIDENT_SECONDARY_BPS)) / 10_000);
-  const sellerLamports = priceLamports - presidentLamports - protocolLamports;
-
+  const feeBps = await sellerFeeBps(listing.seller);
+  const total = Math.round(listing.price_sol * UNITS);
+  const fee = Math.floor((total * feeBps) / 10_000);
+  // Display-only breakdown: the CONTRACT enforces the real split when
+  // buy() executes - nothing here can change what actually happens.
   return {
     listingId: listing.id,
     h3Id: listing.h3_id,
     seller: listing.seller,
-    priceSol: Number(listing.price_sol),
+    priceSol: listing.price_sol,
     feeBps,
     transfers: [
-      { to: listing.seller, lamports: sellerLamports, label: 'seller' },
-      { to: TREASURY, lamports: protocolLamports, label: 'protocol' },
-      // President share -> treasury until thrones exist (block C).
-      { to: TREASURY, lamports: presidentLamports, label: 'president' },
+      { to: listing.seller, lamports: total - fee, label: 'seller' },
+      { to: TILES_ADDRESS, lamports: fee, label: 'protocol' },
     ],
-    totalLamports: priceLamports,
+    totalLamports: total,
     reservedFor: listing.reserved_for,
   };
 }
 
-/** GET /api/buy?listingId=&buyer= → the exact transfers the buyer must make. */
+/** GET /api/buy?listingId= → price + fee breakdown for the confirm dialog. */
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const listingId = url.searchParams.get('listingId');
-  const buyer = url.searchParams.get('buyer');
+  const listingId = new URL(req.url).searchParams.get('listingId');
   if (!listingId) return NextResponse.json({ error: 'listingId required' }, { status: 400 });
   const quote = await buildQuote(listingId);
   if ('error' in quote) return NextResponse.json({ error: quote.error }, { status: quote.status });
-  // Reservation check is advisory here (buyer is client-supplied) - the
-  // hard enforcement lives in settle_sale.
-  if (quote.reservedFor && buyer && buyer !== quote.reservedFor) {
-    return NextResponse.json({ error: 'This listing is reserved for the accepted bidder' }, { status: 403 });
-  }
   return NextResponse.json(quote);
 }
 
 /**
- * POST /api/buy { listingId, buyer, txSig } → verify the payment
- * transaction on-chain against an independently recomputed quote, then
- * settle atomically in the database. The client can never influence
- * amounts - only present a transaction that matches.
+ * POST /api/buy { listingId, buyer, txSig } → the buy() contract call is
+ * ATOMIC (payment split + ownership flip on-chain), so verification is a
+ * single source-of-truth read: the hex's on-chain owner must now be the
+ * buyer. Then the sale is mirrored into Supabase. The old Solana flow's
+ * transfer-verification and keeper sync_owner are gone - the contract
+ * settles everything itself.
  */
 export async function POST(req: Request) {
   let body: { listingId?: string; buyer?: string; txSig?: string };
@@ -176,42 +111,19 @@ export async function POST(req: Request) {
   const quote = await buildQuote(listingId);
   if ('error' in quote) return NextResponse.json({ error: quote.error }, { status: quote.status });
 
-  const connection = new Connection(getRpcUrl(), 'confirmed');
-  const tx = await connection.getTransaction(txSig, {
-    commitment: 'confirmed',
-    maxSupportedTransactionVersion: 0,
-  });
-  if (!tx || tx.meta?.err) {
-    return NextResponse.json({ error: 'Transaction not found or failed' }, { status: 400 });
-  }
-  if (tx.blockTime && Date.now() / 1000 - tx.blockTime > 15 * 60) {
-    return NextResponse.json({ error: 'Payment tx too old' }, { status: 400 });
-  }
-
-  // Buyer must have signed and paid.
-  const keys = tx.transaction.message.getAccountKeys().staticAccountKeys.map((k) => k.toBase58());
-  if (keys[0] !== buyer) {
-    return NextResponse.json({ error: 'Transaction not signed by buyer' }, { status: 400 });
-  }
-
-  // Verify every leg by balance delta (index-robust, immune to how the
-  // client composed the transfers).
-  const pre = tx.meta!.preBalances;
-  const post = tx.meta!.postBalances;
-  const deltas = new Map<string, number>();
-  keys.forEach((k, i) => deltas.set(k, (deltas.get(k) ?? 0) + (post[i] - pre[i])));
-
-  const expected = new Map<string, number>();
-  for (const t of quote.transfers) {
-    expected.set(t.to, (expected.get(t.to) ?? 0) + t.lamports);
-  }
-  for (const [to, lamports] of expected) {
-    if ((deltas.get(to) ?? 0) < lamports) {
-      return NextResponse.json(
-        { error: `Underpaid recipient ${to.slice(0, 6)}…` },
-        { status: 400 },
-      );
-    }
+  const client = getPublicClient();
+  const hex = (await client.readContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'hexes',
+    args: [h3ToUint64(quote.h3Id)],
+  })) as [`0x${string}`, ...unknown[]] | { owner: `0x${string}` };
+  const owner = Array.isArray(hex) ? hex[0] : hex.owner;
+  if (owner.toLowerCase() !== buyer.toLowerCase()) {
+    return NextResponse.json(
+      { error: 'On-chain owner is not the buyer - purchase not confirmed yet' },
+      { status: 400 },
+    );
   }
 
   const sb = getServerSupabase();
@@ -228,7 +140,5 @@ export async function POST(req: Request) {
       : error.message;
     return NextResponse.json({ error: msg }, { status: 409 });
   }
-
-  const syncSig = await syncOwnerOnChain(connection, quote.h3Id, buyer);
-  return NextResponse.json({ ok: true, sale: data, syncSig });
+  return NextResponse.json({ ok: true, sale: data });
 }

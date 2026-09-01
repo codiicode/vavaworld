@@ -118,7 +118,7 @@ function NotificationRow({
   const hexHref = p.h3_id ? `/h/${encodeURIComponent(p.h3_id)}` : '/map';
 
   const act = async (action: 'accept' | 'decline') => {
-    if (!p.bid_id || !p.h3_id || !p.bidder || !wallet.signAndSendTransaction) return;
+    if (!p.bid_id || !p.h3_id || !p.bidder || !wallet.writeContract) return;
     setError(null);
     setActing(action);
     try {

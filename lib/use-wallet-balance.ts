@@ -1,22 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
-import { getConnection } from './anchor-client';
+import { formatEther } from 'viem';
+import { getPublicClient } from './evm';
 import { useClaimDoneListener } from './claim-events';
 
 /**
- * Reads the SOL balance for the given public key.
- *
- * IMPORTANT: depends on the stringified base58 address, NOT the PublicKey
- * object itself. `useActiveWallet` rebuilds a fresh PublicKey instance every
- * render - using it as a useEffect dep tore the effect down and remounted it
- * on every render, which fired thousands of getBalance requests per second
- * and got us 429-rate-limited.
+ * Reads the ETH balance for the given address. Polls slowly and refreshes
+ * right after a local claim confirms.
  */
 const POLL_MS = 30_000;
 
-export function useWalletBalance(publicKey: PublicKey | null): {
+export function useWalletBalance(address: string | null): {
   balance: number | null;
   loading: boolean;
   refetch: () => void;
@@ -26,21 +21,17 @@ export function useWalletBalance(publicKey: PublicKey | null): {
   const [reqId, setReqId] = useState(0);
   const refetch = useCallback(() => setReqId((x) => x + 1), []);
 
-  const addressKey = publicKey?.toBase58() ?? null;
-
   useEffect(() => {
-    if (!addressKey) {
+    if (!address) {
       setBalance(null);
       return;
     }
-    const connection: Connection = getConnection();
-    const pk = new PublicKey(addressKey);
     let cancelled = false;
 
     const fetchOnce = async () => {
       try {
-        const lamports = await connection.getBalance(pk);
-        if (!cancelled) setBalance(lamports / LAMPORTS_PER_SOL);
+        const wei = await getPublicClient().getBalance({ address: address as `0x${string}` });
+        if (!cancelled) setBalance(Number(formatEther(wei)));
       } catch {
         if (!cancelled) setBalance(null);
       }
@@ -56,7 +47,7 @@ export function useWalletBalance(publicKey: PublicKey | null): {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [addressKey, reqId]);
+  }, [address, reqId]);
 
   useClaimDoneListener(() => {
     window.setTimeout(refetch, 800);

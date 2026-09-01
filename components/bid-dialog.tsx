@@ -64,7 +64,7 @@ export function BidDialog({
 
   const submit = async () => {
     if (!valid) return;
-    if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
+    if (!wallet.connected || !wallet.address || !wallet.writeContract) {
       setError('Log in first');
       return;
     }
@@ -74,7 +74,7 @@ export function BidDialog({
       await placeBidOnChain({
         wallet,
         h3,
-        lamports: Math.round(parsed * 1e9),
+        wei: BigInt(Math.round(parsed * 1e6)) * 10n ** 12n,
       });
       setPhase('done');
       onPlaced?.();

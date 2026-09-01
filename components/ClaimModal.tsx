@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { PublicKey } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { useActiveWallet } from '@/lib/active-wallet';
@@ -10,17 +9,13 @@ import { useHexLocations } from '@/lib/use-hex-locations';
 import { useTiles } from '@/lib/use-tiles';
 import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { useCountryCounts } from '@/lib/use-country-counts';
-import { getConnection } from '@/lib/anchor-client';
-import { preflight } from '@/lib/preflight';
-import { fetchQuotes, buildClaimTransaction } from '@/lib/claim-chain';
+import { buildClaimCall, fetchQuotes } from '@/lib/claim-chain-evm';
+import { getPublicClient } from '@/lib/evm';
 import { dispatchClaimDone } from '@/lib/claim-events';
-import { PRICING, SOL_USD } from '@/lib/pricing';
+import { PRICING } from '@/lib/pricing';
 import { Flag } from '@/components/flag';
 
 
-
-const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY;
-const treasuryPk = TREASURY_ADDRESS ? new PublicKey(TREASURY_ADDRESS) : null;
 
 // Fixed white-on-dark-glass, matching the /map chrome the modal floats over.
 const EYEBROW =
@@ -79,30 +74,29 @@ export function ClaimModal({
     return PRICING.BASE_FLOOR_USD + (base + off) * PRICING.SLOPE_PER_CLAIM_USD;
   });
   const totalUsd = perItemUsd.reduce((s, u) => s + u, 0);
-  // Live SOL/USD from Pyth (server-cached); falls back to the reference
-  // rate so the modal always renders.
-  const [solUsd, setSolUsd] = useState<number>(SOL_USD);
+  // Live ETH/USD (server-cached Chainlink) so the modal can show the ETH
+  // figure; the authoritative wei prices come signed from /api/quote.
+  const [ethUsd, setEthUsd] = useState<number>(4500);
   useEffect(() => {
     let alive = true;
-    fetch('/api/sol-price')
+    fetch('/api/eth-price')
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
-        if (alive && j?.solUsd) setSolUsd(j.solUsd);
+        if (alive && j?.ethUsd) setEthUsd(j.ethUsd);
       })
       .catch(() => {});
     return () => {
       alive = false;
     };
   }, []);
-  const totalLamports = BigInt(Math.round((totalUsd / solUsd) * 1_000_000_000));
-  const totalSol = Number(totalLamports) / 1_000_000_000;
+  const totalEth = totalUsd / ethUsd;
 
   // Shareable reveal link - built from the primary (first) hex's location.
   const buildShareUrl = (): string => {
     const first = items[0];
     const loc = first ? locations.get(first.h3) : undefined;
     const center = first ? hexCenter(first.h3) : { lat: 0, lng: 0 };
-    const by = profile.username ?? (wallet.publicKey ? wallet.publicKey.toBase58() : 'someone');
+    const by = profile.username ?? wallet.address ?? 'someone';
     const params = new URLSearchParams({
       by,
       place: loc?.place ?? loc?.countryName ?? 'the map',
@@ -110,7 +104,7 @@ export function ClaimModal({
       lat: center.lat.toFixed(4),
       lon: center.lng.toFixed(4),
       n: String(items.length),
-      sol: totalSol.toFixed(totalSol < 0.01 ? 5 : 3),
+      eth: totalEth.toFixed(totalEth < 0.01 ? 6 : 4),
     });
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://vavaworld.fun';
     return `${origin}/c?${params.toString()}`;
@@ -129,62 +123,37 @@ export function ClaimModal({
   };
 
   const handleConfirm = async () => {
-    if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
+    if (!wallet.connected || !wallet.address || !wallet.writeContract) {
       setState('error');
-      setErrorMsg('Wallet not connected');
-      return;
-    }
-    if (!treasuryPk) {
-      setState('error');
-      setErrorMsg('Treasury address not configured (NEXT_PUBLIC_TREASURY)');
+      setErrorMsg('Log in first');
       return;
     }
     setState('signing');
 
     try {
-      const connection = getConnection();
-      const owner = wallet.publicKey.toBase58();
+      const client = getPublicClient();
+      const owner = wallet.address;
 
       // On-chain settlement. ONE quote round prices the whole basket and
-      // returns one keeper-signed quote per 10-hex chunk (the program
-      // splits each 85/15 and creates the Tile PDAs; without the quote
-      // signature it rejects, so pricing can never be bypassed).
-      //
-      // The chunks are independent transactions, so they are signed with
-      // ONE wallet approval (signAllTransactions) where the wallet can,
-      // and submitted in PARALLEL - a 1000-hex basket settles in seconds,
-      // not minutes of sequential rounds.
+      // returns one keeper-signed EIP-712 quote per chunk; each chunk is
+      // ONE claim(...) transaction (up to 400 hexes) that the contract
+      // splits 85/15. Without the signature it reverts, so pricing can
+      // never be bypassed.
       const succeeded: string[] = [];
       let lastSig = '';
-      // ~rent per Tile PDA + fee margin, on top of the quoted price.
-      const PER_TILE_OVERHEAD = 2_000_000;
 
       const quotes = await fetchQuotes(items.map((it) => it.h3), owner);
-      const totalNeeded = quotes.reduce(
-        (s, q) => s + Number(q.totalLamports) + q.h3s.length * PER_TILE_OVERHEAD,
-        0,
-      );
 
-      const { blockhash } = await connection.getLatestBlockhash('confirmed');
-      const built = quotes.map((q) => {
-        const { tx } = buildClaimTransaction(q, wallet.publicKey!);
-        tx.feePayer = wallet.publicKey!;
-        tx.recentBlockhash = blockhash;
-        return { quote: q, tx };
-      });
-
-      // Balance guard for the WHOLE basket + simulate the first chunk, so
-      // a doomed batch never reaches the wallet ("could be malicious").
-      await preflight({
-        connection,
-        feePayer: wallet.publicKey,
-        tx: built[0].tx,
-        lamportsNeeded: totalNeeded,
-      });
+      // Balance guard before the wallet is asked to sign anything.
+      const totalNeeded = quotes.reduce((s, q) => s + BigInt(q.totalWei), 0n);
+      const balance = await client.getBalance({ address: owner });
+      if (balance < totalNeeded) {
+        throw new Error('Insufficient ETH balance for this claim');
+      }
 
       const mirrorChunk = async (q: (typeof quotes)[number]) => {
-        // Mirror into Supabase (registry + pricing ledger). No txHash:
-        // the server verifies the on-chain Tile PDA instead.
+        // Mirror into Supabase (registry + pricing ledger). The server
+        // verifies on-chain ownership before accepting.
         const mirrors = await Promise.allSettled(
           q.h3s.map((h3, i) =>
             fetch('/api/claim', {
@@ -199,64 +168,15 @@ export function ClaimModal({
         }
       };
 
+      setProgress({ done: 0, total: quotes.length });
       let done = 0;
-      const trackProgress = () => {
+      for (const q of quotes) {
+        const hash = await wallet.writeContract(buildClaimCall(q));
+        await client.waitForTransactionReceipt({ hash });
+        await mirrorChunk(q);
         done += 1;
-        setProgress({ done, total: built.length });
-      };
-      setProgress({ done: 0, total: built.length });
-
-      if (wallet.signAllTransactions && built.length > 1) {
-        // ONE approval for every chunk, then blast them all at once.
-        const signed = await wallet.signAllTransactions(built.map((b) => b.tx));
-        const results = await Promise.allSettled(
-          signed.map(async (tx, i) => {
-            const sig = await connection.sendRawTransaction(tx.serialize(), {
-              skipPreflight: false,
-            });
-            await connection.confirmTransaction(sig, 'confirmed');
-            await mirrorChunk(built[i].quote);
-            trackProgress();
-            return sig;
-          }),
-        );
-        const failed = results
-          .map((r, i) => (r.status === 'rejected' ? i : -1))
-          .filter((i) => i >= 0);
-        // Retry stragglers once, sequentially, on a fresh blockhash - the
-        // quotes are still valid inside their TTL.
-        for (const i of failed) {
-          const { tx } = buildClaimTransaction(built[i].quote, wallet.publicKey!);
-          const fresh = await connection.getLatestBlockhash('confirmed');
-          tx.feePayer = wallet.publicKey!;
-          tx.recentBlockhash = fresh.blockhash;
-          const sig = await wallet.signAndSendTransaction!(tx);
-          await connection.confirmTransaction(sig, 'confirmed');
-          await mirrorChunk(built[i].quote);
-          trackProgress();
-          lastSig = sig;
-        }
-        for (const r of results) {
-          if (r.status === 'fulfilled') lastSig = r.value;
-        }
-      } else {
-        // Privy embedded signs programmatically - no popups - so bounded
-        // parallelism gives the same one-click experience.
-        const CONCURRENCY = 8;
-        let cursor = 0;
-        const worker = async () => {
-          while (cursor < built.length) {
-            const i = cursor++;
-            const sig = await wallet.signAndSendTransaction!(built[i].tx);
-            await connection.confirmTransaction(sig, 'confirmed');
-            await mirrorChunk(built[i].quote);
-            trackProgress();
-            lastSig = sig;
-          }
-        };
-        await Promise.all(
-          Array.from({ length: Math.min(CONCURRENCY, built.length) }, worker),
-        );
+        setProgress({ done, total: quotes.length });
+        lastSig = hash;
       }
 
       setTxSig(lastSig);
@@ -433,7 +353,7 @@ export function ClaimModal({
                   ${totalUsd.toFixed(totalUsd < 10 ? 4 : 2)}
                 </div>
                 <div className="mt-1.5 text-[11.5px] tabular-nums text-white/50">
-                  ≈ {totalSol.toFixed(6)} SOL · ${solUsd.toFixed(2)}/SOL
+                  ≈ {totalEth.toFixed(6)} ETH · ${ethUsd.toFixed(0)}/ETH
                 </div>
               </div>
             </div>

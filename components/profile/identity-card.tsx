@@ -41,7 +41,7 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
   const profile = useUserProfile();
   const wallet = useActiveWallet();
   const { tiles } = useUserTiles();
-  const { balance } = useWalletBalance(wallet.publicKey);
+  const { balance } = useWalletBalance(wallet.address);
   const [copied, setCopied] = useState(false);
 
   const totalSpent =
