@@ -1,13 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
 import { useTiles } from '@/lib/use-tiles';
-import { useClaimedRegistry } from '@/lib/use-claimed-registry';
+import { refreshClaimedRegistry, useClaimedRegistry } from '@/lib/use-claimed-registry';
+import { removePropertyImage, uploadPropertyImage } from '@/lib/property-image';
 import { useCountryCounts } from '@/lib/use-country-counts';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
@@ -639,6 +640,48 @@ function ClaimedHexView({
   const wallet = useActiveWallet();
   const [bidOpen, setBidOpen] = useState(false);
   const canBid = wallet.connected && wallet.address !== info.owner;
+  const isOwn = wallet.connected && wallet.address === info.owner;
+
+  // The property = every hex the owner claimed in the same transaction
+  // (same claimed-at second, matching the tile-groups convention). One
+  // image is set for all of them at once.
+  const registry = useClaimedRegistry();
+  const propertyH3s = useMemo(() => {
+    if (!isOwn) return [item.h3];
+    const out: string[] = [];
+    for (const [h3, v] of registry) {
+      if (v.owner === info.owner && Math.abs(v.claimedAt - info.claimedAtMs) < 2000) out.push(h3);
+    }
+    return out.length > 0 ? out : [item.h3];
+  }, [isOwn, registry, info.owner, info.claimedAtMs, item.h3]);
+
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [imgBusy, setImgBusy] = useState(false);
+  const onPickImage = async (file: File | null) => {
+    if (!file || imgBusy) return;
+    setImgBusy(true);
+    try {
+      await uploadPropertyImage(wallet, propertyH3s, file);
+      refreshClaimedRegistry();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setImgBusy(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+  const onRemoveImage = async () => {
+    if (imgBusy) return;
+    setImgBusy(true);
+    try {
+      await removePropertyImage(wallet, propertyH3s);
+      refreshClaimedRegistry();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Remove failed');
+    } finally {
+      setImgBusy(false);
+    }
+  };
 
   return (
     <>
@@ -737,6 +780,39 @@ function ClaimedHexView({
         >
           Make an offer
         </button>
+      )}
+
+      {isOwn && (
+        <div className="relative z-[1] mb-2 flex flex-col gap-2">
+          <button
+            type="button"
+            disabled={imgBusy}
+            onClick={() => fileRef.current?.click()}
+            className="flex h-[46px] w-full items-center justify-center rounded-[14px] bg-white text-[13.5px] font-bold tracking-[0.02em] text-[#06080d] transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0 disabled:opacity-60"
+          >
+            {imgBusy
+              ? 'Uploading…'
+              : info.imageUrl
+                ? 'Change property image'
+                : `Set property image${propertyH3s.length > 1 ? ` (${propertyH3s.length} hexes)` : ''}`}
+          </button>
+          {info.imageUrl && !imgBusy && (
+            <button
+              type="button"
+              onClick={onRemoveImage}
+              className="text-[11.5px] font-medium uppercase tracking-[0.14em] text-white/50 transition-colors hover:text-white/80"
+            >
+              Remove image
+            </button>
+          )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => onPickImage(e.target.files?.[0] ?? null)}
+          />
+        </div>
       )}
 
       <div className="relative z-[1] grid grid-cols-2 gap-2">

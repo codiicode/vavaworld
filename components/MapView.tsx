@@ -8,6 +8,7 @@ import { hexCenter, hexToFeature, hexesForBounds } from '@/lib/h3-utils';
 import { TIER_FILL, type Tier, classifyTier } from '@/lib/tier';
 import { useTiles } from '@/lib/use-tiles';
 import { useClaimedRegistry } from '@/lib/use-claimed-registry';
+import { syncPropertyImages } from '@/lib/property-image-layer';
 import { ownerColor } from '@/lib/owner-color';
 import { getMapView } from '@/lib/preferences';
 import { PublicKey } from '@solana/web3.js';
@@ -449,6 +450,14 @@ export function MapView({
       );
     }
   }, [ready, tiles, claimedRegistry, mapRef]);
+
+  // Property images: hexagon-clipped bitmaps rendered inside owned cells,
+  // sitting under the grid lines so cell edges stay visible on top.
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!ready || !map) return;
+    syncPropertyImages(map, claimedRegistry, LINE_LAYER);
+  }, [ready, claimedRegistry, mapRef]);
 
   // Idempotent: re-runs after a style toggle (which wipes custom layers).
   const installHexLayers = useCallback(() => {

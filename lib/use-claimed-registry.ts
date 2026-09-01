@@ -71,3 +71,8 @@ export function useClaimedRegistry(): Map<string, ClaimedInfo> {
 
   return map;
 }
+
+/** Force an immediate registry refresh (e.g. right after setting a property image). */
+export function refreshClaimedRegistry(): void {
+  void load(true);
+}

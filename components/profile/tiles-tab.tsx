@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -42,9 +42,6 @@ import { Flag } from '@/components/flag';
 import { hexStaticMapUrl } from '@/lib/static-map';
 import { groupTilesByClaim, type TileGroup } from '@/lib/tile-groups';
 import { useUserTiles } from '@/lib/use-user-tiles';
-import { useClaimedRegistry } from '@/lib/use-claimed-registry';
-import { useActiveWallet } from '@/lib/active-wallet';
-import { removePropertyImage, uploadPropertyImage } from '@/lib/property-image';
 import { useHexLocations } from '@/lib/use-hex-locations';
 import type { ClaimedTile } from '@/types/tile';
 import { TileDetailsDialog } from './tile-details-dialog';
@@ -371,51 +368,15 @@ function GroupCard({
   onAction: (kind: DialogKind, tile: ClaimedTile) => void;
 }) {
   const router = useRouter();
-  const wallet = useActiveWallet();
-  const registry = useClaimedRegistry();
-  const fileRef = useRef<HTMLInputElement | null>(null);
-  const [busy, setBusy] = useState(false);
+  const img = hexStaticMapUrl({
+    lat: g.centerLat,
+    lng: g.centerLng,
+    width: 640,
+    height: 420,
+    zoom: g.zoom,
+  });
   const firstTile = g.tiles[0];
   const isSingle = g.tiles.length === 1;
-  // Local override so a fresh upload shows instantly; registry catches up.
-  const [localImg, setLocalImg] = useState<string | null | undefined>(undefined);
-  const propertyImg =
-    localImg !== undefined ? localImg : registry.get(firstTile.h3)?.imageUrl ?? null;
-  const img =
-    propertyImg ??
-    hexStaticMapUrl({
-      lat: g.centerLat,
-      lng: g.centerLng,
-      width: 640,
-      height: 420,
-      zoom: g.zoom,
-    });
-
-  const onPickImage = async (file: File | null) => {
-    if (!file || busy) return;
-    setBusy(true);
-    try {
-      const url = await uploadPropertyImage(wallet, g.tiles.map((t) => t.h3), file);
-      setLocalImg(url);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Upload failed');
-    } finally {
-      setBusy(false);
-      if (fileRef.current) fileRef.current.value = '';
-    }
-  };
-  const onRemoveImage = async () => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await removePropertyImage(wallet, g.tiles.map((t) => t.h3));
-      setLocalImg(null);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Remove failed');
-    } finally {
-      setBusy(false);
-    }
-  };
   return (
     <div
       onClick={() => router.push(`/h/${encodeURIComponent(firstTile.h3)}`)}
@@ -426,7 +387,7 @@ function GroupCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={img}
-            alt={propertyImg ? `Property image for ${g.citiesLabel}` : `Satellite view of ${g.citiesLabel}`}
+            alt={`Satellite view of ${g.citiesLabel}`}
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             loading="lazy"
           />
@@ -499,28 +460,11 @@ function GroupCard({
                 Transfer{!isSingle && ' (first hex)'}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled={busy} onSelect={() => fileRef.current?.click()}>
-                {busy ? 'Uploading…' : propertyImg ? 'Change property image' : 'Set property image'}
-              </DropdownMenuItem>
-              {propertyImg && (
-                <DropdownMenuItem disabled={busy} onSelect={onRemoveImage}>
-                  Remove image
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => onAction('details', firstTile)}>
                 Details
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="hidden"
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => onPickImage(e.target.files?.[0] ?? null)}
-          />
         </div>
         <div className="mt-2.5 flex items-center justify-between">
           <span className="text-xs text-foreground/55">
