@@ -9,6 +9,15 @@ const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_HEXES = 1000;
 
+/** Wallets allowed to moderate (clear anyone's image). Comma-separated. */
+function isAdmin(address: string): boolean {
+  return (process.env.ADMIN_WALLETS ?? '')
+    .split(',')
+    .map((a) => a.trim())
+    .filter(Boolean)
+    .includes(address);
+}
+
 /**
  * POST /api/property-image (multipart)
  *   image:     the file (jpeg/png/webp, <= 8MB)
@@ -113,11 +122,14 @@ export async function DELETE(req: Request) {
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 401 });
 
   const sb = getServerSupabase();
-  const { error } = await sb.rpc('clear_property_image', {
-    p_secret: API_SECRET,
-    p_owner: address,
-    p_h3s: h3s,
-  });
+  // Moderation path: an allowlisted admin wallet may clear ANY image.
+  const { error } = isAdmin(address)
+    ? await sb.rpc('clear_property_image_admin', { p_secret: API_SECRET, p_h3s: h3s })
+    : await sb.rpc('clear_property_image', {
+        p_secret: API_SECRET,
+        p_owner: address,
+        p_h3s: h3s,
+      });
   if (error) {
     const status = error.message.includes('ownership') ? 403 : 500;
     return NextResponse.json({ error: 'remove failed' }, { status });

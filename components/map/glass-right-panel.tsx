@@ -641,19 +641,34 @@ function ClaimedHexView({
   const [bidOpen, setBidOpen] = useState(false);
   const canBid = wallet.connected && wallet.address !== info.owner;
   const isOwn = wallet.connected && wallet.address === info.owner;
+  const isAdmin =
+    wallet.connected &&
+    !!wallet.address &&
+    (process.env.NEXT_PUBLIC_ADMIN_WALLETS ?? '')
+      .split(',')
+      .map((a) => a.trim())
+      .includes(wallet.address);
 
   // The property = every hex the owner claimed in the same transaction
   // (same claimed-at second, matching the tile-groups convention). One
   // image is set for all of them at once.
   const registry = useClaimedRegistry();
   const propertyH3s = useMemo(() => {
-    if (!isOwn) return [item.h3];
+    if (!isOwn && !isAdmin) return [item.h3];
+    if (!isOwn && isAdmin) {
+      // Moderation clears the whole offending property, not one cell.
+      const out: string[] = [];
+      for (const [h3, v] of registry) {
+        if (v.owner === info.owner && Math.abs(v.claimedAt - info.claimedAtMs) < 2000) out.push(h3);
+      }
+      return out.length > 0 ? out : [item.h3];
+    }
     const out: string[] = [];
     for (const [h3, v] of registry) {
       if (v.owner === info.owner && Math.abs(v.claimedAt - info.claimedAtMs) < 2000) out.push(h3);
     }
     return out.length > 0 ? out : [item.h3];
-  }, [isOwn, registry, info.owner, info.claimedAtMs, item.h3]);
+  }, [isOwn, isAdmin, registry, info.owner, info.claimedAtMs, item.h3]);
 
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [imgBusy, setImgBusy] = useState(false);
@@ -779,6 +794,17 @@ function ClaimedHexView({
           className="relative z-[1] mb-2 flex h-[52px] w-full items-center justify-center rounded-[14px] bg-white text-[14px] font-bold tracking-[0.02em] text-[#06080d] transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0"
         >
           Make an offer
+        </button>
+      )}
+
+      {!isOwn && isAdmin && info.imageUrl && (
+        <button
+          type="button"
+          disabled={imgBusy}
+          onClick={onRemoveImage}
+          className="relative z-[1] mb-2 text-[11.5px] font-medium uppercase tracking-[0.14em] text-red-300/70 transition-colors hover:text-red-300"
+        >
+          {imgBusy ? 'Removing…' : 'Remove image (moderation)'}
         </button>
       )}
 
