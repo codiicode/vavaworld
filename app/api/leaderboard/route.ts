@@ -85,5 +85,5 @@ export async function GET() {
     totalHexes: Number(g?.total_hexes ?? 0),
     activeCountries: Number(g?.active_countries ?? 0),
     totalVolumeUsd: Number(g?.total_volume_usd ?? 0),
-  });
+  }, { headers: { 'Cache-Control': 's-maxage=30, stale-while-revalidate=120' } });
 }

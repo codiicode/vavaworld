@@ -53,5 +53,5 @@ export async function GET() {
     activeCountries: Number(g?.active_countries ?? 0),
     topNationIso: top?.[0] ?? null,
     topNationHexes: top?.[1] ?? 0,
-  });
+  }, { headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' } });
 }

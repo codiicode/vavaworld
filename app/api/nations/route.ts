@@ -48,5 +48,8 @@ export async function GET() {
     president: throneBy.get(r.iso_code) ?? null,
   }));
 
-  return NextResponse.json({ nations });
+  return NextResponse.json(
+    { nations },
+    { headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' } },
+  );
 }
