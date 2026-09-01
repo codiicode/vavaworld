@@ -54,7 +54,7 @@ export function ShareProfile({ user }: { user: MockUser }) {
         title="Copy profile link"
         className="flex items-center gap-1.5 rounded-full border border-white/45 bg-white/40 px-3 py-2 text-[13px] font-medium text-foreground transition-colors hover:bg-white/55"
       >
-        {copied ? <Check size={14} className="text-emerald-600" /> : <Link2 size={14} />}
+        {copied ? <Check size={14} className="text-white/70" /> : <Link2 size={14} />}
         {copied ? 'Copied' : 'Copy'}
       </button>
     </div>

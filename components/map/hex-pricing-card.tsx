@@ -128,7 +128,7 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
       </div>
 
       {err && !data && (
-        <p className="text-[12px] text-rose-300">{err}</p>
+        <p className="text-[12px] text-white/60">{err}</p>
       )}
 
       {data && (
@@ -181,8 +181,9 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
                 onClick={claim}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-[10px] px-3 py-2.5 text-[13.5px] font-semibold text-white transition-[filter] disabled:opacity-50"
                 style={{
-                  background: 'linear-gradient(135deg, #0ea5e9, #14b8a6)',
-                  boxShadow: '0 6px 18px -8px rgba(20,184,166,0.6)',
+                  background: '#ffffff',
+                  color: '#06080d',
+                  boxShadow: '0 6px 18px -8px rgba(0, 0, 0, 0.6)',
                 }}
               >
                 {claiming && <Loader2 size={14} className="animate-spin" />}
@@ -190,7 +191,7 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
                   ? `Claim for $${fmt(data.currentFloor)}`
                   : 'Connect wallet to claim'}
               </button>
-              {err && <p className="mt-1.5 text-[12px] text-rose-300">{err}</p>}
+              {err && <p className="mt-1.5 text-[12px] text-white/60">{err}</p>}
             </>
           )}
         </>

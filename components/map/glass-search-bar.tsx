@@ -120,8 +120,8 @@ export function GlassSearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | nu
 
   return (
     <div className="pointer-events-auto relative w-full">
-      <div className="glass relative flex h-[52px] items-center gap-3 rounded-full px-[18px]">
-        <Search size={18} strokeWidth={2} className="relative z-[1] text-white/55" />
+      <div className="glass relative flex h-[46px] items-center gap-3 rounded-[15px] px-4">
+        <Search size={16} strokeWidth={2} className="relative z-[1] text-white/45" />
         <input
           ref={inputRef}
           type="text"
@@ -148,7 +148,7 @@ export function GlassSearchBar({ mapRef }: { mapRef: React.RefObject<MapRef | nu
             }
           }}
           placeholder="Search any place on Earth…"
-          className="relative z-[1] flex-1 bg-transparent text-[14.5px] tracking-[0.01em] text-white placeholder:text-white/55 focus:outline-none"
+          className="relative z-[1] flex-1 bg-transparent text-[14px] tracking-[0.01em] text-white placeholder:text-white/45 focus:outline-none"
         />
         {q && (
           <button

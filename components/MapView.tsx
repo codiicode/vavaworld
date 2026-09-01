@@ -497,7 +497,7 @@ export function MapView({
           ],
           '#f59e0b',
           ['boolean', ['feature-state', 'selected'], false],
-          '#5eead4',
+          '#7db4f5',
           ['coalesce', ['feature-state', 'ownerColor'], '#888'],
         ],
         'fill-opacity': [
@@ -538,7 +538,7 @@ export function MapView({
       layout: { visibility: 'none' },
       paint: {
         'circle-radius': 6,
-        'circle-color': '#14b8a6',
+        'circle-color': '#7db4f5',
         'circle-opacity': 0.9,
         'circle-stroke-color': '#ffffff',
         'circle-stroke-width': 1.5,
@@ -796,7 +796,7 @@ export function MapView({
         >
           <span
             className="relative z-[1] grid h-[22px] w-[22px] place-items-center rounded-full"
-            style={{ background: 'rgba(94,234,212,0.18)', color: 'var(--brand)' }}
+            style={{ background: 'rgba(255, 255, 255, 0.14)', color: 'var(--brand)' }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12h14" />

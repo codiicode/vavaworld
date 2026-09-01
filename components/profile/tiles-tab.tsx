@@ -182,14 +182,11 @@ export function TilesTab() {
           <p className="text-sm text-foreground/65">No hexes claimed yet.</p>
           <Link
             href="/map"
-            className="mt-1 inline-flex h-10 items-center rounded-[10px] px-5 text-sm font-semibold tracking-[0.01em] transition-colors hover:opacity-90"
+            className="mt-1 inline-flex h-10 items-center rounded-[10px] px-5 text-sm font-semibold tracking-[0.01em] transition-transform hover:-translate-y-px"
             style={{
-              background:
-                'linear-gradient(135deg, rgba(94,234,212,0.65), rgba(56,189,248,0.55))',
-              border: '1px solid rgba(255,255,255,0.6)',
-              color: '#042f2e',
-              boxShadow:
-                '0 6px 18px -8px rgba(20,184,166,0.5), inset 0 1px 0 rgba(255,255,255,0.6)',
+              background: '#ffffff',
+              color: '#06080d',
+              boxShadow: '0 10px 26px -12px rgba(0,0,0,0.9)',
             }}
           >
             Claim your first hex
@@ -400,7 +397,7 @@ function GroupCard({
               className="absolute inset-0"
               style={{
                 background:
-                  'radial-gradient(120% 80% at 50% 50%, rgba(94,234,212,0.20), transparent 60%), radial-gradient(60% 60% at 80% 20%, rgba(56,189,248,0.20), transparent 70%)',
+                  'radial-gradient(120% 80% at 50% 50%, rgba(255, 255, 255, 0.16), transparent 60%), radial-gradient(60% 60% at 80% 20%, rgba(255, 255, 255, 0.16), transparent 70%)',
               }}
             />
             <div className="absolute inset-0 flex items-center justify-center">

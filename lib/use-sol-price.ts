@@ -7,21 +7,37 @@ import { useEffect, useState } from 'react';
 let cached = 150;
 let fetchedAt = 0;
 
+// Components mounting in the same tick both saw a stale `fetchedAt` and
+// each fired their own request — the portfolio page was fetching this
+// twice at ~2.8s apiece. Share the in-flight promise so N callers make
+// one request.
+let inFlight: Promise<number> | null = null;
+
 async function load(): Promise<number> {
   if (Date.now() - fetchedAt < 60_000) return cached;
-  try {
-    const r = await fetch('/api/sol-price');
-    if (r.ok) {
-      const j = (await r.json()) as { solUsd: number };
-      if (Number.isFinite(j.solUsd) && j.solUsd > 0) {
-        cached = j.solUsd;
-        fetchedAt = Date.now();
+  if (inFlight) return inFlight;
+
+  inFlight = (async () => {
+    try {
+      const r = await fetch('/api/sol-price');
+      if (r.ok) {
+        const j = (await r.json()) as { solUsd: number };
+        if (Number.isFinite(j.solUsd) && j.solUsd > 0) {
+          cached = j.solUsd;
+        }
       }
+    } catch {
+      /* keep last-known */
+    } finally {
+      // Stamp regardless of outcome: on failure this backs off for the
+      // window instead of retrying on every mount.
+      fetchedAt = Date.now();
+      inFlight = null;
     }
-  } catch {
-    /* keep last-known */
-  }
-  return cached;
+    return cached;
+  })();
+
+  return inFlight;
 }
 
 /** Live SOL/USD from /api/sol-price (Jupiter, server-cached 30s). */

@@ -37,7 +37,7 @@ export function SignInGate({
             className="grid h-11 w-11 flex-none place-items-center rounded-full"
             style={{
               background:
-                'linear-gradient(135deg, rgba(94,234,212,0.30), rgba(56,189,248,0.20))',
+                'linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.16))',
               border: '1px solid rgba(255,255,255,0.45)',
             }}
           >

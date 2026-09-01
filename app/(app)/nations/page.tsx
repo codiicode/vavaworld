@@ -23,9 +23,8 @@ const SORT_LABELS: Record<NationSort, string> = {
   bonders: 'Most Bonders',
 };
 
-const TRIGGER =
-  'bg-white/40 backdrop-blur-md border-white/40 h-11 rounded-xl text-foreground';
-const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40';
+const TRIGGER = 'select-trigger';
+const CONTENT = 'select-panel';
 
 export default function NationsPage() {
   const [sort, setSort] = useState<NationSort>('claims');
@@ -49,17 +48,11 @@ export default function NationsPage() {
   const rest = list.slice(3);
 
   return (
-    <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
+    <div className="mx-auto max-w-[1280px] px-4 py-6 md:px-8 md:py-8">
       <div className="mb-8">
-        <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-          Governance
-        </div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Nations
         </h1>
-        <p className="mt-1 text-sm text-foreground/70">
-          Governance across VAVAWORLD
-        </p>
       </div>
 
       <div className="mb-6 grid max-w-2xl grid-cols-2 gap-4">

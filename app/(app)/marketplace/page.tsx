@@ -15,6 +15,7 @@ import { CountrySelect } from '@/components/country-select';
 import { ListingGrid } from '@/components/marketplace/listing-grid';
 import { type Listing, type Tier } from '@/lib/mock-marketplace';
 import { useMarketStats } from '@/lib/use-market-stats';
+import { StatTile } from '@/components/ui/stat-tile';
 import {
   useActiveListings,
   useListingsVersion,
@@ -40,9 +41,8 @@ const TIER_OPTIONS: ReadonlyArray<{ value: 'all' | Tier; label: string }> = [
   { value: 3, label: 'Tier 3' },
 ];
 
-const TRIGGER =
-  'bg-white/40 backdrop-blur-md border-white/40 h-11 rounded-xl text-foreground dark:bg-white/10 dark:border-white/15';
-const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40 dark:bg-slate-900/95 dark:border-white/15';
+const TRIGGER = 'select-trigger';
+const CONTENT = 'select-panel';
 
 /**
  * Marketplace - minimal, glass-card grid matching the leaderboard / profile vibe.
@@ -108,19 +108,13 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
+    <div className="mx-auto max-w-[1180px] px-4 py-6 md:px-8 md:py-8">
       {/* Header */}
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-            Market
-          </div>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Marketplace
           </h1>
-          <p className="mt-1 text-sm text-foreground/70">
-            Buy and sell hexes across VAVAWORLD
-          </p>
         </div>
       </div>
 
@@ -145,7 +139,7 @@ export default function MarketplacePage() {
       </div>
 
       {/* Filter row */}
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+      <div className="mb-6 grid grid-cols-1 gap-2.5 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
         <div className="relative">
           <Search
             size={14}
@@ -214,8 +208,8 @@ export default function MarketplacePage() {
 
       {/* Grid */}
       {visible.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/40 bg-white/30 px-6 py-20 text-center backdrop-blur-md">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+        <div className="flex flex-col items-center gap-3.5 rounded-2xl border border-white/[0.08] bg-white/[0.022] px-6 py-14 text-center">
+          <div className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 bg-white/[0.05] text-white/70">
             <ShoppingBag size={22} strokeWidth={1.6} />
           </div>
           {allListings.length === 0 ? (
@@ -246,17 +240,9 @@ export default function MarketplacePage() {
   );
 }
 
+/** Thin wrapper so this page keeps its <Stat> call sites. */
 function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/40 bg-white/30 px-4 py-3 backdrop-blur-md">
-      <div className="text-[10.5px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-        {label}
-      </div>
-      <div className="mt-1 text-lg font-semibold tabular-nums tracking-tight text-foreground">
-        {value}
-      </div>
-    </div>
-  );
+  return <StatTile label={label} value={value} />;
 }
 
 /** Adapt a real DB listing into the same Listing shape the grid renders. */

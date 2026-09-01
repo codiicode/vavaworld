@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { CheckCircle2, ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useActiveWallet } from '@/lib/active-wallet';
-import { useWalletBalance } from '@/lib/use-wallet-balance';
-import { useUserProfile } from '@/lib/use-user-profile';
 import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
 import { useTiles } from '@/lib/use-tiles';
 import { useClaimedRegistry } from '@/lib/use-claimed-registry';
@@ -24,18 +22,6 @@ function shortAddr(addr: string): string {
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
-function gradientFromAddr(addr: string | null): string {
-  if (!addr) return 'linear-gradient(135deg, #6ee7d6, #22d3ee)';
-  const h1 = (addr.charCodeAt(0) + addr.charCodeAt(1)) % 360;
-  const h2 = (addr.charCodeAt(2) + addr.charCodeAt(3)) % 360;
-  return `linear-gradient(135deg, hsl(${h1} 70% 60%) 0%, hsl(${h2} 70% 50%) 100%)`;
-}
-
-type TabId = 'selection';
-
-const TABS: ReadonlyArray<{ id: TabId; label: string }> = [
-  { id: 'selection', label: 'Selection' },
-];
 
 /**
  * Right rail on /map. 320px glass panel pinned to the right gutter, full height
@@ -60,14 +46,11 @@ export function GlassRightPanel({
   onClaim: () => void;
   onSelectClosest: (n: number) => void;
 }) {
-  const [tab, setTab] = useState<TabId>('selection');
   // Mobile-only: the sheet starts COLLAPSED so the map stays tappable behind
   // it (otherwise selecting one hex would block tapping more). Tap the bar
   // header to expand. Desktop ignores this and is always fully visible.
   const [mobileExpanded, setMobileExpanded] = useState(false);
   const wallet = useActiveWallet();
-  const profile = useUserProfile();
-  const { balance } = useWalletBalance(wallet.publicKey);
   const locations = useHexLocations(selectedHexes);
 
   // Which selected hexes are already claimed? Union of the on-chain PDA
@@ -145,7 +128,7 @@ export function GlassRightPanel({
         // Desktop: pinned right rail. overflow-hidden + flex-1/min-h-0 on the
         // inner wrapper means the long hex list scrolls inside the panel,
         // never pushing the Claim button below the viewport.
-        'md:inset-x-auto md:bottom-[18px] md:right-[18px] md:top-[18px] md:max-h-none md:w-[320px] md:overflow-hidden md:rounded-[22px] md:px-5 md:pb-[22px] md:pt-5',
+        'md:inset-x-auto md:bottom-[18px] md:right-[18px] md:top-[76px] md:max-h-none md:w-[320px] md:overflow-hidden md:rounded-[22px] md:px-5 md:pb-[22px] md:pt-5',
         // Mobile: bottom sheet. Collapsed = compact bar (~88px) so most of
         // the map is reachable for taps; expanded = scrollable sheet.
         mobileExpanded
@@ -172,8 +155,8 @@ export function GlassRightPanel({
                 aria-label="Clear all"
                 className="grid h-10 w-10 flex-none place-items-center rounded-full text-white transition-colors"
                 style={{
-                  background: 'rgba(244, 114, 182, 0.18)',
-                  border: '1px solid rgba(244, 114, 182, 0.45)',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
                 }}
               >
                 <X size={16} strokeWidth={2.5} />
@@ -230,91 +213,35 @@ export function GlassRightPanel({
           'flex min-h-0 flex-1 flex-col',
           mobileExpanded ? 'flex' : 'hidden md:flex',
         )}
-        style={{ gap: 20 }}
+        style={{ gap: 14 }}
       >
-      {/* Wallet chip */}
-      <div
-        className="relative z-[1] flex items-center gap-3 rounded-[16px] px-3 py-2"
-        style={{
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.16), rgba(255,255,255,0.06))',
-          border: '1px solid rgba(255,255,255,0.14)',
-        }}
-      >
-        <div
-          className="grid h-9 w-9 flex-none place-items-center overflow-hidden rounded-[10px] text-[12.5px] font-bold"
+      {/* Panel header. The wallet now lives in the dock's top-right pill, so
+          this is a titled header instead - it names the panel and carries the
+          live count, which is what the user actually tracks while selecting. */}
+      <div className="relative z-[1] flex items-center justify-between gap-2 border-b border-white/10 pb-3">
+        <div className="flex min-w-0 flex-col">
+          <span className="text-[15px] font-semibold leading-tight tracking-[-0.01em] text-white">
+            Buy land
+          </span>
+          <span className="mt-[3px] truncate text-[11.5px] leading-tight text-white/50">
+            {count === 0
+              ? 'Pick hexes on the map'
+              : `${count.toLocaleString('en-US')} hex${count === 1 ? '' : 'es'} selected`}
+          </span>
+        </div>
+        <span
+          className="grid h-[30px] min-w-[30px] flex-none place-items-center rounded-[10px] px-2 text-[13px] font-bold tabular-nums text-white"
           style={{
-            background: profile.avatarUrl
-              ? `url(${profile.avatarUrl}) center/cover`
-              : gradientFromAddr(wallet.address),
-            color: '#052e2b',
-            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.3)',
+            background: count > 0 ? 'rgba(125,180,245,0.18)' : 'rgba(255,255,255,0.06)',
+            border: `1px solid ${count > 0 ? 'rgba(125,180,245,0.42)' : 'rgba(255,255,255,0.10)'}`,
           }}
         >
-          {!profile.avatarUrl && (wallet.address ?? 'HX').slice(0, 2).toUpperCase()}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[14px] font-semibold text-white">
-            {wallet.connected ? shortAddr(wallet.address ?? '') : 'Not connected'}
-          </div>
-          <div className="mt-0.5 truncate text-[11.5px] tabular-nums text-white/55">
-            {wallet.connected
-              ? balance !== null
-                ? `${balance.toFixed(3)} SOL`
-                : '- SOL'
-              : 'Connect wallet'}
-          </div>
-        </div>
-        {wallet.connected ? (
-          <button
-            type="button"
-            onClick={() => wallet.logout()}
-            className="grid place-items-center text-white/55 transition-colors hover:text-white"
-            aria-label="Disconnect"
-          >
-            <ChevronDown size={16} />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => wallet.login()}
-            className="rounded-md border border-white/20 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-white/10"
-          >
-            Connect
-          </button>
-        )}
+          {count}
+        </span>
       </div>
 
-      {/* Tabs */}
-      <div className="relative z-[1] flex items-center gap-[22px] border-b border-white/10 pb-3">
-        {TABS.map((t) => {
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={cn(
-                'relative cursor-pointer border-0 bg-transparent px-0 pb-[4px] pt-1 text-[13.5px] font-semibold tracking-[0.02em] transition-colors duration-150',
-                active ? 'text-white' : 'text-white/55 hover:text-white/80',
-              )}
-            >
-              {t.label}
-              {active && (
-                <span
-                  className="absolute bottom-[-13px] left-0 right-0 h-[2px] rounded-[2px]"
-                  style={{
-                    background: 'linear-gradient(90deg, var(--brand), var(--brand-2))',
-                    boxShadow: '0 0 10px rgba(94, 234, 212, 0.6)',
-                  }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Tab body */}
-      {tab === 'selection' && (
+      {/* Body */}
+      {(
         count === 1 && claimedTiles.has(items[0]!.h3) ? (
           <ClaimedHexView
             info={claimedTiles.get(items[0]!.h3)!}
@@ -445,14 +372,14 @@ function SelectionBody({
                 onClick={onClearAll}
                 className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-white transition-colors"
                 style={{
-                  background: 'rgba(244, 114, 182, 0.18)',
-                  border: '1px solid rgba(244, 114, 182, 0.45)',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.14)',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(244, 114, 182, 0.30)';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.11)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(244, 114, 182, 0.18)';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
                 }}
               >
                 <X size={12} strokeWidth={2.5} />
@@ -515,13 +442,36 @@ function SelectionBody({
         )}
 
         {empty ? (
-          <p className="text-[13.5px] leading-[1.45] text-white/70">
-            Click a hex to select. Shift-click to add more. Ctrl-drag for an area.
-          </p>
+          <div className="flex flex-col items-center gap-3 px-2 py-8 text-center">
+            <div
+              className="grid h-12 w-12 place-items-center rounded-[15px]"
+              style={{
+                background: 'rgba(125,180,245,0.12)',
+                border: '1px solid rgba(125,180,245,0.28)',
+              }}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path
+                  d="M12 2.5 20 7v10l-8 4.5L4 17V7l8-4.5Z"
+                  stroke="var(--brand)"
+                  strokeWidth="1.6"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <p className="text-[13.5px] font-semibold leading-tight text-white">
+              No hexes selected
+            </p>
+            <p className="text-[12px] leading-[1.5] text-white/55">
+              Click a hex to select it. Shift-click to add more,
+              <br />
+              or Ctrl-drag to sweep an area.
+            </p>
+          </div>
         ) : (
           <>
             {claimedCount > 0 && (
-              <div className="rounded-md border border-amber-400/30 bg-amber-400/10 px-2.5 py-2 text-[11.5px] leading-relaxed text-amber-100">
+              <div className="rounded-md border border-white/12 bg-white/[0.07] px-2.5 py-2 text-[11.5px] leading-relaxed text-white/85">
                 {claimedCount} of {count} already claimed - those can&apos;t be bought.
               </div>
             )}
@@ -579,13 +529,13 @@ function SelectionBody({
                       </div>
                       <div className="flex flex-shrink-0 items-center gap-2">
                         <span
-                          className="rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider"
-                          style={{ background: 'rgba(94, 234, 212, 0.16)', color: 'var(--brand)' }}
+                          className="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider tabular-nums"
+                          style={{ background: 'rgba(125, 180, 245, 0.16)', color: 'var(--brand)' }}
                         >
                           T{it.tier}
                         </span>
                         {isClaimed ? (
-                          <span className="text-[11px] font-medium uppercase tracking-wider text-amber-200">
+                          <span className="text-[11px] font-medium uppercase tracking-wider text-white/85">
                             Claimed
                           </span>
                         ) : (
@@ -616,6 +566,34 @@ function SelectionBody({
 
       <div className="relative z-[1] flex-1" />
 
+      {/* Order summary. The total used to live only inside the CTA label,
+          where it wrapped and was easy to miss; a checkout-style summary
+          makes the amount the user is about to spend unmissable. */}
+      {!empty && !allClaimed && (
+        <div
+          className="relative z-[1] flex flex-col gap-1.5 rounded-[14px] px-3.5 py-3"
+          style={{
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.10)',
+          }}
+        >
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[12px] text-white/55">
+              {claimableCount.toLocaleString('en-US')} hex{claimableCount === 1 ? '' : 'es'}
+            </span>
+            <span className="text-[12px] tabular-nums text-white/55">
+              ${claimableCount > 0 ? (claimableTotalUsd / claimableCount).toFixed(4) : '0.0000'} ea
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[12.5px] font-semibold text-white/80">Total</span>
+            <span className="text-[19px] font-bold leading-none tabular-nums tracking-[-0.02em] text-white">
+              ${claimableTotalUsd.toFixed(claimableTotalUsd < 10 ? 4 : 2)}
+            </span>
+          </div>
+        </div>
+      )}
+
       <button
         type="button"
         onClick={
@@ -633,7 +611,7 @@ function SelectionBody({
               ? 'All selected are already claimed'
               : !walletConnected
                 ? 'Connect wallet to claim'
-                : `Claim ${claimableCount} ${claimableCount === 1 ? 'hex' : 'hexes'} · $${claimableTotalUsd.toFixed(claimableTotalUsd < 10 ? 4 : 2)}`}
+                : `Claim ${claimableCount} ${claimableCount === 1 ? 'hex' : 'hexes'}`}
       </button>
     </>
   );
@@ -663,7 +641,7 @@ function ClaimedHexView({
     <>
       <div className="relative z-[1] flex min-h-0 flex-col gap-3 overflow-y-auto">
         <div className="flex items-center justify-between">
-          <span className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-amber-200">
+          <span className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-white/85">
             Already claimed
           </span>
           <button
@@ -677,7 +655,7 @@ function ClaimedHexView({
         </div>
 
         <div
-          className="flex flex-col gap-3 rounded-[14px] border border-amber-400/30 bg-amber-400/10 p-3.5"
+          className="flex flex-col gap-3 rounded-[14px] border border-white/12 bg-white/[0.07] p-3.5"
           style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)' }}
         >
           <div className="flex items-start gap-2.5">
@@ -692,8 +670,8 @@ function ClaimedHexView({
               </div>
             </div>
             <span
-              className="rounded px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider"
-              style={{ background: 'rgba(94, 234, 212, 0.16)', color: 'var(--brand)' }}
+              className="rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider tabular-nums"
+              style={{ background: 'rgba(125, 180, 245, 0.16)', color: 'var(--brand)' }}
             >
               T{item.tier}
             </span>
@@ -704,9 +682,9 @@ function ClaimedHexView({
               <div className="uppercase tracking-wider text-white/55">Owner</div>
               <Link
                 href={`/u/${encodeURIComponent(ownerHandle)}`}
-                className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-white transition-colors hover:text-amber-200"
+                className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-white transition-colors hover:text-white/85"
               >
-                <span className={info.username ? '' : 'font-mono'}>{ownerLabel}</span>
+                <span className={info.username ? '' : 'tabular-nums'}>{ownerLabel}</span>
                 <ExternalLink size={11} />
               </Link>
             </div>
@@ -722,7 +700,7 @@ function ClaimedHexView({
             </div>
             <div>
               <div className="uppercase tracking-wider text-white/55">Status</div>
-              <div className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-emerald-300">
+              <div className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-white/70">
                 <CheckCircle2 size={12} />
                 Owned
               </div>
@@ -743,7 +721,7 @@ function ClaimedHexView({
         <button
           type="button"
           onClick={() => setBidOpen(true)}
-          className="relative z-[1] mb-2 flex h-[52px] w-full items-center justify-center rounded-[14px] bg-emerald-500 text-[14px] font-bold tracking-[0.02em] text-emerald-950 transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0"
+          className="relative z-[1] mb-2 flex h-[52px] w-full items-center justify-center rounded-[14px] bg-white text-[14px] font-bold tracking-[0.02em] text-[#06080d] transition-transform duration-150 hover:translate-y-[-1px] active:translate-y-0"
         >
           Make an offer
         </button>

@@ -155,26 +155,39 @@ export default function Page() {
       )}
 
       {/* Search pill + style toggle - search shrinks to make room for the
-          52px toggle. Desktop: clears the left rail (250) and right panel
-          (356). Mobile: spans the width below the floating top bar. */}
-      <div className="pointer-events-none fixed inset-x-3 top-[66px] z-20 flex items-center gap-3 md:inset-x-auto md:left-[250px] md:right-[356px] md:top-[18px] md:pl-[18px] md:pr-0">
+          52px toggle. Desktop: sits on the top row between the brand pill
+          (ends ~206px) and the right panel (356). Mobile: spans the width
+          below the floating top bar. */}
+      <div className="pointer-events-none fixed inset-x-3 top-[66px] z-20 flex items-center gap-3 md:inset-x-auto md:left-[271px] md:right-[487px] md:top-[18px] md:pl-0 md:pr-0">
         <div className="min-w-0 flex-1">
           <GlassSearchBar mapRef={mapRef} />
         </div>
+        {/* On phones these sit beside the search; on desktop they move
+            up into the nav row, left of the account pill. */}
+        <div className="flex items-center gap-2 md:hidden">
+          <MapPerspectiveToggle mapRef={mapRef} />
+          <MapStyleToggle satellite={satellite} onChange={setSatellite} />
+        </div>
+      </div>
+
+      {/* Desktop: every map control lives in the nav row. */}
+      <div className="fixed right-[233px] top-[18px] z-30 hidden items-center gap-2 md:flex">
         <MapPerspectiveToggle mapRef={mapRef} />
         <MapStyleToggle satellite={satellite} onChange={setSatellite} />
       </div>
 
-      <GlassRightPanel
-        selectedHexes={selectedHexes}
-        seedHex={seed}
-        onRemoveHex={removeHex}
-        onClearAll={clearAll}
-        onClaim={() => setShowClaim(true)}
-        onSelectClosest={selectClosest}
-      />
-
       <MapZoomControls mapRef={mapRef} />
+
+      {selectedHexes.size > 0 && (
+        <GlassRightPanel
+          selectedHexes={selectedHexes}
+          seedHex={seed}
+          onRemoveHex={removeHex}
+          onClearAll={clearAll}
+          onClaim={() => setShowClaim(true)}
+          onSelectClosest={selectClosest}
+        />
+      )}
 
       <LiveClaimsFeed />
 

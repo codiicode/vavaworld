@@ -56,14 +56,14 @@ export function LeaderboardRow({ row, scope }: { row: RowView; scope: Scope }) {
               {entry.verified ? `@${handle}` : handle}
             </Link>
             {entry.verified && (
-              <BadgeCheck className="h-4 w-4 flex-shrink-0 text-emerald-500" aria-label="Verified" />
+              <BadgeCheck className="h-4 w-4 flex-shrink-0 text-white/70" aria-label="Verified" />
             )}
             {president && (
               <span
-                className="inline-flex items-center gap-0.5 rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"
+                className="inline-flex items-center gap-0.5 rounded-full bg-white/[0.07] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/85"
                 title="President of this nation"
               >
-                <Crown size={10} className="fill-amber-400" /> President
+                <Crown size={10} className="fill-white/80" /> President
               </span>
             )}
             {entry.isYou && (
@@ -107,7 +107,7 @@ export function LeaderboardRow({ row, scope }: { row: RowView; scope: Scope }) {
           <div
             className={cn(
               'flex items-center justify-end gap-1 text-sm tabular-nums',
-              positive ? 'text-emerald-600' : 'text-red-600',
+              positive ? 'text-[#7db4f5]' : 'text-white/60',
             )}
           >
             {positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}

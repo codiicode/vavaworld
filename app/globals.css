@@ -83,7 +83,7 @@
     --glass-text: #ffffff;
     --glass-text-dim: rgba(255, 255, 255, 0.82);
     --glass-text-muted: rgba(255, 255, 255, 0.52);
-    --brand: #5eead4;
+    --brand: #ffffff;
     --brand-2: #38bdf8;
 
     /* Tailwind `font-sans` reads --font-sans; Geist sets --font-geist-sans. Bridge. */
@@ -92,7 +92,7 @@
 
   /* Dark theme - toggled by ThemeProvider as `dark` on <html> so Radix
      portals inherit. Same hue family as light (slate-blue), inverted. */
-  .dark {
+  .dark , .force-dark  {
     --background:           222 32% 7%;      /* #0B101D */
     --foreground:           213 30% 94%;     /* #E8EEF9 */
     --card:                 222 28% 10%;
@@ -138,20 +138,20 @@
    low-alpha tier (bg-white/10-20, border-white/10-25) is the
    dark-glass idiom already used over the map - left alone.
    ───────────────────────────────────────────────────────── */
-.dark .bg-white          { background-color: #101828; }
-.dark .bg-white\/90      { background-color: rgba(13, 20, 36, 0.92); }
-.dark .bg-white\/80      { background-color: rgba(13, 20, 36, 0.85); }
-.dark .bg-white\/60      { background-color: rgba(17, 26, 46, 0.65); }
-.dark .bg-white\/55      { background-color: rgba(17, 26, 46, 0.60); }
-.dark .bg-white\/40      { background-color: rgba(16, 24, 43, 0.52); }
-.dark .bg-white\/30      { background-color: rgba(15, 23, 42, 0.44); }
-.dark .border-white\/45  { border-color: rgba(255, 255, 255, 0.14); }
-.dark .border-white\/40  { border-color: rgba(255, 255, 255, 0.13); }
-.dark .border-white\/30  { border-color: rgba(255, 255, 255, 0.11); }
-.dark .hover\:bg-white\/55:hover { background-color: rgba(37, 51, 82, 0.62); }
-.dark .hover\:bg-white\/40:hover { background-color: rgba(37, 51, 82, 0.55); }
-.dark .text-black        { color: #f4f7fd; }
-.dark .text-slate-600    { color: #9fb0c9; }
+.dark .bg-white, .force-dark .bg-white { background-color: #0a0d14; }
+.dark .bg-white\/90, .force-dark .bg-white\/90 { background-color: rgba(13, 20, 36, 0.92); }
+.dark .bg-white\/80, .force-dark .bg-white\/80 { background-color: rgba(13, 20, 36, 0.85); }
+.dark .bg-white\/60, .force-dark .bg-white\/60 { background-color: rgba(17, 26, 46, 0.65); }
+.dark .bg-white\/55, .force-dark .bg-white\/55 { background-color: rgba(17, 26, 46, 0.60); }
+.dark .bg-white\/40, .force-dark .bg-white\/40 { background-color: rgba(16, 24, 43, 0.52); }
+.dark .bg-white\/30, .force-dark .bg-white\/30 { background-color: rgba(15, 23, 42, 0.44); }
+.dark .border-white\/45, .force-dark .border-white\/45 { border-color: rgba(255, 255, 255, 0.14); }
+.dark .border-white\/40, .force-dark .border-white\/40 { border-color: rgba(255, 255, 255, 0.13); }
+.dark .border-white\/30, .force-dark .border-white\/30 { border-color: rgba(255, 255, 255, 0.11); }
+.dark .hover\:bg-white\/55:hover, .force-dark .hover\:bg-white\/55:hover { background-color: rgba(37, 51, 82, 0.62); }
+.dark .hover\:bg-white\/40:hover, .force-dark .hover\:bg-white\/40:hover { background-color: rgba(37, 51, 82, 0.55); }
+.dark .text-black, .force-dark .text-black { color: #f4f7fd; }
+.dark .text-slate-600, .force-dark .text-slate-600 { color: #9fb0c9; }
 
 /* Pin the legacy color vars to their LIGHT values regardless of theme.
    The ClaimModal is built on hardcoded white surfaces + legacy vars
@@ -181,7 +181,7 @@
   border: 1px solid rgba(255,255,255,0.45);
   box-shadow: 0 18px 50px rgba(40,80,150,0.22), 0 2px 8px rgba(40,80,150,0.12), inset 0 1px 0 rgba(255,255,255,0.65);
 }
-.dark .sidebar-glass {
+.dark .sidebar-glass, .force-dark .sidebar-glass {
   background: linear-gradient(135deg, rgba(20,30,52,0.72) 0%, rgba(12,19,36,0.55) 100%);
   border: 1px solid rgba(255,255,255,0.12);
   box-shadow: 0 18px 50px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.10);
@@ -193,7 +193,7 @@
   border: 1px solid rgba(255,255,255,0.65);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
 }
-.dark .sidebar-active {
+.dark .sidebar-active, .force-dark .sidebar-active {
   background: rgba(124,191,236,0.14);
   border: 1px solid rgba(255,255,255,0.16);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
@@ -205,7 +205,7 @@
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
-.dark .sidebar-chip {
+.dark .sidebar-chip, .force-dark .sidebar-chip {
   background: linear-gradient(135deg, rgba(28,40,66,0.6) 0%, rgba(16,24,42,0.4) 100%);
   border: 1px solid rgba(255,255,255,0.13);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 4px 14px rgba(0,0,0,0.25);
@@ -219,20 +219,73 @@
 .on-map-dark {
   --foreground: 213 30% 94%;
 }
+/* Near-black rather than navy: over satellite imagery a blue-tinted glass
+   picks up whatever colour is under it and reads muddy. */
 .on-map-dark.sidebar-glass {
-  background: linear-gradient(135deg, rgba(20,30,52,0.72) 0%, rgba(12,19,36,0.55) 100%);
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: 0 18px 50px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.10);
+  background: linear-gradient(135deg, rgba(10,12,16,0.86) 0%, rgba(6,8,11,0.80) 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 20px 56px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .on-map-dark .sidebar-active {
-  background: rgba(124,191,236,0.14);
-  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
 }
 .on-map-dark .sidebar-chip {
-  background: linear-gradient(135deg, rgba(28,40,66,0.6) 0%, rgba(16,24,42,0.4) 100%);
-  border: 1px solid rgba(255,255,255,0.13);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 4px 14px rgba(0,0,0,0.25);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.11);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 4px 14px rgba(0,0,0,0.3);
+}
+
+/* The map's own glass panels (right rail, search, zoom) sit on satellite
+   imagery. A white tint lets whatever is underneath bleed through and go
+   muddy, so on /map they get a near-black tint to match the header. */
+.map-shell .glass {
+  --tint-r: 8;
+  --tint-g: 10;
+  --tint-b: 14;
+  --glass-alpha: 0.82;
+  --glass-alpha-2: 0.74;
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-highlight: rgba(255, 255, 255, 0.09);
+  --glass-shadow: 0 20px 56px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+/* The claim CTA keeps its own gradient — it must stay the brightest thing. */
+.map-shell .glass.glass--cta {
+  --glass-alpha: 0.18;
+  --glass-alpha-2: 0.10;
+}
+/* .glass-panel hard-codes a navy background with !important; on the map it
+   needs the same near-black as the header. */
+.map-shell .glass-panel {
+  background:
+    linear-gradient(135deg, rgba(10, 12, 16, 0.86) 0%, rgba(6, 8, 11, 0.80) 100%) !important;
+}
+/* Accents on the map read blue, not mint — the mint clashed with the
+   near-black chrome. The claim CTA keeps its own cyan→teal gradient. */
+.map-shell {
+  --brand: #7db4f5;
+  --brand-2: #5b9fe8;
+}
+
+/* ── Standard panel sections ───────────────────────────────
+   The right panel shows different content per state; these give
+   every state the same frame, so it reads as one component. */
+.map-shell .panel-sec {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 16px 18px;
+}
+.map-shell .panel-sec:first-of-type { border-top: none; }
+.map-shell .panel-sec-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
 }
 
 html, body { height: 100%; }
@@ -253,7 +306,7 @@ body {
 
 /* Dark mode: same sky photo, multiplied down to a deep navy so the cloud
    texture survives instead of swapping to a flat gradient. */
-.dark body {
+.dark body, .force-dark body {
   background-color: #26324e;
   background-blend-mode: multiply;
 }
@@ -345,17 +398,22 @@ body {
 .glass--cta {
   --glass-alpha: 0.18;
   --glass-alpha-2: 0.10;
-  /* The claim CTA is the most important control on the site - it glows,
-     it never sinks into the dark glass around it. Same gradient as the
-     pricing card's claim button for consistency. */
-  background: linear-gradient(135deg, #0ea5e9, #14b8a6);
-  color: #ffffff;
+  /* The claim CTA is the most important control on the site. Solid white
+     is the highest-contrast object on a dark map, and it matches the
+     landing page's primary button - the cyan/teal gradient read as loud
+     and dated against the near-black chrome. */
+  background: #ffffff;
+  color: #06080d;
   box-shadow:
-    0 10px 28px -8px rgba(20, 184, 166, 0.7),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    0 12px 30px -10px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 .glass--cta:hover:not(:disabled) {
-  background: linear-gradient(135deg, #38bdf8, #2dd4bf);
+  background: #ffffff;
+  box-shadow:
+    0 16px 38px -12px rgba(0, 0, 0, 0.9),
+    0 0 40px -8px rgba(190, 220, 255, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 ::selection { background: hsl(var(--primary) / 0.3); color: hsl(var(--foreground)); }
@@ -519,7 +577,7 @@ body {
    ───────────────────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(20, 184, 166, 0.55) rgba(255, 255, 255, 0.18);
+  scrollbar-color: rgba(0, 0, 0, 0.55) rgba(255, 255, 255, 0.18);
 }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-track {
@@ -527,13 +585,13 @@ body {
   border-radius: 999px;
 }
 *::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(94, 234, 212, 0.55), rgba(14, 165, 233, 0.55));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.40), rgba(14, 165, 233, 0.55));
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(94, 234, 212, 0.85), rgba(14, 165, 233, 0.85));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.40), rgba(14, 165, 233, 0.85));
   background-clip: padding-box;
   border: 2px solid transparent;
 }
@@ -561,3 +619,860 @@ h3, h4 { line-height: 1.25; }
    against the white-translucent glass cards over the sky bg
    (was a too-light grey that read blue-on-blue in places). */
 :root { --muted-foreground: 215 22% 28%; }
+
+/* ═══════════════════════════════════════════════════════════
+   MAP RIGHT PANEL
+   The buy panel is the one place money changes hands, so it
+   gets real hierarchy: a quiet header, the price as the hero,
+   and the total anchored at the foot above the action.
+   ═══════════════════════════════════════════════════════════ */
+
+/* The country card: the price is the subject, not a label in a list. */
+.map-shell .glass-panel .price-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(125, 180, 245, 0.10), transparent 62%),
+    rgba(255, 255, 255, 0.030);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+/* Section headers read as one system across every panel state. */
+.map-shell .panel-sec-h {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Quantity chips: even, tappable, and clearly a set. */
+.map-shell .qty-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+.map-shell .qty-row button {
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.035);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.72);
+  transition: background 260ms ease, border-color 260ms ease, color 260ms ease;
+}
+.map-shell .qty-row button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* The hex list scrolls; the total and CTA stay put. */
+.map-shell .hex-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+.map-shell .hex-scroll::-webkit-scrollbar { width: 6px; }
+.map-shell .hex-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+/* Total block: the number that matters, set large. */
+.map-shell .total-block {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.022);
+  padding: 14px 18px;
+}
+.map-shell .total-block .t-val {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+/* A hairline of light along the panel's leading edge. */
+.map-shell .glass-panel::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  inset-block: 12%;
+  width: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(125, 180, 245, 0.28) 30%,
+    rgba(125, 180, 245, 0.28) 70%,
+    transparent
+  );
+}
+
+
+/* ── App shell surfaces ────────────────────────────────────
+   The (app) routes share the landing page's palette: true black
+   ground, near-black panels, hairline borders. Navy surfaces
+   read as a different product. */
+.force-dark .bg-card,
+.force-dark [class*="bg-card"] {
+  background-color: rgba(255, 255, 255, 0.028) !important;
+}
+.force-dark .border,
+.force-dark [class*="border-border"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   APP SURFACES — high quality
+   The (app) routes were flat rectangles with hairline borders:
+   correct colours, no craft. These give every surface the same
+   depth language as the landing page — a lit top edge, a real
+   shadow, and a hover that lifts.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Every card-like surface, whatever component drew it. */
+.force-dark [class*="rounded-"][class*="border"]:not(button):not(input):not(select):not(nav):not([role="tab"]) {
+  border-color: rgba(255, 255, 255, 0.075);
+}
+
+/* The workhorse panel: stat cards, list containers, empty states. */
+.force-dark .bg-card,
+.force-dark [class*="bg-card"] {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.042), rgba(255, 255, 255, 0.014)) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 20px 46px -26px rgba(0, 0, 0, 0.9);
+}
+
+/* Page headers: an eyebrow, a large title, a quiet lede. */
+/* App view titles, not marketing headlines: smaller, tighter, quieter. */
+.force-dark main h1 {
+  font-size: clamp(1.35rem, 1rem + 0.8vw, 1.7rem) !important;
+  font-weight: 600;
+  letter-spacing: -0.028em;
+  line-height: 1.15;
+  color: #fff;
+}
+
+/* The eyebrow above a title. */
+.force-dark main h1 + p,
+.force-dark main h1 ~ p {
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.force-dark main h2 { font-size: 1.05rem !important; font-weight: 600; }
+.force-dark main h3 { font-size: 0.95rem !important; font-weight: 600; }
+
+/* Stat figures come down a step too. */
+.stat-tile .stat-v { font-size: 25px; }
+
+/* Compact variant: a summary row, not a hero band. */
+.stat-tile.compact { padding: 13px 15px 14px; border-radius: 13px; }
+.stat-tile.compact .stat-k { font-size: 9px; letter-spacing: 0.15em; }
+.stat-tile.compact .stat-v { margin-top: 7px; font-size: 19px; }
+
+/* Numerals anywhere in the app read as data, never as prose. */
+.force-dark main .tabular-nums,
+.force-dark main [class*="tabular"] {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Inputs and selects: real fields, not outlines. */
+.force-dark input,
+.force-dark select,
+.force-dark textarea {
+  background: rgba(255, 255, 255, 0.035) !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  color: #fff;
+  transition: border-color 260ms ease, background 260ms ease;
+}
+.force-dark input:focus,
+.force-dark select:focus,
+.force-dark textarea:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.055) !important;
+  border-color: rgba(125, 180, 245, 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(125, 180, 245, 0.12);
+}
+.force-dark input::placeholder { color: rgba(255, 255, 255, 0.34); }
+
+/* Tables: the app's densest surface, so it needs the most care. */
+.force-dark thead th {
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 500;
+  padding-block: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.force-dark tbody tr {
+  transition: background 240ms ease;
+}
+.force-dark tbody tr:hover { background: rgba(255, 255, 255, 0.028); }
+.force-dark tbody td { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+
+/* Primary actions match the landing page: solid white. */
+.force-dark button[class*="bg-primary"],
+.force-dark a[class*="bg-primary"] {
+  background: #ffffff !important;
+  color: #06080d !important;
+  font-weight: 600;
+  box-shadow: 0 10px 26px -12px rgba(0, 0, 0, 0.9);
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 300ms ease;
+}
+.force-dark button[class*="bg-primary"]:hover,
+.force-dark a[class*="bg-primary"]:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 14px 32px -12px rgba(0, 0, 0, 0.95),
+    0 0 34px -10px rgba(200, 225, 255, 0.4);
+}
+
+/* Secondary/ghost controls. */
+.force-dark button[class*="bg-secondary"],
+.force-dark button[class*="bg-muted"] {
+  background: rgba(255, 255, 255, 0.055) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+.force-dark button[class*="bg-secondary"]:hover,
+.force-dark button[class*="bg-muted"]:hover {
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+/* Muted text was too dim to read on black. */
+.force-dark .text-muted-foreground { color: rgba(255, 255, 255, 0.52) !important; }
+
+/* Badges and pills. */
+.force-dark [class*="rounded-full"][class*="bg-"]:not(button):not(a) {
+  backdrop-filter: blur(10px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .force-dark .bg-card,
+  .force-dark button[class*="bg-primary"],
+  .force-dark tbody tr { transition: none; }
+}
+
+/* ── Stat tile ─────────────────────────────────────────────
+   The figure is the subject: set it at scale, in a gradient
+   that fades toward the baseline, over a lit surface. */
+
+.stat-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.013));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 20px 44px -26px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+  transition: border-color 400ms ease, transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stat-tile::before {
+  content: '';
+  position: absolute;
+  inset-inline: 18%;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+}
+.stat-tile:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.stat-tile .stat-k {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+.stat-tile .stat-v {
+  margin-top: 12px;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(178deg, #ffffff 30%, rgba(255, 255, 255, 0.55) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.stat-tile .stat-v.accent {
+  background: linear-gradient(178deg, #cfe3ff 20%, rgba(125, 180, 245, 0.6) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.stat-tile .stat-n {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-tile, .stat-tile:hover { transition: none; transform: none; }
+}
+
+/* ── List rows and inner surfaces ──────────────────────────
+   Rows inside a card were solid grey blocks. They should read
+   as inset surfaces on the panel, with the active one lit. */
+
+.force-dark [class*="rounded-xl"][class*="bg-muted"],
+.force-dark [class*="rounded-2xl"][class*="bg-muted"],
+.force-dark [class*="rounded-lg"][class*="bg-muted"] {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* The row marked as yours/active. */
+.force-dark [class*="ring-primary"],
+.force-dark [class*="border-primary"] {
+  border-color: rgba(125, 180, 245, 0.4) !important;
+  background: rgba(125, 180, 245, 0.06) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Empty states: centre them properly and give the icon a real housing. */
+.force-dark main [class*="rounded-full"][class*="bg-primary"] {
+  background: rgba(125, 180, 245, 0.12) !important;
+  border: 1px solid rgba(125, 180, 245, 0.22);
+}
+
+/* Section headings inside panels. */
+.force-dark main h2,
+.force-dark main h3 {
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+/* Dividers. */
+.force-dark hr,
+.force-dark [class*="divide-"] > * + * {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Skeletons and placeholder blocks. */
+.force-dark [class*="animate-pulse"] {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* ── Legacy light-glass classes ────────────────────────────
+   Much of the app was built on `bg-white/30 border-white/40`,
+   which is a light-theme glass. On black it renders as a flat
+   grey slab. Remap it once here rather than editing every
+   call site. */
+
+.force-dark [class*="bg-white/30"],
+.force-dark [class*="bg-white/25"],
+.force-dark [class*="bg-white/20"],
+.force-dark [class*="bg-white/40"],
+.force-dark [class*="bg-white/50"],
+.force-dark [class*="bg-white/60"] {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.042), rgba(255, 255, 255, 0.014)) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.force-dark [class*="border-white/40"],
+.force-dark [class*="border-white/30"],
+.force-dark [class*="border-white/50"],
+.force-dark [class*="border-white/60"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Nested rows inside those cards sit a touch deeper. */
+.force-dark [class*="bg-white/30"] [class*="bg-white/30"],
+.force-dark [class*="bg-white/40"] [class*="bg-white/40"] {
+  background: rgba(255, 255, 255, 0.026) !important;
+}
+
+/* Solid inverse buttons ("bg-foreground text-background") are the
+   primary action — white, like the landing page. Scoped to main:
+   the nav uses the same utility for its own states. */
+.force-dark main button[class*="bg-foreground"],
+.force-dark main a[class*="bg-foreground"] {
+  background: #ffffff !important;
+  color: #06080d !important;
+}
+
+/* ── The top bar ───────────────────────────────────────────
+   Near-black glass with a lit top edge and a real shadow —
+   instrument chrome, not a translucent navy panel. */
+
+.force-dark .sidebar-glass {
+  background: rgba(6, 8, 13, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  backdrop-filter: blur(30px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(180%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 20px 50px -24px rgba(0, 0, 0, 0.95) !important;
+}
+
+/* A hairline of light across the top edge, as on real hardware. */
+.force-dark .sidebar-glass::before {
+  content: '';
+  position: absolute;
+  inset-inline: 12%;
+  top: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.30), transparent);
+}
+
+/* Nav items: quiet by default, lit when current. */
+.force-dark .sidebar-glass a[class*="rounded-"],
+.force-dark .sidebar-glass button[class*="rounded-"] {
+  transition: background 220ms ease, color 220ms ease;
+}
+.force-dark .sidebar-glass a:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Only the current route is lit. Matching on a hover utility class lit
+   every item at once, which read as noise. */
+.force-dark .sidebar-glass [aria-current='page'] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+
+/* Icon buttons at the right end. */
+/* Icon buttons only (square: both h-9 and w-9). Connect is h-9 too,
+   so matching on height alone erased it. */
+.force-dark .sidebar-glass button[class*="w-9"] {
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent !important;
+}
+.force-dark .sidebar-glass button[class*="w-9"]:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* The wordmark: technical, wide, quietly authoritative. */
+.force-dark .sidebar-glass a[href="/"] span {
+  letter-spacing: 0.16em !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LEADERBOARD — the competitive screen
+   A thin strip over an empty table gave the most contested
+   view in the app no weight. This gives it a stage.
+   ═══════════════════════════════════════════════════════════ */
+
+/* The champion sits on a lit plinth, not a flat bar. */
+.champ-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    radial-gradient(80% 130% at 18% 0%, rgba(125, 180, 245, 0.10), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 34px 80px -40px rgba(0, 0, 0, 1);
+}
+
+/* A slow sweep of light across the plinth. */
+.champ-stage::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  width: 40%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  animation: champ-sweep 9s ease-in-out infinite;
+}
+@keyframes champ-sweep {
+  0%, 100% { transform: translateX(-140%); }
+  50% { transform: translateX(320%); }
+}
+
+/* Rank numeral as furniture. */
+.rank-numeral {
+  font-size: clamp(3.2rem, 2rem + 3.4vw, 5.6rem);
+  font-weight: 600;
+  line-height: 0.82;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(178deg, #ffffff 22%, rgba(255, 255, 255, 0.22) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Podium places 2 and 3. */
+.podium-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.01));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 22px 50px -30px rgba(0, 0, 0, 0.95);
+  transition: transform 460ms cubic-bezier(0.16, 1, 0.3, 1), border-color 460ms ease;
+}
+.podium-card:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.16); }
+
+/* The rankings table: dense, quiet, scannable. */
+.rank-table thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(6, 8, 13, 0.92);
+  backdrop-filter: blur(12px);
+  z-index: 1;
+}
+.rank-table tbody tr {
+  transition: background 200ms ease;
+}
+.rank-table tbody tr:hover { background: rgba(255, 255, 255, 0.035); }
+
+/* Your own row, if you are on the board. */
+.rank-table tbody tr[data-you='true'] {
+  background: rgba(125, 180, 245, 0.07);
+  box-shadow: inset 2px 0 0 var(--brand, #7db4f5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .champ-stage::after { animation: none; opacity: 0; }
+  .podium-card, .podium-card:hover { transition: none; transform: none; }
+}
+
+/* ── Controls: elegant, not oversized ──────────────────────
+   Sort/search were full-height fields on a 200px+ column and
+   dominated the page above the content they filter. */
+
+@media (min-width: 768px) {
+  .force-dark main select,
+  .force-dark main input[type="search"],
+  .force-dark main input[type="text"] {
+    max-width: 260px;
+  }
+}
+
+.force-dark main select,
+.force-dark main input {
+  height: 38px !important;
+  padding-block: 0 !important;
+  font-size: 13.5px !important;
+  border-radius: 10px !important;
+}
+
+/* The label above a control. */
+.force-dark main label,
+.force-dark main [class*="uppercase"][class*="tracking-"] {
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+}
+
+/* ── No gradients on surfaces ──────────────────────────────
+   Flat, even fills read as product chrome. Gradient washes on
+   cards read as decoration and fight the content. */
+
+.force-dark main [class*="bg-gradient-to-r"],
+.force-dark main [class*="bg-gradient-to-br"],
+.force-dark main [class*="bg-gradient-to-b"]:not([class*="bg-clip-text"]) {
+  background-image: none !important;
+}
+
+/* Keep gradients only where they are the point: clipped to text. */
+.force-dark main [class*="bg-clip-text"] {
+  background-image: linear-gradient(180deg, #ffffff 25%, rgba(255, 255, 255, 0.62) 100%) !important;
+}
+
+/* Cards: one flat surface, one hairline, no wash. */
+.force-dark .stat-tile,
+.force-dark .podium-card,
+.force-dark .champ-stage {
+  background: rgba(255, 255, 255, 0.028) !important;
+}
+.force-dark .champ-stage { background: rgba(255, 255, 255, 0.038) !important; }
+
+/* The sweep animation was decoration on a surface — drop it. */
+.force-dark .champ-stage::after { display: none; }
+
+/* Borders stay hairline, never heavy. */
+.force-dark main [class*="border-2"] { border-width: 1px !important; }
+
+/* ── Marketplace listing card ──────────────────────────────
+   A tile of land for sale: the imagery leads, the price is the
+   subject, and the whole card lifts toward the cursor. */
+
+.listing-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.028);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 40px -26px rgba(0, 0, 0, 0.95);
+  transition:
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 420ms ease,
+    box-shadow 420ms ease;
+}
+.listing-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 26px 54px -26px rgba(0, 0, 0, 1);
+}
+
+/* The satellite plate reads a touch cooler until you hover it. */
+.listing-card img {
+  filter: saturate(0.85) contrast(1.04);
+  transition: filter 420ms ease, transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.listing-card:hover img { filter: saturate(1) contrast(1.06); }
+
+/* A scrim under the tier chip so it never sits on bright imagery. */
+.listing-card > div:first-child::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(4, 6, 11, 0.35) 0%, transparent 34%, transparent 62%, rgba(4, 6, 11, 0.5) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listing-card, .listing-card img, .listing-card:hover { transition: none; transform: none; }
+}
+
+/* ── Select controls ───────────────────────────────────────
+   The trigger reads as a field; the open panel is dark glass.
+   These were light-theme (bg-white/40 over bg-white/90), so an
+   open dropdown was a white sheet on a black app. */
+
+.select-trigger {
+  height: 38px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  background: rgba(255, 255, 255, 0.035) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 13.5px !important;
+  transition: border-color 240ms ease, background 240ms ease;
+}
+.select-trigger:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+.select-trigger:focus,
+.select-trigger[data-state='open'] {
+  outline: none;
+  border-color: rgba(125, 180, 245, 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(125, 180, 245, 0.12);
+}
+.select-trigger svg { color: rgba(255, 255, 255, 0.42); }
+
+/* The floating menu. */
+.select-panel {
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  background: rgba(10, 13, 20, 0.96) !important;
+  backdrop-filter: blur(26px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(26px) saturate(170%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 60px -22px rgba(0, 0, 0, 0.95) !important;
+  padding: 5px !important;
+}
+
+.select-panel [role='option'] {
+  border-radius: 8px;
+  padding: 8px 10px !important;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.72);
+  transition: background 180ms ease, color 180ms ease;
+}
+.select-panel [role='option']:hover,
+.select-panel [role='option'][data-highlighted] {
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: #fff !important;
+  outline: none;
+}
+.select-panel [role='option'][data-state='checked'] {
+  background: rgba(125, 180, 245, 0.12) !important;
+  color: #fff !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .select-trigger, .select-panel [role='option'] { transition: none; }
+}
+
+
+/* ── Map chrome parity ─────────────────────────────────────
+   The search field and the nav pills are the same row, so
+   they must be the same surface. */
+.map-shell .glass {
+  --tint-r: 9;
+  --tint-g: 12;
+  --tint-b: 19;
+  --glass-alpha: 0.72;
+  --glass-alpha-2: 0.72;
+}
+
+/* Any dialog, popover or sheet in the app is near-black glass,
+   never a light or navy panel. */
+.force-dark [role='dialog'],
+.map-shell [role='dialog'],
+.force-dark [data-radix-popper-content-wrapper] > * {
+  background: rgba(10, 13, 20, 0.97) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* No serif or mono anywhere in the app chrome — one typeface. */
+.force-dark [role='dialog'],
+.map-shell [role='dialog'] {
+  font-family: inherit !important;
+}
+.force-dark [role='dialog'] * ,
+.map-shell [role='dialog'] * {
+  font-style: normal !important;
+}
+
+/* ── Primary actions stay white ────────────────────────────
+   `.force-dark .bg-white` repaints surfaces near-black, which
+   is right for cards but wrong for buttons — several rendered
+   invisible. Interactive elements opt back out. */
+
+.force-dark a.bg-white,
+.force-dark button.bg-white,
+.map-shell a.bg-white,
+.map-shell button.bg-white {
+  background-color: #ffffff !important;
+  color: #06080d !important;
+}
+
+/* ── Popups are black, never blue ──────────────────────────
+   Any overlay surface in the app: dialogs, popovers, sheets,
+   command menus, tooltips. */
+
+[role='dialog'],
+[role='alertdialog'],
+[role='menu'],
+[role='listbox'],
+[data-radix-popper-content-wrapper] > *,
+.force-dark [data-state='open'][class*='fixed'],
+.map-shell [data-state='open'][class*='fixed'] {
+  background-color: rgba(8, 10, 16, 0.97) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* The scrim behind a modal. */
+[data-radix-dialog-overlay],
+.force-dark [class*='bg-black/'],
+.map-shell [class*='bg-black/'] {
+  background-color: rgba(0, 0, 0, 0.72) !important;
+  backdrop-filter: blur(6px);
+}
+
+/* Nothing inside an overlay may use a second typeface. */
+[role='dialog'] *,
+[role='alertdialog'] * {
+  font-style: normal !important;
+}
+
+/* ── Map chrome parity with the app header ─────────────────
+   The map's controls were separate pills pinned to the
+   viewport edges at mixed heights (46/44/36). They now share
+   the app header's span and one height, so moving between
+   /map and the rest of the app is seamless. */
+
+.map-shell .glass,
+.map-shell .fixed > .glass {
+  --map-chrome-h: 46px;
+}
+
+/* Every top-row control is the same height and radius. */
+.map-shell [class*='top-[18px]'] > .glass,
+.map-shell [class*='top-[18px]'].glass {
+  height: 46px;
+  border-radius: 15px;
+}
+
+/* The zoom and view toggles were 44px buttons in 44px shells. */
+.map-shell [class*='top-[18px]'] button {
+  height: 46px;
+  min-width: 46px;
+  border-radius: 15px;
+}
+.map-shell [class*='top-[18px]'] .glass button {
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+}
+
+/* ── Inputs already inside a glass shell ───────────────────
+   `.force-dark input` gives every field its own fill, which is
+   right for a bare input on a page. Inside the map's search
+   pill it painted a lighter box within the box — the pill is
+   already the surface, so the field must be transparent. */
+
+.glass input,
+.map-shell .glass input,
+.app-dock input,
+.demo-search input {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.glass input:focus,
+.map-shell .glass input:focus,
+.app-dock input:focus,
+.demo-search input:focus {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* ── Privy wallet modal ────────────────────────────────────
+   Privy's own dark theme is a mid-grey. Pin it to the app's
+   near-black so the sign-in flow doesn't read as a different
+   product bolted on. */
+
+#privy-modal-content,
+[id^='privy-modal'],
+[class*='privy'] [role='dialog'] {
+  background-color: #0a0d14 !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+/* The scrim behind it. */
+[id^='privy-dialog-backdrop'],
+[class*='privy-backdrop'] {
+  background-color: rgba(0, 0, 0, 0.78) !important;
+  backdrop-filter: blur(6px);
+}
+
+/* Wallet rows inside the modal. */
+[class*='privy'] button[class*='wallet'],
+#privy-modal-content button {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  color: #fff !important;
+}
+#privy-modal-content button:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Never a second typeface in the sign-in flow. */
+#privy-modal-content,
+#privy-modal-content * {
+  font-family: inherit !important;
+  font-style: normal !important;
+}

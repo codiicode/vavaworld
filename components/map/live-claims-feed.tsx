@@ -5,7 +5,8 @@ import { Flag } from '@/components/flag';
 import { useLiveClaims } from '@/lib/live-feed';
 
 /**
- * Floating "world is alive" feed on the map: incoming claims pop in bottom-left
+ * Floating "world is alive" feed on the map: incoming claims pop in bottom-left,
+ * lifted above the floating nav dock on desktop
  * so the map reads as a live, multiplayer land grab rather than a static view.
  * Mock-driven today (see lib/live-feed); becomes real with the indexer.
  */
@@ -13,11 +14,11 @@ export function LiveClaimsFeed() {
   const events = useLiveClaims(5000, 3, 3);
 
   return (
-    <div className="pointer-events-none absolute bottom-7 left-4 z-[6] hidden flex-col gap-1.5 md:flex md:left-[270px]">
+    <div className="pointer-events-none absolute bottom-7 left-4 z-[6] hidden flex-col gap-1.5 md:bottom-[108px] md:flex md:left-[18px]">
       <div className="mb-0.5 flex items-center gap-1.5 pl-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70">
         <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#7db4f5] opacity-75" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#7db4f5]" />
         </span>
         Live claims
       </div>

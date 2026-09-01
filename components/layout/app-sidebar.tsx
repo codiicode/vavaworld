@@ -69,8 +69,8 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
   const { theme, toggle } = useTheme();
   // The sidebar glass is dark over the map (and in dark mode) but light over
   // the white-glow app pages - the wordmark/logo flip to stay visible.
-  const isMap = pathname?.startsWith('/map') ?? false;
-  const onDark = isMap || theme === 'dark';
+  // Every (app) route renders on the dark shell now.
+  const onDark = true;
 
   return (
     <>
@@ -104,7 +104,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                'relative flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] leading-none transition-colors duration-150',
+                'relative flex items-center gap-2.5 rounded-[12px] px-2.5 py-[10px] text-[14px] leading-none transition-colors duration-150',
                 active
                   ? 'sidebar-active font-semibold text-foreground'
                   : 'font-medium text-foreground/70 hover:bg-foreground/[0.04] hover:text-foreground',
@@ -125,7 +125,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
           href="/notifications"
           onClick={onNavigate}
           className={cn(
-            'flex items-center gap-3.5 rounded-[12px] px-3 py-[11px] text-[14.5px] leading-none transition-colors duration-150',
+            'flex items-center gap-2.5 rounded-[12px] px-2.5 py-[10px] text-[14px] leading-none transition-colors duration-150',
             pathname === '/notifications'
               ? 'sidebar-active font-semibold text-foreground'
               : 'font-medium text-foreground/50 hover:bg-foreground/[0.04] hover:text-foreground',
@@ -239,9 +239,9 @@ export function AppSidebar() {
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { theme } = useTheme();
   const isMap = pathname?.startsWith('/map') ?? false;
-  const onDark = isMap || theme === 'dark';
+  // Every (app) route renders on the dark shell now.
+  const onDark = true;
 
   // Close on navigation.
   useEffect(() => {
@@ -318,5 +318,143 @@ export function MobileNav() {
         <SidebarInner onNavigate={() => setOpen(false)} />
       </aside>
     </>
+  );
+}
+
+/**
+ * Desktop top bar. Replaces the left rail so /map and /marketplace get the
+ * full viewport width. Carries the same NAV as {@link SidebarInner} so the
+ * two never drift; secondary actions (notifications, theme, settings) collapse
+ * to icon buttons and the wallet chip sits at the far right.
+ */
+export function TopNav() {
+  const pathname = usePathname();
+  const wallet = useActiveWallet();
+  const profile = useUserProfile();
+  const { balance } = useWalletBalance(wallet.publicKey);
+  const { unread } = useNotifications(wallet.address);
+  const { theme, toggle } = useTheme();
+
+  const isMap = pathname?.startsWith('/map') ?? false;
+  // Every (app) route renders on the dark shell now.
+  const onDark = true;
+
+  const iconBtn =
+    'grid h-10 w-10 place-items-center rounded-[10px] text-foreground/55 transition-colors hover:bg-foreground/[0.06] hover:text-foreground';
+
+  return (
+    <header
+      className={cn(
+        'sidebar-glass fixed left-1/2 top-[18px] z-30 hidden h-[62px] w-[calc(100vw-130px)] max-w-[1600px] -translate-x-1/2 items-center gap-2 rounded-[18px] px-4 text-foreground md:flex',
+        isMap && 'on-map-dark',
+      )}
+    >
+      {/* Brand */}
+      <Link href="/" className="flex flex-none items-center gap-2.5 pr-1">
+        <BrandLogo size={28} variant={onDark ? 'white' : 'color'} />
+        <span
+          className="hidden text-[10px] tracking-[0.02em] lg:inline"
+          style={{
+            fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif',
+            color: onDark ? '#ffffff' : '#0b1a2e',
+          }}
+        >
+          VAVAWORLD
+        </span>
+      </Link>
+
+      <span className="mx-1 h-6 w-px flex-none bg-foreground/10" />
+
+      {/* Primary nav */}
+      <nav className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
+        {NAV.map((item) => {
+          const Icon = item.icon;
+          const active =
+            pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href + '/'));
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'flex flex-none items-center gap-2 rounded-[11px] px-3.5 py-2.5 text-[13.5px] leading-none transition-colors duration-150',
+                active
+                  ? 'sidebar-active font-semibold text-foreground'
+                  : 'font-medium text-foreground/65 hover:bg-foreground/[0.04] hover:text-foreground',
+              )}
+            >
+              <Icon size={17} strokeWidth={1.8} />
+              <span className="hidden xl:inline">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Secondary actions */}
+      <div className="flex flex-none items-center gap-0.5">
+        <Link
+          href="/notifications"
+          aria-label="Notifications"
+          className={cn(iconBtn, 'relative', pathname === '/notifications' && 'text-foreground')}
+        >
+          <Bell size={18} strokeWidth={1.8} />
+          {unread > 0 && (
+            <span className="absolute right-1 top-1 grid h-[15px] min-w-[15px] place-items-center rounded-full bg-red-500 px-[3px] text-[9px] font-bold leading-none text-white">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+        </Link>
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          className={iconBtn}
+        >
+          {theme === 'dark' ? <Sun size={18} strokeWidth={1.8} /> : <Moon size={18} strokeWidth={1.8} />}
+        </button>
+        <Link href="/settings" aria-label="Settings" className={iconBtn}>
+          <Settings size={18} strokeWidth={1.8} />
+        </Link>
+      </div>
+
+      {/* Wallet */}
+      {wallet.ready && wallet.connected && (
+        <div className="sidebar-chip ml-1 flex flex-none items-center gap-2.5 rounded-[12px] px-2.5 py-1.5">
+          <Link href="/profile" className="flex min-w-0 items-center gap-2.5 transition-opacity hover:opacity-80">
+            <div
+              className="h-[28px] w-[28px] flex-none overflow-hidden rounded-[8px]"
+              style={{
+                background: profile.avatarUrl
+                  ? `url(${profile.avatarUrl}) center/cover`
+                  : gradientFromAddr(wallet.address),
+                boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.7)',
+              }}
+            />
+            <div className="hidden min-w-0 flex-col lg:flex">
+              <span className="truncate text-[12.5px] font-semibold leading-tight text-foreground">
+                {profile.username ? `@${profile.username}` : shortAddr(wallet.address ?? '')}
+              </span>
+              <span className="truncate text-[11px] leading-tight tabular-nums text-foreground/55">
+                {balance !== null ? `${balance.toFixed(3)} SOL` : '- SOL'}
+              </span>
+            </div>
+          </Link>
+          <button
+            type="button"
+            aria-label="Log out"
+            title="Log out"
+            onClick={() => void wallet.logout()}
+            className="grid h-7 w-7 flex-none place-items-center rounded-[8px] text-foreground/55 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
+          >
+            <LogOut size={15} strokeWidth={1.8} />
+          </button>
+        </div>
+      )}
+
+      {wallet.ready && !wallet.connected && (
+        <div className="ml-1 flex-none">
+          <ConnectButton />
+        </div>
+      )}
+    </header>
   );
 }

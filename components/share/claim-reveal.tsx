@@ -88,7 +88,7 @@ export function ClaimReveal({ claim }: { claim: ClaimShare }) {
       ctx.beginPath();
       path(d3.geoGraticule10());
       ctx.lineWidth = 0.6;
-      ctx.strokeStyle = 'rgba(94,234,212,0.12)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.10)';
       ctx.stroke();
 
       if (land) {
@@ -97,7 +97,7 @@ export function ClaimReveal({ claim }: { claim: ClaimShare }) {
         ctx.fillStyle = 'rgba(120,190,230,0.55)';
         ctx.fill();
         ctx.lineWidth = 0.5;
-        ctx.strokeStyle = 'rgba(94,234,212,0.25)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.20)';
         ctx.stroke();
       }
 
@@ -170,7 +170,7 @@ export function ClaimReveal({ claim }: { claim: ClaimShare }) {
           <span className="text-3xl font-bold text-white md:text-4xl">{claim.place}</span>
         </div>
         <p className="text-base text-white/70 md:text-lg">
-          <span className="font-semibold text-[#5eead4]">{name}</span> claimed{' '}
+          <span className="font-semibold text-[#ffffff]">{name}</span> claimed{' '}
           <span className="font-semibold text-white">
             {claim.n.toLocaleString('en-US')} hex{claim.n === 1 ? '' : 'es'}
           </span>
@@ -185,7 +185,8 @@ export function ClaimReveal({ claim }: { claim: ClaimShare }) {
         <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/map"
-            className="rounded-full bg-[#14b8a6] px-6 py-3 text-sm font-semibold text-[#042f2e] shadow-lg transition-transform hover:scale-[1.03]"
+            className="rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:scale-[1.03]"
+            style={{ background: '#ffffff', color: '#06080d' }}
           >
             Claim your ground →
           </Link>

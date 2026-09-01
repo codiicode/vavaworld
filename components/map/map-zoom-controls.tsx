@@ -36,24 +36,39 @@ export function MapZoomControls({
   const zoomOut = () => map()?.zoomOut({ duration: 120 });
 
   return (
-    <div
-      className="pointer-events-auto fixed z-20 flex flex-col gap-2
-        right-3 bottom-[110px]
-        md:bottom-auto md:right-[356px] md:top-[88px]"
-    >
-      <ZoomBtn label="Zoom in close" onClick={flyClose} primary>
-        <ZoomIn size={18} strokeWidth={1.9} />
-      </ZoomBtn>
-      <div className="glass flex flex-col overflow-hidden rounded-full">
-        <ZoomBtn label="Zoom in" onClick={zoomIn} inGroup>
-          <Plus size={18} strokeWidth={2} />
+    <>
+      {/* Phone: floating stack within thumb reach. */}
+      <div className="pointer-events-auto fixed bottom-[110px] right-3 z-20 flex flex-col gap-2 md:hidden">
+        <ZoomBtn label="Zoom in close" onClick={flyClose} primary>
+          <ZoomIn size={18} strokeWidth={1.9} />
         </ZoomBtn>
-        <div className="mx-2 h-px bg-white/15" />
-        <ZoomBtn label="Zoom out" onClick={zoomOut} inGroup>
-          <Minus size={18} strokeWidth={2} />
-        </ZoomBtn>
+        <div className="glass flex flex-col overflow-hidden rounded-full">
+          <ZoomBtn label="Zoom in" onClick={zoomIn} inGroup>
+            <Plus size={18} strokeWidth={2} />
+          </ZoomBtn>
+          <div className="mx-2 h-px bg-white/15" />
+          <ZoomBtn label="Zoom out" onClick={zoomOut} inGroup>
+            <Minus size={18} strokeWidth={2} />
+          </ZoomBtn>
+        </div>
       </div>
-    </div>
+
+      {/* Desktop: sits in the nav row beside the view toggles. */}
+      <div className="pointer-events-auto fixed right-[335px] top-[18px] z-30 hidden items-center gap-2 md:flex">
+        <ZoomBtn label="Zoom in close" onClick={flyClose} primary>
+          <ZoomIn size={17} strokeWidth={1.9} />
+        </ZoomBtn>
+        <div className="glass flex items-center overflow-hidden rounded-full">
+          <ZoomBtn label="Zoom in" onClick={zoomIn} inGroup>
+            <Plus size={17} strokeWidth={2} />
+          </ZoomBtn>
+          <div className="my-2 w-px self-stretch bg-white/15" />
+          <ZoomBtn label="Zoom out" onClick={zoomOut} inGroup>
+            <Minus size={17} strokeWidth={2} />
+          </ZoomBtn>
+        </div>
+      </div>
+    </>
   );
 }
 
