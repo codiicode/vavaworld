@@ -3,10 +3,10 @@ use anchor_lang::prelude::*;
 // =========================================================================
 // TREASURY
 // =========================================================================
-// Devnet treasury — replace before mainnet deploy with the user's mainnet
-// wallet address. The address constraint on the treasury account in
-// Claim<'info> uses this constant directly.
-pub const TREASURY: Pubkey = pubkey!("74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X");
+// MAINNET treasury (hardware wallet). The address constraint on the
+// treasury account in Claim<'info> uses this constant directly.
+// Devnet builds used 74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X.
+pub const TREASURY: Pubkey = pubkey!("AkXJgHBo2Y4KWLi5h5UBAMgKTMn9SotfryZHjLJ3BvFN");
 
 // =========================================================================
 // PRICING (lamports, 1 SOL = 1_000_000_000)

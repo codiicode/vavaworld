@@ -11,6 +11,9 @@ tiles = "G8MsXTtabmQnfPd4PZ7dDLYtRPhFDqRs93ExhhsSDkwM"
 [programs.devnet]
 tiles = "G8MsXTtabmQnfPd4PZ7dDLYtRPhFDqRs93ExhhsSDkwM"
 
+[programs.mainnet]
+tiles = "9L3cE2XpkUjdQrMUwxmU83ZMNPsgGxiTHfXxKorvjoJt"
+
 [registry]
 url = "https://api.apr.dev"
 

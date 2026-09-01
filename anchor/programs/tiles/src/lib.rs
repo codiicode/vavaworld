@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
-declare_id!("G8MsXTtabmQnfPd4PZ7dDLYtRPhFDqRs93ExhhsSDkwM");
+// Mainnet id. Devnet ran as G8MsXTtabmQnfPd4PZ7dDLYtRPhFDqRs93ExhhsSDkwM.
+declare_id!("9L3cE2XpkUjdQrMUwxmU83ZMNPsgGxiTHfXxKorvjoJt");
 
 pub mod constants;
 pub mod errors;
