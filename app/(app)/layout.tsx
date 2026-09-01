@@ -37,7 +37,13 @@ export default function AppGroupLayout({ children }: { children: React.ReactNode
             dock + brand/account pills that leave the map full-bleed. Every
             other (app) route keeps the shared top nav. */}
         {isMap ? (
-          <MapDock />
+          <>
+            <MapDock />
+            {/* MapDock is desktop-only (every element is hidden md:*) - the
+                phone still needs the drawer nav, and the map's mobile search
+                bar is positioned to sit below this bar. */}
+            <MobileNav />
+          </>
         ) : (
           <>
             <TopNav />
