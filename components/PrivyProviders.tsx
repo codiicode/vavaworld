@@ -1,6 +1,7 @@
 'use client';
 
 import { PrivyProvider } from '@privy-io/react-auth';
+import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
 import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/kit';
 import { useMemo, type ReactNode } from 'react';
 
@@ -51,8 +52,12 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
     <PrivyProvider
       appId={appId}
       config={{
-        // External wallets (Phantom etc.) live outside Privy - see ConnectButton.
-        loginMethods: ['email', 'google', 'twitter'],
+        // 'wallet' puts Phantom/Solflare/Backpack INSIDE the Privy modal, so
+        // one Log in button covers social AND wallet users.
+        loginMethods: ['email', 'google', 'twitter', 'wallet'],
+        externalWallets: {
+          solana: { connectors: toSolanaWalletConnectors() },
+        },
         appearance: {
           theme: 'dark',
           accentColor: '#7db4f5',

@@ -61,7 +61,7 @@ export default function NotificationsPage() {
       {!wallet.connected ? (
         <div className={`${CARD} flex flex-col items-center gap-3 px-6 py-14 text-center`}>
           <Wallet size={28} className="text-foreground/40" />
-          <p className="text-sm text-foreground/70">Connect your wallet to see your notifications.</p>
+          <p className="text-sm text-foreground/70">Log in to see your notifications.</p>
         </div>
       ) : notifications.length === 0 ? (
         <div className={`${CARD} flex flex-col items-center gap-3 px-6 py-14 text-center`}>

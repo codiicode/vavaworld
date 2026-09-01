@@ -189,7 +189,7 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
                 {claiming && <Loader2 size={14} className="animate-spin" />}
                 {wallet.connected
                   ? `Claim for $${fmt(data.currentFloor)}`
-                  : 'Connect wallet to claim'}
+                  : 'Log in to claim'}
               </button>
               {err && <p className="mt-1.5 text-[12px] text-white/60">{err}</p>}
             </>

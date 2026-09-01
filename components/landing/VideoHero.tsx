@@ -2,7 +2,7 @@
 
 /**
  * The landing page. The first screen is the full-bleed planet video with the
- * nav floating over it in glass — the original VAVAWORLD hero. Everything
+ * nav floating over it in glass - the original VAVAWORLD hero. Everything
  * below it is the dark editorial page.
  */
 
@@ -20,10 +20,10 @@ const VIDEO_URL = '/videos/hero-loop.mp4';
 
 /** Placeholder shown until the live figures arrive. */
 const HERO_FALLBACK = [
-  { k: 'Claimed today', v: '—' },
-  { k: 'Tiles left', v: '—' },
+  { k: 'Claimed today', v: ' - ' },
+  { k: 'Hexes left', v: ' - ' },
   { k: 'Floor', v: '$0.10' },
-  { k: 'Owners', v: '—' },
+  { k: 'Owners', v: ' - ' },
 ];
 
 const NAV_LINKS = [
@@ -156,7 +156,7 @@ export function VideoHero() {
   const heroStats = stats
     ? [
         { k: 'Claimed today', v: stats.claimedToday.toLocaleString('en-US') },
-        { k: 'Tiles left', v: compact(stats.tilesRemaining) },
+        { k: 'Hexes left', v: compact(stats.tilesRemaining) },
         { k: 'Floor', v: '$0.10' },
         { k: 'Owners', v: stats.holders.toLocaleString('en-US') },
       ]

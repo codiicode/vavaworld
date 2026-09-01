@@ -17,12 +17,12 @@ export default function AppGroupLayout({ children }: { children: React.ReactNode
   const isMap = pathname?.startsWith('/map') ?? false;
 
   // The map is always dark: its chrome floats on satellite imagery, so a light
-  // theme there never looked right. A separate class rather than `dark` —
+  // theme there never looked right. A separate class rather than `dark`  - 
   // ThemeProvider owns `dark` and toggles it off whenever the theme changes,
   // which would strip ours. The user's stored preference is untouched.
   useEffect(() => {
     const root = document.documentElement;
-    // Every (app) route is dark, not just the map — the light theme on
+    // Every (app) route is dark, not just the map - the light theme on
     // portfolio/profile/etc. read as a different product.
     root.classList.add('force-dark');
     return () => root.classList.remove('force-dark');

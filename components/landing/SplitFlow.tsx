@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * Where the money goes. A weighted dial in a real housing — ticks around
- * the rim, an inner well for the readout — with the amount picker on one
+ * Where the money goes. A weighted dial in a real housing - ticks around
+ * the rim, an inner well for the readout - with the amount picker on one
  * side and the split reading down the other.
  */
 
@@ -76,7 +76,7 @@ export function SplitFlow() {
               </button>
             ))}
           </div>
-          <span className="spend-note">Prices start near $0.10 a tile.</span>
+          <span className="spend-note">Prices start near $0.10 a hex.</span>
         </div>
 
         {/* The dial */}

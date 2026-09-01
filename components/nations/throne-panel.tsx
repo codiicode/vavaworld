@@ -58,7 +58,7 @@ export function ThronePanel({ iso }: { iso: string }) {
 
   const act = async (action: 'claim' | 'coup') => {
     if (!wallet.connected || !wallet.address || !wallet.signMessage) {
-      setError('Connect a wallet that can sign messages');
+      setError('Log in with a wallet that can sign messages');
       return;
     }
     setBusy(true);

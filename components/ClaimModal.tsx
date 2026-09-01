@@ -462,7 +462,7 @@ export function ClaimModal({
             />
             <span className={EYEBROW}>
               {progress && progress.total > 1
-                ? `Settling ${progress.done * 10 >= items.length ? items.length : progress.done * 10}/${items.length} tiles…`
+                ? `Settling ${progress.done * 10 >= items.length ? items.length : progress.done * 10}/${items.length} hexes…`
                 : 'Confirm in your wallet…'}
             </span>
             <style jsx>{`

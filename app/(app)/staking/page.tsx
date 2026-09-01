@@ -123,7 +123,7 @@ export default function StakingPage() {
             </h2>
             {!wallet.connected ? (
               <p className="text-sm text-foreground/60">
-                Connect a wallet to stake. $VAVA launches on pump.fun — staking
+                Connect a wallet to stake. $VAVA launches on pump.fun - staking
                 goes live with the token.
               </p>
             ) : (
@@ -261,7 +261,7 @@ function AmountForm({
 }
 
 function fmt(n: number | undefined): string {
-  if (n === undefined) return '—';
+  if (n === undefined) return ' - ';
   return n.toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
 

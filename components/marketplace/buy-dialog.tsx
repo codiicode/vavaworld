@@ -81,7 +81,7 @@ export function BuyDialog({
   const buy = async () => {
     if (!quote) return;
     if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
-      setError('Connect a wallet first');
+      setError('Log in first');
       return;
     }
     setError(null);

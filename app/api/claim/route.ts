@@ -99,20 +99,20 @@ export async function POST(req: Request) {
   } else {
     // ---- Mirror path: hex was claimed through the on-chain program ----
     const [tilePda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('tile'), h3IdToLeBytes(h3)],
+      [Buffer.from('hex'), h3IdToLeBytes(h3)],
       PROGRAM_ID,
     );
     const info = await connection.getAccountInfo(tilePda);
     if (!info || !info.owner.equals(PROGRAM_ID)) {
       return NextResponse.json(
-        { error: 'no payment tx and no on-chain tile to mirror' },
+        { error: 'no payment tx and no on-chain hex to mirror' },
         { status: 400 },
       );
     }
     // Tile layout: 8 disc + 32 owner …
     const tileOwner = new PublicKey(info.data.subarray(8, 40)).toBase58();
     if (tileOwner !== owner) {
-      return NextResponse.json({ error: 'on-chain tile not owned by owner' }, { status: 403 });
+      return NextResponse.json({ error: 'on-chain hex not owned by owner' }, { status: 403 });
     }
     effectiveTx = `mirror:${h3}`;
   }

@@ -15,7 +15,7 @@ type Frame = {
   title: string;
   body: string;
   img: string;
-  /** Plate zoom at this stage — the descent. */
+  /** Plate zoom at this stage - the descent. */
   zoom: number;
   /** How many of the seven cells are lit. */
   lit: number;
@@ -33,7 +33,7 @@ const FRAMES: Frame[] = [
     lit: 0,
     hud: [
       { k: 'Location', v: 'Searching…' },
-      { k: 'Tile size', v: '~9 m' },
+      { k: 'Hex size', v: '~9 m' },
       { k: 'Status', v: 'Idle' },
     ],
     fill: 8,
@@ -55,12 +55,12 @@ const FRAMES: Frame[] = [
   {
     n: 'Step 03',
     title: 'Tap the ground you want.',
-    body: 'Go on — tap the hexes. Select one or the whole block. The price climbs with every claim already made in that country.',
+    body: 'Go on - tap the hexes. Select one or the whole block. The price climbs with every claim already made in that country.',
     img: '/assets/city-2.jpg',
     zoom: 1.08,
     lit: 3,
     hud: [
-      { k: 'Selected', v: '3 tiles' },
+      { k: 'Selected', v: '3 hexes' },
       { k: 'Quote', v: '0.0021 SOL' },
       { k: 'Status', v: 'Selected' },
     ],
@@ -133,7 +133,7 @@ const SCRIPTED = (() => {
 })();
 
 function hexPoints(cx: number, cy: number, r: number) {
-  // Pointy-top, so the cells tile cleanly in the offset-row layout.
+  // Pointy-top, so the cells hex cleanly in the offset-row layout.
   return Array.from({ length: 6 }, (_, i) => {
     const a = (Math.PI / 3) * i - Math.PI / 2;
     return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
@@ -170,7 +170,7 @@ export function ClaimDemo() {
       const vh = window.innerHeight || 1;
       // Travel available while the stage is pinned. Progress runs from
       // the moment top hits 0 to the moment the shell's bottom reaches
-      // the fold — measuring from section-entry instead would leave the
+      // the fold - measuring from section-entry instead would leave the
       // first frame stuck while the section is still scrolling in.
       const total = r.height - vh;
       if (total <= 0) return;
@@ -242,7 +242,7 @@ export function ClaimDemo() {
   return (
     <div ref={shell} className="demo-shell" style={{ height: `${FRAMES.length * 78}vh` }}>
       <div className="demo-stage">
-        {/* Plates — all mounted, only the current one visible, so the
+        {/* Plates - all mounted, only the current one visible, so the
             browser never decodes an image mid-sequence. */}
         {FRAMES.map((fr, k) => (
           <div
@@ -258,7 +258,7 @@ export function ClaimDemo() {
         ))}
         <div aria-hidden className="demo-veil" />
 
-        {/* The grid, over a building rather than dead centre — the middle
+        {/* The grid, over a building rather than dead centre - the middle
             belongs to the statement. */}
         {showGrid && (
           <svg
@@ -316,7 +316,7 @@ export function ClaimDemo() {
           </svg>
         )}
 
-        {/* Search — how you actually find a place. */}
+        {/* Search - how you actually find a place. */}
         <div className={`demo-search ${i === 0 ? 'on' : ''}`} aria-hidden>
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
             <circle cx="7" cy="7" r="5" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" />
@@ -348,7 +348,7 @@ export function ClaimDemo() {
               ? 'Owned · 8a2f…c41'
               : i === 3
                 ? 'Confirming…'
-                : `${on.size} ${on.size === 1 ? 'tile' : 'tiles'} · ${(on.size * 0.0007).toFixed(4)} SOL`}
+                : `${on.size} ${on.size === 1 ? 'hex' : 'hexes'} · ${(on.size * 0.0007).toFixed(4)} SOL`}
           </span>
         </div>
 
@@ -365,7 +365,7 @@ export function ClaimDemo() {
               <p>{fr.body}</p>
               {k === FRAMES.length - 1 && (
                 <Link href="/map" className="cta-enter mt-7 px-8 py-3.5 text-[12.5px] font-medium uppercase tracking-[0.18em]">
-                  Claim your first tile
+                  Claim your first hex
                   <svg width="15" height="10" viewBox="0 0 15 10" fill="none" aria-hidden>
                     <path d="M1 5h12M9.5 1.2 13.4 5l-3.9 3.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -387,13 +387,13 @@ export function ClaimDemo() {
           <div className="hud-rows">
             {(interactive
               ? [
-                  { k: 'Selected', v: `${picked.size} ${picked.size === 1 ? 'tile' : 'tiles'}` },
+                  { k: 'Selected', v: `${picked.size} ${picked.size === 1 ? 'hex' : 'hexes'}` },
                   { k: 'Quote', v: `${(picked.size * 0.0007).toFixed(4)} SOL` },
                   { k: 'Status', v: picked.size ? 'Selected' : 'Tap a hex' },
                 ]
               : i >= 3 && chosen
                 ? [
-                    { k: i >= 4 ? 'Owned' : 'Claiming', v: `${picked.size} ${picked.size === 1 ? 'tile' : 'tiles'}` },
+                    { k: i >= 4 ? 'Owned' : 'Claiming', v: `${picked.size} ${picked.size === 1 ? 'hex' : 'hexes'}` },
                     { k: i >= 4 ? 'Deed' : 'Paying', v: i >= 4 ? '8a2f…c41' : `${(picked.size * 0.0007).toFixed(4)} SOL` },
                     { k: 'Status', v: i >= 4 ? 'Owned' : 'Confirming' },
                   ]

@@ -112,7 +112,7 @@ export function TileListDialog({
                 disabled={!valid || submitting || !wallet.address}
                 onClick={async () => {
                   if (!wallet.address) {
-                    setError('Connect your wallet first');
+                    setError('Log in first');
                     return;
                   }
                   setSubmitting(true);

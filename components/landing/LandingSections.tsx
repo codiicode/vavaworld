@@ -44,7 +44,7 @@ const FOOTER_COLUMNS = [
 ];
 
 /** The supply ledger beside the split. */
-/** The four rules. Each leads with its number — the figure is the
+/** The four rules. Each leads with its number - the figure is the
     point, the paragraph is the footnote. */
 
 
@@ -59,9 +59,9 @@ const SUPPLY = [
 
 const STATS = [
   { value: '249', label: 'Territories', sub: 'Every one has a throne' },
-  { value: '~9 m', label: 'Per tile', sub: 'About the size of a house' },
+  { value: '~9 m', label: 'Per hex', sub: 'About the size of a house' },
   { value: '$0.10', label: 'To start', sub: 'Rises with every claim' },
-  { value: '1', label: 'Owner per tile', sub: 'First come, first served' },
+  { value: '1', label: 'Owner per hex', sub: 'First come, first served' },
 ];
 
 
@@ -253,14 +253,14 @@ export function LandingSections() {
               className="closer-title display mx-auto mt-8 max-w-[15ch]"
               style={{ color: 'var(--ink)' }}
             >
-              Every tile has one owner.{' '}
+              Every hex has one owner.{' '}
               <span style={{ color: 'var(--accent)' }}>Go be it.</span>
             </h2>
           </Reveal>
           <Reveal delay={180}>
             <div className="mt-14 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/map" className="btn-ink">
-                Claim your first tile
+                Claim your first hex
               </Link>
               <Link href="/leaderboard" className="btn-outline">
                 See who is winning
@@ -297,7 +297,7 @@ export function LandingSections() {
                 1.66 trillion hexagons. 249 countries. One owner each, on-chain and permanent.
               </p>
               <Link href="/map" className="btn-ink mt-8 !px-6 !py-3 !text-[13px]">
-                Claim your first tile
+                Claim your first hex
               </Link>
             </div>
 

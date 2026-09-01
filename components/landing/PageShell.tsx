@@ -3,7 +3,7 @@
 /**
  * The shell for standalone marketing pages (docs, legal). Same header,
  * ground and type as the landing page, so these never read as a
- * different site — the previous standalone pages used a meadow video
+ * different site - the previous standalone pages used a meadow video
  * and a serif face and looked unrelated to the product.
  */
 
@@ -79,7 +79,7 @@ export function PageShell({
           </div>
 
           <Link href="/map" className="btn-ink !px-5 !py-2.5 !text-[13px]">
-            Claim a tile
+            Claim a hex
           </Link>
         </div>
       </nav>

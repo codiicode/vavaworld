@@ -122,19 +122,19 @@ export default function MarketplacePage() {
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat
           label="Floor"
-          value={stats?.floorSol != null ? `${stats.floorSol.toFixed(3)} SOL` : '—'}
+          value={stats?.floorSol != null ? `${stats.floorSol.toFixed(3)} SOL` : ' - '}
         />
         <Stat
           label="Volume (24h)"
-          value={stats ? `${stats.volume24hSol.toFixed(2)} SOL` : '—'}
+          value={stats ? `${stats.volume24hSol.toFixed(2)} SOL` : ' - '}
         />
         <Stat
           label="Listed"
-          value={stats ? stats.activeListings.toLocaleString('en-US') : '—'}
+          value={stats ? stats.activeListings.toLocaleString('en-US') : ' - '}
         />
         <Stat
           label="Sales (24h)"
-          value={stats ? stats.sales24h.toLocaleString('en-US') : '—'}
+          value={stats ? stats.sales24h.toLocaleString('en-US') : ' - '}
         />
       </div>
 

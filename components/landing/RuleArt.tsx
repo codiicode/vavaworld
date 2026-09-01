@@ -4,13 +4,13 @@ import { useLandingStats } from '@/lib/use-landing-stats';
 
 /**
  * One product screen per rule. Earlier versions drew the rules as
- * illustration — falling seeds, a crown — which reads as clip-art at
+ * illustration - falling seeds, a crown - which reads as clip-art at
  * any size. What reads as high quality is the interface the rule
  * actually produces: a deed, a price ladder, a supply meter, a
  * contested throne, in the same chrome as the app.
  */
 
-/** 01 — every tile is loaded: the deed, showing what is sealed inside. */
+/** 01 - every hex is loaded: the deed, showing what is sealed inside. */
 export function ArtLoaded() {
   return (
     <div className="ui-card">
@@ -37,13 +37,13 @@ export function ArtLoaded() {
   );
 }
 
-/** 02 — your land has a floor: the price ladder resting on it. */
+/** 02 - your land has a floor: the price ladder resting on it. */
 export function ArtFloor() {
   const bars = [58, 71, 49, 82, 63, 90, 55, 74];
   return (
     <div className="ui-card">
       <div className="ui-head">
-        Market · your tile
+        Market · your hex
         <span className="tag">30d</span>
       </div>
       <div className="ui-ladder">
@@ -69,7 +69,7 @@ export function ArtFloor() {
   );
 }
 
-/** 03 — the map only shrinks: supply draining, never refilling. */
+/** 03 - the map only shrinks: supply draining, never refilling. */
 export function ArtShrink() {
   const stats = useLandingStats();
   return (
@@ -79,7 +79,7 @@ export function ArtShrink() {
         <span className="tag">Supply</span>
       </div>
       <div className="ui-hero">
-        <span className="ui-hero-k">Tiles still unclaimed</span>
+        <span className="ui-hero-k">Hexes still unclaimed</span>
         <span className="ui-hero-v">1.66T</span>
         <span className="ui-hero-note">Every claim makes the rest rarer</span>
       </div>
@@ -90,7 +90,7 @@ export function ArtShrink() {
         <div className="ui-row">
           <span className="k">Claimed today</span>
           <span className="v">
-            {stats ? stats.claimedToday.toLocaleString('en-US') : '—'}
+            {stats ? stats.claimedToday.toLocaleString('en-US') : ' - '}
           </span>
         </div>
         <div className="ui-row hl">
@@ -102,7 +102,7 @@ export function ArtShrink() {
   );
 }
 
-/** 04 — take a throne: the seat, and who is coming for it. */
+/** 04 - take a throne: the seat, and who is coming for it. */
 export function ArtThrone() {
   return (
     <div className="ui-card">
@@ -114,7 +114,7 @@ export function ArtThrone() {
         <div>
           <div className="who crown">@shibuyaSam</div>
           <div className="amt">14,203</div>
-          <div className="sub">Holds · tiles</div>
+          <div className="sub">Holds · hexes</div>
         </div>
         <div>
           <div className="who">@nordicwhale</div>

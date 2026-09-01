@@ -1,7 +1,7 @@
 import { ChevronUp, ChevronDown, Minus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-/** Tiny position-change pill: ▲n (green) / ▼n (red) / — (neutral). */
+/** Tiny position-change pill: ▲n (green) / ▼n (red) / - (neutral). */
 export function RankDelta({ delta, className }: { delta: number; className?: string }) {
   if (delta === 0) {
     return (

@@ -105,7 +105,7 @@ export default function LeaderboardPage() {
         onFilterChange={setFilter}
       />
 
-      {/* The contest at a glance — the page opened straight onto a thin
+      {/* The contest at a glance - the page opened straight onto a thin
           champion strip, which gave the most competitive screen in the
           app no weight of its own. */}
       {!loading && rows.length > 0 && (

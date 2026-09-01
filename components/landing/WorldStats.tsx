@@ -2,7 +2,7 @@
 
 /**
  * The world, live. Four boxed cards in a row is the default dashboard
- * and reads as one — this counts each figure up as it arrives, ticks
+ * and reads as one - this counts each figure up as it arrives, ticks
  * the live one upward while you watch, and runs a claim pulse along
  * the strip so the section feels like a running world.
  */
@@ -27,7 +27,7 @@ const STATS: Stat[] = [
     to: 12847,
     fmt: (n) => Math.round(n).toLocaleString('en-US'),
     k: 'Claimed today',
-    note: 'Tiles taken in the last 24 hours.',
+    note: 'Hexes taken in the last 24 hours.',
     blue: true,
     live: true,
   },
@@ -40,7 +40,7 @@ const STATS: Stat[] = [
   {
     to: 1.66,
     fmt: (n) => `${n.toFixed(2)}T`,
-    k: 'Tiles remaining',
+    k: 'Hexes remaining',
     note: 'The pool only ever gets smaller.',
   },
   {
@@ -111,7 +111,7 @@ export function WorldStats() {
         if (i < 0) return v;
         // Nothing to tick when the world is quiet.
         if (live && live.claimedToday === 0) return v;
-        // Pin every other figure to its exact value — an earlier version
+        // Pin every other figure to its exact value - an earlier version
         // let them drift, so 249 became 247 and 1.66T became 1.64T.
         const next = STATS.map((s, k) => (k === i ? v[k] : s.to));
         next[i] = Math.max(v[i], STATS[i].to) + Math.ceil(Math.random() * 3);

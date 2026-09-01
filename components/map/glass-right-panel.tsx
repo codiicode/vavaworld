@@ -29,8 +29,8 @@ function shortAddr(addr: string): string {
  * inside the 18px outer gap.
  *
  * Empty Selection state matches the design verbatim (hint paragraph + disabled
- * "Select at least one tile" CTA). When ≥1 hex is selected we swap to a scrollable
- * list + "Claim N tiles · X.XX SOL" CTA.
+ * "Select at least one hex" CTA). When ≥1 hex is selected we swap to a scrollable
+ * list + "Claim N hexes · X.XX SOL" CTA.
  */
 export function GlassRightPanel({
   selectedHexes,
@@ -614,7 +614,7 @@ function SelectionBody({
             : allClaimed
               ? 'All selected are already claimed'
               : !walletConnected
-                ? 'Connect wallet to claim'
+                ? 'Log in to claim'
                 : `Claim ${claimableCount} ${claimableCount === 1 ? 'hex' : 'hexes'}`}
       </button>
     </>

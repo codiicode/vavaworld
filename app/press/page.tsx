@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 };
 
 const ASSETS = [
-  { name: 'Globe mark — white', file: '/logo-globe-white.png', note: 'For dark backgrounds' },
-  { name: 'Globe mark — colour', file: '/logo-globe-color.png', note: 'For light backgrounds' },
+  { name: 'Globe mark - white', file: '/logo-globe-white.png', note: 'For dark backgrounds' },
+  { name: 'Globe mark - colour', file: '/logo-globe-color.png', note: 'For light backgrounds' },
 ];
 
 export default function PressPage() {
@@ -17,12 +17,12 @@ export default function PressPage() {
     <PageShell
       eyebrow="Press kit"
       title="Assets and facts."
-      lede="Everything you need to write about VAVAWORLD. Use the marks as they are — please don't recolour, stretch or add effects to them."
+      lede="Everything you need to write about VAVAWORLD. Use the marks as they are - please don't recolour, stretch or add effects to them."
     >
       <h2>The short version</h2>
       <p>
         VAVAWORLD divides Earth into 1.66 trillion hexagons and lets anyone claim one on Solana.
-        Every claim buys $VAVA and seals it inside the land itself, so a tile always holds
+        Every claim buys $VAVA and seals it inside the land itself, so a hex always holds
         redeemable value. Each of the 249 territories has a presidency that earns a cut of every
         claim made on its soil.
       </p>
@@ -31,9 +31,9 @@ export default function PressPage() {
       <p>
         <em>
           VAVAWORLD is a land-claiming game built on Solana. The planet is partitioned into
-          1.66 trillion hexagonal tiles roughly the size of a house; players claim them with
-          SOL, and 15% of every claim automatically buys $VAVA and locks it inside the tile.
-          Tiles can be held, traded on an open marketplace, or razed to recover the tokens
+          1.66 trillion hexagonal hexes roughly the size of a house; players claim them with
+          SOL, and 15% of every claim automatically buys $VAVA and locks it inside the hex.
+          Hexes can be held, traded on an open marketplace, or razed to recover the tokens
           within.
         </em>
       </p>
@@ -49,11 +49,11 @@ export default function PressPage() {
           <dd>H3 resolution 12</dd>
         </div>
         <div className="doc-row">
-          <dt>Total tiles</dt>
+          <dt>Total hexes</dt>
           <dd>1,660,954,464,122</dd>
         </div>
         <div className="doc-row">
-          <dt>Tile size</dt>
+          <dt>Hex size</dt>
           <dd>~9 m edge</dd>
         </div>
         <div className="doc-row">
@@ -62,10 +62,10 @@ export default function PressPage() {
         </div>
         <div className="doc-row">
           <dt>Starting price</dt>
-          <dd>~$0.10 per tile</dd>
+          <dd>~$0.10 per hex</dd>
         </div>
         <div className="doc-row">
-          <dt>Locked into each tile</dt>
+          <dt>Locked into each hex</dt>
           <dd>15% of the claim</dd>
         </div>
         <div className="doc-row">
@@ -97,9 +97,9 @@ export default function PressPage() {
           The product is <strong>VAVAWORLD</strong>, one word, all caps in display use.
         </li>
         <li>
-          The token is always written <strong>$VAVA</strong> — never &ldquo;VAVA token&rdquo;.
+          The token is always written <strong>$VAVA</strong> - never &ldquo;VAVA token&rdquo;.
         </li>
-        <li>A claimed hexagon is a <strong>tile</strong> or a <strong>hex</strong>, not a plot or an NFT.</li>
+        <li>A claimed hexagon is a <strong>hex</strong> or a <strong>hex</strong>, not a plot or an NFT.</li>
       </ul>
 
       <h2>Colours</h2>

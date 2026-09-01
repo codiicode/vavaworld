@@ -23,16 +23,16 @@ const THRONES = [
   { cc: 'fr', country: 'France', holder: '@marais', held: '7d', state: 'contested' },
   { cc: 'jp', country: 'Japan', holder: '@shibuyaSam', held: '118d', state: 'held' },
   { cc: 'ma', country: 'Morocco', holder: '@atlasmine', held: '23d', state: 'held' },
-  { cc: 'br', country: 'Brazil', holder: null, held: '—', state: 'open' },
+  { cc: 'br', country: 'Brazil', holder: null, held: ' - ', state: 'open' },
   { cc: 'au', country: 'Australia', holder: '@reefline', held: '61d', state: 'held' },
 ];
 
 const RECENT = [
-  { cc: 'ma', who: '@atlasmine', what: 'claimed 320 tiles in', where: 'Casablanca', ago: '2m' },
+  { cc: 'ma', who: '@atlasmine', what: 'claimed 320 hexes in', where: 'Casablanca', ago: '2m' },
   { cc: 'fr', who: '@marais', what: 'took the throne of', where: 'France', ago: '11m' },
-  { cc: 'us', who: '@harborline', what: 'sold 40 tiles in', where: 'Chicago', ago: '18m' },
-  { cc: 'se', who: '@nordicwhale', what: 'claimed 1,204 tiles in', where: 'Stockholm', ago: '24m' },
-  { cc: 'jp', who: '@shibuyaSam', what: 'claimed 88 tiles in', where: 'Osaka', ago: '31m' },
+  { cc: 'us', who: '@harborline', what: 'sold 40 hexes in', where: 'Chicago', ago: '18m' },
+  { cc: 'se', who: '@nordicwhale', what: 'claimed 1,204 hexes in', where: 'Stockholm', ago: '24m' },
+  { cc: 'jp', who: '@shibuyaSam', what: 'claimed 88 hexes in', where: 'Osaka', ago: '31m' },
 ];
 
 export function GameBoard() {
@@ -71,7 +71,7 @@ export function GameBoard() {
                 </span>
                 <span className="val">{row.tiles}</span>
                 <span className={`delta ${row.d > 0 ? 'up' : row.d < 0 ? 'down' : 'flat'}`}>
-                  {row.d > 0 ? `▲${row.d}` : row.d < 0 ? `▼${Math.abs(row.d)}` : '—'}
+                  {row.d > 0 ? `▲${row.d}` : row.d < 0 ? `▼${Math.abs(row.d)}` : ' - '}
                 </span>
               </div>
             ))}

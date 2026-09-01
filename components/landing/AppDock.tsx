@@ -3,7 +3,7 @@
 /**
  * The persistent app chrome. Once the hero is behind you this takes over
  * from the transparent hero nav and follows you down the page, carrying
- * the section you are in, live world state, and the primary action — so
+ * the section you are in, live world state, and the primary action - so
  * the page reads as an application rather than a document.
  */
 
@@ -87,12 +87,12 @@ export function AppDock() {
       </nav>
 
       <span className="dock-live">
-        <b>{stats ? stats.claimedToday.toLocaleString('en-US') : '—'}</b>
+        <b>{stats ? stats.claimedToday.toLocaleString('en-US') : ' - '}</b>
         claimed today
       </span>
 
       <Link href="/map" className="dock-cta">
-        Claim a tile
+        Claim a hex
       </Link>
 
       <span className="dock-progress" aria-hidden>

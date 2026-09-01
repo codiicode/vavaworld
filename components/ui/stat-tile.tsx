@@ -1,6 +1,6 @@
 /**
- * The app's stat tile. Every page showed its own flat variant — a small
- * number in a large empty box — which is what made the app read as a
+ * The app's stat tile. Every page showed its own flat variant - a small
+ * number in a large empty box - which is what made the app read as a
  * wireframe. One component, one treatment: a quiet label, the figure at
  * real scale, and an optional note underneath.
  */
@@ -17,7 +17,7 @@ export function StatTile({
   label: string;
   value: string;
   note?: string;
-  /** Renders the figure in the brand blue — for the one number that matters. */
+  /** Renders the figure in the brand blue - for the one number that matters. */
   accent?: boolean;
   className?: string;
 }) {

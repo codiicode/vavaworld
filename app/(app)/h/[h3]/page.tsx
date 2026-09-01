@@ -37,7 +37,7 @@ function decodeTile(buf: Buffer, h3: string): ClaimedTile | null {
       tier: number;
       price_paid: { toString: () => string };
       bump: number;
-    }>('Tile', buf);
+    }>('Hex', buf);
     return {
       h3,
       owner: d.owner.toBase58(),

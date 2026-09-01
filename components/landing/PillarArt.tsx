@@ -3,13 +3,13 @@
 /**
  * A small diagram per mechanism card. Each one shows the actual behaviour
  * (buy pressure, a floor, a ratchet, a contested throne) rather than being
- * decoration — four text boxes in a row read as a wall of grey without them.
+ * decoration - four text boxes in a row read as a wall of grey without them.
  */
 
 const ACCENT = '#6aa8ff';
 const TEAL = '#b8892b';
 
-/** 01 — every purchase routes 15% into the token. */
+/** 01 - every purchase routes 15% into the token. */
 function BuysToken() {
   return (
     <svg viewBox="0 0 120 72" className="h-full w-full" aria-hidden>
@@ -47,7 +47,7 @@ function BuysToken() {
   );
 }
 
-/** 02 — price can move, but never below the tokens inside. */
+/** 02 - price can move, but never below the tokens inside. */
 function PriceFloor() {
   return (
     <svg viewBox="0 0 120 72" className="h-full w-full" aria-hidden>
@@ -58,7 +58,7 @@ function PriceFloor() {
         strokeWidth="1.6"
         strokeLinecap="round"
       />
-      {/* The floor itself — the price never crosses it. */}
+      {/* The floor itself - the price never crosses it. */}
       <line x1="6" y1="52" x2="114" y2="52" stroke={TEAL} strokeWidth="1.6" strokeDasharray="4 3" />
       <rect x="6" y="52" width="108" height="14" fill="rgba(184,137,43,0.08)" />
       <text x="10" y="64" fontSize="8" fill={TEAL} fontWeight="600" letterSpacing="0.4">
@@ -68,7 +68,7 @@ function PriceFloor() {
   );
 }
 
-/** 03 — a ratchet: claimed land never returns to the pool. */
+/** 03 - a ratchet: claimed land never returns to the pool. */
 function SupplyTightens() {
   return (
     <svg viewBox="0 0 120 72" className="h-full w-full" aria-hidden>
@@ -94,7 +94,7 @@ function SupplyTightens() {
   );
 }
 
-/** 04 — one seat, contested by whoever holds the most land. */
+/** 04 - one seat, contested by whoever holds the most land. */
 function Throne() {
   return (
     <svg viewBox="0 0 120 72" className="h-full w-full" aria-hidden>

@@ -69,7 +69,7 @@ export function ConnectButton({
         >
           <Wallet size={16} className="mt-0.5 shrink-0 text-muted-foreground" />
           <div className="flex flex-col">
-            <span className="text-sm font-medium">Connect wallet</span>
+            <span className="text-sm font-medium">Log in</span>
             <span className="text-[11px] text-muted-foreground">
               Phantom, Solflare, Backpack
             </span>

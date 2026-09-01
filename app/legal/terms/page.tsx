@@ -14,9 +14,9 @@ export default function TermsPage() {
       title="Terms of use."
       lede="The rules for using VAVAWORLD. Short, and meant to be read."
     >
-      <h2>What a tile is</h2>
+      <h2>What a hex is</h2>
       <p>
-        Claiming a tile records your wallet as its owner in the VAVAWORLD program on Solana. It
+        Claiming a hex records your wallet as its owner in the VAVAWORLD program on Solana. It
         is a position in a game world. <strong>It does not convey any real-world property
         right</strong>, land title, easement or interest in the physical location it depicts,
         and it grants no rights against whoever owns or occupies that ground.
@@ -30,9 +30,9 @@ export default function TermsPage() {
 
       <h2>No investment promise</h2>
       <p>
-        $VAVA and tiles are not offered as investments, and nothing in the product is financial
-        advice. Prices can fall. The floor mechanism guarantees only that a tile can be razed
-        for the $VAVA it holds, less the 10% burn — not that the token itself holds any value.
+        $VAVA and hexes are not offered as investments, and nothing in the product is financial
+        advice. Prices can fall. The floor mechanism guarantees only that a hex can be razed
+        for the $VAVA it holds, less the 10% burn - not that the token itself holds any value.
       </p>
 
       <h2>Acceptable use</h2>
@@ -47,7 +47,7 @@ export default function TermsPage() {
       <h2>Availability</h2>
       <p>
         The service is provided as-is. VAVAWORLD currently runs on <strong>Solana devnet</strong>,
-        and devnet state may be reset by the network itself — outside our control. We do not
+        and devnet state may be reset by the network itself - outside our control. We do not
         guarantee uninterrupted availability.
       </p>
 
