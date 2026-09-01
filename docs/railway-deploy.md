@@ -73,18 +73,27 @@ Add a second service from the same repo, then set **Config Path** to
 | `KEEPER_INTERVAL_SECS` | yes | e.g. `60`. Without it the process runs one pass and exits (Railway would treat that as a crash and restart-loop). |
 | `RPC_URL` | recommended | Falls back to `NEXT_PUBLIC_RPC_URL`, then devnet public. |
 | `SOL_PRICE_URL` | recommended | Point at the deployed web service, e.g. `https://<web>.up.railway.app/api/sol-price`. Falls back to $105 if unreachable. |
-| `VAVA_REFERENCE_USD` | devnet only | Fixed price used to size the "buy". Defaults to `0.0001`. On mainnet this leg becomes a real Jupiter swap — see below. |
+| `VAVA_REFERENCE_USD` | devnet only | Fixed price used to size the "buy" in reference mode. Defaults to `0.0001`. |
 | `FUNDER_SECRET_KEY` | **devnet only** | Tops the keeper up with SOL + test-$VAVA. **Leave unset in production** — the keeper should be funded deliberately, and this key can move treasury funds. |
+| `KEEPER_SWAP` | mainnet | `reference` (default; devnet fixed-price credit) or `jupiter` (real SOL→$VAVA buy via Jupiter Order/Execute before each embed pass). |
+| `JUPITER_API_KEY` | optional | Keyless api.jup.ag access is 0.5 RPS — enough for one pass a minute. Set a key from Jupiter Portal for headroom. |
+| `JUPITER_BASE_URL` | optional | Defaults to `https://api.jup.ag/swap/v2`. |
+| `KEEPER_MIN_SWAP_LAMPORTS` | optional | Skip a pass when total pending SOL is below this (default 1 000 000 = 0.001 SOL) so fee drag never eats dust. |
 
 The keeper reads the $VAVA mint from the on-chain config on every pass, so
 launch day's `update_mint` flows through without redeploying it.
 
-### Not done yet: the mainnet swap leg
+### Mainnet swap mode
 
-On devnet the keeper credits tokens at a fixed reference price because there
-is no market. On mainnet it must actually buy $VAVA (Jupiter) with the
-reimbursed SOL before calling `embed()`. That swap is the one piece of the
-buyback loop still to be written.
+`KEEPER_SWAP=jupiter` makes each pass do ONE swap for the pass's total
+pending SOL (Jupiter `/order` → sign → `/execute`), then split the received
+$VAVA pro-rata across tiles by their pending lamports before calling
+`embed()` per tile. The keeper still fronts the SOL and is reimbursed by
+`embed`, so it needs working capital ≥ the largest expected pass. Swap
+math and error paths are unit-tested in `lib/__tests__/keeper-swap.test.ts`;
+the swap client lives in `anchor/scripts/keeper-swap.mjs`. Jupiter only has
+liquidity on mainnet — the mode cannot be rehearsed on devnet, so keep
+`reference` there.
 
 ---
 

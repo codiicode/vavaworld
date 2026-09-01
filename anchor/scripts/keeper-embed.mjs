@@ -24,12 +24,21 @@ import {
 } from '@solana/web3.js';
 import { AnchorProvider, Program, Wallet, BN, BorshAccountsCoder } from '@coral-xyz/anchor';
 import bs58 from 'bs58';
+import { jupiterSwap, proRata } from './keeper-swap.mjs';
 
 const RPC_URL =
   process.env.RPC_URL ?? process.env.NEXT_PUBLIC_RPC_URL ?? 'https://api.devnet.solana.com';
 const INTERVAL_SECS = Number(process.env.KEEPER_INTERVAL_SECS ?? 0);
 const VAVA_USD = Number(process.env.VAVA_REFERENCE_USD ?? 0.0001);
 const SOL_PRICE_URL = process.env.SOL_PRICE_URL ?? 'https://vavaworld.vercel.app/api/sol-price';
+
+// 'reference' (devnet: fixed-price credit, no market) or 'jupiter'
+// (mainnet: actually buy $VAVA with the pending SOL before embedding).
+const SWAP_MODE = process.env.KEEPER_SWAP ?? 'reference';
+const JUPITER_BASE_URL = process.env.JUPITER_BASE_URL ?? 'https://api.jup.ag/swap/v2';
+const JUPITER_API_KEY = process.env.JUPITER_API_KEY ?? '';
+// Skip a pass rather than swap dust - fee drag would eat it.
+const MIN_SWAP_LAMPORTS = BigInt(process.env.KEEPER_MIN_SWAP_LAMPORTS ?? 1_000_000);
 
 const TOKEN = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const ATA_PROG = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
@@ -161,14 +170,39 @@ async function runOnce() {
     return;
   }
 
-  const rate = await solUsd();
-  console.log(`[keeper] settling ${pending.length} tiles @ SOL $${rate.toFixed(2)}`);
+  // Size the buy per tile. Reference mode: fixed devnet price. Jupiter
+  // mode: one real SOL->$VAVA swap for the pass total, split pro-rata.
+  let amounts;
+  if (SWAP_MODE === 'jupiter') {
+    const totalLamports = pending.reduce((s, t) => s + t.pending, 0n);
+    if (totalLamports < MIN_SWAP_LAMPORTS) {
+      console.log(`[keeper] ${totalLamports} lamports pending < min ${MIN_SWAP_LAMPORTS}, skipping pass`);
+      return;
+    }
+    const { outAmount, signature } = await jupiterSwap({
+      baseUrl: JUPITER_BASE_URL,
+      apiKey: JUPITER_API_KEY,
+      signer: keeper,
+      outputMint: mint.toBase58(),
+      amountLamports: totalLamports,
+    });
+    console.log(`[keeper] swapped ${totalLamports} lamports -> ${outAmount} VAVA units ${signature.slice(0, 16)}…`);
+    amounts = proRata(outAmount, pending);
+  } else {
+    const rate = await solUsd();
+    console.log(`[keeper] settling ${pending.length} tiles @ SOL $${rate.toFixed(2)} (reference)`);
+    amounts = pending.map(({ pending: lamports }) => {
+      // Escrowed SOL -> USD -> $VAVA base units (6 decimals).
+      const usd = (Number(lamports) / 1e9) * rate;
+      return BigInt(Math.max(1, Math.round((usd / VAVA_USD) * 1e6)));
+    });
+  }
 
   let settled = 0;
-  for (const { pda, pending: lamports } of pending) {
-    // Escrowed SOL -> USD -> $VAVA base units (6 decimals).
-    const usd = (Number(lamports) / 1e9) * rate;
-    const amount = new BN(Math.max(1, Math.round((usd / VAVA_USD) * 1e6)));
+  for (let i = 0; i < pending.length; i++) {
+    const { pda } = pending[i];
+    if (amounts[i] === 0n) continue;
+    const amount = new BN(amounts[i].toString());
     try {
       const sig = await program.methods.embed(amount).accounts({
         keeper: keeper.publicKey,
