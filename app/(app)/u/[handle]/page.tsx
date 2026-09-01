@@ -78,7 +78,7 @@ export default function PublicProfilePage() {
   const display = user.username ? `@${user.username}` : user.addr;
 
   return (
-    <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
+    <div className="mx-auto max-w-[1180px] px-4 py-6 md:px-8 md:py-8">
       <Link
         href="/leaderboard"
         className="mb-6 inline-flex items-center gap-1.5 text-xs text-foreground/60 transition-colors hover:text-foreground"
@@ -129,8 +129,8 @@ export default function PublicProfilePage() {
               className={cn(
                 'mt-1 flex flex-wrap items-baseline gap-x-1.5 text-xl font-semibold tabular-nums tracking-tight',
                 (owner?.returnUsd ?? 0) >= 0
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-red-600 dark:text-red-400',
+                  ? 'text-white/60'
+                  : 'text-white/60 dark:text-white/60',
               )}
             >
               <span className="flex items-center gap-1">
@@ -214,11 +214,11 @@ const TIER_BADGE: Record<
   },
   baron: {
     icon: Coins,
-    cls: 'border-violet-400/50 bg-violet-400/15 text-violet-700 dark:text-violet-300',
+    cls: 'border-white/12 bg-white/[0.07] text-white/70 dark:text-white/70',
   },
   president: {
     icon: Crown,
-    cls: 'border-amber-300/60 bg-gradient-to-br from-amber-300/40 to-orange-400/25 text-amber-700',
+    cls: 'border-white/12 bg-gradient-to-br from-white/[0.06] to-transparent text-white/85',
     fill: true,
   },
 };
@@ -232,7 +232,7 @@ function TierBadge({ tier }: { tier: TierKey }) {
     <span
       className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide ${meta.cls}`}
     >
-      <Icon size={11} className={meta.fill ? 'fill-amber-400' : undefined} />
+      <Icon size={11} className={meta.fill ? 'fill-white/80' : undefined} />
       {tier === 'president' ? 'President' : label}
     </span>
   );

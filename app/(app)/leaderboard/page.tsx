@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { LeaderboardHeader } from '@/components/leaderboard/leaderboard-header';
+import { StatTile } from '@/components/ui/stat-tile';
 import {
   LeaderboardFilters,
   type FilterKey,
@@ -94,7 +95,7 @@ export default function LeaderboardPage() {
   const tableRows = rows.slice(3);
 
   return (
-    <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
+    <div className="mx-auto max-w-[1280px] px-4 py-6 md:px-8 md:py-8">
       <LeaderboardHeader />
 
       <LeaderboardFilters
@@ -104,10 +105,35 @@ export default function LeaderboardPage() {
         onFilterChange={setFilter}
       />
 
+      {/* The contest at a glance — the page opened straight onto a thin
+          champion strip, which gave the most competitive screen in the
+          app no weight of its own. */}
+      {!loading && rows.length > 0 && (
+        <div className="mb-5 grid grid-cols-2 gap-2.5 md:grid-cols-4">
+          <StatTile className="compact" label="Ranked holders" value={rows.length.toLocaleString('en-US')} />
+          <StatTile
+            className="compact"
+            label="Hexes held"
+            value={rows.reduce((n, r) => n + r.hexes, 0).toLocaleString('en-US')}
+            accent
+          />
+          <StatTile
+            className="compact"
+            label="Countries"
+            value={new Set(rows.flatMap((r) => (r.countries ? [r.countries] : []))).size.toLocaleString('en-US')}
+          />
+          <StatTile
+            className="compact"
+            label="Total value"
+            value={`${rows.reduce((n, r) => n + r.valueSOL, 0).toFixed(1)} SOL`}
+          />
+        </div>
+      )}
+
       {loading ? (
         <RankingsSkeleton />
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-white/40 bg-white/30 p-10 text-center text-sm text-foreground/60 backdrop-blur-md">
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-14 text-center text-sm text-white/50">
           No holders in {scopeName} yet.
         </div>
       ) : (

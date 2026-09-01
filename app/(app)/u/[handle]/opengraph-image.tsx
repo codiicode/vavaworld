@@ -8,7 +8,7 @@ export const contentType = 'image/png';
 
 // Hex stops only - Satori's gradient parser rejects modern hsl() syntax.
 const AVATAR_GRADIENTS = [
-  'linear-gradient(135deg, #5eead4, #2b9fd8)',
+  'linear-gradient(135deg, #ffffff, #2b9fd8)',
   'linear-gradient(135deg, #f4a026, #f0653b)',
   'linear-gradient(135deg, #a78bfa, #6366f1)',
   'linear-gradient(135deg, #34d399, #0ea5e9)',
@@ -65,7 +65,7 @@ export default async function Image({ params }: { params: { handle: string } }) 
           <span style={{ fontSize: 30, fontWeight: 800, letterSpacing: 6, color: '#ffffff' }}>
             VAVAWORLD
           </span>
-          <span style={{ fontSize: 24, color: '#5eead4', letterSpacing: 2 }}>vavaworld.fun</span>
+          <span style={{ fontSize: 24, color: '#ffffff', letterSpacing: 2 }}>vavaworld.fun</span>
         </div>
 
         {/* Middle: identity */}

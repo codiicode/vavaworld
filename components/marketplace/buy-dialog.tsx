@@ -177,7 +177,7 @@ export function BuyDialog({
           )}
 
           {phase === 'done' && (
-            <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-sm text-emerald-900">
+            <div className="flex items-center gap-2 rounded-md border border-white/12 bg-white/[0.04] px-3 py-2.5 text-sm text-white/80">
               <CheckCircle2 size={15} />
               Yours. The register updates in a few seconds.
             </div>

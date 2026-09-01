@@ -18,7 +18,7 @@ export function RankDelta({ delta, className }: { delta: number; className?: str
     <span
       className={cn(
         'inline-flex items-center gap-0.5 text-[11px] font-semibold tabular-nums',
-        up ? 'text-emerald-600' : 'text-red-500',
+        up ? 'text-[#7db4f5]' : 'text-red-500',
         className,
       )}
       title={`${up ? 'Up' : 'Down'} ${Math.abs(delta)} since yesterday`}

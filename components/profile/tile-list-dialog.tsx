@@ -158,7 +158,7 @@ export function TileListDialog({
             <div className="flex flex-col items-center gap-3 py-6 text-center">
               <div
                 className="grid h-10 w-10 place-items-center rounded-full text-lg"
-                style={{ background: 'rgba(94,234,212,0.18)', color: 'var(--brand, #5eead4)' }}
+                style={{ background: 'rgba(255, 255, 255, 0.14)', color: 'var(--brand, #ffffff)' }}
               >
                 ✓
               </div>

@@ -31,8 +31,11 @@ export function ConnectButton({
 
   // Glass pill that matches the sidebar / sky background instead of the
   // default solid primary fill (which looked out of place against the panel).
+  // Solid white on the dark shell, matching the landing page's primary
+  // action. The old white-glass fill was invisible against black.
   const glassClass =
-    'inline-flex items-center justify-center rounded-[12px] border border-white/40 bg-white/30 text-foreground backdrop-blur-md transition-colors hover:bg-white/45 hover:text-foreground';
+    'inline-flex items-center justify-center rounded-[12px] font-semibold transition-all hover:-translate-y-px hover:shadow-[0_10px_28px_-10px_rgba(255,255,255,0.45)]';
+  const solid = { background: '#ffffff', color: '#06080d' } as const;
   const triggerClass =
     variant === 'sidebar'
       ? `${glassClass} h-9 w-full text-[13px] font-medium`
@@ -41,7 +44,7 @@ export function ConnectButton({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" className={cn(triggerClass, className)}>
+        <button type="button" className={cn(triggerClass, className)} style={solid}>
           Connect
         </button>
       </PopoverTrigger>

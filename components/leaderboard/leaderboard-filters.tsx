@@ -13,9 +13,8 @@ export type SortKey = 'hexes' | 'volume' | 'value' | 'countries' | 'bonded';
 /** ISO 3166-1 alpha-2 country code, or 'worldwide' for the all-countries view. */
 export type FilterKey = 'worldwide' | string;
 
-const TRIGGER =
-  'bg-white/40 backdrop-blur-md border-white/40 h-11 rounded-xl text-foreground';
-const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40';
+const TRIGGER = 'select-trigger';
+const CONTENT = 'select-panel';
 
 export function LeaderboardFilters({
   sort,

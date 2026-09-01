@@ -54,9 +54,9 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
         // External wallets (Phantom etc.) live outside Privy - see ConnectButton.
         loginMethods: ['email', 'google', 'twitter'],
         appearance: {
-          theme: 'light',
-          accentColor: '#14b8a6',
-          logo: '/logo-globe-color.png',
+          theme: 'dark',
+          accentColor: '#7db4f5',
+          logo: '/logo-globe-white.png',
           landingHeader: 'Welcome to VAVAWORLD',
           showWalletLoginFirst: false,
           walletChainType: 'solana-only',

@@ -153,18 +153,15 @@ export default function PortfolioPage() {
 
   return (
     <SignInGate label="portfolio">
-    <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
+    <div className="mx-auto max-w-[1180px] px-4 py-6 md:px-8 md:py-8">
       {/* Header */}
       <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-            Portfolio
-          </div>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-            Welcome back, {displayName}
+            Portfolio
           </h1>
-          <p className="mt-1 text-sm text-foreground/70">
-            Your hex holdings and value across VAVAWORLD
+          <p className="mt-1.5 text-sm text-foreground/70">
+            <span className="font-medium tabular-nums text-foreground/85">{displayName}</span>
           </p>
         </div>
         <Link
@@ -239,7 +236,7 @@ export default function PortfolioPage() {
                           {p.name}
                         </span>
                         {p.count > 1 && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-white/75">
                             <Layers size={10} strokeWidth={2} />
                             {p.count} hexes
                           </span>
@@ -257,7 +254,7 @@ export default function PortfolioPage() {
                       <span
                         className={cn(
                           'mt-0.5 text-[11px] tabular-nums',
-                          p.roiPct >= 0 ? 'text-emerald-600' : 'text-red-600',
+                          p.roiPct >= 0 ? 'text-[#7db4f5]' : 'text-red-600',
                         )}
                       >
                         {p.roiPct >= 0 ? '+' : ''}
@@ -321,7 +318,7 @@ export default function PortfolioPage() {
               className={cn(
                 'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium',
                 derived.roiPct >= 0
-                  ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-700'
+                  ? 'border-white/16 bg-white/[0.08] text-white'
                   : 'border-red-500/30 bg-red-500/15 text-red-700',
               )}
             >
@@ -352,7 +349,7 @@ export default function PortfolioPage() {
               {derived.activity.map((a) => (
                 <li key={a.key} className="flex items-center justify-between px-5 py-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-700">
+                    <span className="rounded-full border border-white/12 bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white/70">
                       Claimed{a.count > 1 ? ` ×${a.count}` : ''}
                     </span>
                     <span className="truncate text-sm text-foreground">{a.place}</span>
@@ -402,7 +399,7 @@ function KpiCard({
           deltaPositive === undefined
             ? 'text-foreground/55'
             : deltaPositive
-              ? 'text-emerald-600'
+              ? 'text-[#7db4f5]'
               : 'text-red-600',
         )}
       >
@@ -431,7 +428,8 @@ function EmptyState({
       {cta && (
         <Link
           href={cta.href}
-          className="mt-1 inline-flex h-9 items-center rounded-[10px] bg-primary/90 px-4 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary"
+          className="mt-1 inline-flex h-9 items-center rounded-[10px] px-4 text-xs font-semibold transition-transform hover:-translate-y-px"
+          style={{ background: '#ffffff', color: '#06080d' }}
         >
           {cta.label}
         </Link>

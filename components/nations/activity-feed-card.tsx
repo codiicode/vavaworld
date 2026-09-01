@@ -2,8 +2,8 @@ import { cn } from '@/lib/utils';
 import type { Nation, ActivityKind } from '@/lib/mock-nations';
 
 const DOT: Record<ActivityKind, string> = {
-  bond: 'bg-emerald-500',
-  presidency: 'bg-amber-500',
+  bond: 'bg-[#7db4f5]',
+  presidency: 'bg-white/[0.07]',
   trade: 'bg-slate-400',
   claim: 'bg-slate-400',
 };

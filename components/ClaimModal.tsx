@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Instrument_Serif } from 'next/font/google';
 import { PublicKey } from '@solana/web3.js';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
@@ -18,7 +17,7 @@ import { dispatchClaimDone } from '@/lib/claim-events';
 import { PRICING, SOL_USD } from '@/lib/pricing';
 import { Flag } from '@/components/flag';
 
-const totalSerif = Instrument_Serif({ weight: '400', style: 'italic', subsets: ['latin'], display: 'swap' });
+
 
 const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY;
 const treasuryPk = TREASURY_ADDRESS ? new PublicKey(TREASURY_ADDRESS) : null;
@@ -271,7 +270,7 @@ export function ClaimModal({
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              'radial-gradient(130% 55% at 50% -12%, rgba(94,234,212,0.10), transparent 60%)',
+              'radial-gradient(130% 55% at 50% -12%, rgba(255, 255, 255, 0.08), transparent 60%)',
           }}
         />
 
@@ -299,7 +298,7 @@ export function ClaimModal({
         {state === 'review' && (
           <>
             {excludedCount > 0 && (
-              <p className="relative mb-4 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3.5 py-2.5 text-[12px] leading-relaxed text-amber-100">
+              <p className="relative mb-4 rounded-xl border border-white/12 bg-white/[0.07] px-3.5 py-2.5 text-[12px] leading-relaxed text-white/85">
                 {excludedCount} selected {excludedCount === 1 ? 'hex is' : 'hexes are'} already
                 owned and excluded - you only pay for the {items.length} below.
               </p>
@@ -338,9 +337,9 @@ export function ClaimModal({
                             >
                               <div className="flex min-w-0 items-center gap-2">
                                 <span
-                                  className="flex-none rounded px-1.5 py-0.5 font-mono text-[9.5px] font-medium uppercase tracking-wider"
+                                  className="flex-none rounded px-1.5 py-0.5 text-[9.5px] font-medium uppercase tracking-wider tabular-nums"
                                   style={{
-                                    background: 'rgba(94, 234, 212, 0.14)',
+                                    background: 'rgba(255, 255, 255, 0.11)',
                                     color: 'var(--brand)',
                                   }}
                                 >
@@ -367,8 +366,8 @@ export function ClaimModal({
               <span className={EYEBROW}>Total</span>
               <div className="text-right">
                 <div
-                  className={`${totalSerif.className} text-[34px] italic leading-none tabular-nums`}
-                  style={{ color: '#5eead4', textShadow: '0 0 24px rgba(94,234,212,0.35)' }}
+                  className="text-[34px] font-semibold leading-none tracking-[-0.035em] tabular-nums"
+                  style={{ color: '#ffffff', textShadow: '0 0 24px rgba(255, 255, 255, 0.28)' }}
                 >
                   ${totalUsd.toFixed(totalUsd < 10 ? 4 : 2)}
                 </div>
@@ -398,13 +397,13 @@ export function ClaimModal({
           <div className="relative flex flex-col items-center gap-4 py-12 text-center">
             <div
               className="h-2.5 w-2.5 rounded-full"
-              style={{ background: '#5eead4', animation: 'claim-pulse 1.6s ease-in-out infinite' }}
+              style={{ background: '#ffffff', animation: 'claim-pulse 1.6s ease-in-out infinite' }}
             />
             <span className={EYEBROW}>Confirm in your wallet…</span>
             <style jsx>{`
               @keyframes claim-pulse {
-                0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 18px rgba(94,234,212,0.6); }
-                50% { opacity: 0.35; transform: scale(0.8); box-shadow: 0 0 4px rgba(94,234,212,0.2); }
+                0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 18px rgba(255, 255, 255, 0.40); }
+                50% { opacity: 0.35; transform: scale(0.8); box-shadow: 0 0 4px rgba(255, 255, 255, 0.16); }
               }
             `}</style>
           </div>
@@ -417,14 +416,14 @@ export function ClaimModal({
               <div className="relative grid place-items-center">
                 <span
                   className="absolute inset-0 animate-ping rounded-full"
-                  style={{ background: 'rgba(94,234,212,0.25)', animationIterationCount: 2 }}
+                  style={{ background: 'rgba(255, 255, 255, 0.20)', animationIterationCount: 2 }}
                 />
                 <div
                   className="relative grid h-12 w-12 place-items-center rounded-full text-xl"
                   style={{
-                    background: 'rgba(94,234,212,0.16)',
-                    color: '#5eead4',
-                    border: '1px solid rgba(94,234,212,0.4)',
+                    background: 'rgba(255, 255, 255, 0.13)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255, 255, 255, 0.32)',
                   }}
                 >
                   ✓
@@ -460,7 +459,7 @@ export function ClaimModal({
         {state === 'error' && (
           <>
             <div className="relative mb-4 py-2">
-              <div className={`${EYEBROW} mb-2.5 !text-rose-300`}>Error</div>
+              <div className={`${EYEBROW} mb-2.5 !text-white/60`}>Error</div>
               <pre className="max-h-[260px] overflow-y-auto whitespace-pre-wrap text-[11.5px] leading-relaxed text-white/75">
                 {errorMsg}
               </pre>

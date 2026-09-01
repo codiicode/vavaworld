@@ -136,7 +136,7 @@ export default function HexDetailPage() {
   const claimed = tile !== null && tile !== undefined;
 
   return (
-    <div className="mx-auto flex max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] flex-col gap-6 px-4 py-6 md:px-8 md:py-8 2xl:px-10">
+    <div className="mx-auto flex max-w-[1180px] flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
       <Link
         href="/map"
         className="inline-flex items-center gap-1.5 text-xs text-foreground/60 transition-colors hover:text-foreground"
@@ -148,9 +148,6 @@ export default function HexDetailPage() {
       {/* Header - title + flag + tier */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-            Hex
-          </div>
           <h1 className="flex flex-wrap items-center gap-3 text-3xl font-semibold tracking-tight text-foreground">
             <Flag code={loc?.countryCode} size={26} />
             <span>{city}</span>
@@ -269,7 +266,7 @@ function OwnerCard({ tile }: { tile: ClaimedTile }) {
         <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
           Owned
         </span>
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#7db4f5]">
           <CheckCircle2 size={12} />
           Claimed
         </span>
@@ -301,8 +298,8 @@ function OwnerCard({ tile }: { tile: ClaimedTile }) {
 
 function UnclaimedCard({ h3 }: { h3: string }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 backdrop-blur-md">
-      <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-emerald-700">
+    <div className="flex flex-col gap-3 rounded-2xl border border-white/12 bg-white/[0.04] p-5 backdrop-blur-md">
+      <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/70">
         Available
       </div>
       <p className="text-sm text-foreground/80">
@@ -395,7 +392,7 @@ function BidsCard({
                       type="button"
                       disabled={actingOn !== null}
                       onClick={() => void act(b, 'accept')}
-                      className="inline-flex h-7 items-center gap-1 rounded-md bg-emerald-600 px-2.5 text-[11px] font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
+                      className="inline-flex h-7 items-center gap-1 rounded-md bg-[#7db4f5] px-2.5 text-[11px] font-semibold text-white transition-colors hover:bg-[#7db4f5] disabled:opacity-50"
                     >
                       {actingOn === b.id ? (
                         <Loader2 size={11} className="animate-spin" />

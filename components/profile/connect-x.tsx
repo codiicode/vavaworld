@@ -96,7 +96,7 @@ export function ConnectX({ onChanged }: { onChanged?: () => void }) {
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/40 bg-white/30 py-1 pl-1.5 pr-2.5 text-xs font-medium text-foreground">
             <XBadge handle={verified} size={11} />
             @{verified}
-            <span className="text-[10px] font-normal uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <span className="text-[10px] font-normal uppercase tracking-wider text-white/60">
               Verified
             </span>
           </span>

@@ -8,7 +8,7 @@ export function RankingsSkeleton({ rows = 8 }: { rows?: number }) {
   return (
     <div className="mb-4 flex flex-col gap-2.5" aria-hidden>
       {/* Champion hero */}
-      <div className="h-[148px] animate-pulse rounded-[1.55rem] bg-amber-100/40 md:h-[160px]" />
+      <div className="h-[148px] animate-pulse rounded-[1.55rem] bg-white/[0.07] md:h-[160px]" />
 
       {/* #2 + #3 */}
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-[3fr_2fr]">

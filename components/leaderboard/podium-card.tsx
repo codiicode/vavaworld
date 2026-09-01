@@ -10,30 +10,30 @@ type Variant = 'gold' | 'silver' | 'bronze';
 
 const VARIANT = {
   gold: {
-    border: 'border-amber-400/60',
-    bg: 'bg-gradient-to-br from-amber-200/40 via-amber-100/25 to-white/20',
+    border: 'border-white/12',
+    bg: 'bg-gradient-to-br from-white/[0.06] via-white/[0.04] to-white/20',
     shadow:
-      '0 24px 60px -22px rgba(245,158,11,0.55), inset 0 1px 0 rgba(255,255,255,0.65)',
+      '0 24px 60px -22px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.08)',
     label: 'Champion',
-    labelColor: 'text-amber-700',
+    labelColor: 'text-white/85',
     chip:
-      'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-[0_6px_20px_-6px_rgba(245,158,11,0.65)]',
+      'bg-gradient-to-br from-white/[0.06] to-transparent text-white shadow-[0_6px_20px_-6px_rgba(0,0,0,0.85)]',
   },
   silver: {
     border: 'border-slate-300/60',
     bg: 'bg-gradient-to-br from-slate-200/40 via-white/20 to-white/15',
-    shadow: '0 14px 40px -16px rgba(100,116,139,0.45), inset 0 1px 0 rgba(255,255,255,0.55)',
+    shadow: '0 14px 40px -16px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08)',
     label: '2nd',
     labelColor: 'text-slate-600',
     chip: 'bg-gradient-to-br from-slate-300 to-slate-500 text-white',
   },
   bronze: {
-    border: 'border-orange-400/45',
-    bg: 'bg-gradient-to-br from-orange-200/30 via-white/15 to-white/10',
-    shadow: '0 10px 30px -14px rgba(180,83,9,0.40), inset 0 1px 0 rgba(255,255,255,0.5)',
+    border: 'border-white/12',
+    bg: 'bg-gradient-to-br from-white/[0.06] via-white/15 to-white/10',
+    shadow: '0 10px 30px -14px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08)',
     label: '3rd',
-    labelColor: 'text-orange-700',
-    chip: 'bg-gradient-to-br from-amber-600 to-orange-700 text-white',
+    labelColor: 'text-white/85',
+    chip: 'bg-gradient-to-br from-white/[0.06] to-transparent text-white',
   },
 } as const satisfies Record<Variant, {
   border: string; bg: string; shadow: string;
@@ -106,11 +106,11 @@ export function PodiumCard({
           </span>
         </div>
         {president ? (
-          <Crown size={15} strokeWidth={1.8} className="text-amber-500" />
+          <Crown size={15} strokeWidth={1.8} className="text-white/70" />
         ) : isSilver ? (
           <Medal size={15} strokeWidth={1.8} className="text-slate-400" />
         ) : (
-          <Medal size={15} strokeWidth={1.8} className="text-amber-700" />
+          <Medal size={15} strokeWidth={1.8} className="text-white/85" />
         )}
       </div>
 
@@ -128,7 +128,7 @@ export function PodiumCard({
             </span>
             {entry.verified && (
               <BadgeCheck
-                className={cn('flex-shrink-0 text-emerald-500', isGold ? 'h-4 w-4' : 'h-3.5 w-3.5')}
+                className={cn('flex-shrink-0 text-white/70', isGold ? 'h-4 w-4' : 'h-3.5 w-3.5')}
                 aria-label="Verified"
               />
             )}

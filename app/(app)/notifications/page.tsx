@@ -52,9 +52,6 @@ export default function NotificationsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 md:px-8 md:py-8">
       <div className="mb-8">
-        <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-          Account
-        </div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">Notifications</h1>
         <p className="mt-1.5 text-sm text-foreground/70">
           Offers on your land, accepted bids, and sales.
@@ -212,7 +209,7 @@ function NotificationRow({
                 type="button"
                 disabled={acting !== null}
                 onClick={() => void act('accept')}
-                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#7db4f5] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#7db4f5] disabled:opacity-50"
               >
                 {acting === 'accept' ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -233,7 +230,7 @@ function NotificationRow({
             </div>
           )}
           {outcome === 'accepted' && (
-            <p className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-300">
+            <p className="mt-2 text-xs font-medium text-[#7db4f5] dark:text-white/70">
               Sold - the escrowed SOL landed in your wallet and the hex transferred to the buyer.
             </p>
           )}
@@ -243,7 +240,7 @@ function NotificationRow({
           {n.type === 'bid_accepted' && (
             <Link
               href={hexHref}
-              className="mt-2.5 inline-flex h-8 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-emerald-500"
+              className="mt-2.5 inline-flex h-8 items-center gap-1.5 rounded-md bg-[#7db4f5] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#7db4f5]"
             >
               View your hex
               <ArrowUpRight size={12} />

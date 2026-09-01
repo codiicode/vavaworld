@@ -1,15 +1,18 @@
 /**
- * Clean white background with a soft radial glow - the shared backdrop for the
- * (app) pages (portfolio, profile, marketplace, etc.). Fixed so it stays put on
- * scroll; sits behind everything.
+ * The shared backdrop for every (app) page. Matches the landing page and
+ * the map: near-black with a slow blue wash, so moving between the
+ * marketing site and the app feels like one product rather than two.
  */
 export function GlowBackground() {
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-white dark:bg-[#0a101f]">
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-[#000000]">
       <div
-        className="absolute inset-0 opacity-40 dark:opacity-[0.18]"
+        className="absolute inset-0"
         style={{
-          backgroundImage: 'radial-gradient(circle at center, #93c5fd 0%, transparent 70%)',
+          backgroundImage: `
+            radial-gradient(50% 40% at 16% 12%, rgba(60, 110, 220, 0.055), transparent 72%),
+            radial-gradient(46% 36% at 88% 78%, rgba(90, 140, 255, 0.045), transparent 70%)
+          `,
         }}
       />
     </div>

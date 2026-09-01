@@ -1,68 +1,85 @@
 'use client';
 
 /**
- * The landing page: a single full-screen video hero, nothing below it.
- * The nav carries the real login / wallet actions.
+ * The landing page. The first screen is the full-bleed planet video with the
+ * nav floating over it in glass — the original VAVAWORLD hero. Everything
+ * below it is the dark editorial page.
  */
 
-import { useState } from 'react';
+import { BrandLogo } from '@/components/brand-logo';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Inter, Instrument_Serif } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
 import { useActiveWallet } from '@/lib/active-wallet';
+import { LandingSections } from './LandingSections';
+import { useHeroMotion } from './useHeroMotion';
+import { AppDock } from './AppDock';
+import { useLandingStats, compact } from '@/lib/use-landing-stats';
 
-const GLASS_PILL =
-  'rounded-full border border-white/30 bg-white/10 text-white backdrop-blur-md transition-all hover:scale-[1.03] hover:bg-white/20';
-const GLASS_INSET = { boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.25)' };
+const VIDEO_URL = '/videos/hero-loop.mp4';
 
-const sans = Inter({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], display: 'swap' });
-const serif = Instrument_Serif({ weight: '400', style: ['normal', 'italic'], subsets: ['latin'], display: 'swap' });
-
-// Self-hosted: the original 13MB 4K file lived on the AI provider's
-// CloudFront bucket (out of our control - link-rot risk) and every
-// visitor downloaded all of it. Re-encoded to 1080p CRF28 = 0.9MB,
-// visually identical for a dark background loop.
-const VIDEO_URL = '/videos/hero.mp4';
+/** Placeholder shown until the live figures arrive. */
+const HERO_FALLBACK = [
+  { k: 'Claimed today', v: '—' },
+  { k: 'Tiles left', v: '—' },
+  { k: 'Floor', v: '$0.10' },
+  { k: 'Owners', v: '—' },
+];
 
 const NAV_LINKS = [
   { label: 'Buy land', href: '/map' },
   { label: 'Marketplace', href: '/marketplace' },
   { label: 'Leaderboard', href: '/leaderboard' },
-  { label: 'How it works', href: '/how-it-works' },
-  { label: 'Tokenomics', href: '/tokenomics' },
+  { label: 'How it works', href: '/#how' },
+  { label: 'Tokenomics', href: '/#token' },
 ];
 
 function Nav() {
   const wallet = useActiveWallet();
   // Mobile-only dropdown: desktop shows the inline link row instead.
   const [menuOpen, setMenuOpen] = useState(false);
+  const [gone, setGone] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setGone(window.scrollY > window.innerHeight * 0.55);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <nav className="absolute inset-x-0 top-0 z-50 mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-5 md:px-8 md:py-6">
-      <Link href="/" className="flex items-center">
-        <span
-          className="text-[15px] tracking-[0.02em] text-white md:text-xl"
-          style={{ fontFamily: '"StretchPro", "Abril Fatface", Georgia, serif' }}
-        >
-          VAVAWORLD
+    <nav
+      className="absolute inset-x-0 top-0 z-50 mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-5 py-5 transition-opacity duration-500 md:px-8 md:py-6"
+      style={{ opacity: gone ? 0 : 1, pointerEvents: gone ? 'none' : 'auto' }}
+    >
+      <Link href="/" className="flex items-center gap-2.5">
+        <BrandLogo size={22} variant="white" />
+        <span className="text-[13px] font-semibold uppercase tracking-[0.28em] text-white">
+          Vavaworld
         </span>
       </Link>
 
       <div className="hidden items-center gap-8 md:flex">
         {NAV_LINKS.map((item, i) => (
-          <a
+          <Link
             key={item.label}
             href={item.href}
-            className={`text-sm transition-colors hover:text-white ${i === 0 ? 'text-white' : 'text-white/70'}`}
+            className={`text-sm transition-colors hover:text-white ${
+              i === 0 ? 'text-white' : 'text-white/70'
+            }`}
           >
             {item.label}
-          </a>
+          </Link>
         ))}
       </div>
 
       <div className="flex items-center gap-3">
         {!wallet.ready && <span style={{ width: 96 }} />}
         {wallet.ready && wallet.connected && (
-          <Link href="/profile" className={`${GLASS_PILL} whitespace-nowrap px-4 py-2.5 text-sm md:px-6`} style={GLASS_INSET}>
+          <Link
+            href="/profile"
+            className="glass-pill whitespace-nowrap px-4 py-2.5 text-sm md:px-6"
+          >
             Profile
           </Link>
         )}
@@ -70,8 +87,7 @@ function Nav() {
           <button
             type="button"
             onClick={wallet.login}
-            className={`${GLASS_PILL} whitespace-nowrap px-4 py-2.5 text-sm md:px-6`}
-            style={GLASS_INSET}
+            className="glass-pill whitespace-nowrap px-4 py-2.5 text-sm md:px-6"
           >
             Log in
           </button>
@@ -80,8 +96,7 @@ function Nav() {
           type="button"
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           onClick={() => setMenuOpen((v) => !v)}
-          className={`${GLASS_PILL} grid h-[42px] w-[42px] place-items-center md:hidden`}
-          style={GLASS_INSET}
+          className="glass-pill grid h-[42px] w-[42px] place-items-center md:hidden"
         >
           {menuOpen ? (
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -114,14 +129,14 @@ function Nav() {
             }}
           >
             {NAV_LINKS.map((item) => (
-              <a
+              <Link
                 key={item.label}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
-                className="border-b border-white/[0.07] px-6 py-4 text-[15px] text-white/85 transition-colors last:border-b-0 hover:bg-white/[0.06] hover:text-white"
+                className="border-b border-white/[0.10] px-6 py-4 text-[15px] text-white/85 transition-colors last:border-b-0 hover:bg-white/[0.05] hover:text-white"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </div>
         </>
@@ -131,40 +146,117 @@ function Nav() {
 }
 
 export function VideoHero() {
+  const stage = useHeroMotion();
+  const stats = useLandingStats();
+
+  // Real figures from the same aggregates the app reads.
+  const heroStats = stats
+    ? [
+        { k: 'Claimed today', v: stats.claimedToday.toLocaleString('en-US') },
+        { k: 'Tiles left', v: compact(stats.tilesRemaining) },
+        { k: 'Floor', v: '$0.10' },
+        { k: 'Owners', v: stats.holders.toLocaleString('en-US') },
+      ]
+    : HERO_FALLBACK;
+
   return (
-    <div className={`${sans.className} bg-[#0a0608]`}>
-      <section className="relative h-screen w-full overflow-hidden">
+    <div className={`${GeistSans.className} landing-root`}>
+      <AppDock />
+      {/* Light behind the whole lower page, so it never falls to flat black. */}
+      <div aria-hidden className="page-glow" />
+
+      {/* ── Hero: the video is the whole first screen ── */}
+      <section ref={stage} className="hero-stage relative h-screen w-full overflow-hidden">
         <video
-          className="absolute inset-0 h-full w-full object-cover"
+          className="hero-video par absolute inset-0 h-full w-full object-cover"
+          style={{ ['--par-depth' as string]: '14px' }}
           src={VIDEO_URL}
+          poster="/videos/hero-poster.jpg"
           autoPlay
           muted
           loop
           playsInline
           preload="auto"
-          poster="/videos/hero-poster.jpg"
         />
-        <div className="absolute inset-0 bg-black/20" />
+        <div aria-hidden className="hero-rim" />
+        <div aria-hidden className="hero-flare" />
+        <div aria-hidden className="starfield par" style={{ ['--par-depth' as string]: '26px' }} />
+        <div aria-hidden className="hero-aurora par" style={{ ['--par-depth' as string]: '38px' }} />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(4,6,11,0.55) 0%, rgba(4,6,11,0.34) 38%, rgba(4,6,11,0.78) 100%)',
+          }}
+        />
+        <div aria-hidden className="hero-vignette" />
+        <div aria-hidden className="hero-grain" />
 
         <Nav />
 
-        <div className="absolute inset-0 -mt-[170px] flex flex-col items-center justify-center px-6">
-          <h1
-            className={`${serif.className} ht-text-glow text-center text-[36px] font-normal leading-[0.9] tracking-tight text-white md:text-7xl lg:text-[110px]`}
-          >
-            The oldest currency in <span style={{ fontStyle: 'italic' }}>human history.</span>
-            <br />
-            Now digital.
+        <div
+          className="par absolute inset-0 z-10 mt-[46px] flex flex-col items-center justify-center px-5"
+          style={{ ['--par-depth' as string]: '-9px' }}
+        >
+          <h1 className="hero-display text-center text-white">
+            <span className="line-mask">
+              <span className="lede" style={{ animationDelay: '140ms' }}>
+                The oldest currency
+              </span>
+            </span>
+            <span className="line-mask">
+              <span className="payload" style={{ animationDelay: '260ms' }}>
+                <span>in human history.</span>
+              </span>
+            </span>
           </h1>
+
+          <p
+            className="rise mt-5 max-w-[42ch] text-center text-[15.5px] leading-relaxed md:text-[17px]"
+            style={{ color: 'rgba(255,255,255,0.62)', animationDelay: '420ms' }}
+          >
+            Earth divided into 1.66 trillion hexagons. Claim one and it is yours on-chain,
+            permanently.
+          </p>
           <Link
             href="/map"
-            className={`${GLASS_PILL} mt-8 px-8 py-3.5 text-sm font-medium tracking-wide md:mt-10`}
-            style={GLASS_INSET}
+            className="cta-enter rise mt-8 px-9 py-4 text-[13.5px] font-medium uppercase tracking-[0.14em] md:mt-9"
+            style={{ animationDelay: '760ms' }}
           >
-            ENTER VAVAWORLD
+            Enter Vavaworld
+            <svg width="15" height="10" viewBox="0 0 15 10" fill="none" aria-hidden>
+              <path
+                d="M1 5h12M9.5 1.2 13.4 5l-3.9 3.8"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </Link>
+
+          {/* A slice of the real product, in its own chrome. */}
+          <div className="app-strip rise mt-10" style={{ animationDelay: '900ms' }}>
+            {heroStats.map((s) => (
+              <div key={s.k} className="cell">
+                <span className="k">
+                  {s.k}
+                </span>
+                <span className="v">{s.v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div aria-hidden className="hero-scrim" />
+        <div aria-hidden className="hero-seam" />
+        <div className="scroll-cue rise z-10" style={{ animationDelay: '1100ms' }} aria-hidden>
+          <span>Scroll</span>
+          <span className="rail" />
         </div>
       </section>
+
+      <LandingSections />
     </div>
   );
 }

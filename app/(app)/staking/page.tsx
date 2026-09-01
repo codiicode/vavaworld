@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Coins, Crown, Hourglass, Lock, ShieldCheck, User } from 'lucide-react';
 import { useStake } from '@/lib/use-stake';
 import { TIERS, tierFor, type TierKey } from '@/lib/tokenomics-constants';
+import { StatTile } from '@/components/ui/stat-tile';
 import { cn } from '@/lib/utils';
 
 const CARD = 'rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md';
@@ -44,19 +45,11 @@ export default function StakingPage() {
   const withdrawReady = state ? state.pending > 0 && cooldownLeft === 0 : false;
 
   return (
-    <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
+    <div className="mx-auto max-w-[1280px] px-4 py-6 md:px-8 md:py-8">
       <div className="mb-6">
-        <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-          Staking
-        </div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Citizens &amp; Tourists
         </h1>
-        <p className="mt-1.5 max-w-2xl text-sm text-foreground/70">
-          Stake $VAVA to become a Citizen of VAVAWORLD. No yield, no promises —
-          staking buys power: cheaper land, cheaper trading, and a seat at a
-          national throne. Unstaking takes 24 hours.
-        </p>
       </div>
 
       {/* Your position */}
@@ -208,17 +201,7 @@ export default function StakingPage() {
 }
 
 function Stat({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
-  return (
-    <div className={`${CARD} px-5 py-4`}>
-      <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-        {label}
-      </div>
-      <div className="mt-1 text-xl font-semibold tabular-nums tracking-tight text-foreground">
-        {value}
-        {suffix ? <span className="ml-1.5 text-xs font-normal text-foreground/55">{suffix}</span> : null}
-      </div>
-    </div>
-  );
+  return <StatTile label={label} value={value} note={suffix} />;
 }
 
 function AmountForm({

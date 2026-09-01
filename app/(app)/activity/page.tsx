@@ -20,15 +20,14 @@ import {
 } from '@/components/ui/table';
 import { Flag } from '@/components/flag';
 import { UserLink } from '@/components/user-link';
-import { cn } from '@/lib/utils';
+import { StatTile } from '@/components/ui/stat-tile';
 import { type ActivityItem } from '@/lib/mock-marketplace';
 import { useActivity } from '@/lib/use-activity';
 
 type ActionFilter = 'all' | 'buy' | 'sell';
 
-const TRIGGER =
-  'bg-white/40 backdrop-blur-md border-white/40 h-11 rounded-xl text-foreground';
-const CONTENT = 'bg-white/90 backdrop-blur-xl border-white/40';
+const TRIGGER = 'select-trigger';
+const CONTENT = 'select-panel';
 const TH = 'text-[10px] uppercase tracking-[0.08em] font-medium text-foreground/60';
 
 export default function ActivityPage() {
@@ -45,27 +44,21 @@ export default function ActivityPage() {
   const volume = items.reduce((s, a) => s + a.price, 0);
 
   return (
-    <div className="mx-auto max-w-7xl xl:max-w-[1500px] 2xl:max-w-[1800px] min-[1920px]:max-w-[2100px] min-[2560px]:max-w-[2400px] px-4 py-6 md:px-8 md:py-8 2xl:px-10">
+    <div className="mx-auto max-w-[1280px] px-4 py-6 md:px-8 md:py-8">
       <div className="mb-8 flex items-end justify-between">
         <div>
-          <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-            Market
-          </div>
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Activity
           </h1>
-          <p className="mt-1 text-sm text-foreground/70">
-            Every buy and sell across VAVAWORLD, as it happens
-          </p>
         </div>
         <div className="flex items-center gap-1.5 rounded-full border border-white/40 bg-white/30 px-3 py-1.5 backdrop-blur-md">
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#7db4f5]" />
           <span className="text-xs text-foreground/70">Live feed</span>
         </div>
       </div>
 
       <div className="mb-6 grid grid-cols-3 gap-4">
-        <StatCard label="Buys (24h)" value={buys.toString()} accent="emerald" />
+        <StatCard label="Buys (24h)" value={buys.toString()} accent="accent" />
         <StatCard label="Sells (24h)" value={sells.toString()} accent="rose" />
         <StatCard
           label="Volume (24h)"
@@ -176,36 +169,21 @@ function StatCard({
 }: {
   label: string;
   value: string;
-  accent?: 'emerald' | 'rose';
+  accent?: 'accent' | 'rose';
 }) {
-  return (
-    <div className="rounded-2xl border border-white/40 bg-white/30 px-5 py-4 backdrop-blur-md">
-      <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-        {label}
-      </div>
-      <div
-        className={cn(
-          'mt-1 text-2xl font-semibold tracking-tight tabular-nums',
-          accent === 'emerald' && 'text-emerald-600',
-          accent === 'rose' && 'text-rose-600',
-        )}
-      >
-        {value}
-      </div>
-    </div>
-  );
+  return <StatTile label={label} value={value} accent={accent === 'accent'} />;
 }
 
 function ActionPill({ action }: { action: 'buy' | 'sell' }) {
   if (action === 'buy') {
     return (
-      <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-0.5 text-[10.5px] font-medium uppercase tracking-[0.12em] text-emerald-700">
+      <span className="inline-flex items-center rounded-full border border-white/12 bg-[#7db4f5]/15 px-2.5 py-0.5 text-[10.5px] font-medium uppercase tracking-[0.12em] text-white/70">
         Buy
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded-full border border-rose-500/30 bg-rose-500/15 px-2.5 py-0.5 text-[10.5px] font-medium uppercase tracking-[0.12em] text-rose-700">
+    <span className="inline-flex items-center rounded-full border border-white/12 bg-white/[0.07] px-2.5 py-0.5 text-[10.5px] font-medium uppercase tracking-[0.12em] text-white/60">
       Sell
     </span>
   );

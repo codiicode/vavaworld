@@ -29,7 +29,7 @@ function ListingCard({ listing: l }: { listing: Listing }) {
   return (
     <Link
       href={`/marketplace/${l.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md transition-colors hover:bg-white/40"
+      className="listing-card group relative flex flex-col overflow-hidden"
     >
       <div className="relative aspect-[3/2] overflow-hidden bg-foreground/[0.04]">
         {img && (
@@ -41,7 +41,7 @@ function ListingCard({ listing: l }: { listing: Listing }) {
             loading="lazy"
           />
         )}
-        <span className="absolute right-2 top-2 rounded border border-primary/30 bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary backdrop-blur-sm">
+        <span className="absolute right-2.5 top-2.5 rounded-md border border-white/15 bg-black/55 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-white/80 backdrop-blur-md">
           T{l.tier}
         </span>
       </div>
@@ -59,18 +59,21 @@ function ListingCard({ listing: l }: { listing: Listing }) {
           </div>
         </div>
 
-        <div className="mt-1 flex items-baseline justify-between border-t border-white/30 pt-2">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-sm font-semibold tabular-nums text-foreground">
-              {l.price.toFixed(3)}
-            </span>
-            <span className="text-[11px] text-foreground/55">SOL</span>
+        <div className="mt-1 flex items-end justify-between border-t border-white/[0.07] pt-2.5">
+          <div>
+            <div className="text-[9px] uppercase tracking-[0.16em] text-white/38">Price</div>
+            <div className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-[17px] font-semibold leading-none tabular-nums text-white">
+                {l.price.toFixed(3)}
+              </span>
+              <span className="text-[11px] text-white/50">SOL</span>
+            </div>
           </div>
           {l.change24h !== 0 && (
             <span
               className={cn(
                 'inline-flex items-center gap-0.5 text-[11px] tabular-nums',
-                positive ? 'text-emerald-600' : 'text-red-600',
+                positive ? 'text-[#7db4f5]' : 'text-white/55',
               )}
             >
               {positive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}

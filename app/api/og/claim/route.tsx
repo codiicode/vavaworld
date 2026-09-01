@@ -40,7 +40,7 @@ export async function GET(req: Request) {
           <span style={{ fontSize: 30, fontWeight: 800, letterSpacing: 6, color: '#ffffff' }}>
             VAVAWORLD
           </span>
-          <span style={{ fontSize: 24, color: '#5eead4', letterSpacing: 2 }}>vavaworld.fun</span>
+          <span style={{ fontSize: 24, color: '#ffffff', letterSpacing: 2 }}>vavaworld.fun</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -65,7 +65,7 @@ export async function GET(req: Request) {
             <span style={{ fontSize: 24, color: 'rgba(255,255,255,0.55)', letterSpacing: 1 }}>
               Claimed
             </span>
-            <span style={{ fontSize: 56, fontWeight: 700, color: '#5eead4' }}>{hexLine}</span>
+            <span style={{ fontSize: 56, fontWeight: 700, color: '#ffffff' }}>{hexLine}</span>
           </div>
           {sol && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

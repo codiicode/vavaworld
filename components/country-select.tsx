@@ -110,7 +110,7 @@ export function CountrySelect({
 
       <PopoverContent
         className={cn(
-          'w-[--radix-popover-trigger-width] border-white/40 bg-white/90 p-0 backdrop-blur-xl dark:border-white/15 dark:bg-slate-900/95',
+          'w-[--radix-popover-trigger-width] border-white/10 bg-[rgba(10,13,20,0.96)] p-0 backdrop-blur-xl',
           contentClassName,
         )}
         align={align}
