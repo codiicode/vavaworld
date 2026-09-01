@@ -11,7 +11,7 @@ token used for bonding (locked-up VAVA per claim).
 not coarsen the rendered cells, so a clicked cell is always the claimable cell.
 
 **Repo:** `C:\Users\User\Desktop\tomorrowland`
-**Live:** https://vavaworld.fun (alias of https://vavaworld.vercel.app)
+**Live:** https://vavaworld.net (Cloudflare-proxied Railway; vavaworld.vercel.app runs the same `main` in parallel. vavaworld.fun was never actually registered — the old note here was wrong.)
 
 ## How the user works with you
 
