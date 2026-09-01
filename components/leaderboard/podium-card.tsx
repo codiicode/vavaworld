@@ -6,6 +6,7 @@ import { GradientAvatar } from '@/components/gradient-avatar';
 import { fmtCompact } from '@/lib/format';
 import type { RowView, Scope } from '@/lib/mock-leaderboard';
 
+import { useUsdFmt } from '@/lib/usd';
 type Variant = 'gold' | 'silver' | 'bronze';
 
 const VARIANT = {
@@ -56,6 +57,7 @@ export function PodiumCard({
   scope: Scope;
   className?: string;
 }) {
+  const usd = useUsdFmt();
   const v = VARIANT[variant];
   const { entry } = row;
   const handle = entry.username.replace(/^@/, '');
@@ -149,7 +151,7 @@ export function PodiumCard({
           isGold ? 'grid-cols-3' : isSilver ? 'grid-cols-2' : 'grid-cols-1',
         )}
       >
-        <Stat label="Value" value={`${row.valueSOL.toFixed(1)} SOL`} big={isGold} />
+        <Stat label="Value" value={usd(row.valueSOL)} big={isGold} />
         {(isGold || isSilver) &&
           (isWorldwide ? (
             <Stat label="Countries" value={String(row.countries)} big={isGold} />

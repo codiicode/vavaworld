@@ -35,7 +35,7 @@ export default function PrivacyPage() {
       <h2>What we do not collect</h2>
       <ul>
         <li>Private keys or seed phrases. These never leave your wallet.</li>
-        <li>Payment card details. All payments are on-chain in SOL.</li>
+        <li>Payment card details. All payments are on-chain (ETH or USDG).</li>
         <li>Precise device location. The map centres on places you search, not on you.</li>
         <li>Cross-site advertising or tracking profiles.</li>
       </ul>

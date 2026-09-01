@@ -31,7 +31,7 @@ export function generateMetadata({ searchParams }: { searchParams: SP }): Metada
   const ogUrl = `/api/og/claim?${ogParams.toString()}`;
   const title = `${c.by.startsWith('@') ? c.by : '@' + c.by} claimed ${c.place} on VAVAWORLD`;
   const description = `${c.n.toLocaleString('en-US')} hex${c.n === 1 ? '' : 'es'} claimed${
-    c.sol ? ` for ◎ ${c.sol} SOL` : ''
+    c.sol ? ` for $${c.sol}` : ''
   }. Claim your own ground on the live world map.`;
 
   return {

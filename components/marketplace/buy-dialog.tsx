@@ -13,6 +13,7 @@ import { preflight } from '@/lib/preflight';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { dispatchListingsChanged } from '@/lib/supabase-listings';
 
+import { useUsdFmt } from '@/lib/usd';
 type Quote = {
   listingId: string;
   seller: string;
@@ -39,6 +40,7 @@ export function BuyDialog({
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
+  const usd = useUsdFmt();
   const wallet = useActiveWallet();
   const [quote, setQuote] = useState<Quote | null>(null);
   const [phase, setPhase] = useState<Phase>('quote');
@@ -166,13 +168,13 @@ export function BuyDialog({
 
           {quote && phase !== 'done' && (
             <dl className="space-y-2 text-sm">
-              <Row label="Price" value={`${quote.priceSol.toFixed(3)} SOL`} bold />
+              <Row label="Price" value={`${usd(quote.priceSol)}`} bold />
               <Row
                 label={`Marketplace fee (${(quote.feeBps / 100).toFixed(0)}%, seller-side)`}
-                value={`${fee!.toFixed(4)} SOL`}
+                value={`${usd(fee!)}`}
                 muted
               />
-              <Row label="Seller receives" value={`${sellerGets!.toFixed(4)} SOL`} muted />
+              <Row label="Seller receives" value={`${usd(sellerGets!)}`} muted />
             </dl>
           )}
 
@@ -209,7 +211,7 @@ export function BuyDialog({
                   <Loader2 size={14} className="animate-spin" /> Settling…
                 </span>
               ) : (
-                `Buy for ${listing.price.toFixed(3)} SOL`
+                `Buy for ${usd(listing.price)}`
               )}
             </Button>
           )}

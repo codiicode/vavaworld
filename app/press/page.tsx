@@ -32,7 +32,7 @@ export default function PressPage() {
         <em>
           VAVAWORLD is a land-claiming game built on Solana. The planet is partitioned into
           1.66 trillion hexagonal hexes roughly the size of a house; players claim them with
-          SOL, and 15% of every claim automatically buys $VAVA and locks it inside the hex.
+          crypto, and 15% of every claim automatically buys $VAVA and locks it inside the hex.
           Hexes can be held, traded on an open marketplace, or razed to recover the tokens
           within.
         </em>

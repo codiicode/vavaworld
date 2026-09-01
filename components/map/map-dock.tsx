@@ -24,6 +24,7 @@ import { useUserProfile } from '@/lib/use-user-profile';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { cn } from '@/lib/utils';
 
+import { useUsdFmt } from '@/lib/usd';
 function shortAddr(addr: string): string {
   if (!addr) return '-';
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
@@ -66,6 +67,7 @@ const SECONDARY: ReadonlyArray<DockItem> = [
  * Only /map renders this; every other (app) route keeps <TopNav>.
  */
 export function MapDock() {
+  const usd = useUsdFmt();
   const pathname = usePathname();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
@@ -223,7 +225,7 @@ export function MapDock() {
                   {profile.username ? `@${profile.username}` : shortAddr(wallet.address ?? '')}
                 </span>
                 <span className="truncate text-[11px] leading-tight tabular-nums text-white/55">
-                  {balance !== null ? `${balance.toFixed(3)} SOL` : '- SOL'}
+                  {balance !== null ? usd(balance) : '$ -'}
                 </span>
               </div>
             </Link>

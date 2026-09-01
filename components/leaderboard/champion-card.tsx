@@ -6,6 +6,7 @@ import { CountUp } from '@/components/count-up';
 import { fmtCompact } from '@/lib/format';
 import type { RowView, Scope } from '@/lib/mock-leaderboard';
 
+import { useUsdFmt } from '@/lib/usd';
 /**
  * The #1 hero. Diverges from the silver/bronze PodiumCard so the top spot
  * reads as a trophy (rotating gold ring, pulsing aura, light sweep, floating
@@ -21,6 +22,7 @@ export function ChampionCard({
   scope: Scope;
   scopeName: string | null;
 }) {
+  const usd = useUsdFmt();
   const { entry } = row;
   const handle = entry.username.replace(/^@/, '');
   const initial = handle[0]?.toUpperCase() ?? '?';
@@ -99,7 +101,7 @@ export function ChampionCard({
               <ChampStat
                 label="Value"
                 value={row.valueSOL}
-                format={(n) => `${n.toFixed(1)} SOL`}
+                format={(n) => `${usd(n)}`}
               />
               {isWorldwide ? (
                 <ChampStat

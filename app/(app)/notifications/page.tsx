@@ -20,6 +20,7 @@ import { useNotifications, type DbNotification } from '@/lib/use-notifications';
 import { useHexLocations } from '@/lib/use-hex-locations';
 import { acceptBidOnChain, declineBidOnChain } from '@/lib/bid-chain';
 
+import { useUsdFmt } from '@/lib/usd';
 const CARD = 'rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md';
 
 function formatAgo(iso: string): string {
@@ -109,6 +110,7 @@ function NotificationRow({
   countryCode?: string;
   wallet: ActiveWallet;
 }) {
+  const usd = useUsdFmt();
   const [acting, setActing] = useState<'accept' | 'decline' | null>(null);
   const [outcome, setOutcome] = useState<'accepted' | 'declined' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -160,42 +162,42 @@ function NotificationRow({
               {n.type === 'bid_received' && (
                 <>
                   <UserLink addr={p.bidder ?? ''} /> offered{' '}
-                  <b className="tabular-nums">{Number(p.price_sol).toFixed(3)} SOL</b> for your hex in{' '}
+                  <b className="tabular-nums">{usd(Number(p.price_sol))}</b> for your hex in{' '}
                   <HexLink href={hexHref} label={where} countryCode={countryCode} />
                 </>
               )}
               {n.type === 'bid_accepted' && (
                 <>
-                  Your <b className="tabular-nums">{Number(p.price_sol).toFixed(3)} SOL</b> offer on{' '}
+                  Your <b className="tabular-nums">{usd(Number(p.price_sol))}</b> offer on{' '}
                   <HexLink href={hexHref} label={where} countryCode={countryCode} /> was accepted -
                   the hex is yours.
                 </>
               )}
               {n.type === 'bid_declined' && (
                 <>
-                  Your <b className="tabular-nums">{Number(p.price_sol).toFixed(3)} SOL</b> offer on{' '}
+                  Your <b className="tabular-nums">{usd(Number(p.price_sol))}</b> offer on{' '}
                   <HexLink href={hexHref} label={where} countryCode={countryCode} /> was declined.
                 </>
               )}
               {n.type === 'bid_cancelled' && (
                 <>
                   <UserLink addr={p.bidder ?? ''} /> withdrew their{' '}
-                  <b className="tabular-nums">{Number(p.price_sol).toFixed(3)} SOL</b> offer on{' '}
+                  <b className="tabular-nums">{usd(Number(p.price_sol))}</b> offer on{' '}
                   <HexLink href={hexHref} label={where} countryCode={countryCode} />
                 </>
               )}
               {n.type === 'outbid' && (
                 <>
                   You were outbid on <HexLink href={hexHref} label={where} countryCode={countryCode} />{' '}
-                  - <b className="tabular-nums">{Number(p.new_price_sol).toFixed(3)} SOL</b> beats your{' '}
-                  <span className="tabular-nums">{Number(p.your_price_sol).toFixed(3)} SOL</span>.
+                  - <b className="tabular-nums">{usd(Number(p.new_price_sol))}</b> beats your{' '}
+                  <span className="tabular-nums">{usd(Number(p.your_price_sol))}</span>.
                 </>
               )}
               {n.type === 'hex_sold' && (
                 <>
                   Your hex in <HexLink href={hexHref} label={where} countryCode={countryCode} /> sold to{' '}
                   <UserLink addr={p.buyer ?? ''} /> for{' '}
-                  <b className="tabular-nums">{Number(p.price_sol).toFixed(3)} SOL</b>
+                  <b className="tabular-nums">{usd(Number(p.price_sol))}</b>
                 </>
               )}
             </div>
@@ -231,7 +233,7 @@ function NotificationRow({
           )}
           {outcome === 'accepted' && (
             <p className="mt-2 text-xs font-medium text-[#7db4f5] dark:text-white/70">
-              Sold - the escrowed SOL landed in your wallet and the hex transferred to the buyer.
+              Sold - the escrowed funds landed in your wallet and the hex transferred to the buyer.
             </p>
           )}
           {outcome === 'declined' && (

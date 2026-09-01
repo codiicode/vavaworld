@@ -146,7 +146,7 @@ export default function TileDetailPage() {
               <span className="text-3xl font-semibold tabular-nums tracking-tight">
                 {listing.price.toFixed(3)}
               </span>
-              <span className="text-sm font-medium text-muted-foreground">SOL</span>
+              <span className="text-sm font-medium text-muted-foreground">USD</span>
               <span className="ml-2 text-sm tabular-nums text-muted-foreground">
                 ≈ ${listing.priceUsd}
               </span>
@@ -214,7 +214,7 @@ export default function TileDetailPage() {
             {!isOwn && (
               <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
                 Buying settles on-chain via the secondary-market program: your
-                SOL and the hex change hands in one atomic transaction.
+                Payment and the hex change hands in one atomic transaction.
               </p>
             )}
           </div>

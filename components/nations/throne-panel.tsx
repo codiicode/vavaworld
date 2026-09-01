@@ -7,6 +7,7 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { UserLink } from '@/components/user-link';
 import { TIERS } from '@/lib/tokenomics-constants';
 
+import { useUsdFmt } from '@/lib/usd';
 const CARD = 'rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md';
 
 type Throne = { country_iso: string; holder: string; seized_at: string; via: 'claim' | 'coup' };
@@ -33,6 +34,7 @@ type ThroneData = {
  * server verifies signature, on-chain stake and land atomically).
  */
 export function ThronePanel({ iso }: { iso: string }) {
+  const usd = useUsdFmt();
   const wallet = useActiveWallet();
   const [data, setData] = useState<ThroneData | null>(null);
   const [busy, setBusy] = useState(false);
@@ -119,7 +121,7 @@ export function ThronePanel({ iso }: { iso: string }) {
               <div className="text-lg font-semibold tabular-nums text-foreground">
                 ${data.earnings?.primaryUsd.toFixed(2) ?? '0.00'}
                 <span className="ml-2 text-xs font-normal text-foreground/60">
-                  + {data.earnings?.secondarySol.toFixed(4) ?? '0'} SOL trade cut
+                  + {usd(data.earnings?.secondarySol ?? 0)} trade cut
                 </span>
               </div>
             </div>

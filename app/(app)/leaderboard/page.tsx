@@ -22,12 +22,14 @@ import {
 import { useLeaderboard } from '@/lib/use-leaderboard';
 import { COUNTRIES } from '@/lib/countries';
 
+import { useUsdFmt } from '@/lib/usd';
 const COUNTRY_NAME = new Map(COUNTRIES.map((c) => [c.code, c.name]));
 
 // Sorts that only make sense worldwide (no per-country equivalent in the data).
 const GLOBAL_ONLY_SORTS: ReadonlyArray<SortKey> = ['countries', 'volume'];
 
 export default function LeaderboardPage() {
+  const usd = useUsdFmt();
   const [sort, setSort] = useState<SortKey>('hexes');
   const [filter, setFilter] = useState<FilterKey>('worldwide');
   const firstMount = useFirstMountLoading();
@@ -125,7 +127,7 @@ export default function LeaderboardPage() {
           <StatTile
             className="compact"
             label="Total value"
-            value={`${rows.reduce((n, r) => n + r.valueSOL, 0).toFixed(1)} SOL`}
+            value={usd(rows.reduce((n, r) => n + r.valueSOL, 0))}
           />
         </div>
       )}

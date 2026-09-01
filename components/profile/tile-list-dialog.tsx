@@ -16,6 +16,7 @@ import {
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
+import { useUsdFmt } from '@/lib/usd';
 /**
  * "List for sale" dialog opened from the tile row "..." menu.
  *
@@ -35,6 +36,7 @@ export function TileListDialog({
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
+  const usd = useUsdFmt();
   const [price, setPrice] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
@@ -77,7 +79,7 @@ export function TileListDialog({
             <div className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                  Asking price (SOL)
+                  Asking price ($)
                 </label>
                 <Input
                   autoFocus
@@ -88,13 +90,13 @@ export function TileListDialog({
                   className="h-10 text-base tabular-nums"
                 />
                 <p className="mt-1 text-[11px] text-muted-foreground tabular-nums">
-                  You paid {paidSol.toFixed(3)} SOL
+                  You paid {usd(paidSol)}
                 </p>
               </div>
 
               <dl className="space-y-1.5 rounded-md border border-border bg-muted/40 p-3 text-xs">
-                <Row label="Marketplace fee (2.5%)" value={`${fee.toFixed(4)} SOL`} />
-                <Row label="You receive" value={`${proceeds.toFixed(4)} SOL`} bold />
+                <Row label="Marketplace fee (2.5%)" value={`${usd(fee)}`} />
+                <Row label="You receive" value={`${usd(proceeds)}`} bold />
               </dl>
 
               {error && (
@@ -165,7 +167,7 @@ export function TileListDialog({
               <p className="text-sm font-medium">Listed</p>
               <p className="max-w-sm text-xs text-muted-foreground">
                 Your hex is live in the marketplace at{' '}
-                <span className="tabular-nums text-foreground">{numeric.toFixed(3)} SOL</span>.
+                <span className="tabular-nums text-foreground">{usd(numeric)}</span>.
                 On-chain settlement happens when the marketplace contract ships;
                 until then the listing is held off-chain.
               </p>

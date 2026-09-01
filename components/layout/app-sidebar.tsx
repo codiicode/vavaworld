@@ -29,6 +29,7 @@ import { useUserProfile } from '@/lib/use-user-profile';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
 import { cn } from '@/lib/utils';
 
+import { useUsdFmt } from '@/lib/usd';
 function shortAddr(addr: string): string {
   if (!addr) return '-';
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
@@ -61,6 +62,7 @@ const NAV: ReadonlyArray<NavItem> = [
  * `onNavigate` lets the mobile drawer close itself when a link is tapped.
  */
 function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
+  const usd = useUsdFmt();
   const pathname = usePathname();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
@@ -187,7 +189,7 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
                   {profile.username ? `@${profile.username}` : shortAddr(wallet.address ?? '')}
                 </span>
                 <span className="truncate text-[11.5px] leading-tight tabular-nums text-foreground/55">
-                  {balance !== null ? `${balance.toFixed(3)} SOL` : '- SOL'}
+                  {balance !== null ? usd(balance) : '$ -'}
                 </span>
               </div>
             </Link>
@@ -328,6 +330,7 @@ export function MobileNav() {
  * to icon buttons and the wallet chip sits at the far right.
  */
 export function TopNav() {
+  const usd = useUsdFmt();
   const pathname = usePathname();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
@@ -434,7 +437,7 @@ export function TopNav() {
                 {profile.username ? `@${profile.username}` : shortAddr(wallet.address ?? '')}
               </span>
               <span className="truncate text-[11px] leading-tight tabular-nums text-foreground/55">
-                {balance !== null ? `${balance.toFixed(3)} SOL` : '- SOL'}
+                {balance !== null ? usd(balance) : '$ -'}
               </span>
             </div>
           </Link>

@@ -26,6 +26,7 @@ import type { DbListing } from '@/lib/supabase-listings';
 import type { ClaimedTile } from '@/types/tile';
 import type { Tier } from '@/lib/tier';
 
+import { useUsdFmt } from '@/lib/usd';
 const programIdPk = new PublicKey(PROGRAM_ID);
 const coder = new BorshAccountsCoder(idl as Idl);
 
@@ -259,6 +260,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 }
 
 function OwnerCard({ tile }: { tile: ClaimedTile }) {
+  const usd = useUsdFmt();
   const paidSol = Number(tile.pricePaid) / LAMPORTS_PER_SOL;
   return (
     <div className="rounded-2xl border border-white/40 bg-white/30 p-5 backdrop-blur-md">
@@ -288,7 +290,7 @@ function OwnerCard({ tile }: { tile: ClaimedTile }) {
             Originally paid
           </div>
           <div className="font-medium tabular-nums text-foreground">
-            {paidSol.toFixed(3)} SOL
+            {usd(paidSol)}
           </div>
         </div>
       </div>
@@ -330,6 +332,7 @@ function BidsCard({
   countryCode?: string;
   askSol: number | null;
 }) {
+  const usd = useUsdFmt();
   const wallet = useActiveWallet();
   const { bids, refresh } = useBidsForHex(h3);
   const [bidOpen, setBidOpen] = useState(false);
@@ -379,7 +382,7 @@ function BidsCard({
             <div key={b.id} className="flex items-center justify-between gap-3 py-2 first:pt-0">
               <div className="min-w-0">
                 <div className="text-sm font-semibold tabular-nums text-foreground">
-                  {Number(b.price_sol).toFixed(3)} SOL
+                  {usd(Number(b.price_sol))}
                 </div>
                 <div className="truncate text-[11px] text-foreground/55">
                   <UserLink addr={b.bidder} />
@@ -458,6 +461,7 @@ function BidsCard({
 }
 
 function ListingCard({ listing }: { listing: DbListing }) {
+  const usd = useUsdFmt();
   return (
     <div className="rounded-2xl border border-primary/40 bg-primary/10 p-5 backdrop-blur-md">
       <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-primary">
@@ -465,7 +469,7 @@ function ListingCard({ listing }: { listing: DbListing }) {
       </div>
       <div className="flex items-baseline justify-between">
         <span className="text-2xl font-semibold tabular-nums tracking-tight text-foreground">
-          {Number(listing.price_sol).toFixed(3)} SOL
+          {usd(Number(listing.price_sol))}
         </span>
         <span className="text-xs text-foreground/55">≈ ${Math.round(Number(listing.price_sol) * 150)}</span>
       </div>
