@@ -65,6 +65,7 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
           landingHeader: 'Welcome to VAVAWORLD',
           showWalletLoginFirst: false,
           walletChainType: 'solana-only',
+          walletList: ['detected_solana_wallets', 'phantom', 'solflare', 'backpack'],
         },
         embeddedWallets: {
           solana: {
