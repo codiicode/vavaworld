@@ -5,6 +5,9 @@ import hardhatToolboxMochaEthersPlugin from "@nomicfoundation/hardhat-toolbox-mo
  *  deploy time; the local network covers the whole test suite. */
 const config: HardhatUserConfig = {
   plugins: [hardhatToolboxMochaEthersPlugin],
+  networks: {
+    localhost: { type: "http", url: "http://127.0.0.1:8545" },
+  },
   solidity: {
     version: "0.8.24",
     settings: { optimizer: { enabled: true, runs: 800 }, viaIR: true },
