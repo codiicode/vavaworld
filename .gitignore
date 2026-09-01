@@ -49,3 +49,6 @@ anchor/.anchor/
 pc-*.png
 anchor/keeper-keypair.json
 anchor/tiles-keypair-v3.json
+
+# local scratch - not part of the app
+content/
