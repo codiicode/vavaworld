@@ -10,7 +10,7 @@ const programId = new PublicKey(idl.address);
 const keypairBytes = JSON.parse(readFileSync(join(homedir(), '.config', 'solana', 'id.json'), 'utf-8'));
 const keypair = Keypair.fromSecretKey(Uint8Array.from(keypairBytes));
 
-const connection = new Connection('https://api.devnet.solana.com', { commitment: 'confirmed' });
+const connection = new Connection(process.env.RPC_URL ?? 'https://api.devnet.solana.com', { commitment: 'confirmed' });
 const wallet = new Wallet(keypair);
 const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
 const program = new Program(idl, provider);

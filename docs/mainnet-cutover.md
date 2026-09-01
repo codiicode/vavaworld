@@ -15,17 +15,59 @@ into everything downstream.
 - [ ] $VAVA minted (pump.fun, 6 decimals) — record the mint address.
 - [ ] Supabase on a paid plan (free tier pauses after inactivity).
 
-## 1. On-chain program
+## 1. On-chain program — DONE except deploy
 
-1. Edit `anchor/programs/tiles/src/constants.rs`: replace `TREASURY` with
-   the mainnet treasury pubkey.
-2. `anchor build` with a fresh mainnet program keypair; note the new
-   program id, update `declare_id!` + `Anchor.toml`, rebuild.
-3. `anchor deploy --provider.cluster mainnet`.
-4. Initialize: `init_config` (keeper pubkey), `init_stake_vault`,
-   `init_counter` for tiers 1–3.
-5. `update_mint` with the real $VAVA mint, then — once verified —
-   `lock_mint` so it can never be swapped again.
+Already baked into `anchor/target/deploy/tiles.so` (437 KB, built):
+- `TREASURY = AkXJgHBo2Y4KWLi5h5UBAMgKTMn9SotfryZHjLJ3BvFN`
+- Program id `9L3cE2XpkUjdQrMUwxmU83ZMNPsgGxiTHfXxKorvjoJt`
+  (keypair: `anchor/target/deploy/tiles-mainnet-keypair.json`)
+
+Deploy day, from repo root (needs ~5.6 SOL on the deployer wallet
+`74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X`):
+
+```bash
+export RPC_URL="<helius mainnet url>"
+solana program deploy anchor/target/deploy/tiles.so \
+  --program-id anchor/target/deploy/tiles-mainnet-keypair.json \
+  --url "$RPC_URL"
+```
+
+Then flip `lib/anchor-idl.json`'s `address` field to the mainnet id and
+commit — every client and script reads the program id from there.
+
+### Init with a STAND-IN mint first (the devnet pattern, on purpose)
+
+`init_config` creates the token vault against a mint, but real $VAVA
+doesn't exist until launch minute. So: create a throwaway SPL mint on
+mainnet (6 decimals, tiny supply), init and REHEARSE with it, and swap in
+the real mint at launch. That is exactly what `update_mint`/`lock_mint`
+exist for.
+
+```bash
+spl-token create-token --decimals 6 --url "$RPC_URL"   # note <STANDIN>
+RPC_URL=$RPC_URL node anchor/scripts/init-config.mjs <STANDIN>
+RPC_URL=$RPC_URL node anchor/scripts/init-counters.mjs
+# stake vault init runs inside smoke-staking.mjs (idempotent)
+```
+
+Rehearse with `KEEPER_SWAP=reference` + the stand-in mint (no market
+exists for it, so Jupiter mode can't run yet).
+
+**End the rehearsal by RAZING every rehearsal hex** - `update_mint`
+refuses while the old vault still holds tokens, so the stand-in vault
+must be drained before the real mint can be connected.
+
+### Launch minute
+
+```bash
+# after the real $VAVA is minted on pump.fun:
+RPC_URL=$RPC_URL node anchor/scripts/update-mint.mjs <REAL_VAVA_MINT>
+# verify a claim + one keeper pass against the real mint, then:
+RPC_URL=$RPC_URL node anchor/scripts/lock-mint.mjs   # PERMANENT
+```
+
+Flip the keeper service to `KEEPER_SWAP=jupiter` and watch its FIRST
+real swap land - that is the last untested code path in the system.
 
 ## 2. App + env (Railway and Vercel)
 
