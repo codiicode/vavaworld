@@ -28,9 +28,10 @@ import {IERC20} from "./interfaces/IERC20.sol";
 contract VavaTiles {
     // ---------------------------------------------------------------- types
 
+    // Packed to 2 storage slots - at 1000-hex batches every slot counts.
+    // Price paid lives in the Claimed event (indexers), not in storage.
     struct Hex {
         address owner;
-        uint64 pricePaidWei6; // price paid, in wei / 1e6 (fits u64 for ~18M ETH)
         uint40 claimedAt;
         uint8 tier; // 1..3, from the city bbox table
         uint128 pendingWei; // 15% escrow awaiting embed
@@ -78,9 +79,8 @@ contract VavaTiles {
 
     // ---------------------------------------------------------------- EIP-712
 
-    // keccak256("VavaClaim(address claimer,uint64[] h3s,uint256[] pricesWei,uint256 expiry)")
     bytes32 public constant CLAIM_TYPEHASH =
-        keccak256("VavaClaim(address claimer,uint64[] h3s,uint256[] pricesWei,uint256 expiry)");
+        keccak256("VavaClaim(address claimer,uint64[] h3s,uint256[] pricesWei,uint8[] tiers,uint256 expiry)");
     bytes32 public immutable DOMAIN_SEPARATOR;
 
     // ---------------------------------------------------------------- events
@@ -136,6 +136,14 @@ contract VavaTiles {
         );
     }
 
+    uint256 private _entered = 1;
+    modifier nonReentrant() {
+        require(_entered == 1, "reentrant");
+        _entered = 2;
+        _;
+        _entered = 1;
+    }
+
     modifier onlyAdmin() {
         if (msg.sender != admin) revert NotAdmin();
         _;
@@ -161,7 +169,7 @@ contract VavaTiles {
         uint8[] calldata tiers,
         uint256 expiry,
         bytes calldata signature
-    ) external payable {
+    ) external payable nonReentrant {
         uint256 n = h3s.length;
         if (n == 0 || n > 1000) revert TooMany();
         if (pricesWei.length != n || tiers.length != n) revert LengthMismatch();
@@ -178,7 +186,6 @@ contract VavaTiles {
             uint128 pending = uint128((price * EMBED_BPS) / 10_000);
             hexes[id] = Hex({
                 owner: msg.sender,
-                pricePaidWei6: uint64(price / 1e6),
                 claimedAt: uint40(block.timestamp),
                 tier: tiers[i],
                 pendingWei: pending,
@@ -204,21 +211,17 @@ contract VavaTiles {
         uint256 expiry,
         bytes calldata signature
     ) internal view {
-        // tiers ride inside the h3 hash: h3s[i] is packed with the tier in
-        // the top byte server-side? No - keep it explicit and simple:
         bytes32 structHash = keccak256(
             abi.encode(
                 CLAIM_TYPEHASH,
                 claimer,
                 keccak256(abi.encodePacked(h3s)),
                 keccak256(abi.encodePacked(pricesWei)),
+                keccak256(abi.encodePacked(tiers)),
                 expiry
             )
         );
-        // tiers are committed via a second packed hash appended to the digest
-        bytes32 digest = keccak256(
-            abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash, keccak256(abi.encodePacked(tiers)))
-        );
+        bytes32 digest = keccak256(abi.encodePacked(hex"1901", DOMAIN_SEPARATOR, structHash));
         if (_recover(digest, signature) != keeper) revert BadSignature();
     }
 
@@ -233,7 +236,7 @@ contract VavaTiles {
     // ---------------------------------------------------------------- embed / raze
 
     /** Keeper: lock bought VAVA into hexes, get escrowed ETH back. */
-    function embed(uint64[] calldata h3s, uint256[] calldata amounts) external onlyKeeper {
+    function embed(uint64[] calldata h3s, uint256[] calldata amounts) external onlyKeeper nonReentrant {
         if (h3s.length != amounts.length) revert LengthMismatch();
         uint256 reimburse;
         uint256 vavaIn;
@@ -253,7 +256,7 @@ contract VavaTiles {
     }
 
     /** Owner: burn the hex, take its embedded VAVA minus the 10% burn. */
-    function raze(uint64 h3) external {
+    function raze(uint64 h3) external nonReentrant {
         Hex storage h = hexes[h3];
         if (h.owner != msg.sender) revert NotOwner();
         uint256 embedded = h.embeddedVava;
@@ -296,7 +299,7 @@ contract VavaTiles {
     }
 
     /** Atomic listing purchase - the EVM upgrade over wallet-transfer + sync_owner. */
-    function buy(uint64 h3) external payable {
+    function buy(uint64 h3) external payable nonReentrant {
         uint128 ask = listings[h3];
         if (ask == 0) revert NotListed();
         if (msg.value != ask) revert WrongPayment();
@@ -305,7 +308,7 @@ contract VavaTiles {
         emit Sold(h3, seller, msg.sender, ask);
     }
 
-    function placeBid(uint64 h3) external payable {
+    function placeBid(uint64 h3) external payable nonReentrant {
         if (hexes[h3].owner == address(0) || hexes[h3].owner == msg.sender) revert NotOwner();
         if (bids[h3].bidder != address(0)) revert BidExists();
         if (msg.value == 0) revert WrongPayment();
@@ -313,7 +316,7 @@ contract VavaTiles {
         emit BidPlaced(h3, msg.sender, msg.value);
     }
 
-    function cancelBid(uint64 h3) external {
+    function cancelBid(uint64 h3) external nonReentrant {
         Bid memory b = bids[h3];
         if (b.bidder != msg.sender) revert NoBid();
         delete bids[h3];
@@ -321,12 +324,12 @@ contract VavaTiles {
         emit BidResolved(h3, b.bidder, false);
     }
 
-    function declineBid(uint64 h3) external {
+    function declineBid(uint64 h3) external nonReentrant {
         if (hexes[h3].owner != msg.sender) revert NotOwner();
         _refundBid(h3);
     }
 
-    function acceptBid(uint64 h3) external {
+    function acceptBid(uint64 h3) external nonReentrant {
         if (hexes[h3].owner != msg.sender) revert NotOwner();
         Bid memory b = bids[h3];
         if (b.bidder == address(0)) revert NoBid();
@@ -376,7 +379,7 @@ contract VavaTiles {
         emit UnstakeBegun(msg.sender, amount, s.availableAt);
     }
 
-    function withdrawUnstaked() external {
+    function withdrawUnstaked() external nonReentrant {
         Stake storage s = stakes[msg.sender];
         uint256 amount = s.pendingAmount;
         if (amount == 0) revert NothingPending();
