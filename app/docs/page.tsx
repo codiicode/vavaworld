@@ -237,7 +237,7 @@ export default function DocsPage() {
             <h3>Offers</h3>
             <p>
               You can also bid on hexes nobody has listed. Offers are{' '}
-              <strong>escrowed on-chain</strong> - the SOL leaves your wallet and sits in a
+              <strong>escrowed on-chain</strong> - the funds leave your wallet and sit in a
               program-owned account, so an owner considering your offer knows it is real and
               funded.
             </p>
@@ -311,7 +311,7 @@ export default function DocsPage() {
               not a simulation.
             </p>
             <p>
-              Devnet SOL has no monetary value and can be obtained free from a faucet, so you
+              Testnet funds have no monetary value and can be obtained free from a faucet, so you
               can play through the entire loop without spending anything. The trade-off is that
               devnet is a test network: it can be reset by the Solana validators themselves,
               which would clear all state. That is outside anyone&apos;s control.

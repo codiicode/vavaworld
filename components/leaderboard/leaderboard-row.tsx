@@ -11,7 +11,9 @@ import { RankDelta } from '@/components/rank-delta';
 import { fmtCompact } from '@/lib/format';
 import type { RowView, Scope } from '@/lib/mock-leaderboard';
 
+import { useUsdFmt } from '@/lib/usd';
 export function LeaderboardRow({ row, scope }: { row: RowView; scope: Scope }) {
+  const usd = useUsdFmt();
   const router = useRouter();
   const { entry } = row;
   const isWorldwide = scope === 'worldwide';
@@ -95,7 +97,7 @@ export function LeaderboardRow({ row, scope }: { row: RowView; scope: Scope }) {
 
       <TableCell className="text-right">
         <div className="text-sm font-semibold tabular-nums">
-          {row.valueSOL.toFixed(1)} SOL
+          {usd(row.valueSOL)}
         </div>
         <div className="text-[10px] tabular-nums text-foreground/50">
           ${row.valueUSD.toLocaleString('en-US')}
@@ -112,7 +114,7 @@ export function LeaderboardRow({ row, scope }: { row: RowView; scope: Scope }) {
           >
             {positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
             {positive ? '+' : ''}
-            {entry.volume24h} SOL
+            {usd(entry.volume24h)}
           </div>
         </TableCell>
       )}

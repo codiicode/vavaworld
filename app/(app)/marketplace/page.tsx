@@ -25,6 +25,7 @@ import { hexCenter } from '@/lib/h3-utils';
 import { useHexLocations } from '@/lib/use-hex-locations';
 import { classifyTier } from '@/lib/tier';
 
+import { useUsdFmt } from '@/lib/usd';
 type SortKey = 'newest' | 'price-asc' | 'price-desc' | 'trending';
 
 const SORT_LABELS: Record<SortKey, string> = {
@@ -50,6 +51,7 @@ const CONTENT = 'select-panel';
  * dense side rail; listings render as satellite-preview tiles.
  */
 export default function MarketplacePage() {
+  const usd = useUsdFmt();
   const [search, setSearch] = useState('');
   const [country, setCountry] = useState<'all' | string>('all');
   const [tier, setTier] = useState<'all' | Tier>('all');
@@ -122,11 +124,11 @@ export default function MarketplacePage() {
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat
           label="Floor"
-          value={stats?.floorSol != null ? `${stats.floorSol.toFixed(3)} SOL` : ' - '}
+          value={stats?.floorSol != null ? `${usd(stats.floorSol)}` : ' - '}
         />
         <Stat
           label="Volume (24h)"
-          value={stats ? `${stats.volume24hSol.toFixed(2)} SOL` : ' - '}
+          value={stats ? `${usd(stats.volume24hSol)}` : ' - '}
         />
         <Stat
           label="Listed"

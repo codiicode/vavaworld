@@ -9,6 +9,7 @@ import { Flag } from '@/components/flag';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { placeBidOnChain } from '@/lib/bid-chain';
 
+import { useUsdFmt } from '@/lib/usd';
 type Phase = 'input' | 'signing' | 'done' | 'error';
 
 /**
@@ -35,6 +36,7 @@ export function BidDialog({
   onOpenChange: (next: boolean) => void;
   onPlaced?: () => void;
 }) {
+  const usd = useUsdFmt();
   const wallet = useActiveWallet();
   const [amount, setAmount] = useState('');
   const [phase, setPhase] = useState<Phase>('input');
@@ -93,7 +95,7 @@ export function BidDialog({
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="text-sm text-muted-foreground">
             {phase === 'done'
-              ? 'Your SOL is locked in escrow and the owner has been notified. Accept makes the hex yours instantly; decline refunds you automatically.'
+              ? 'Your funds are locked in escrow and the owner has been notified. Accept makes the hex yours instantly; decline refunds you automatically.'
               : 'Name your price. The amount is held in a secure on-chain escrow - refunded in full if the owner declines or you withdraw.'}
           </DialogPrimitive.Description>
         </div>
@@ -108,7 +110,7 @@ export function BidDialog({
             {askSol != null && (
               <div className="text-right">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Ask</div>
-                <div className="text-xs font-semibold tabular-nums">{askSol.toFixed(3)} SOL</div>
+                <div className="text-xs font-semibold tabular-nums">{usd(askSol)}</div>
               </div>
             )}
           </div>
@@ -116,7 +118,7 @@ export function BidDialog({
           {phase !== 'done' && (
             <div>
               <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                Your offer (SOL)
+                Your offer ($)
               </label>
               <div className="relative">
                 <input
@@ -129,9 +131,7 @@ export function BidDialog({
                   placeholder="0.000"
                   className="h-10 w-full rounded-md border border-border bg-background px-3 pr-14 text-sm tabular-nums outline-none transition-colors focus:border-primary"
                 />
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
-                  SOL
-                </span>
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">$</span>
               </div>
               <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
                 <span>{usdApprox != null ? `≈ $${usdApprox.toFixed(2)}` : ' '}</span>
@@ -145,7 +145,7 @@ export function BidDialog({
           {phase === 'done' && (
             <div className="flex items-center gap-2 rounded-md border border-white/12 bg-white/[0.04] px-3 py-2.5 text-sm text-white/80">
               <CheckCircle2 size={15} />
-              {parsed.toFixed(3)} SOL locked in escrow - offer live.
+              {usd(parsed)} locked in escrow - offer live.
             </div>
           )}
 

@@ -16,6 +16,7 @@ export async function GET(req: Request) {
   const country = (searchParams.get('country') || '').toLowerCase();
   const n = Number(searchParams.get('n') || '1');
   const sol = searchParams.get('sol');
+  const usdAmount = searchParams.get('usd') ?? sol;
 
   const headline = `${by.startsWith('@') || by.length > 24 ? by : '@' + by} claimed`;
   const hexLine = `${n.toLocaleString('en-US')} hex${n === 1 ? '' : 'es'}`;
@@ -72,7 +73,7 @@ export async function GET(req: Request) {
               <span style={{ fontSize: 24, color: 'rgba(255,255,255,0.55)', letterSpacing: 1 }}>
                 Paid
               </span>
-              <span style={{ fontSize: 56, fontWeight: 700, color: '#ffffff' }}>◎ {sol} SOL</span>
+              <span style={{ fontSize: 56, fontWeight: 700, color: '#ffffff' }}>${usdAmount}</span>
             </div>
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 'auto' }}>

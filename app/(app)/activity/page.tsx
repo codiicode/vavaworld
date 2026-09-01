@@ -24,6 +24,7 @@ import { StatTile } from '@/components/ui/stat-tile';
 import { type ActivityItem } from '@/lib/mock-marketplace';
 import { useActivity } from '@/lib/use-activity';
 
+import { useUsdFmt } from '@/lib/usd';
 type ActionFilter = 'all' | 'buy' | 'sell';
 
 const TRIGGER = 'select-trigger';
@@ -31,6 +32,7 @@ const CONTENT = 'select-panel';
 const TH = 'text-[10px] uppercase tracking-[0.08em] font-medium text-foreground/60';
 
 export default function ActivityPage() {
+  const usd = useUsdFmt();
   const [action, setAction] = useState<ActionFilter>('all');
   const { items } = useActivity();
 
@@ -62,7 +64,7 @@ export default function ActivityPage() {
         <StatCard label="Sells (24h)" value={sells.toString()} accent="rose" />
         <StatCard
           label="Volume (24h)"
-          value={`${volume.toFixed(2)} SOL`}
+          value={`${usd(volume)}`}
         />
       </div>
 
@@ -141,7 +143,7 @@ export default function ActivityPage() {
                   <UserLink addr={a.toAddr} />
                 </TableCell>
                 <TableCell className="text-right text-sm font-semibold tabular-nums">
-                  {a.price.toFixed(3)} SOL
+                  {usd(a.price)}
                 </TableCell>
                 <TableCell className="text-right text-[11px] tabular-nums text-foreground/55">
                   {a.ago} ago

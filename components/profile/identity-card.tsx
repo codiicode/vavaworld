@@ -164,12 +164,12 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
             <SummaryStat
               label="Spent"
               value={totalSpent !== null ? totalSpent.toFixed(3) : '-'}
-              unit="SOL"
+              unit=""
             />
             <SummaryStat
               label="Balance"
               value={balance !== null ? balance.toFixed(3) : '-'}
-              unit="SOL"
+              unit=""
             />
           </div>
         </div>

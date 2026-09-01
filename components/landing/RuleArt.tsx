@@ -26,7 +26,7 @@ export function ArtLoaded() {
       <div className="ui-rows">
         <div className="ui-row">
           <span className="k">You paid</span>
-          <span className="v">0.0021 SOL</span>
+          <span className="v">$0.31</span>
         </div>
         <div className="ui-row">
           <span className="k">Redeem</span>

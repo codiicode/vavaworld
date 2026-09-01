@@ -66,7 +66,7 @@ function ListingCard({ listing: l }: { listing: Listing }) {
               <span className="text-[17px] font-semibold leading-none tabular-nums text-white">
                 {l.price.toFixed(3)}
               </span>
-              <span className="text-[11px] text-white/50">SOL</span>
+              <span className="text-[11px] text-white/50">USD</span>
             </div>
           </div>
           {l.change24h !== 0 && (

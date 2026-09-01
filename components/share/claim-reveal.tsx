@@ -177,7 +177,7 @@ export function ClaimReveal({ claim }: { claim: ClaimShare }) {
           {claim.sol ? (
             <>
               {' '}
-              for <span className="font-semibold text-white">◎ {claim.sol} SOL</span>
+              for <span className="font-semibold text-white">${claim.sol}</span>
             </>
           ) : null}
         </p>

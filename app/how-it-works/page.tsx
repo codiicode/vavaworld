@@ -22,7 +22,7 @@ const STEPS = [
   {
     n: 'ii.',
     title: 'Claim it.',
-    body: 'Pay with SOL straight from your wallet - prices start around $0.10 per hex and rise a little with every claim in that country. First come, first served.',
+    body: 'Pay with ETH or USDG straight from your wallet - prices start around $0.10 per hex and rise a little with every claim in that country. First come, first served.',
   },
   {
     n: 'iii.',

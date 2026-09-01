@@ -61,7 +61,7 @@ const FRAMES: Frame[] = [
     lit: 3,
     hud: [
       { k: 'Selected', v: '3 hexes' },
-      { k: 'Quote', v: '0.0021 SOL' },
+      { k: 'Quote', v: '$0.31' },
       { k: 'Status', v: 'Selected' },
     ],
     fill: 56,
@@ -348,7 +348,7 @@ export function ClaimDemo() {
               ? 'Owned · 8a2f…c41'
               : i === 3
                 ? 'Confirming…'
-                : `${on.size} ${on.size === 1 ? 'hex' : 'hexes'} · ${(on.size * 0.0007).toFixed(4)} SOL`}
+                : `${on.size} ${on.size === 1 ? 'hex' : 'hexes'} · $${(on.size * 0.1).toFixed(2)}`}
           </span>
         </div>
 
@@ -388,13 +388,13 @@ export function ClaimDemo() {
             {(interactive
               ? [
                   { k: 'Selected', v: `${picked.size} ${picked.size === 1 ? 'hex' : 'hexes'}` },
-                  { k: 'Quote', v: `${(picked.size * 0.0007).toFixed(4)} SOL` },
+                  { k: 'Quote', v: `$${(picked.size * 0.1).toFixed(2)}` },
                   { k: 'Status', v: picked.size ? 'Selected' : 'Tap a hex' },
                 ]
               : i >= 3 && chosen
                 ? [
                     { k: i >= 4 ? 'Owned' : 'Claiming', v: `${picked.size} ${picked.size === 1 ? 'hex' : 'hexes'}` },
-                    { k: i >= 4 ? 'Deed' : 'Paying', v: i >= 4 ? '8a2f…c41' : `${(picked.size * 0.0007).toFixed(4)} SOL` },
+                    { k: i >= 4 ? 'Deed' : 'Paying', v: i >= 4 ? '8a2f…c41' : `$${(picked.size * 0.1).toFixed(2)}` },
                     { k: 'Status', v: i >= 4 ? 'Owned' : 'Confirming' },
                   ]
                 : f.hud
