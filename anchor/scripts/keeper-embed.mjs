@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import {
-  Connection, Keypair, PublicKey, SystemProgram, Transaction,
+  ComputeBudgetProgram, Connection, Keypair, PublicKey, SystemProgram, Transaction,
 } from '@solana/web3.js';
 import { AnchorProvider, Program, Wallet, BN, BorshAccountsCoder } from '@coral-xyz/anchor';
 import bs58 from 'bs58';
@@ -39,6 +39,10 @@ const JUPITER_BASE_URL = process.env.JUPITER_BASE_URL ?? 'https://api.jup.ag/swa
 const JUPITER_API_KEY = process.env.JUPITER_API_KEY ?? '';
 // Skip a pass rather than swap dust - fee drag would eat it.
 const MIN_SWAP_LAMPORTS = BigInt(process.env.KEEPER_MIN_SWAP_LAMPORTS ?? 1_000_000);
+// Embeds are batched N-per-transaction and the transactions land in
+// parallel - a 1000-tile pass settles in seconds, not minutes.
+const EMBED_BATCH = Number(process.env.KEEPER_EMBED_BATCH ?? 8);
+const EMBED_CONCURRENCY = Number(process.env.KEEPER_EMBED_CONCURRENCY ?? 8);
 
 const TOKEN = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const ATA_PROG = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
@@ -198,28 +202,51 @@ async function runOnce() {
     });
   }
 
+  // Batch EMBED_BATCH embeds per transaction, land batches in parallel.
+  // embed() is atomic per tile, so a failing batch only delays its tiles
+  // to the next pass - amounts re-derive from on-chain pending_sol.
+  const work = pending
+    .map((t, i) => ({ ...t, amount: amounts[i] }))
+    .filter((t) => t.amount > 0n);
+  const batches = [];
+  for (let i = 0; i < work.length; i += EMBED_BATCH) batches.push(work.slice(i, i + EMBED_BATCH));
+
   let settled = 0;
-  for (let i = 0; i < pending.length; i++) {
-    const { pda } = pending[i];
-    if (amounts[i] === 0n) continue;
-    const amount = new BN(amounts[i].toString());
-    try {
-      const sig = await program.methods.embed(amount).accounts({
-        keeper: keeper.publicKey,
-        config: configPda,
-        tile: pda,
-        buybackVault,
-        keeperToken: keeperAta,
-        vavaVault,
-      }).rpc();
-      settled += 1;
-      console.log(`[keeper] embedded ${(amount.toNumber() / 1e6).toFixed(2)} VAVA -> ${pda.toBase58().slice(0, 8)}… ${sig.slice(0, 16)}…`);
-    } catch (e) {
-      // One failing tile must never take the service down.
-      console.error(`[keeper] embed failed for ${pda.toBase58().slice(0, 8)}…:`, String(e).slice(0, 160));
+  let cursor = 0;
+  const t0 = Date.now();
+  const worker = async () => {
+    for (;;) {
+      const b = cursor < batches.length ? batches[cursor++] : null;
+      if (!b) return;
+      try {
+        const tx = new Transaction().add(
+          ComputeBudgetProgram.setComputeUnitLimit({ units: 1_200_000 }),
+        );
+        for (const { pda, amount } of b) {
+          tx.add(await program.methods.embed(new BN(amount.toString())).accounts({
+            keeper: keeper.publicKey,
+            config: configPda,
+            tile: pda,
+            buybackVault,
+            keeperToken: keeperAta,
+            vavaVault,
+          }).instruction());
+        }
+        tx.feePayer = keeper.publicKey;
+        tx.recentBlockhash = (await conn.getLatestBlockhash('confirmed')).blockhash;
+        tx.sign(keeper);
+        const sig = await conn.sendRawTransaction(tx.serialize(), { skipPreflight: false });
+        await conn.confirmTransaction(sig, 'confirmed');
+        settled += b.length;
+        console.log(`[keeper] embedded batch of ${b.length} ${sig.slice(0, 16)}…`);
+      } catch (e) {
+        // One failing batch must never take the service down.
+        console.error(`[keeper] embed batch failed (${b.length} tiles):`, String(e).slice(0, 160));
+      }
     }
-  }
-  console.log(`[keeper] pass complete: ${settled}/${pending.length} settled`);
+  };
+  await Promise.all(Array.from({ length: Math.min(EMBED_CONCURRENCY, batches.length) }, worker));
+  console.log(`[keeper] pass complete: ${settled}/${pending.length} settled in ${Date.now() - t0}ms`);
 }
 
 console.log(`[keeper] rpc=${RPC_URL} program=${programId.toBase58()} keeper=${keeper.publicKey.toBase58()}`);

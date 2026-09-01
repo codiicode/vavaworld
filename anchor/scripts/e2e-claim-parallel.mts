@@ -25,7 +25,7 @@ const kp = Keypair.fromSecretKey(
 );
 
 // Deep Sahara, offset from every earlier test spot.
-const BASE = { lat: 24.1173, lng: 6.2381 };
+const BASE = { lat: 24.1173, lng: Number(process.env.E2E_LNG ?? 6.2381) };
 const COUNT = 25;
 const h3s: string[] = [];
 for (let i = 0; h3s.length < COUNT; i++) {
