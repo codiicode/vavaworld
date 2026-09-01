@@ -9,7 +9,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
-const MAX_TX_AGE_SECS = 15 * 60;
 
 /**
  * POST /api/claim  { h3, owner, txHash?, quotedPriceUsd? }
@@ -118,9 +117,3 @@ export async function POST(req: Request) {
 }
 
 /** h3 string → the LE u64 bytes used in the tile PDA seed. */
-function h3IdToLeBytes(h3: string): Buffer {
-  const big = BigInt('0x' + h3);
-  const buf = Buffer.alloc(8);
-  buf.writeBigUInt64LE(big);
-  return buf;
-}
