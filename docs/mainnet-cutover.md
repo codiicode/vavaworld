@@ -41,9 +41,11 @@ into everything downstream.
 Also regenerate `lib/anchor-idl.json` from the mainnet build (the address
 field inside it is what `anchor-client.ts` and the keeper read).
 
-`lib/pricing.ts` still holds `SOL_USD = 150` as a hard-coded reference —
-switch to the live price source (or Pyth) before launch; a stale rate
-misprices every claim in lamports.
+`lib/pricing.ts` holds `SOL_USD = 150` — this is only the FALLBACK used by
+`lib/sol-price.ts` when the live price fetch fails with a cold cache; live
+quotes (`/api/quote`) already price against the real SOL/USD rate. Before
+launch, refresh the fallback to a current ballpark so a price-API outage
+doesn't misprice claims by 50%.
 
 ## 3. Rehearsal on mainnet (small money, before announcing)
 
