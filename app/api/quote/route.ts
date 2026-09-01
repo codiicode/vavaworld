@@ -7,7 +7,7 @@ import { H3_RESOLUTION, PRICING } from '@/lib/pricing';
 import { getEthUsd } from '@/lib/eth-price';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
-import { CLAIM_DOMAIN, CLAIM_TYPES, TILES_ADDRESS, h3ToUint64 } from '@/lib/evm';
+import { CLAIM_DOMAIN, CLAIM_TYPES, NATIVE_PAY, TILES_ADDRESS, USDG_ADDRESS, h3ToUint64 } from '@/lib/evm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,7 +38,7 @@ function keeperAccount() {
 }
 
 export async function POST(req: Request) {
-  let body: { h3s?: unknown; claimer?: unknown };
+  let body: { h3s?: unknown; claimer?: unknown; currency?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -49,6 +49,12 @@ export async function POST(req: Request) {
     ? body.h3s.filter((x): x is string => typeof x === 'string')
     : [];
   const claimer = typeof body.claimer === 'string' ? body.claimer.trim() : '';
+  // 'eth' (default) or 'usdg' - the $ path prices 1:1 in USDG, no oracle.
+  const currency = body.currency === 'usdg' ? 'usdg' : 'eth';
+  const payToken = currency === 'usdg' ? USDG_ADDRESS : NATIVE_PAY;
+  if (currency === 'usdg' && !USDG_ADDRESS) {
+    return NextResponse.json({ error: 'USDG payments not configured' }, { status: 503 });
+  }
   if (h3s.length === 0 || h3s.length > MAX_PER_REQUEST) {
     return NextResponse.json({ error: `h3s must contain 1-${MAX_PER_REQUEST} hexes` }, { status: 400 });
   }
@@ -90,7 +96,7 @@ export async function POST(req: Request) {
     .in('iso_code', uniqueIsos);
   const countByIso = new Map((countries ?? []).map((c) => [c.iso_code, Number(c.claim_count)]));
 
-  const ethUsd = await getEthUsd();
+  const ethUsd = currency === 'eth' ? await getEthUsd() : 0;
   const localOffset = new Map<string, number>();
   const perHexUsd: number[] = [];
   const pricesWei: bigint[] = [];
@@ -102,8 +108,13 @@ export async function POST(req: Request) {
     localOffset.set(iso, off + 1);
     const usd = PRICING.BASE_FLOOR_USD + (base + off) * PRICING.SLOPE_PER_CLAIM_USD;
     perHexUsd.push(usd);
-    // usd -> wei via micro-eth precision: round(usd/ethUsd * 1e12) * 1e6
-    pricesWei.push(BigInt(Math.round((usd / ethUsd) * 1e12)) * 10n ** 6n);
+    if (currency === 'usdg') {
+      // $ path: price IS the dollar amount, in 6-decimal USDG base units.
+      pricesWei.push(BigInt(Math.round(usd * 1e6)));
+    } else {
+      // usd -> wei via micro-eth precision: round(usd/ethUsd * 1e12) * 1e6
+      pricesWei.push(BigInt(Math.round((usd / ethUsd) * 1e12)) * 10n ** 6n);
+    }
     const c = hexCenter(h3);
     tiers.push(classifyTier(c.lat, c.lng));
   });
@@ -123,8 +134,9 @@ export async function POST(req: Request) {
       primaryType: 'VavaClaim',
       message: {
         claimer: claimer as `0x${string}`,
+        payToken,
         h3s: cH3s.map(h3ToUint64),
-        pricesWei: cWei,
+        prices: cWei,
         tiers: cTiers,
         expiry,
       },
@@ -133,7 +145,8 @@ export async function POST(req: Request) {
     quotes.push({
       h3s: cH3s,
       perHexUsd: cUsd,
-      pricesWei: cWei.map(String),
+      payToken,
+      prices: cWei.map(String),
       tiers: cTiers,
       totalWei: cWei.reduce((s, p) => s + p, 0n).toString(),
       totalUsd: cUsd.reduce((s, u) => s + u, 0),

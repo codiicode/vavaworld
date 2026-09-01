@@ -34,7 +34,8 @@ contract VavaTiles {
         address owner;
         uint40 claimedAt;
         uint8 tier; // 1..3, from the city bbox table
-        uint128 pendingWei; // 15% escrow awaiting embed
+        bool paidInUsdg; // which currency the 15% escrow is held in
+        uint128 pendingAmount; // 15% escrow awaiting embed (wei or usd6)
         uint128 embeddedVava; // VAVA base units locked in this hex
     }
 
@@ -55,6 +56,7 @@ contract VavaTiles {
     address public keeper; // signs quotes + runs embed
     address public immutable treasury;
     IERC20 public vava;
+    IERC20 public usdg; // stable payment path - $0.10 is literally 0.10 USDG
     bool public mintLocked;
 
     mapping(uint64 => Hex) public hexes; // h3 index -> hex
@@ -62,7 +64,8 @@ contract VavaTiles {
     mapping(uint64 => Bid) public bids; // one active bid per hex
     mapping(uint64 => uint128) public listings; // askWei; 0 = not listed
 
-    uint256 public totalPendingWei; // sum of all hex escrows (sanity/accounting)
+    uint256 public totalPendingWei; // sum of ETH-paid hex escrows
+    uint256 public totalPendingUsd; // sum of USDG-paid hex escrows (6 decimals)
     uint64[3] public tierCounts;
 
     // ---------------------------------------------------------------- config
@@ -80,7 +83,7 @@ contract VavaTiles {
     // ---------------------------------------------------------------- EIP-712
 
     bytes32 public constant CLAIM_TYPEHASH =
-        keccak256("VavaClaim(address claimer,uint64[] h3s,uint256[] pricesWei,uint8[] tiers,uint256 expiry)");
+        keccak256("VavaClaim(address claimer,address payToken,uint64[] h3s,uint256[] prices,uint8[] tiers,uint256 expiry)");
     bytes32 public immutable DOMAIN_SEPARATOR;
 
     // ---------------------------------------------------------------- events
@@ -165,22 +168,25 @@ contract VavaTiles {
      */
     function claim(
         uint64[] calldata h3s,
-        uint256[] calldata pricesWei,
+        uint256[] calldata prices,
         uint8[] calldata tiers,
         uint256 expiry,
+        address payToken,
         bytes calldata signature
     ) external payable nonReentrant {
         uint256 n = h3s.length;
         if (n == 0 || n > 1000) revert TooMany();
-        if (pricesWei.length != n || tiers.length != n) revert LengthMismatch();
+        if (prices.length != n || tiers.length != n) revert LengthMismatch();
         if (block.timestamp > expiry) revert QuoteExpired();
-        _verifyQuote(msg.sender, h3s, pricesWei, tiers, expiry, signature);
+        bool inUsdg = payToken != address(0);
+        if (inUsdg && payToken != address(usdg)) revert WrongPayment();
+        _verifyQuote(msg.sender, payToken, h3s, prices, tiers, expiry, signature);
 
         uint256 total;
         for (uint256 i; i < n; ++i) {
             uint64 id = h3s[i];
             if (hexes[id].owner != address(0)) revert AlreadyClaimed(id);
-            uint256 price = pricesWei[i];
+            uint256 price = prices[i];
             total += price;
 
             uint128 pending = uint128((price * EMBED_BPS) / 10_000);
@@ -188,25 +194,36 @@ contract VavaTiles {
                 owner: msg.sender,
                 claimedAt: uint40(block.timestamp),
                 tier: tiers[i],
-                pendingWei: pending,
+                paidInUsdg: inUsdg,
+                pendingAmount: pending,
                 embeddedVava: 0
             });
-            totalPendingWei += pending;
+            if (inUsdg) totalPendingUsd += pending;
+            else totalPendingWei += pending;
             unchecked {
                 tierCounts[tiers[i] - 1] += 1;
             }
             emit Claimed(msg.sender, id, price, tiers[i]);
         }
 
-        if (msg.value != total) revert WrongPayment();
-        // 85% out to treasury now; the 15% stays in the contract as escrow.
-        _pay(treasury, (total * TREASURY_BPS) / 10_000);
+        uint256 toTreasury = (total * TREASURY_BPS) / 10_000;
+        if (inUsdg) {
+            // $ path: prices are USDG base units (6 decimals) - no oracle.
+            if (msg.value != 0) revert WrongPayment();
+            require(usdg.transferFrom(msg.sender, treasury, toTreasury), "usdg treasury");
+            require(usdg.transferFrom(msg.sender, address(this), total - toTreasury), "usdg escrow");
+        } else {
+            if (msg.value != total) revert WrongPayment();
+            // 85% out to treasury now; the 15% stays in the contract as escrow.
+            _pay(treasury, toTreasury);
+        }
     }
 
     function _verifyQuote(
         address claimer,
+        address payToken,
         uint64[] calldata h3s,
-        uint256[] calldata pricesWei,
+        uint256[] calldata prices,
         uint8[] calldata tiers,
         uint256 expiry,
         bytes calldata signature
@@ -215,8 +232,9 @@ contract VavaTiles {
             abi.encode(
                 CLAIM_TYPEHASH,
                 claimer,
+                payToken,
                 keccak256(abi.encodePacked(h3s)),
-                keccak256(abi.encodePacked(pricesWei)),
+                keccak256(abi.encodePacked(prices)),
                 keccak256(abi.encodePacked(tiers)),
                 expiry
             )
@@ -238,21 +256,28 @@ contract VavaTiles {
     /** Keeper: lock bought VAVA into hexes, get escrowed ETH back. */
     function embed(uint64[] calldata h3s, uint256[] calldata amounts) external onlyKeeper nonReentrant {
         if (h3s.length != amounts.length) revert LengthMismatch();
-        uint256 reimburse;
+        uint256 reimburseWei;
+        uint256 reimburseUsd;
         uint256 vavaIn;
         for (uint256 i; i < h3s.length; ++i) {
             Hex storage h = hexes[h3s[i]];
-            uint128 pending = h.pendingWei;
+            uint128 pending = h.pendingAmount;
             if (pending == 0) revert NothingPending();
             h.embeddedVava += uint128(amounts[i]);
-            h.pendingWei = 0;
-            totalPendingWei -= pending;
-            reimburse += pending;
+            h.pendingAmount = 0;
+            if (h.paidInUsdg) {
+                totalPendingUsd -= pending;
+                reimburseUsd += pending;
+            } else {
+                totalPendingWei -= pending;
+                reimburseWei += pending;
+            }
             vavaIn += amounts[i];
             emit Embedded(h3s[i], amounts[i], pending);
         }
         require(vava.transferFrom(msg.sender, address(this), vavaIn), "vava in");
-        _pay(msg.sender, reimburse);
+        if (reimburseWei > 0) _pay(msg.sender, reimburseWei);
+        if (reimburseUsd > 0) require(usdg.transfer(msg.sender, reimburseUsd), "usdg out");
     }
 
     /** Owner: burn the hex, take its embedded VAVA minus the 10% burn. */
@@ -260,18 +285,22 @@ contract VavaTiles {
         Hex storage h = hexes[h3];
         if (h.owner != msg.sender) revert NotOwner();
         uint256 embedded = h.embeddedVava;
-        uint256 pending = h.pendingWei;
+        uint256 pending = h.pendingAmount;
+        bool inUsdg = h.paidInUsdg;
         uint8 tier = h.tier;
         delete hexes[h3];
         delete listings[h3];
         // A pending bid on a razed hex is refunded.
         _refundBid(h3);
         if (pending > 0) {
-            // escrow that never got embedded goes back to the buyback pool
-            // owner: it stays in the contract for the keeper's next pass?
-            // No hex to attach it to any more - send it to treasury.
-            totalPendingWei -= pending;
-            _pay(treasury, pending);
+            // No hex to attach the un-embedded escrow to - it goes to treasury.
+            if (inUsdg) {
+                totalPendingUsd -= pending;
+                require(usdg.transfer(treasury, pending), "usdg out");
+            } else {
+                totalPendingWei -= pending;
+                _pay(treasury, pending);
+            }
         }
         unchecked {
             tierCounts[tier - 1] -= 1;
@@ -394,6 +423,13 @@ contract VavaTiles {
 
     function updateKeeper(address k) external onlyAdmin {
         keeper = k;
+    }
+
+    /** Set/replace the USDG payment token. Refuses while the contract
+     *  still holds old-token escrow. */
+    function setUsdg(address token) external onlyAdmin {
+        if (totalPendingUsd != 0) revert VaultNotEmpty();
+        usdg = IERC20(token);
     }
 
     /** Swap the VAVA token (launch minute). Refuses once locked or while

@@ -1,6 +1,6 @@
 'use client';
 
-import { TILES_ABI, TILES_ADDRESS, h3ToUint64 } from './evm';
+import { NATIVE_PAY, TILES_ABI, TILES_ADDRESS, h3ToUint64 } from './evm';
 
 /**
  * EVM claim settlement. One quote from /api/quote authorizes exactly one
@@ -11,10 +11,13 @@ import { TILES_ABI, TILES_ADDRESS, h3ToUint64 } from './evm';
 
 export const CLAIM_CHUNK = Number(process.env.NEXT_PUBLIC_CLAIM_CHUNK ?? 400);
 
+export type PayCurrency = 'eth' | 'usdg';
+
 export type EvmClaimQuote = {
   h3s: string[];
   perHexUsd: number[];
-  pricesWei: string[];
+  payToken: `0x${string}`;
+  prices: string[];
   tiers: number[];
   totalWei: string;
   totalUsd: number;
@@ -23,11 +26,15 @@ export type EvmClaimQuote = {
   keeper: `0x${string}`;
 };
 
-export async function fetchQuotes(h3s: string[], claimer: string): Promise<EvmClaimQuote[]> {
+export async function fetchQuotes(
+  h3s: string[],
+  claimer: string,
+  currency: PayCurrency = 'eth',
+): Promise<EvmClaimQuote[]> {
   const r = await fetch('/api/quote', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ h3s, claimer }),
+    body: JSON.stringify({ h3s, claimer, currency }),
   });
   const j = await r.json();
   if (!r.ok) throw new Error(j.error ?? 'quote failed');
@@ -39,17 +46,41 @@ export async function fetchQuotes(h3s: string[], claimer: string): Promise<EvmCl
  * the wallet layer (Privy sendTransaction / wagmi writeContract).
  */
 export function buildClaimCall(quote: EvmClaimQuote) {
+  const isEth = quote.payToken === NATIVE_PAY;
   return {
     address: TILES_ADDRESS,
     abi: TILES_ABI,
     functionName: 'claim' as const,
     args: [
       quote.h3s.map(h3ToUint64),
-      quote.pricesWei.map(BigInt),
+      quote.prices.map(BigInt),
       quote.tiers,
       BigInt(quote.expiry),
+      quote.payToken,
       quote.signature,
     ],
-    value: BigInt(quote.totalWei),
+    // USDG claims move tokens via transferFrom - no native value attached.
+    value: isEth ? BigInt(quote.totalWei) : 0n,
+  };
+}
+
+/** approve() call for the USDG path - run once before the claim tx. */
+export function buildUsdgApproveCall(quote: EvmClaimQuote) {
+  return {
+    address: quote.payToken,
+    abi: [
+      {
+        type: 'function',
+        name: 'approve',
+        stateMutability: 'nonpayable',
+        inputs: [
+          { name: 'spender', type: 'address' },
+          { name: 'amount', type: 'uint256' },
+        ],
+        outputs: [{ type: 'bool' }],
+      },
+    ],
+    functionName: 'approve' as const,
+    args: [TILES_ADDRESS, BigInt(quote.totalWei)],
   };
 }

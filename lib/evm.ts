@@ -53,9 +53,14 @@ export const CLAIM_DOMAIN = (chainId: number, contract: `0x${string}`) => ({
 export const CLAIM_TYPES = {
   VavaClaim: [
     { name: 'claimer', type: 'address' },
+    { name: 'payToken', type: 'address' },
     { name: 'h3s', type: 'uint64[]' },
-    { name: 'pricesWei', type: 'uint256[]' },
+    { name: 'prices', type: 'uint256[]' },
     { name: 'tiers', type: 'uint8[]' },
     { name: 'expiry', type: 'uint256' },
   ],
 } as const;
+
+/** Zero address = pay in native ETH; the USDG address = pay in dollars. */
+export const NATIVE_PAY = '0x0000000000000000000000000000000000000000' as `0x${string}`;
+export const USDG_ADDRESS = (process.env.NEXT_PUBLIC_USDG_CONTRACT ?? '') as `0x${string}`;

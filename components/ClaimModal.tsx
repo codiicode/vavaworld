@@ -9,7 +9,8 @@ import { useHexLocations } from '@/lib/use-hex-locations';
 import { useTiles } from '@/lib/use-tiles';
 import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { useCountryCounts } from '@/lib/use-country-counts';
-import { buildClaimCall, fetchQuotes } from '@/lib/claim-chain-evm';
+import { buildClaimCall, buildUsdgApproveCall, fetchQuotes, type PayCurrency } from '@/lib/claim-chain-evm';
+import { USDG_ADDRESS } from '@/lib/evm';
 import { getPublicClient } from '@/lib/evm';
 import { dispatchClaimDone } from '@/lib/claim-events';
 import { PRICING } from '@/lib/pricing';
@@ -41,6 +42,9 @@ export function ClaimModal({
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [txSig, setTxSig] = useState<string>('');
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  // '$' is the language of the UI; the currency picker only decides which
+  // asset settles the dollars: ETH (default) or USDG 1:1.
+  const [currency, setCurrency] = useState<PayCurrency>('eth');
 
   // NEVER charge for hexes someone already owns: the selection can contain
   // claimed cells (area select / mark-closest sweeps them up). Without this
@@ -142,13 +146,23 @@ export function ClaimModal({
       const succeeded: string[] = [];
       let lastSig = '';
 
-      const quotes = await fetchQuotes(items.map((it) => it.h3), owner);
+      const quotes = await fetchQuotes(items.map((it) => it.h3), owner, currency);
 
-      // Balance guard before the wallet is asked to sign anything.
       const totalNeeded = quotes.reduce((s, q) => s + BigInt(q.totalWei), 0n);
-      const balance = await client.getBalance({ address: owner });
-      if (balance < totalNeeded) {
-        throw new Error('Insufficient ETH balance for this claim');
+      if (currency === 'eth') {
+        // Balance guard before the wallet is asked to sign anything.
+        const balance = await client.getBalance({ address: owner });
+        if (balance < totalNeeded) {
+          throw new Error('Insufficient balance for this claim');
+        }
+      } else {
+        // $ path: one approve covering every chunk, then the claims can
+        // draw it down via transferFrom.
+        const approveHash = await wallet.writeContract({
+          ...buildUsdgApproveCall(quotes[0]),
+          args: [buildUsdgApproveCall(quotes[0]).args[0], totalNeeded],
+        });
+        await client.waitForTransactionReceipt({ hash: approveHash });
       }
 
       const mirrorChunk = async (q: (typeof quotes)[number]) => {
@@ -352,10 +366,41 @@ export function ClaimModal({
                 >
                   ${totalUsd.toFixed(totalUsd < 10 ? 4 : 2)}
                 </div>
-                <div className="mt-1.5 text-[11.5px] tabular-nums text-white/50">
-                  ≈ {totalEth.toFixed(6)} ETH · ${ethUsd.toFixed(0)}/ETH
-                </div>
+                {currency === 'eth' && (
+                  <div className="mt-1.5 text-[11.5px] tabular-nums text-white/50">
+                    settles as {totalEth.toFixed(6)} ETH
+                  </div>
+                )}
               </div>
+            </div>
+
+            {/* Pay-with picker: the price is in dollars either way. */}
+            <div className="relative mt-4 flex items-center gap-2">
+              <span className={`${EYEBROW} mr-1`}>Pay with</span>
+              <button
+                type="button"
+                onClick={() => setCurrency('eth')}
+                className={`rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
+                  currency === 'eth'
+                    ? 'border-white/70 bg-white text-[#06080d]'
+                    : 'border-white/20 bg-white/[0.06] text-white/70 hover:bg-white/[0.12]'
+                }`}
+              >
+                ETH
+              </button>
+              {USDG_ADDRESS && (
+                <button
+                  type="button"
+                  onClick={() => setCurrency('usdg')}
+                  className={`rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
+                    currency === 'usdg'
+                      ? 'border-white/70 bg-white text-[#06080d]'
+                      : 'border-white/20 bg-white/[0.06] text-white/70 hover:bg-white/[0.12]'
+                  }`}
+                >
+                  USDG
+                </button>
+              )}
             </div>
 
             <div className="relative mt-5 flex gap-3">
