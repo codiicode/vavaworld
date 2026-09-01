@@ -88,6 +88,7 @@ export function WalletBridge() {
             throw e;
           }
         },
+        signAllTransactions: null,
         signMessage: async (message) => {
           const result = await privySignMessage({
             message,
@@ -122,6 +123,9 @@ export function WalletBridge() {
           const signature = await adapter.sendTransaction(tx as Transaction, connection);
           return signature;
         },
+        signAllTransactions: adapter.signAllTransactions
+          ? async (txs) => (await adapter.signAllTransactions!(txs)) as Transaction[]
+          : null,
         signMessage: adapter.signMessage
           ? async (message) => adapter.signMessage!(message)
           : null,
@@ -143,6 +147,7 @@ export function WalletBridge() {
       ready,
       connected: false,
       signAndSendTransaction: null,
+      signAllTransactions: null,
       signMessage: null,
       login,
       logout,
@@ -183,6 +188,7 @@ export function WalletBridge() {
   const connected = wallet.connected;
   const walletReady = wallet.ready;
   const canSign = !!wallet.signAndSendTransaction;
+  const canSignAll = !!wallet.signAllTransactions;
   const canSignMsg = !!wallet.signMessage;
   const canExport = !!wallet.exportWallet;
   const userId = user?.id ?? null;
@@ -197,6 +203,9 @@ export function WalletBridge() {
       connected,
       signAndSendTransaction: canSign
         ? (tx) => latestRef.current.signAndSendTransaction!(tx)
+        : null,
+      signAllTransactions: canSignAll
+        ? (txs) => latestRef.current.signAllTransactions!(txs)
         : null,
       signMessage: canSignMsg ? (m) => latestRef.current.signMessage!(m) : null,
       login: () => latestRef.current.login(),
@@ -221,6 +230,7 @@ export function WalletBridge() {
     connected,
     walletReady,
     canSign,
+    canSignAll,
     canSignMsg,
     canExport,
     ready,

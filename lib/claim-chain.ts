@@ -52,6 +52,22 @@ export async function fetchQuote(h3s: string[], claimer: string): Promise<ClaimQ
   return j as ClaimQuote;
 }
 
+/**
+ * Quote a whole basket (up to 1000 hexes) in ONE request. The server walks
+ * the price curve once and returns one signed quote per CLAIM_CHUNK, each
+ * authorizing exactly one claim transaction.
+ */
+export async function fetchQuotes(h3s: string[], claimer: string): Promise<ClaimQuote[]> {
+  const r = await fetch('/api/quote', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ h3s, claimer }),
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error ?? 'quote failed');
+  return (j.quotes ?? [j]) as ClaimQuote[];
+}
+
 export function tilePda(h3: string): PublicKey {
   const buf = Buffer.alloc(8);
   buf.writeBigUInt64LE(BigInt('0x' + h3));
@@ -122,7 +138,9 @@ export function buildClaimTransaction(quote: ClaimQuote, claimer: PublicKey): {
 
   const tx = new Transaction()
     .add(edIx)
-    .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }))
+    // A full 10-tile chunk of fresh PDAs runs well past 600k CU - proven
+    // by e2e-claim-parallel. 1.2M keeps headroom under the 1.4M tx cap.
+    .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 1_200_000 }))
     .add(claimIx);
 
   return { tx, totalLamports: BigInt(quote.totalLamports) };

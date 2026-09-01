@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-// @ts-expect-error - plain ESM module shared with the node keeper script
 import { WSOL_MINT, buildOrderUrl, jupiterSwap, proRata } from '../../anchor/scripts/keeper-swap.mjs';
 
 const t = (pending: bigint) => ({ pending });

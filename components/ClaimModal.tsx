@@ -13,7 +13,7 @@ import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { useCountryCounts } from '@/lib/use-country-counts';
 import { getConnection } from '@/lib/anchor-client';
 import { preflight } from '@/lib/preflight';
-import { chunkHexes, fetchQuote, buildClaimTransaction } from '@/lib/claim-chain';
+import { fetchQuotes, buildClaimTransaction } from '@/lib/claim-chain';
 import { dispatchClaimDone } from '@/lib/claim-events';
 import { PRICING, SOL_USD } from '@/lib/pricing';
 import { Flag } from '@/components/flag';
@@ -46,6 +46,7 @@ export function ClaimModal({
   const [state, setState] = useState<State>('review');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [txSig, setTxSig] = useState<string>('');
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
   // NEVER charge for hexes someone already owns: the selection can contain
   // claimed cells (area select / mark-closest sweeps them up). Without this
@@ -145,58 +146,118 @@ export function ClaimModal({
       const connection = getConnection();
       const owner = wallet.publicKey.toBase58();
 
-      // On-chain settlement: each chunk gets a keeper-signed quote from
-      // /api/quote, then one program transaction that splits the price
-      // 85/15 (treasury / buyback escrow) and creates the Tile PDAs.
-      // Without the quote signature the program rejects the claim, so
-      // pricing can never be bypassed.
+      // On-chain settlement. ONE quote round prices the whole basket and
+      // returns one keeper-signed quote per 10-hex chunk (the program
+      // splits each 85/15 and creates the Tile PDAs; without the quote
+      // signature it rejects, so pricing can never be bypassed).
+      //
+      // The chunks are independent transactions, so they are signed with
+      // ONE wallet approval (signAllTransactions) where the wallet can,
+      // and submitted in PARALLEL - a 1000-hex basket settles in seconds,
+      // not minutes of sequential rounds.
       const succeeded: string[] = [];
       let lastSig = '';
       // ~rent per Tile PDA + fee margin, on top of the quoted price.
       const PER_TILE_OVERHEAD = 2_000_000;
 
-      for (const chunk of chunkHexes(items.map((it) => it.h3))) {
-        const quote = await fetchQuote(chunk, owner);
-        const { tx, totalLamports: chunkLamports } = buildClaimTransaction(
-          quote,
-          wallet.publicKey,
-        );
-        const { blockhash } = await connection.getLatestBlockhash('confirmed');
-        tx.feePayer = wallet.publicKey;
+      const quotes = await fetchQuotes(items.map((it) => it.h3), owner);
+      const totalNeeded = quotes.reduce(
+        (s, q) => s + Number(q.totalLamports) + q.h3s.length * PER_TILE_OVERHEAD,
+        0,
+      );
+
+      const { blockhash } = await connection.getLatestBlockhash('confirmed');
+      const built = quotes.map((q) => {
+        const { tx } = buildClaimTransaction(q, wallet.publicKey!);
+        tx.feePayer = wallet.publicKey!;
         tx.recentBlockhash = blockhash;
+        return { quote: q, tx };
+      });
 
-        // Balance guard + simulate before the wallet sees it, so a doomed
-        // tx never triggers Phantom's "could be malicious" warning.
-        await preflight({
-          connection,
-          feePayer: wallet.publicKey,
-          tx,
-          lamportsNeeded:
-            Number(chunkLamports) + chunk.length * PER_TILE_OVERHEAD,
-        });
+      // Balance guard for the WHOLE basket + simulate the first chunk, so
+      // a doomed batch never reaches the wallet ("could be malicious").
+      await preflight({
+        connection,
+        feePayer: wallet.publicKey,
+        tx: built[0].tx,
+        lamportsNeeded: totalNeeded,
+      });
 
-        const sig = await wallet.signAndSendTransaction(tx);
-        await connection.confirmTransaction(sig, 'confirmed');
-        lastSig = sig;
-
+      const mirrorChunk = async (q: (typeof quotes)[number]) => {
         // Mirror into Supabase (registry + pricing ledger). No txHash:
         // the server verifies the on-chain Tile PDA instead.
         const mirrors = await Promise.allSettled(
-          chunk.map((h3, i) =>
+          q.h3s.map((h3, i) =>
             fetch('/api/claim', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                h3,
-                owner,
-                quotedPriceUsd: quote.perHexUsd[i],
-              }),
+              body: JSON.stringify({ h3, owner, quotedPriceUsd: q.perHexUsd[i] }),
             }).then((r) => (r.ok ? h3 : null)),
           ),
         );
         for (const m of mirrors) {
           if (m.status === 'fulfilled' && m.value) succeeded.push(m.value);
         }
+      };
+
+      let done = 0;
+      const trackProgress = () => {
+        done += 1;
+        setProgress({ done, total: built.length });
+      };
+      setProgress({ done: 0, total: built.length });
+
+      if (wallet.signAllTransactions && built.length > 1) {
+        // ONE approval for every chunk, then blast them all at once.
+        const signed = await wallet.signAllTransactions(built.map((b) => b.tx));
+        const results = await Promise.allSettled(
+          signed.map(async (tx, i) => {
+            const sig = await connection.sendRawTransaction(tx.serialize(), {
+              skipPreflight: false,
+            });
+            await connection.confirmTransaction(sig, 'confirmed');
+            await mirrorChunk(built[i].quote);
+            trackProgress();
+            return sig;
+          }),
+        );
+        const failed = results
+          .map((r, i) => (r.status === 'rejected' ? i : -1))
+          .filter((i) => i >= 0);
+        // Retry stragglers once, sequentially, on a fresh blockhash - the
+        // quotes are still valid inside their TTL.
+        for (const i of failed) {
+          const { tx } = buildClaimTransaction(built[i].quote, wallet.publicKey!);
+          const fresh = await connection.getLatestBlockhash('confirmed');
+          tx.feePayer = wallet.publicKey!;
+          tx.recentBlockhash = fresh.blockhash;
+          const sig = await wallet.signAndSendTransaction!(tx);
+          await connection.confirmTransaction(sig, 'confirmed');
+          await mirrorChunk(built[i].quote);
+          trackProgress();
+          lastSig = sig;
+        }
+        for (const r of results) {
+          if (r.status === 'fulfilled') lastSig = r.value;
+        }
+      } else {
+        // Privy embedded signs programmatically - no popups - so bounded
+        // parallelism gives the same one-click experience.
+        const CONCURRENCY = 8;
+        let cursor = 0;
+        const worker = async () => {
+          while (cursor < built.length) {
+            const i = cursor++;
+            const sig = await wallet.signAndSendTransaction!(built[i].tx);
+            await connection.confirmTransaction(sig, 'confirmed');
+            await mirrorChunk(built[i].quote);
+            trackProgress();
+            lastSig = sig;
+          }
+        };
+        await Promise.all(
+          Array.from({ length: Math.min(CONCURRENCY, built.length) }, worker),
+        );
       }
 
       setTxSig(lastSig);
@@ -400,7 +461,11 @@ export function ClaimModal({
               className="h-2.5 w-2.5 rounded-full"
               style={{ background: '#5eead4', animation: 'claim-pulse 1.6s ease-in-out infinite' }}
             />
-            <span className={EYEBROW}>Confirm in your wallet…</span>
+            <span className={EYEBROW}>
+              {progress && progress.total > 1
+                ? `Settling ${progress.done * 10 >= items.length ? items.length : progress.done * 10}/${items.length} tiles…`
+                : 'Confirm in your wallet…'}
+            </span>
             <style jsx>{`
               @keyframes claim-pulse {
                 0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 18px rgba(94,234,212,0.6); }

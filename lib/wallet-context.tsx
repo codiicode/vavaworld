@@ -41,6 +41,12 @@ export type ActiveWallet = {
   connected: boolean;
   /** Sign and send a built transaction. Returns the signature string. */
   signAndSendTransaction: ((tx: Transaction | VersionedTransaction) => Promise<string>) | null;
+  /**
+   * Sign MANY transactions with ONE wallet approval (adapter wallets like
+   * Phantom). Null when the wallet can't - callers fall back to parallel
+   * signAndSendTransaction (Privy embedded signs programmatically anyway).
+   */
+  signAllTransactions: ((txs: Transaction[]) => Promise<Transaction[]>) | null;
   /** Sign an arbitrary message (throne actions etc). Returns raw 64-byte sig. */
   signMessage: ((message: Uint8Array) => Promise<Uint8Array>) | null;
   /** Open Privy login modal */
@@ -112,6 +118,7 @@ export function WalletStateProvider({ children }: { children: ReactNode }) {
       ready: false,
       connected: false,
       signAndSendTransaction: null,
+      signAllTransactions: null,
       signMessage: null,
       login: () => demand('login'),
       logout: async () => {},
