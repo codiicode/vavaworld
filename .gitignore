@@ -48,6 +48,7 @@ anchor/.anchor/
 .vercel
 pc-*.png
 anchor/keeper-keypair.json
+anchor/keeper-mainnet-keypair.json
 anchor/tiles-keypair-v3.json
 
 # local scratch - not part of the app
