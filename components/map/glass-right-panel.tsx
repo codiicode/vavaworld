@@ -69,6 +69,7 @@ export function GlassRightPanel({
           username: null,
           paidLabel: `${(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(3)} SOL`,
           claimedAtMs: t.claimedAt * 1000,
+          imageUrl: registry.get(h)?.imageUrl ?? null,
         });
         continue;
       }
@@ -79,6 +80,7 @@ export function GlassRightPanel({
           username: r.username,
           paidLabel: `$${r.priceUsd.toFixed(4)}`,
           claimedAtMs: r.claimedAt,
+          imageUrl: r.imageUrl,
         });
       }
     }
@@ -279,6 +281,7 @@ type ClaimedView = {
   username: string | null;
   paidLabel: string;
   claimedAtMs: number;
+  imageUrl: string | null;
 };
 
 function SelectionBody({
@@ -658,6 +661,15 @@ function ClaimedHexView({
           className="flex flex-col gap-3 rounded-[14px] border border-white/12 bg-white/[0.07] p-3.5"
           style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)' }}
         >
+          {info.imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={info.imageUrl}
+              alt="Property image"
+              className="-mx-3.5 -mt-3.5 aspect-[16/9] w-[calc(100%+28px)] max-w-none rounded-t-[14px] object-cover"
+              loading="lazy"
+            />
+          )}
           <div className="flex items-start gap-2.5">
             <Flag code={location?.countryCode} size={18} />
             <div className="min-w-0 flex-1">

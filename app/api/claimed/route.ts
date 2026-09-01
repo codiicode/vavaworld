@@ -17,7 +17,7 @@ export async function GET() {
   const sb = getServerSupabase();
   const { data: hexes, error } = await sb
     .from('hexes')
-    .select('h3_id, owner, purchase_price, claimed_at');
+    .select('h3_id, owner, purchase_price, claimed_at, image_url');
   if (error) {
     return NextResponse.json({ error: 'lookup failed' }, { status: 500 });
   }
@@ -38,6 +38,7 @@ export async function GET() {
         username: nameByAddr.get(h.owner) ?? null,
         priceUsd: Number(h.purchase_price),
         claimedAt: h.claimed_at,
+        imageUrl: h.image_url ?? null,
       })),
     },
     { headers: { 'Cache-Control': 's-maxage=15, stale-while-revalidate=60' } },

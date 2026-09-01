@@ -29,7 +29,7 @@ type OwnerData = {
   returnUsd?: number;
   returnPct?: number;
   byCountry?: Array<{ iso: string; name: string; hexes: number; spentUsd: number; valueUsd?: number }>;
-  recentHexes?: Array<{ h3: string; iso: string; paidUsd: number; claimedAt: string }>;
+  recentHexes?: Array<{ h3: string; iso: string; paidUsd: number; claimedAt: string; imageUrl?: string | null }>;
 };
 
 /**
@@ -271,7 +271,7 @@ function PropertyGrid({
         {hexes.map((h) => {
           const c = hexCenter(h.h3);
           const loc = locations.get(h.h3);
-          const img = hexStaticMapUrl({ lat: c.lat, lng: c.lng, width: 400, height: 260, zoom: 17 });
+          const img = h.imageUrl ?? hexStaticMapUrl({ lat: c.lat, lng: c.lng, width: 400, height: 260, zoom: 17 });
           const tier = classifyTier(c.lat, c.lng);
           return (
             <Link
@@ -284,7 +284,7 @@ function PropertyGrid({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={img}
-                    alt={`Satellite view of ${loc?.place ?? h.iso.toUpperCase()}`}
+                    alt={h.imageUrl ? 'Property image' : `Satellite view of ${loc?.place ?? h.iso.toUpperCase()}`}
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                     loading="lazy"
                   />

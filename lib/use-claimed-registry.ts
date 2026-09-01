@@ -9,6 +9,7 @@ export type ClaimedInfo = {
   priceUsd: number;
   /** ms epoch */
   claimedAt: number;
+  imageUrl: string | null;
 };
 
 // Module-level so re-mounts (map ↔ other pages) render instantly from the
@@ -23,7 +24,7 @@ async function load(force = false): Promise<void> {
     const r = await fetch('/api/claimed', { cache: 'no-store' });
     if (!r.ok) return;
     const j = (await r.json()) as {
-      hexes: Array<{ h3: string; owner: string; username: string | null; priceUsd: number; claimedAt: string }>;
+      hexes: Array<{ h3: string; owner: string; username: string | null; priceUsd: number; claimedAt: string; imageUrl: string | null }>;
     };
     const next = new Map<string, ClaimedInfo>();
     for (const h of j.hexes) {
@@ -32,6 +33,7 @@ async function load(force = false): Promise<void> {
         username: h.username,
         priceUsd: h.priceUsd,
         claimedAt: Date.parse(h.claimedAt),
+        imageUrl: h.imageUrl ?? null,
       });
     }
     cache = next;
