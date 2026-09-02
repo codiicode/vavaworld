@@ -21,18 +21,19 @@ export default function PressPage() {
     >
       <h2>The short version</h2>
       <p>
-        VAVAWORLD divides Earth into 1.66 trillion hexagons and lets anyone claim one on Solana.
-        Every claim buys $VAVA and seals it inside the land itself, so a hex always holds
-        redeemable value. Each of the 249 territories has a presidency that earns a cut of every
-        claim made on its soil.
+        VAVAWORLD divides Earth into 1.66 trillion hexagons and lets anyone claim one on
+        Robinhood Chain, paying in ETH or USDG. Every claim buys $VAVA and seals it inside
+        the land itself, so a hex always holds redeemable value. Each of the 249 territories
+        has a throne - stake enough $VAVA and its presidency is yours to take.
       </p>
 
       <h2>Boilerplate</h2>
       <p>
         <em>
-          VAVAWORLD is a land-claiming game built on Solana. The planet is partitioned into
-          1.66 trillion hexagonal hexes roughly the size of a house; players claim them with
-          crypto, and 15% of every claim automatically buys $VAVA and locks it inside the hex.
+          VAVAWORLD is a land-claiming game built on Robinhood Chain. The planet is partitioned
+          into 1.66 trillion hexagonal hexes roughly the size of a house; players claim them
+          with ETH or USDG, and 15% of every claim automatically buys $VAVA and locks it
+          inside the hex.
           Hexes can be held, traded on an open marketplace, or razed to recover the tokens
           within.
         </em>
@@ -42,7 +43,7 @@ export default function PressPage() {
       <dl>
         <div className="doc-row">
           <dt>Chain</dt>
-          <dd>Solana (devnet)</dd>
+          <dd>Robinhood Chain</dd>
         </div>
         <div className="doc-row">
           <dt>Grid</dt>
@@ -59,6 +60,10 @@ export default function PressPage() {
         <div className="doc-row">
           <dt>Territories</dt>
           <dd>249</dd>
+        </div>
+        <div className="doc-row">
+          <dt>Payment</dt>
+          <dd>ETH or USDG - shown in $</dd>
         </div>
         <div className="doc-row">
           <dt>Starting price</dt>
@@ -99,7 +104,7 @@ export default function PressPage() {
         <li>
           The token is always written <strong>$VAVA</strong> - never &ldquo;VAVA token&rdquo;.
         </li>
-        <li>A claimed hexagon is a <strong>hex</strong> or a <strong>hex</strong>, not a plot or an NFT.</li>
+        <li>A claimed hexagon is a <strong>hex</strong> - not a tile, a plot or an NFT.</li>
       </ul>
 
       <h2>Colours</h2>
@@ -120,8 +125,7 @@ export default function PressPage() {
 
       <h2>Contact</h2>
       <p>
-        For interviews, review access or anything not covered here, get in touch through the
-        site.
+        For interviews, review access or anything not covered here, get in touch through X.
       </p>
     </PageShell>
   );
