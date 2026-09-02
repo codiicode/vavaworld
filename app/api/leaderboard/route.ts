@@ -16,7 +16,7 @@ type LeaderboardRow = {
   avatar_url: string | null;
 };
 
-type MatrixRow = { owner: string; country_iso: string; purchase_price: number };
+type MatrixRow = { owner: string; country_iso: string; hex_count: number; spent_usd: number };
 
 /**
  * GET /api/leaderboard → real per-owner rankings from the hexes table,
@@ -31,7 +31,9 @@ export async function GET() {
   const [{ data: rows, error: e1 }, { data: matrix, error: e2 }, { data: globals, error: e3 }] =
     await Promise.all([
       sb.rpc('leaderboard_stats', { p_limit: 100 }),
-      sb.from('hexes').select('owner,country_iso,purchase_price'),
+      // Aggregated in SQL - a raw hexes select silently caps at 1000 rows,
+      // which broke per-country counts the moment claims passed that.
+      sb.rpc('owner_country_matrix'),
       sb.rpc('global_stats'),
     ]);
 
@@ -46,8 +48,8 @@ export async function GET() {
       rec = { hexes: {}, value: {} };
       byOwner.set(m.owner, rec);
     }
-    rec.hexes[iso] = (rec.hexes[iso] ?? 0) + 1;
-    rec.value[iso] = (rec.value[iso] ?? 0) + Number(m.purchase_price) / SOL_USD;
+    rec.hexes[iso] = (rec.hexes[iso] ?? 0) + Number(m.hex_count);
+    rec.value[iso] = (rec.value[iso] ?? 0) + Number(m.spent_usd) / SOL_USD;
   }
 
   const entries = ((rows ?? []) as LeaderboardRow[]).map((r, i) => {

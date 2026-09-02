@@ -13,13 +13,23 @@ export const dynamic = 'force-dynamic';
  * is a few KB - clients fetch it once and look up locally, which beats any
  * per-hex or per-viewport endpoint until the indexer ships a bbox query.
  */
+const PAGE = 1000; // Supabase silently caps un-ranged selects at 1000 rows
+
 export async function GET() {
   const sb = getServerSupabase();
-  const { data: hexes, error } = await sb
-    .from('hexes')
-    .select('h3_id, owner, purchase_price, claimed_at, image_url');
-  if (error) {
-    return NextResponse.json({ error: 'lookup failed' }, { status: 500 });
+  type Row = { h3_id: string; owner: string; purchase_price: number; claimed_at: string; image_url: string | null };
+  const hexes: Row[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await sb
+      .from('hexes')
+      .select('h3_id, owner, purchase_price, claimed_at, image_url')
+      .order('claimed_at', { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) {
+      return NextResponse.json({ error: 'lookup failed' }, { status: 500 });
+    }
+    hexes.push(...((data ?? []) as Row[]));
+    if ((data ?? []).length < PAGE) break;
   }
   const owners = Array.from(new Set((hexes ?? []).map((h) => h.owner)));
   const nameByAddr = new Map<string, string | null>();
