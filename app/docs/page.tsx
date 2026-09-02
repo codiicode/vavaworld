@@ -251,8 +251,9 @@ export default function DocsPage() {
 
           <Sec id="thrones">
             <p>
-              Every one of the <strong>249</strong> nations has a presidency. Hold enough
-              ground in a country and stake 1,000,000 $VAVA to take the seat.
+              Every one of the <strong>249</strong> nations has a presidency. Own at least{' '}
+              <strong>250 hexes</strong> in a country and stake 1,000,000 $VAVA to take the
+              seat - the same requirement everywhere, from Iceland to the United States.
             </p>
             <p>
               The president earns <strong>5% of every claim</strong> made anywhere in that
