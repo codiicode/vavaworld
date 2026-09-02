@@ -24,8 +24,8 @@ type Move = {
   type: 'claim' | 'sale';
   countryIso: string;
   countryName: string;
-  to?: string | null;
-  buyer?: string | null;
+  to: string;
+  toUsername: string | null;
   at: string;
 };
 
@@ -171,7 +171,7 @@ export function GameBoard() {
             <div key={`${e.at}-${i}`} className={`frow ${i === top ? 'now' : ''}`}>
               <Flag code={e.countryIso} size={16} />
               <span className="ftext">
-                <b>{short((e.type === 'sale' ? e.buyer : e.to) ?? 'someone')}</b>{' '}
+                <b>{e.toUsername ? `@${e.toUsername}` : short(e.to)}</b>{' '}
                 {e.type === 'sale' ? 'bought a hex in' : 'claimed a hex in'}{' '}
                 <span className="where">{e.countryName}</span>
               </span>
