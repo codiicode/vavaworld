@@ -26,10 +26,19 @@ const tiles = await ethers.getContractAt("VavaTiles", dep.tiles);
 const vava = await ethers.getContractAt("MockVava", dep.standinVava);
 const usdg = await ethers.getContractAt("MockVava", dep.usdg);
 
-// keeper inventory for reference-mode embeds; admin gets USDG to claim with
+// keeper inventory for reference-mode embeds (MockVava mint is open)
 await (await vava.mint(dep.keeper, 10_000_000_000_000n)).wait();
-await (await usdg.mint(admin.address, 1_000_000_000_000n)).wait();
-await (await usdg.approve(dep.tiles, 1_000_000_000_000n)).wait();
+// On testnet the USDG stand-in is mintable; REAL mainnet USDG is not -
+// the USDG leg is then skipped (its code path is testnet-proven, and the
+// clicked rehearsal can exercise it with real USDG if the user holds any).
+let usdgLeg = true;
+try {
+  await (await usdg.mint(admin.address, 1_000_000_000_000n)).wait();
+  await (await usdg.approve(dep.tiles, 1_000_000_000_000n)).wait();
+} catch {
+  usdgLeg = false;
+  console.error("USDG not mintable (real token) - skipping the USDG leg");
+}
 
 const domain = {
   name: "VAVAWORLD",
@@ -64,20 +73,24 @@ const txEth = await tiles.claim(ethH3s, ethPrices, ethTiers, expiry, ethers.Zero
 });
 await txEth.wait();
 
-const usdH3s = [11n, 12n, 13n].map((i) => 0x8c1fb46741ae900n + salt + i * 2n);
-const usdPrices = usdH3s.map(() => 100_000n);
-const usdTiers = usdH3s.map(() => 1);
-const sigUsd = await keeper.signTypedData(domain, types, {
-  claimer: admin.address, payToken: dep.usdg,
-  h3s: usdH3s, prices: usdPrices, tiers: usdTiers, expiry,
-});
-const txUsd = await tiles.claim(usdH3s, usdPrices, usdTiers, expiry, dep.usdg, sigUsd);
-await txUsd.wait();
+let usdgTxHash = null;
+if (usdgLeg) {
+  const usdH3s = [11n, 12n, 13n].map((i) => 0x8c1fb46741ae900n + salt + i * 2n);
+  const usdPrices = usdH3s.map(() => 100_000n);
+  const usdTiers = usdH3s.map(() => 1);
+  const sigUsd = await keeper.signTypedData(domain, types, {
+    claimer: admin.address, payToken: dep.usdg,
+    h3s: usdH3s, prices: usdPrices, tiers: usdTiers, expiry,
+  });
+  const txUsd = await tiles.claim(usdH3s, usdPrices, usdTiers, expiry, dep.usdg, sigUsd);
+  await txUsd.wait();
+  usdgTxHash = txUsd.hash;
+}
 
 console.log(JSON.stringify({
   tiles: dep.tiles,
   claimEthTx: txEth.hash,
-  claimUsdgTx: txUsd.hash,
+  claimUsdgTx: usdgTxHash,
   treasuryBalanceWei: (await ethers.provider.getBalance(dep.treasury)).toString(),
   pendingWei: (await tiles.totalPendingWei()).toString(),
   pendingUsd: (await tiles.totalPendingUsd()).toString(),
