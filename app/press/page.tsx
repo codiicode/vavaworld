@@ -67,7 +67,7 @@ export default function PressPage() {
         </div>
         <div className="doc-row">
           <dt>Starting price</dt>
-          <dd>~$0.10 per hex</dd>
+          <dd>$0.10 per hex, per nation - rises only where claims land</dd>
         </div>
         <div className="doc-row">
           <dt>Locked into each hex</dt>

@@ -52,15 +52,15 @@ const FOOTER_COLUMNS = [
 
 const SUPPLY = [
   { k: 'Total supply', v: '1B' },
-  { k: 'Locked in land', v: '48.2M' },
-  { k: 'Treasury', v: '210M' },
+  { k: 'Of each claim locked in land', v: '15%' },
+  { k: 'Of each claim to the throne', v: '5%' },
   { k: 'Sellers keep', v: '95%' },
 ];
 
 const STATS = [
   { value: '249', label: 'Nations', sub: 'Every one has a throne' },
   { value: '~9 m', label: 'Per hex', sub: 'About the size of a house' },
-  { value: '$0.10', label: 'To start', sub: 'Rises with every claim' },
+  { value: '$0.10', label: 'To start, per nation', sub: 'Rises with every claim there' },
   { value: '1', label: 'Owner per hex', sub: 'First come, first served' },
 ];
 

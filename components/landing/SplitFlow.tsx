@@ -76,7 +76,7 @@ export function SplitFlow() {
               </button>
             ))}
           </div>
-          <span className="spend-note">Prices start near $0.10 a hex.</span>
+          <span className="spend-note">Every nation starts at $0.10 a hex.</span>
         </div>
 
         {/* The dial */}

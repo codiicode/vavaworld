@@ -141,10 +141,19 @@ export default function DocsPage() {
               The program rejects unquoted prices - the number you are shown is the number you
               pay.
             </div>
+            <h3>The price curve</h3>
             <p>
-              Prices start near <strong>$0.10</strong> a hex and rise along a bonding curve as
-              more ground is claimed in that country. Hexes near major cities sit in higher
-              tiers.
+              Every nation starts at <strong>$0.10</strong> a hex and keeps its own counter.
+              The curve is a <strong>linear bonding curve</strong>:
+            </p>
+            <div className="doc-note">
+              floor = $0.10 + $0.00001 × claims in that nation
+            </div>
+            <p>
+              Each claim raises the floor by a constant <strong>$0.00001</strong> - one cent per
+              1,000 hexes claimed. The rise is confined to the nation where the claim lands:
+              claiming in Sweden moves only Sweden&apos;s floor, and every other nation stays
+              where it was. Hexes near major cities sit in higher tiers.
             </p>
           </Sec>
 
