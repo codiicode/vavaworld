@@ -7,7 +7,7 @@ export default function NotFound() {
       <div className="w-full max-w-md rounded-2xl border border-white/40 bg-white/30 p-8 text-center backdrop-blur-md">
         <BrandLogo size={44} variant="white" className="mx-auto" />
         <p className="mt-6 text-[11px] font-medium uppercase tracking-[0.08em] text-foreground/60">
-          Unclaimed territory
+          Unclaimed land
         </p>
         <h1 className="mt-1 text-3xl font-semibold tracking-tight">
           This page doesn&apos;t exist.

@@ -58,7 +58,7 @@ const SUPPLY = [
 ];
 
 const STATS = [
-  { value: '249', label: 'Territories', sub: 'Every one has a throne' },
+  { value: '249', label: 'Nations', sub: 'Every one has a throne' },
   { value: '~9 m', label: 'Per hex', sub: 'About the size of a house' },
   { value: '$0.10', label: 'To start', sub: 'Rises with every claim' },
   { value: '1', label: 'Owner per hex', sub: 'First come, first served' },

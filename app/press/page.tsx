@@ -23,7 +23,7 @@ export default function PressPage() {
       <p>
         VAVAWORLD divides Earth into 1.66 trillion hexagons and lets anyone claim one on
         Robinhood Chain, paying in ETH or USDG. Every claim buys $VAVA and seals it inside
-        the land itself, so a hex always holds redeemable value. Each of the 249 territories
+        the land itself, so a hex always holds redeemable value. Each of the 249 nations
         has a throne - stake enough $VAVA and its presidency is yours to take.
       </p>
 
@@ -58,7 +58,7 @@ export default function PressPage() {
           <dd>~9 m edge</dd>
         </div>
         <div className="doc-row">
-          <dt>Territories</dt>
+          <dt>Nations</dt>
           <dd>249</dd>
         </div>
         <div className="doc-row">
@@ -125,7 +125,8 @@ export default function PressPage() {
 
       <h2>Contact</h2>
       <p>
-        For interviews, review access or anything not covered here, get in touch through X.
+        For interviews, review access or anything not covered here, get in touch on X:{' '}
+        <a href="https://x.com/vavaworldnet" target="_blank" rel="noreferrer">@vavaworldnet</a>.
       </p>
     </PageShell>
   );
