@@ -12,6 +12,8 @@ import { useCountryCounts } from '@/lib/use-country-counts';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { PRICING } from '@/lib/pricing';
+import { useUsdFmt } from '@/lib/usd';
+import { useActiveListings, useListingsVersion } from '@/lib/supabase-listings';
 import { BidDialog } from '@/components/bid-dialog';
 import { Flag } from '@/components/flag';
 import { HexPricingCard } from '@/components/map/hex-pricing-card';
@@ -59,6 +61,14 @@ export function GlassRightPanel({
   const selectedArr = useMemo(() => Array.from(selectedHexes), [selectedHexes]);
   const { tiles: claimedCache } = useTiles(selectedArr);
   const registry = useClaimedRegistry();
+  const usdFmt = useUsdFmt();
+  // Live asks, so an owned hex that is up for sale says so on its card.
+  const { listings } = useActiveListings(useListingsVersion());
+  const askByH3 = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const l of listings) m.set(l.h3_id, usdFmt(l.price_sol));
+    return m;
+  }, [listings, usdFmt]);
   const claimedTiles = useMemo(() => {
     const m = new Map<string, ClaimedView>();
     for (const h of selectedArr) {
@@ -70,6 +80,7 @@ export function GlassRightPanel({
           paidLabel: registry.get(h)?.priceUsd != null ? `$${registry.get(h)!.priceUsd.toFixed(2)}` : ' - ',
           claimedAtMs: t.claimedAt * 1000,
           imageUrl: registry.get(h)?.imageUrl ?? null,
+          askLabel: askByH3.get(h) ?? null,
         });
         continue;
       }
@@ -81,11 +92,12 @@ export function GlassRightPanel({
           paidLabel: `$${r.priceUsd.toFixed(4)}`,
           claimedAtMs: r.claimedAt,
           imageUrl: r.imageUrl,
+          askLabel: askByH3.get(h) ?? null,
         });
       }
     }
     return m;
-  }, [selectedArr, claimedCache, registry]);
+  }, [selectedArr, claimedCache, registry, askByH3]);
 
   const items = Array.from(selectedHexes).map((h3) => {
     const c = hexCenter(h3);
@@ -282,6 +294,8 @@ type ClaimedView = {
   paidLabel: string;
   claimedAtMs: number;
   imageUrl: string | null;
+  /** Formatted asking price when the hex is listed, else null. */
+  askLabel: string | null;
 };
 
 function SelectionBody({
@@ -772,10 +786,16 @@ function ClaimedHexView({
             </div>
             <div>
               <div className="uppercase tracking-wider text-white/55">Status</div>
-              <div className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-white/70">
-                <CheckCircle2 size={12} />
-                Owned
-              </div>
+              {info.askLabel ? (
+                <div className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-emerald-300">
+                  For sale · {info.askLabel}
+                </div>
+              ) : (
+                <div className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-white/70">
+                  <CheckCircle2 size={12} />
+                  Owned
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -48,8 +48,17 @@ import { TileDetailsDialog } from './tile-details-dialog';
 import { TileListDialog } from './tile-list-dialog';
 import { TileTransferDialog } from './tile-transfer-dialog';
 
-import { fmtUsdValue } from '@/lib/usd';
-type DialogKind = 'details' | 'list' | 'transfer';
+import { fmtUsdValue, useUsdFmt } from '@/lib/usd';
+import { useActiveWallet } from '@/lib/active-wallet';
+import {
+  cancelListing,
+  dispatchListingsChanged,
+  useActiveListings,
+  useListingsVersion,
+  type DbListing,
+} from '@/lib/supabase-listings';
+import { delistOnChain } from '@/lib/bid-chain';
+type DialogKind = 'details' | 'list' | 'transfer' | 'cancel';
 type DialogState = { kind: DialogKind; tile: ClaimedTile } | null;
 
 const PER_PAGE = 10;
@@ -64,7 +73,34 @@ export function TilesTab() {
   const hexSet = useMemo(() => new Set(tiles?.map((t) => t.h3) ?? []), [tiles]);
   const locations = useHexLocations(hexSet);
   const [dialog, setDialog] = useState<DialogState>(null);
-  const openDialog = (kind: DialogKind, tile: ClaimedTile) => setDialog({ kind, tile });
+  const wallet = useActiveWallet();
+
+  // Which of my hexes are up for sale - drives the menu (List vs Cancel)
+  // and the "For sale" badge.
+  const { listings } = useActiveListings(useListingsVersion());
+  const listingByH3 = useMemo(() => {
+    const m = new Map<string, DbListing>();
+    for (const l of listings) m.set(l.h3_id, l);
+    return m;
+  }, [listings]);
+  const listingFor = (g: TileGroup): DbListing | null => listingByH3.get(g.tiles[0].h3) ?? null;
+
+  const cancelFor = async (tile: ClaimedTile) => {
+    const l = listingByH3.get(tile.h3);
+    if (!l || !wallet.address || !wallet.signMessage) return;
+    try {
+      // On-chain ask first, then the marketplace row.
+      await delistOnChain({ wallet, h3: tile.h3 });
+      await cancelListing({ id: l.id, seller: wallet.address, signMessage: wallet.signMessage });
+      dispatchListingsChanged();
+    } catch {
+      /* wallet rejected or chain error - the listing simply stays */
+    }
+  };
+  const openDialog = (kind: DialogKind, tile: ClaimedTile) => {
+    if (kind === 'cancel') void cancelFor(tile);
+    else setDialog({ kind, tile });
+  };
   const dialogLocation = dialog ? locations.get(dialog.tile.h3) ?? null : null;
 
   const filteredTiles = useMemo(() => {
@@ -215,6 +251,7 @@ export function TilesTab() {
                   key={g.key}
                   group={g}
                   index={start + i + 1}
+                  listing={listingFor(g)}
                   onAction={openDialog}
                 />
               ))}
@@ -226,7 +263,7 @@ export function TilesTab() {
       {!loading && tiles && tiles.length > 0 && view === 'grid' && (
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {pageGroups.map((g) => (
-            <GroupCard key={g.key} group={g} onAction={openDialog} />
+            <GroupCard key={g.key} group={g} listing={listingFor(g)} onAction={openDialog} />
           ))}
         </div>
       )}
@@ -268,12 +305,15 @@ export function TilesTab() {
 function GroupRow({
   group: g,
   index,
+  listing,
   onAction,
 }: {
   group: TileGroup;
   index: number;
+  listing: DbListing | null;
   onAction: (kind: DialogKind, tile: ClaimedTile) => void;
 }) {
+  const usd = useUsdFmt();
   const isSingle = g.tiles.length === 1;
   const title = isSingle
     ? g.neighborhood ?? g.citiesLabel ?? g.countryName ?? 'Locating…'
@@ -342,9 +382,15 @@ function GroupRow({
             </DropdownMenuItem>
             {isSingle && (
               <>
-                <DropdownMenuItem onSelect={() => onAction('list', firstTile)}>
-                  List for sale
-                </DropdownMenuItem>
+                {listing ? (
+                  <DropdownMenuItem onSelect={() => onAction('cancel', firstTile)}>
+                    Cancel listing ({usd(listing.price_sol)})
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onSelect={() => onAction('list', firstTile)}>
+                    List for sale
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onSelect={() => onAction('transfer', firstTile)}>
                   Transfer
                 </DropdownMenuItem>
@@ -363,12 +409,15 @@ function GroupRow({
 
 function GroupCard({
   group: g,
+  listing,
   onAction,
 }: {
   group: TileGroup;
+  listing: DbListing | null;
   onAction: (kind: DialogKind, tile: ClaimedTile) => void;
 }) {
   const router = useRouter();
+  const usd = useUsdFmt();
   const img = hexStaticMapUrl({
     lat: g.centerLat,
     lng: g.centerLng,
@@ -411,6 +460,11 @@ function GroupCard({
           <span className="max-w-[160px] truncate">{g.citiesLabel}</span>
         </div>
         <span className="absolute right-2 top-2 flex items-center gap-1.5">
+          {listing && (
+            <span className="rounded-md border border-emerald-300/40 bg-emerald-400/20 px-2 py-1 text-[11px] font-semibold text-foreground backdrop-blur-md">
+              For sale · {usd(listing.price_sol)}
+            </span>
+          )}
           {!isSingle && (
             <span className="inline-flex items-center gap-1 rounded-md border border-white/40 bg-white/30 px-2 py-1 text-[11px] font-semibold text-foreground backdrop-blur-md">
               <Layers size={11} strokeWidth={2} />
@@ -454,9 +508,15 @@ function GroupCard({
               <DropdownMenuItem asChild>
                 <Link href={`/map#${firstTile.h3}`}>View on map</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onAction('list', firstTile)}>
-                List for sale{!isSingle && ' (first hex)'}
-              </DropdownMenuItem>
+              {listing ? (
+                <DropdownMenuItem onSelect={() => onAction('cancel', firstTile)}>
+                  Cancel listing ({usd(listing.price_sol)})
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onSelect={() => onAction('list', firstTile)}>
+                  List for sale{!isSingle && ' (first hex)'}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onSelect={() => onAction('transfer', firstTile)}>
                 Transfer{!isSingle && ' (first hex)'}
               </DropdownMenuItem>
