@@ -289,6 +289,9 @@
 }
 
 html, body { height: 100%; }
+/* Overscroll rubber-band + safe areas show the <html> ground: keep it the
+   same near-black as every surface so the app reads edge-to-edge on iOS. */
+html { background-color: #000000; }
 body {
   /* Sky photo backdrop - glass panels float on top with white-translucent
      backgrounds and dark text. Map page overrides with mapbox + dim overlay. */
