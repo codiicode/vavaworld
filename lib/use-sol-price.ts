@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
-// Last-known price survives remounts; 150 only bridges the very first
-// fetch of a session so USD figures never render as $0.
-let cached = 150;
+// Last-known price survives remounts; 4500 only bridges the very first
+// fetch of a session so USD figures never render as $0. The endpoint
+// serves ETH/USD (legacy field name from the Solana era).
+let cached = 4500;
 let fetchedAt = 0;
 
 // Components mounting in the same tick both saw a stale `fetchedAt` and
@@ -40,7 +41,7 @@ async function load(): Promise<number> {
   return inFlight;
 }
 
-/** Live SOL/USD from /api/sol-price (Jupiter, server-cached 30s). */
+/** Live ETH/USD from /api/sol-price (legacy route name, server-cached 30s). */
 export function useSolPrice(): number {
   const [price, setPrice] = useState(cached);
   useEffect(() => {
