@@ -50,6 +50,25 @@ export default function NotificationsPage() {
   );
   const locations = useHexLocations(hexSet);
 
+  // Which offers are still open - a notification is history, the bid row
+  // is the truth. null until loaded so rows don't flash the wrong state.
+  const [openBidIds, setOpenBidIds] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    if (!wallet.address) return;
+    let alive = true;
+    fetch(`/api/bids?owner=${encodeURIComponent(wallet.address)}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : { bids: [] }))
+      .then((j: { bids?: Array<{ id: string }> }) => {
+        if (alive) setOpenBidIds(new Set((j.bids ?? []).map((b) => b.id)));
+      })
+      .catch(() => {
+        if (alive) setOpenBidIds(new Set());
+      });
+    return () => {
+      alive = false;
+    };
+  }, [wallet.address, notifications.length]);
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 md:px-8 md:py-8">
       <div className="mb-8">
@@ -91,6 +110,7 @@ export default function NotificationsPage() {
                 undefined
               }
               wallet={wallet}
+              open={openBidIds === null || (!!n.payload.bid_id && openBidIds.has(n.payload.bid_id))}
             />
           ))}
         </div>
@@ -104,11 +124,14 @@ function NotificationRow({
   place,
   countryCode,
   wallet,
+  open,
 }: {
   n: DbNotification;
   place: string | null;
   countryCode?: string;
   wallet: ActiveWallet;
+  /** The offer is still live in the bid table (accept/decline possible). */
+  open: boolean;
 }) {
   const usd = useUsdFmt();
   const [acting, setActing] = useState<'accept' | 'decline' | null>(null);
@@ -205,7 +228,10 @@ function NotificationRow({
           </div>
 
           {/* Inline actions */}
-          {n.type === 'bid_received' && !outcome && (
+          {n.type === 'bid_received' && !outcome && !open && (
+            <p className="mt-2 text-xs text-foreground/60">This offer is no longer open.</p>
+          )}
+          {n.type === 'bid_received' && !outcome && open && (
             <div className="mt-2.5 flex items-center gap-2">
               <button
                 type="button"
