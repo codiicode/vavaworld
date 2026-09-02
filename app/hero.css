@@ -1039,7 +1039,11 @@ html:has(.landing-root) {
 @media (max-width: 860px) {
   .app-dock .dock-links,
   .app-dock .dock-live { display: none; }
-  .app-dock { padding: 8px 8px 8px 15px; }
+  /* Links + live readout are gone, so nothing holds the mark and the CTA
+     apart: pin them to opposite ends and drop the mark's divider, which
+     only separated it from the now-hidden links. */
+  .app-dock { padding: 8px 8px 8px 15px; justify-content: space-between; }
+  .app-dock .dock-mark { border-right: 0; padding-right: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
