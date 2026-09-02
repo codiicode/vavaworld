@@ -92,7 +92,17 @@ const chain = defineChain({
   rpcUrls: { default: { http: [RPC_URL] } },
 });
 const account = privateKeyToAccount(KEY);
-const pub = createPublicClient({ chain, transport: http(RPC_URL) });
+// Launch-day RPC drops requests under load: retry every read, and collapse
+// the per-hex pending reads into multicall3 batches (verified deployed at
+// the canonical address) so a pass makes dozens of calls, not thousands.
+const pub = createPublicClient({
+  chain: {
+    ...chain,
+    contracts: { multicall3: { address: '0xcA11bde05977b3631167028862bE2a173976CA11' } },
+  },
+  transport: http(RPC_URL, { retryCount: 5, retryDelay: 500, timeout: 30_000 }),
+  batch: { multicall: { wait: 50 } },
+});
 const wallet = createWalletClient({ account, chain, transport: http(RPC_URL) });
 
 const read = (functionName, args = []) =>
@@ -171,16 +181,27 @@ async function reconcileMirror(logs) {
 
 async function findPending(logs) {
   const seen = new Set();
-  const out = [];
+  const h3s = [];
   for (const log of logs) {
     const h3 = log.args.h3;
     if (seen.has(h3)) continue;
     seen.add(h3);
-    const hex = await read('hexes', [h3]);
-    // struct tuple: owner, claimedAt, tier, paidInUsdg, pendingAmount, embeddedVava
-    const pendingAmount = hex[4];
-    if (pendingAmount > 0n) {
-      out.push({ h3, pending: pendingAmount, inUsdg: hex[3] });
+    h3s.push(h3);
+  }
+  const out = [];
+  // Concurrent reads per chunk so the client's multicall batching collapses
+  // them - sequential awaits were thousands of eth_calls and died on rate
+  // limits mid-pass.
+  const CHUNK = 200;
+  for (let i = 0; i < h3s.length; i += CHUNK) {
+    const slice = h3s.slice(i, i + CHUNK);
+    const hexes = await Promise.all(slice.map((h3) => read('hexes', [h3])));
+    for (let j = 0; j < slice.length; j++) {
+      // struct tuple: owner, claimedAt, tier, paidInUsdg, pendingAmount, embeddedVava
+      const pendingAmount = hexes[j][4];
+      if (pendingAmount > 0n) {
+        out.push({ h3: slice[j], pending: pendingAmount, inUsdg: hexes[j][3] });
+      }
     }
   }
   return out;
