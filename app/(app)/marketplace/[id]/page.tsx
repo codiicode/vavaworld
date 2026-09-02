@@ -24,6 +24,7 @@ import {
   type DbListing,
 } from '@/lib/supabase-listings';
 import { cn } from '@/lib/utils';
+import { delistOnChain } from '@/lib/bid-chain';
 
 /** Tile detail - works for both real (UUID) and seed (mock) listings. */
 export default function TileDetailPage() {
@@ -177,6 +178,9 @@ export default function TileDetailPage() {
                     if (!wallet.address || !wallet.signMessage) return;
                     setCancelling(true);
                     try {
+                      // Clear the on-chain ask first so nobody can buy() a
+                      // hex the marketplace no longer shows.
+                      await delistOnChain({ wallet, h3: listing.h3 });
                       await cancelListing({
                         id: listing.id,
                         seller: wallet.address,

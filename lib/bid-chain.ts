@@ -90,14 +90,58 @@ export async function acceptBidOnChain(args: {
   await mirror('/api/bids/respond', { bidId, txSig: sig });
 }
 
-/** Atomic listing purchase: pay the ask, hex flips in the same tx. */
-export async function buyListingOnChain(args: {
+/** The live on-chain ask for a hex (0 = not listed). */
+export async function readListingAsk(h3: string): Promise<bigint> {
+  return (await getPublicClient().readContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'listings',
+    args: [h3ToUint64(h3)],
+  })) as bigint;
+}
+
+/** Put the hex up for sale on-chain - buy() settles against THIS ask. */
+export async function listOnChain(args: {
   wallet: ActiveWallet;
   h3: string;
   askWei: bigint;
 }): Promise<`0x${string}`> {
   const { wallet, h3, askWei } = args;
-  return call(wallet, 'buy', h3, askWei);
+  if (!wallet.writeContract) throw new Error('Log in first');
+  const hash = await wallet.writeContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'list',
+    args: [h3ToUint64(h3), askWei],
+  });
+  await getPublicClient().waitForTransactionReceipt({ hash });
+  return hash;
+}
+
+export async function delistOnChain(args: {
+  wallet: ActiveWallet;
+  h3: string;
+}): Promise<`0x${string}`> {
+  return call(args.wallet, 'delist', args.h3);
+}
+
+/**
+ * Atomic listing purchase: pay the ask, hex flips in the same tx. The
+ * contract demands msg.value == ask EXACTLY, so the amount sent is read
+ * from the contract, never from the quote (a float that went through the
+ * DB); `expectedWei` only guards against a seller re-listing higher
+ * since the buyer looked.
+ */
+export async function buyListingOnChain(args: {
+  wallet: ActiveWallet;
+  h3: string;
+  expectedWei: bigint;
+}): Promise<`0x${string}`> {
+  const { wallet, h3, expectedWei } = args;
+  const ask = await readListingAsk(h3);
+  if (ask === 0n) throw new Error('This hex is not listed on-chain - ask the seller to re-list');
+  if (ask > (expectedWei * 102n) / 100n) throw new Error('The asking price changed - reload and try again');
+  return call(wallet, 'buy', h3, ask);
 }
 
 /** Read the live on-chain owner of a hex (zero address = unclaimed). */

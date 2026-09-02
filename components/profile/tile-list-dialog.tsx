@@ -12,6 +12,7 @@ import {
   createListing,
   dispatchListingsChanged,
 } from '@/lib/supabase-listings';
+import { listOnChain } from '@/lib/bid-chain';
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
@@ -152,11 +153,16 @@ export function TileListDialog({
 
                     if (!wallet.signMessage) throw new Error('Wallet cannot sign messages');
                     if (!ethUsd) throw new Error('Live price unavailable - try again');
+                    // Typed in dollars; the contract holds the ask in wei and
+                    // buy() settles against it, so the on-chain list comes
+                    // FIRST - the DB row is only the marketplace's index.
+                    const priceEth = numeric / ethUsd;
+                    const askWei = BigInt(Math.round(priceEth * 1e12)) * 10n ** 6n;
+                    await listOnChain({ wallet, h3: tile.h3, askWei });
                     await createListing({
                       h3: tile.h3,
                       seller: wallet.address,
-                      // Typed in dollars; the listing column holds native coin.
-                      priceSol: numeric / ethUsd,
+                      priceSol: priceEth,
                       signMessage: wallet.signMessage,
                     });
                     dispatchListingsChanged();
@@ -186,8 +192,8 @@ export function TileListDialog({
               <p className="max-w-sm text-xs text-muted-foreground">
                 Your hex is live in the marketplace at{' '}
                 <span className="tabular-nums text-foreground">{fmtUsdValue(numeric)}</span>.
-                On-chain settlement happens when the marketplace contract ships;
-                until then the listing is held off-chain.
+                The ask is recorded on-chain - a buyer pays it and the hex
+                flips to them in the same transaction.
               </p>
             </div>
             <Button variant="outline" onClick={close} className="w-full">

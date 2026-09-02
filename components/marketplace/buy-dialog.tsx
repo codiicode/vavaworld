@@ -92,7 +92,7 @@ export function BuyDialog({
       const sig = await buyListingOnChain({
         wallet,
         h3: listing.h3,
-        askWei: BigInt(quote.totalLamports) * 10n ** 9n,
+        expectedWei: BigInt(quote.totalLamports) * 10n ** 9n,
       });
 
       setPhase('settling');
