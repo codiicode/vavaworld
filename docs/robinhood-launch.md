@@ -62,6 +62,10 @@ EVM keeper, so no service reconfiguration is needed beyond env vars.
 | `KEEPER_SWAP` | `reference` until launch minute, then `uniswap` | keeper service |
 | `SWAP_ROUTER`, `WETH_ADDRESS`, `POOL_FEE` | where $VAVA liquidity lives (see §5) | keeper service |
 | `START_BLOCK` | the deploy block number | keeper (log-scan floor) |
+| `ADMIN_WALLETS` / `NEXT_PUBLIC_ADMIN_WALLETS` | comma-separated moderator addresses (case-insensitive) - ASK THE USER before launch | web |
+| `CHAINLINK_ETH_USD_FEED` | ETH/USD aggregator on Robinhood Chain if one exists (verify on explorer); empty = Coinbase spot fallback | web server |
+| `ETH_USD_FALLBACK` | last-resort ETH/USD constant (default 4500) | web server |
+| `NEXT_PUBLIC_CLAIM_CHUNK` | hexes per claim tx (default 400) | web |
 
 Gone from the Solana era: `NEXT_PUBLIC_PROGRAM_ID`, `NEXT_PUBLIC_TREASURY`
 (treasury is baked into the contract), `KEEPER_SECRET_KEY` (base58),
