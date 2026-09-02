@@ -7,7 +7,7 @@ import {
   type ConnectedWallet,
 } from '@privy-io/react-auth';
 import { createWalletClient, custom, type WalletClient } from 'viem';
-import { robinhoodChain } from '@/lib/evm';
+import { getPublicClient, robinhoodChain } from '@/lib/evm';
 import { useWalletPublish, type ActiveWallet, type WriteCall } from '@/lib/wallet-context';
 
 /**
@@ -59,10 +59,28 @@ export function WalletBridge() {
       ...base,
       writeContract: async (call: WriteCall) => {
         const client = await walletClientFor(wallet);
+        const account = wallet.address as `0x${string}`;
+        // Pre-fill gas + fees through our retrying/fallback public client.
+        // Left to the wallet provider, these become bare reads against the
+        // public RPC and die on launch-day rate limits mid-purchase. If
+        // even the resilient path fails, fall back to provider-side fill.
+        let gas: bigint | undefined;
+        let fees: { maxFeePerGas?: bigint; maxPriorityFeePerGas?: bigint } | undefined;
+        try {
+          const pub = getPublicClient();
+          gas = await pub.estimateContractGas({ ...call, account } as never);
+          fees = await pub.estimateFeesPerGas();
+        } catch {
+          /* provider fills them */
+        }
         return client.writeContract({
           ...call,
           chain: robinhoodChain,
-          account: wallet.address as `0x${string}`,
+          account,
+          ...(gas ? { gas: (gas * 12n) / 10n } : {}),
+          ...(fees?.maxFeePerGas
+            ? { maxFeePerGas: fees.maxFeePerGas, maxPriorityFeePerGas: fees.maxPriorityFeePerGas }
+            : {}),
           // Loose WriteCall -> viem's exhaustive generic; runtime shape is right.
         } as Parameters<typeof client.writeContract>[0]);
       },
