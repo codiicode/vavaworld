@@ -28,6 +28,8 @@ const FOOTER_COLUMNS = [
     links: [
       { label: 'How it works', href: '/#how' },
       { label: 'Tokenomics', href: '/#token' },
+      { label: 'Docs', href: '/docs' },
+      { label: 'Press kit', href: '/press' },
     ],
   },
   {
@@ -35,8 +37,6 @@ const FOOTER_COLUMNS = [
     links: [
       { label: 'Profile', href: '/profile' },
       { label: 'Activity', href: '/activity' },
-      { label: 'Docs', href: '/docs' },
-      { label: 'Press kit', href: '/press' },
       { label: 'Privacy', href: '/legal/privacy' },
       { label: 'Terms', href: '/legal/terms' },
     ],
