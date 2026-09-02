@@ -7,6 +7,16 @@ const config: HardhatUserConfig = {
   plugins: [hardhatToolboxMochaEthersPlugin],
   networks: {
     localhost: { type: "http", url: "http://127.0.0.1:8545" },
+    robinhoodTestnet: {
+      type: "http",
+      url: process.env.RH_TESTNET_RPC ?? "https://rpc.testnet.chain.robinhood.com/rpc",
+      accounts: process.env.EVM_DEPLOYER_KEY ? [process.env.EVM_DEPLOYER_KEY] : [],
+    },
+    robinhood: {
+      type: "http",
+      url: process.env.RH_RPC ?? "https://rpc.chain.robinhood.com/rpc",
+      accounts: process.env.EVM_DEPLOYER_KEY ? [process.env.EVM_DEPLOYER_KEY] : [],
+    },
   },
   solidity: {
     version: "0.8.24",
