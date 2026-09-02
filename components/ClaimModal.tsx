@@ -92,6 +92,9 @@ export function ClaimModal({
   // Live ETH/USD (server-cached Chainlink) so the modal can show the ETH
   // figure; the authoritative wei prices come signed from /api/quote.
   const [ethUsd, setEthUsd] = useState<number>(4500);
+  // True only while the one-time USDG allowance is being signed, so the
+  // modal can explain why the wallet is asking twice this first time.
+  const [approving, setApproving] = useState(false);
   useEffect(() => {
     let alive = true;
     fetch('/api/eth-price')
@@ -180,11 +183,16 @@ export function ClaimModal({
           args: [owner, spender],
         })) as bigint;
         if (allowance < totalNeeded) {
-          const approveHash = await wallet.writeContract({
-            ...approveCall,
-            args: [spender, maxUint256],
-          });
-          await client.waitForTransactionReceipt({ hash: approveHash });
+          setApproving(true);
+          try {
+            const approveHash = await wallet.writeContract({
+              ...approveCall,
+              args: [spender, maxUint256],
+            });
+            await client.waitForTransactionReceipt({ hash: approveHash });
+          } finally {
+            setApproving(false);
+          }
         }
       }
 
@@ -449,10 +457,19 @@ export function ClaimModal({
               style={{ background: '#ffffff', animation: 'claim-pulse 1.6s ease-in-out infinite' }}
             />
             <span className={EYEBROW}>
-              {progress && progress.total > 1
-                ? `Settling ${progress.done * 10 >= items.length ? items.length : progress.done * 10}/${items.length} hexes…`
-                : 'Confirm in your wallet…'}
+              {approving
+                ? 'Step 1 of 2 · Allow USDG'
+                : progress && progress.total > 1
+                  ? `Settling ${progress.done * 10 >= items.length ? items.length : progress.done * 10}/${items.length} hexes…`
+                  : 'Confirm in your wallet…'}
             </span>
+            {approving && (
+              <p className="max-w-[300px] text-[12.5px] leading-relaxed text-white/60">
+                A one-time approval so VAVAWORLD can take USDG from your wallet
+                when you buy. You will not be asked again - every purchase after
+                this is a single confirmation.
+              </p>
+            )}
             <style jsx>{`
               @keyframes claim-pulse {
                 0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 18px rgba(255, 255, 255, 0.40); }
