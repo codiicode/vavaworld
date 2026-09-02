@@ -22,7 +22,7 @@ async function load(): Promise<LandingStats | null> {
   if (inFlight) return inFlight;
   inFlight = (async () => {
     try {
-      const r = await fetch('/api/landing-stats');
+      const r = await fetch('/api/landing-stats', { cache: 'no-store' });
       if (r.ok) cached = (await r.json()) as LandingStats;
     } catch {
       /* leave null — callers fall back to their placeholder */

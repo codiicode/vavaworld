@@ -11,7 +11,7 @@ export function useNations(): { nations: Nation[]; loading: boolean } {
 
   useEffect(() => {
     let alive = true;
-    fetch('/api/nations')
+    fetch('/api/nations', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((json: { nations: ApiNation[] }) => {
         if (alive) setNations((json.nations ?? []).map(apiToNation));

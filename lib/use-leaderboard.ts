@@ -22,7 +22,7 @@ export function useLeaderboard(): { data: LeaderboardData | null; loading: boole
 
   useEffect(() => {
     let alive = true;
-    fetch('/api/leaderboard')
+    fetch('/api/leaderboard', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((json) => {
         if (alive) setData(json as LeaderboardData);

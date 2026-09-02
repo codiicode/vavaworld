@@ -14,7 +14,7 @@ export function useMarketStats(version = 0): MarketStats | null {
   const [stats, setStats] = useState<MarketStats | null>(null);
   useEffect(() => {
     let alive = true;
-    fetch('/api/market-stats')
+    fetch('/api/market-stats', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((json) => {
         if (alive) setStats(json as MarketStats);

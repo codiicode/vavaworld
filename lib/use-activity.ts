@@ -40,7 +40,7 @@ export function useActivity(): { items: ActivityItem[]; loading: boolean } {
 
   useEffect(() => {
     let alive = true;
-    fetch('/api/activity')
+    fetch('/api/activity', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((json: { events: ApiEvent[] }) => {
         if (!alive) return;

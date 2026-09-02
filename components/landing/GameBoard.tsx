@@ -54,13 +54,13 @@ export function GameBoard() {
 
   useEffect(() => {
     let alive = true;
-    fetch('/api/leaderboard')
+    fetch('/api/leaderboard', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (alive) setLeaders((j?.entries ?? []).slice(0, 6));
       })
       .catch(() => alive && setLeaders([]));
-    fetch('/api/thrones')
+    fetch('/api/thrones', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (!alive) return;
@@ -70,7 +70,7 @@ export function GameBoard() {
         setThrones({ rows: ((j?.thrones ?? []) as Throne[]).slice(0, 6), contested });
       })
       .catch(() => alive && setThrones({ rows: [], contested: new Set() }));
-    fetch('/api/activity')
+    fetch('/api/activity', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (alive) setMoves(((j?.events ?? []) as Move[]).slice(0, 5));

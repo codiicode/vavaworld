@@ -31,7 +31,7 @@ export function LiveClaimsFeed() {
   const [events, setEvents] = useState<FeedEvent[]>([]);
 
   const load = useCallback(() => {
-    fetch('/api/activity')
+    fetch('/api/activity', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (j?.events) setEvents((j.events as FeedEvent[]).slice(0, SHOW));
