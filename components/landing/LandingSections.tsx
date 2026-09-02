@@ -185,18 +185,6 @@ export function LandingSections() {
                 <br />
                 a real game.
               </h2>
-              <Link href="/#how" className="rules-link">
-                Read the contract
-                <svg width="13" height="9" viewBox="0 0 15 10" fill="none" aria-hidden>
-                  <path
-                    d="M1 5h12M9.5 1.2 13.4 5l-3.9 3.8"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Link>
             </div>
           </Reveal>
         </div>
