@@ -735,11 +735,35 @@ export function MapView({
       const h3 = feats[0].properties?.h3 as string | undefined;
       if (!h3) return;
       const next = new Set(selectedHexes);
-      if (next.has(h3)) next.delete(h3);
-      else next.add(h3);
+      const claimed = claimedRegistry.get(h3);
+      if (claimed) {
+        // A claimed hex is part of a PROPERTY - every hex the same owner
+        // claimed in the same transaction (same claimed-at second, the
+        // convention property images and moderation already use). Clicking
+        // any cell of it toggles the whole property as one unit.
+        const group = [h3];
+        for (const [id, v] of claimedRegistry) {
+          if (
+            id !== h3 &&
+            v.owner === claimed.owner &&
+            Math.abs(v.claimedAt - claimed.claimedAt) < 2000
+          ) {
+            group.push(id);
+          }
+        }
+        const on = next.has(h3);
+        for (const id of group) {
+          if (on) next.delete(id);
+          else next.add(id);
+        }
+      } else if (next.has(h3)) {
+        next.delete(h3);
+      } else {
+        next.add(h3);
+      }
       setSelectedHexes(next);
     },
-    [selectedHexes, setSelectedHexes, mapRef],
+    [selectedHexes, setSelectedHexes, mapRef, claimedRegistry],
   );
 
   const handleOverlayMouseDown = (e: React.MouseEvent) => {
