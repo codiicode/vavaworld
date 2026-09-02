@@ -37,6 +37,6 @@ export async function GET() {
     .filter((c) => c.centroid !== null);
   return NextResponse.json(
     { countries },
-    { headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' } },
+    { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=60, stale-while-revalidate=300' } },
   );
 }

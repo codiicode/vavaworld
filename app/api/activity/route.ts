@@ -71,5 +71,8 @@ export async function GET() {
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
     .slice(0, 80);
 
-  return NextResponse.json({ events });
+  return NextResponse.json(
+    { events },
+    { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=15, stale-while-revalidate=60' } },
+  );
 }

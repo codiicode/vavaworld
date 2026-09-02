@@ -41,6 +41,6 @@ export async function GET() {
         imageUrl: h.image_url ?? null,
       })),
     },
-    { headers: { 'Cache-Control': 's-maxage=15, stale-while-revalidate=60' } },
+    { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=15, stale-while-revalidate=60' } },
   );
 }

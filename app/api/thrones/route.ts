@@ -44,7 +44,10 @@ export async function GET(req: Request) {
     landFloor = Number(floor ?? 250);
   }
 
-  return NextResponse.json({ thrones: thrones ?? [], coups: coups ?? [], earnings, landFloor });
+  return NextResponse.json(
+    { thrones: thrones ?? [], coups: coups ?? [], earnings, landFloor },
+    { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=15, stale-while-revalidate=60' } },
+  );
 }
 
 /**

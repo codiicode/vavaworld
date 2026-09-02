@@ -50,6 +50,6 @@ export async function GET() {
 
   return NextResponse.json(
     { nations },
-    { headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' } },
+    { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=60, stale-while-revalidate=300' } },
   );
 }

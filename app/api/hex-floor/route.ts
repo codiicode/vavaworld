@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     if (lock) {
       return NextResponse.json(
         { ...data, available: false, locked: true, lockName: lock.name, unlockAt: lock.unlockAt },
-        { headers: { 'Cache-Control': 's-maxage=5, stale-while-revalidate=30' } },
+        { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=5, stale-while-revalidate=30' } },
       );
     }
     // CDN-cache per hex: clients poll their selected hex on an interval, so
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
     // and stale-while-revalidate keeps responses instant while refreshing.
     // The floor moves $0.00001 per claim - seconds of staleness is invisible.
     return NextResponse.json(data, {
-      headers: { 'Cache-Control': 's-maxage=5, stale-while-revalidate=30' },
+      headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=5, stale-while-revalidate=30' },
     });
   } catch (e) {
     return NextResponse.json(

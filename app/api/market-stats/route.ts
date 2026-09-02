@@ -20,5 +20,5 @@ export async function GET() {
     floorSol: s?.floor_sol != null ? Number(s.floor_sol) : null,
     sales24h: Number(s?.sales_24h ?? 0),
     volume24hSol: Number(s?.volume_24h_sol ?? 0),
-  }, { headers: { 'Cache-Control': 's-maxage=30, stale-while-revalidate=120' } });
+  }, { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=30, stale-while-revalidate=120' } });
 }

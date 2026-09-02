@@ -8,6 +8,6 @@ export const revalidate = 30;
 export async function GET() {
   return NextResponse.json(
     { ethUsd: await getEthUsd() },
-    { headers: { 'Cache-Control': 's-maxage=30, stale-while-revalidate=120' } },
+    { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=30, stale-while-revalidate=120' } },
   );
 }

@@ -18,6 +18,6 @@ export async function GET(req: Request) {
       claimCount: state.claimCount,
       currentFloor: state.floor,
     },
-    { headers: { 'Cache-Control': 's-maxage=10, stale-while-revalidate=60' } },
+    { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=10, stale-while-revalidate=60' } },
   );
 }
