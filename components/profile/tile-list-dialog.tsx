@@ -13,6 +13,8 @@ import {
   dispatchListingsChanged,
 } from '@/lib/supabase-listings';
 import { listOnChain } from '@/lib/bid-chain';
+import { SECONDARY_FEE_BPS } from '@/lib/tokenomics-constants';
+import { useStakedTier } from '@/lib/use-staked-tier';
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
@@ -41,6 +43,7 @@ export function TileListDialog({
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const wallet = useActiveWallet();
+  const tier = useStakedTier(wallet.address);
   const [ethUsd, setEthUsd] = useState<number | null>(null);
 
   // The field is dollars but the listing settles in native coin, so a
@@ -64,7 +67,11 @@ export function TileListDialog({
   // All figures below are dollars; conversion to native happens at submit.
   const numeric = Number(price);
   const valid = Number.isFinite(numeric) && numeric > 0 && ethUsd !== null;
-  const fee = valid ? numeric * 0.025 : 0;
+  // The contract's split: 5%, or 3% for baron-staked sellers.
+  const feeBps = tier === 'baron' || tier === 'president'
+    ? SECONDARY_FEE_BPS.baron
+    : SECONDARY_FEE_BPS.standard;
+  const fee = valid ? (numeric * feeBps) / 10_000 : 0;
   const proceeds = valid ? numeric - fee : 0;
   const paidUsd = tile.paidUsd;
   const place = location?.neighborhood ?? location?.place ?? location?.countryName ?? 'Unmapped';
@@ -112,7 +119,7 @@ export function TileListDialog({
               </div>
 
               <dl className="space-y-1.5 rounded-md border border-border bg-muted/40 p-3 text-xs">
-                <Row label="Marketplace fee (2.5%)" value={fmtUsdValue(fee)} />
+                <Row label={`Marketplace fee (${feeBps / 100}%)`} value={fmtUsdValue(fee)} />
                 <Row label="You receive" value={fmtUsdValue(proceeds)} bold />
               </dl>
 
