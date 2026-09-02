@@ -123,6 +123,16 @@ deployer with ~$20 of ETH (contract deploy costs cents here, not 5.5 SOL).
 Repeat §3 with small real money. Checkpoint #1: 85% of the first claim
 lands in `0x4809...87B9`. End by razing everything.
 
+**Mainnet rehearsal PASSED 2026-09-02** (contract
+`0x5eC2b64AbDc8D5A6D2AC0E001bE9cB7922CfC175`, deploy block 52681004,
+real USDG wired): 5 real-ETH claims via EIP-712 quotes -> 85%
+(0.000425 ETH) landed in the hardware treasury (checkpoint #1) ->
+keeper reference pass drained pending to 0/0 -> razeBatch(5) in one tx
+emptied the stand-in vault. updateMint is ready. USDG leg skipped in
+the script (real USDG is not mintable); that path is testnet-proven.
+Gas remaining: deployer ~0.0035 ETH, keeper 0.002 ETH - enough for the
+launch-minute test claim and first swaps.
+
 ## 5. Launch minute (Pons)
 
 1. User creates $VAVA on **Pons** -> token address to Claude
