@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: 'Logos, facts, boilerplate and screenshots for writing about VAVAWORLD.',
 };
 
+const IS_TESTNET = process.env.NEXT_PUBLIC_EVM_CHAIN_ID !== '4663';
+
 const ASSETS = [
   { name: 'Globe mark - white', file: '/logo-globe-white.png', note: 'For dark backgrounds' },
   { name: 'Globe mark - colour', file: '/logo-globe-color.png', note: 'For light backgrounds' },
@@ -21,7 +23,7 @@ export default function PressPage() {
     >
       <h2>The short version</h2>
       <p>
-        VAVAWORLD divides Earth into 1.66 trillion hexagons and lets anyone claim one on Solana.
+        VAVAWORLD divides Earth into 1.66 trillion hexagons and lets anyone claim one on Robinhood Chain.
         Every claim buys $VAVA and seals it inside the land itself, so a hex always holds
         redeemable value. Each of the 249 territories has a presidency that earns a cut of every
         claim made on its soil.
@@ -30,7 +32,7 @@ export default function PressPage() {
       <h2>Boilerplate</h2>
       <p>
         <em>
-          VAVAWORLD is a land-claiming game built on Solana. The planet is partitioned into
+          VAVAWORLD is a land-claiming game built on Robinhood Chain. The planet is partitioned into
           1.66 trillion hexagonal hexes roughly the size of a house; players claim them with
           crypto, and 15% of every claim automatically buys $VAVA and locks it inside the hex.
           Hexes can be held, traded on an open marketplace, or razed to recover the tokens
@@ -42,7 +44,7 @@ export default function PressPage() {
       <dl>
         <div className="doc-row">
           <dt>Chain</dt>
-          <dd>Solana (devnet)</dd>
+          <dd>Robinhood Chain{IS_TESTNET ? ' (testnet)' : ''}</dd>
         </div>
         <div className="doc-row">
           <dt>Grid</dt>

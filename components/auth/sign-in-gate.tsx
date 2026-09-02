@@ -53,9 +53,9 @@ export function SignInGate({
           </div>
         </div>
         <p className="mb-5 text-sm leading-relaxed text-foreground/70">
-          Your {label} is tied to a Solana wallet. Sign in with email, Google or
+          Your {label} is tied to your wallet. Sign in with email, Google or
           X - we&apos;ll create an embedded wallet for you - or connect an
-          existing Phantom, Solflare or Backpack wallet.
+          existing wallet like MetaMask, Rabby or Coinbase Wallet.
         </p>
 
         <div className="flex flex-col gap-2">
@@ -86,7 +86,7 @@ export function SignInGate({
                 Connect wallet
               </div>
               <div className="text-[11.5px] text-foreground/60">
-                Phantom · Solflare · Backpack
+                MetaMask · Rabby · Coinbase Wallet
               </div>
             </div>
           </button>

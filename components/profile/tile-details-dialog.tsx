@@ -10,6 +10,7 @@ import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
 import { fmtUsdValue } from '@/lib/usd';
+import { explorerAddressUrl } from '@/lib/evm';
 /**
  * Read-only tile info card. Triggered from the row "..." menu → Details.
  * Shows the on-chain fields plus the geocoded place name so collectors can
@@ -86,12 +87,12 @@ export function TileDetailsDialog({
             Close
           </Button>
           <a
-            href={`https://solscan.io/account/${tile.owner}?cluster=devnet`}
+            href={explorerAddressUrl(tile.owner)}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
           >
-            View owner on Solscan <ExternalLink size={11} />
+            View owner on explorer <ExternalLink size={11} />
           </a>
         </div>
       </DialogContent>

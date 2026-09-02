@@ -74,7 +74,7 @@ const FRAMES: Frame[] = [
     zoom: 1.11,
     lit: 5,
     hud: [
-      { k: 'Signing', v: 'Phantom' },
+      { k: 'Signing', v: 'Your wallet' },
       { k: 'Locked', v: '15% → $VAVA' },
       { k: 'Status', v: 'Confirming' },
     ],

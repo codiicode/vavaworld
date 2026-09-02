@@ -7,6 +7,12 @@ export const metadata: Metadata = {
   description: 'How VAVAWORLD works: the grid, claiming, pricing, the token split, and thrones.',
 };
 
+const IS_TESTNET = process.env.NEXT_PUBLIC_EVM_CHAIN_ID !== '4663';
+const TILES_CONTRACT = process.env.NEXT_PUBLIC_TILES_CONTRACT ?? '';
+const EXPLORER = IS_TESTNET
+  ? 'explorer.testnet.chain.robinhood.com'
+  : 'explorer.chain.robinhood.com';
+
 const SECTIONS = [
   { id: 'grid', n: '01', title: 'The grid' },
   { id: 'claiming', n: '02', title: 'Claiming' },
@@ -36,7 +42,7 @@ export default function DocsPage() {
     <PageShell
       eyebrow="Documentation"
       title="How VAVAWORLD works."
-      lede="Earth divided into hexagons, claimed on Solana. Every rule below is enforced by the on-chain program, not by policy."
+      lede="Earth divided into hexagons, claimed on Robinhood Chain. Every rule below is enforced by the on-chain contract, not by policy."
     >
       <div className="doc-layout">
         <nav className="doc-toc" aria-label="Contents">
@@ -99,17 +105,17 @@ export default function DocsPage() {
           <Sec id="claiming">
             <p>
               Claiming happens in two halves. Prices come from a per-country curve computed off
-              the current claim count; settlement happens on Solana. The two are bound together
-              by a signed quote, so neither side can drift from the other.
+              the current claim count; settlement happens on Robinhood Chain. The two are bound
+              together by a signed quote, so neither side can drift from the other.
             </p>
             <h3>How a claim executes</h3>
             <p>
-              When you confirm a selection, the server issues a quote naming{' '}
-              <strong>the claimer, the exact cells, the price of each, and an expiry</strong>,
-              signed with the keeper key. Your wallet then submits two instructions together:
-              one verifying that signature, and one performing the claim. The program checks the
-              signature belongs to the keeper and that the prices in the transaction match the
-              ones that were signed.
+              When you confirm a selection, the server issues a typed-data (EIP-712) quote
+              naming <strong>the claimer, the payment currency, the exact cells, the price of
+              each, and an expiry</strong>, signed with the keeper key. Your wallet submits one
+              claim transaction carrying that signature; the contract recovers the signer,
+              requires it to be the keeper, and requires the prices in the transaction to match
+              the ones that were signed.
             </p>
             <div className="doc-note">
               The program rejects unquoted prices. The number you are shown is the number you
@@ -126,11 +132,10 @@ export default function DocsPage() {
             </p>
             <h3>Batch limits</h3>
             <p>
-              A single Solana transaction is capped at 1,232 bytes and roughly 1.4 million
-              compute units. The program allows up to <strong>20 hexes per transaction</strong>;
-              the client batches at 10 to stay comfortably inside both limits. Larger selections
-              become several sequential rounds, each with its own quote and signature - so
-              claiming 1,000 hexes is 100 transactions, not one enormous one.
+              A single claim transaction settles up to <strong>400 hexes at once</strong> - the
+              contract loops the whole quoted basket in one call, roughly 50k gas per hex.
+              Larger selections become several sequential rounds, each with its own quote and
+              signature, and the app walks through them for you.
             </p>
             <div className="doc-note">
               The program rejects unquoted prices - the number you are shown is the number you
@@ -306,21 +311,29 @@ export default function DocsPage() {
 
           <Sec id="network">
             <p>
-              VAVAWORLD runs on <strong>Solana devnet</strong>. Everything the app shows you  - 
-              hexes, owners, prices, balances - is real on-chain state read from that network,
-              not a simulation.
+              VAVAWORLD runs on{' '}
+              <strong>Robinhood Chain{IS_TESTNET ? ' testnet' : ''}</strong>, an Ethereum
+              layer-2. Everything the app shows you - hexes, owners, prices, balances - is real
+              on-chain state read from that network, not a simulation. Gas is paid in ETH;
+              claims can be paid in ETH or USDG.
             </p>
-            <p>
-              Testnet funds have no monetary value and can be obtained free from a faucet, so you
-              can play through the entire loop without spending anything. The trade-off is that
-              devnet is a test network: it can be reset by the Solana validators themselves,
-              which would clear all state. That is outside anyone&apos;s control.
-            </p>
+            {IS_TESTNET ? (
+              <p>
+                Testnet funds have no monetary value and can be obtained free from a faucet, so
+                you can play through the entire loop without spending anything. The trade-off is
+                that a test network can be reset by its operators, which would clear all state.
+                That is outside anyone&apos;s control.
+              </p>
+            ) : null}
             <h3>Verifying it yourself</h3>
             <p>
-              The program is deployed at <code>G8MsXTtabmQnfPd4PZ7dDLYtRPhFDqRs93ExhhsSDkwM</code>.
-              Every claim, sale and transfer is a public transaction you can inspect in any
-              Solana explorer without trusting anything this site tells you.
+              {TILES_CONTRACT ? (
+                <>
+                  The contract is deployed at <code>{TILES_CONTRACT}</code>.{' '}
+                </>
+              ) : null}
+              Every claim, sale and transfer is a public transaction you can inspect at{' '}
+              <code>{EXPLORER}</code> without trusting anything this site tells you.
             </p>
           </Sec>
         </div>

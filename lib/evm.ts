@@ -61,6 +61,19 @@ export const CLAIM_TYPES = {
   ],
 } as const;
 
+const EXPLORER_BASE =
+  process.env.NEXT_PUBLIC_EVM_CHAIN_ID === '4663'
+    ? 'https://explorer.chain.robinhood.com'
+    : 'https://explorer.testnet.chain.robinhood.com';
+
+export function explorerTxUrl(hash: string): string {
+  return `${EXPLORER_BASE}/tx/${hash}`;
+}
+
+export function explorerAddressUrl(address: string): string {
+  return `${EXPLORER_BASE}/address/${address}`;
+}
+
 /** Zero address = pay in native ETH; the USDG address = pay in dollars. */
 export const NATIVE_PAY = '0x0000000000000000000000000000000000000000' as `0x${string}`;
 export const USDG_ADDRESS = (process.env.NEXT_PUBLIC_USDG_CONTRACT ?? '') as `0x${string}`;

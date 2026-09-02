@@ -10,7 +10,7 @@ import { useTiles } from '@/lib/use-tiles';
 import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { useCountryCounts } from '@/lib/use-country-counts';
 import { buildClaimCall, buildUsdgApproveCall, fetchQuotes, type PayCurrency } from '@/lib/claim-chain-evm';
-import { USDG_ADDRESS } from '@/lib/evm';
+import { explorerTxUrl, USDG_ADDRESS } from '@/lib/evm';
 import { getPublicClient } from '@/lib/evm';
 import { dispatchClaimDone } from '@/lib/claim-events';
 import { PRICING } from '@/lib/pricing';
@@ -463,12 +463,12 @@ export function ClaimModal({
                 {items.length} {items.length === 1 ? 'hex' : 'hexes'} claimed
               </div>
               <a
-                href={`https://solscan.io/tx/${txSig}?cluster=devnet`}
+                href={explorerTxUrl(txSig)}
                 target="_blank"
                 rel="noreferrer"
                 className="text-[12px] font-medium text-white/55 underline underline-offset-4 transition-colors hover:text-white"
               >
-                View on Solscan →
+                View on explorer →
               </a>
             </div>
             <div className="relative flex gap-3">

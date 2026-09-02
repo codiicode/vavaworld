@@ -638,15 +638,18 @@ function ClaimedHexView({
   const ownerHandle = info.username ?? info.owner;
   const wallet = useActiveWallet();
   const [bidOpen, setBidOpen] = useState(false);
-  const canBid = wallet.connected && wallet.address !== info.owner;
-  const isOwn = wallet.connected && wallet.address === info.owner;
+  // EVM addresses mix checksummed and lowercase forms depending on the
+  // source (wallet vs registry vs env) - every comparison must fold case.
+  const me = wallet.address?.toLowerCase();
+  const canBid = wallet.connected && me !== info.owner.toLowerCase();
+  const isOwn = wallet.connected && me === info.owner.toLowerCase();
   const isAdmin =
     wallet.connected &&
-    !!wallet.address &&
+    !!me &&
     (process.env.NEXT_PUBLIC_ADMIN_WALLETS ?? '')
       .split(',')
-      .map((a) => a.trim())
-      .includes(wallet.address);
+      .map((a) => a.trim().toLowerCase())
+      .includes(me);
 
   // The property = every hex the owner claimed in the same transaction
   // (same claimed-at second, matching the tile-groups convention). One

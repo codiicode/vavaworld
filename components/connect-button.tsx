@@ -71,7 +71,7 @@ export function ConnectButton({
           <div className="flex flex-col">
             <span className="text-sm font-medium">Log in</span>
             <span className="text-[11px] text-muted-foreground">
-              Phantom, Solflare, Backpack
+              MetaMask, Rabby, Coinbase Wallet
             </span>
           </div>
         </button>
