@@ -23,7 +23,7 @@ that file is kept for the frozen Solana fallback on `main`.
 | Testnet deployer (throwaway; key in `evm/.deployer-testnet.key`, gitignored) | `0xcf45a13e079F3fFEF6197F318D70186b600adCF7` |
 | Mainnet deployer (throwaway; key in `evm/.deployer-mainnet.key`, gitignored) | `0xcFf88702991e8314F2D042C81c8080e3d819435A` |
 | Mainnet keeper (key in `evm/.keeper-mainnet.key`, gitignored; goes in `KEEPER_EVM_KEY` env at launch) | `0xa5035b1dB2e1b07F64FFe731cC992Ff8088c0F44` |
-| USDG (mainnet) | look up the canonical USDG token on the mainnet explorer before deploy - do NOT trust a pasted address from chat/DMs |
+| USDG (mainnet) | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` - verified 2026-09-02 two ways: eth_call against the node (name "Global Dollar", symbol USDG, decimals 6 - matching our $0.10 = 100_000 units) AND the same address in Paxos's own docs (docs.paxos.com). Re-verify on-chain before the deploy command runs |
 
 ## 1. Deploy (testnet first, then mainnet - same commands)
 
