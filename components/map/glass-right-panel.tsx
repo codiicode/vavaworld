@@ -13,6 +13,7 @@ import { useCountryCounts } from '@/lib/use-country-counts';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { PRICING } from '@/lib/pricing';
+import { useUsdFmt } from '@/lib/usd';
 import { BidDialog } from '@/components/bid-dialog';
 import { Flag } from '@/components/flag';
 import { HexPricingCard } from '@/components/map/hex-pricing-card';
@@ -60,6 +61,7 @@ export function GlassRightPanel({
   const selectedArr = useMemo(() => Array.from(selectedHexes), [selectedHexes]);
   const { tiles: claimedCache } = useTiles(selectedArr);
   const registry = useClaimedRegistry();
+  const usdFmt = useUsdFmt();
   const claimedTiles = useMemo(() => {
     const m = new Map<string, ClaimedView>();
     for (const h of selectedArr) {
@@ -68,7 +70,7 @@ export function GlassRightPanel({
         m.set(h, {
           owner: t.owner,
           username: null,
-          paidLabel: `${(Number(t.pricePaid) / LAMPORTS_PER_SOL).toFixed(3)} SOL`,
+          paidLabel: usdFmt(Number(t.pricePaid) / LAMPORTS_PER_SOL),
           claimedAtMs: t.claimedAt * 1000,
           imageUrl: registry.get(h)?.imageUrl ?? null,
         });
@@ -86,7 +88,7 @@ export function GlassRightPanel({
       }
     }
     return m;
-  }, [selectedArr, claimedCache, registry]);
+  }, [selectedArr, claimedCache, registry, usdFmt]);
 
   const items = Array.from(selectedHexes).map((h3) => {
     const c = hexCenter(h3);

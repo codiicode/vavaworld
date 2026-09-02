@@ -432,9 +432,6 @@ export function ClaimModal({
                 >
                   ${totalUsd.toFixed(totalUsd < 10 ? 4 : 2)}
                 </div>
-                <div className="mt-1.5 text-[11.5px] tabular-nums text-white/50">
-                  ≈ {totalSol.toFixed(6)} SOL · ${solUsd.toFixed(2)}/SOL
-                </div>
               </div>
             </div>
 

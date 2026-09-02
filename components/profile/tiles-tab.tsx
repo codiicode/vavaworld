@@ -274,6 +274,7 @@ function GroupRow({
   index: number;
   onAction: (kind: DialogKind, tile: ClaimedTile) => void;
 }) {
+  const usd = useUsdFmt();
   const isSingle = g.tiles.length === 1;
   const title = isSingle
     ? g.neighborhood ?? g.citiesLabel ?? g.countryName ?? 'Locating…'
@@ -320,9 +321,8 @@ function GroupRow({
       </TableCell>
       <TableCell className="text-right">
         <span className="text-sm font-medium tabular-nums text-foreground">
-          {g.totalSol.toFixed(3)}
+          {usd(g.totalSol)}
         </span>
-        <span className="ml-1 text-xs text-foreground/55">USD</span>
       </TableCell>
       <TableCell>
         <DropdownMenu>

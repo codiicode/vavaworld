@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -16,7 +16,7 @@ import {
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
-import { useUsdFmt } from '@/lib/usd';
+import { fmtUsdValue, useUsdFmt } from '@/lib/usd';
 /**
  * "List for sale" dialog opened from the tile row "..." menu.
  *
@@ -41,12 +41,32 @@ export function TileListDialog({
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [solUsd, setSolUsd] = useState<number | null>(null);
   const wallet = useActiveWallet();
+
+  // The field is denominated in DOLLARS but the listing settles in the
+  // native coin, so a live rate is required before anything can be
+  // submitted - never convert through a stale fallback constant.
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    fetch('/api/sol-price')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (alive && j?.solUsd > 0) setSolUsd(j.solUsd);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [open]);
 
   if (!tile) return null;
 
+  // All figures below are dollars; the conversion to native happens once,
+  // at submit.
   const numeric = Number(price);
-  const valid = Number.isFinite(numeric) && numeric > 0;
+  const valid = Number.isFinite(numeric) && numeric > 0 && solUsd !== null;
   const fee = valid ? numeric * 0.025 : 0;
   const proceeds = valid ? numeric - fee : 0;
   const paidSol = Number(tile.pricePaid) / LAMPORTS_PER_SOL;
@@ -84,7 +104,7 @@ export function TileListDialog({
                 <Input
                   autoFocus
                   inputMode="decimal"
-                  placeholder={paidSol > 0 ? paidSol.toFixed(3) : '0.000'}
+                  placeholder={solUsd && paidSol > 0 ? (paidSol * solUsd).toFixed(2) : '0.00'}
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   className="h-10 text-base tabular-nums"
@@ -95,8 +115,8 @@ export function TileListDialog({
               </div>
 
               <dl className="space-y-1.5 rounded-md border border-border bg-muted/40 p-3 text-xs">
-                <Row label="Marketplace fee (2.5%)" value={`${usd(fee)}`} />
-                <Row label="You receive" value={`${usd(proceeds)}`} bold />
+                <Row label="Marketplace fee (2.5%)" value={fmtUsdValue(fee)} />
+                <Row label="You receive" value={fmtUsdValue(proceeds)} bold />
               </dl>
 
               {error && (
@@ -135,10 +155,12 @@ export function TileListDialog({
                     }
 
                     if (!wallet.signMessage) throw new Error('Wallet cannot sign messages');
+                    if (!solUsd) throw new Error('Live price unavailable - try again');
                     await createListing({
                       h3: tile.h3,
                       seller: wallet.address,
-                      priceSol: numeric,
+                      // Typed in dollars, settled in native coin.
+                      priceSol: numeric / solUsd,
                       signMessage: wallet.signMessage,
                     });
                     dispatchListingsChanged();
