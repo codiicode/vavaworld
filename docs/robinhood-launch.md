@@ -41,13 +41,22 @@ npx hardhat run scripts/deploy.ts --network robinhoodTestnet   # or robinhood
 
 ## 2. Env flip (Vercel + Railway web + Railway keeper)
 
+**Branch first:** production (Vercel prod + both Railway services) deploys
+`main`, which holds the frozen Solana stack. Going live on Robinhood means
+merging `evm` -> `main` (after the testnet rehearsal passes), which flips
+every host at once. The Railway keeper service must ALSO have its start
+already pointing at `npm run keeper` - on the evm branch that script IS the
+EVM keeper, so no service reconfiguration is needed beyond env vars.
+
 | Variable | Value | Where |
 |---|---|---|
-| `NEXT_PUBLIC_RPC_URL` | chain RPC | web (browser reads) |
-| `RPC_URL` | chain RPC | web server + keeper |
+| `NEXT_PUBLIC_EVM_RPC_URL` | chain RPC | web (browser reads) |
+| `EVM_RPC_URL` | chain RPC | web server |
+| `RPC_URL` | chain RPC | keeper service |
 | `NEXT_PUBLIC_TILES_CONTRACT` / `TILES_CONTRACT` | deploy output `tiles` | web + keeper |
 | `NEXT_PUBLIC_USDG_CONTRACT` | deploy output `usdg` | web |
-| `CHAIN_ID` | 46630 / 4663 | web + keeper |
+| `NEXT_PUBLIC_EVM_CHAIN_ID` | 46630 / 4663 | web |
+| `CHAIN_ID` | 46630 / 4663 | keeper service |
 | `KEEPER_EVM_KEY` | keeper private key | web server (quote signing) + keeper service |
 | `KEEPER_INTERVAL_SECS` | `60` | keeper service |
 | `KEEPER_SWAP` | `reference` until launch minute, then `uniswap` | keeper service |

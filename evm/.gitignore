@@ -3,3 +3,4 @@ artifacts/
 cache/
 types/
 .deployer-*.key
+.keeper-*.key
