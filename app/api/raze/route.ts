@@ -6,6 +6,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const ZERO = '0x0000000000000000000000000000000000000000';
+const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
 
 /**
  * POST /api/raze { h3, owner, txHash? }
@@ -39,21 +40,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'hex is still owned on-chain' }, { status: 409 });
   }
 
+  // The server talks to Supabase with the anon key, so table writes are
+  // RLS-gated; every mutation goes through a SECURITY DEFINER function
+  // guarded by the API secret, like the rest of the mirror.
   const sb = getServerSupabase();
-  const { data: row } = await sb
-    .from('hexes')
-    .select('owner')
-    .eq('h3_id', h3)
-    .maybeSingle<{ owner: string }>();
-  if (!row) return NextResponse.json({ ok: true, note: 'not in registry' });
-  if (row.owner.toLowerCase() !== owner.toLowerCase()) {
-    return NextResponse.json({ error: 'registry owner is not the caller' }, { status: 403 });
+  const { data, error } = await sb.rpc('raze_hex', {
+    p_h3: h3,
+    p_owner: owner,
+    p_secret: API_SECRET,
+  });
+  if (error) {
+    const msg = error.message.replace(/^.*?: /, '');
+    return NextResponse.json({ error: msg }, { status: /not the caller/i.test(msg) ? 403 : 500 });
   }
-
-  const now = new Date().toISOString();
-  await sb.from('listings').update({ status: 'cancelled', closed_at: now }).eq('h3_id', h3).eq('status', 'active');
-  await sb.from('bids').update({ status: 'cancelled', closed_at: now }).eq('h3_id', h3).eq('status', 'active');
-  const { error } = await sb.from('hexes').delete().eq('h3_id', h3);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, ...(data as object) });
 }
