@@ -48,12 +48,20 @@ export async function POST(req: Request) {
     }
   }
   try {
-    const upstream = await fetch(getEvmRpcUrl(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(15_000),
-    });
+    const send = () =>
+      fetch(getEvmRpcUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(15_000),
+      });
+    let upstream = await send();
+    if (upstream.status === 429) {
+      // The relay's egress IP shares one quota - a beat of patience beats
+      // handing every user behind it the raw rate-limit error.
+      await new Promise((r) => setTimeout(r, 1200));
+      upstream = await send();
+    }
     const text = await upstream.text();
     return new NextResponse(text, {
       status: upstream.status,

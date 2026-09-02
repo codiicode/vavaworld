@@ -22,6 +22,9 @@ export const robinhoodChain = defineChain({
   name: 'Robinhood Chain',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: { default: { http: [getEvmRpcUrl()] } },
+  contracts: {
+    multicall3: { address: '0xcA11bde05977b3631167028862bE2a173976CA11' },
+  },
 });
 
 let _client: PublicClient | null = null;
@@ -31,12 +34,32 @@ export function getPublicClient(): PublicClient {
   // straight to the user). Retry each request, and in the browser fall
   // back to our own /api/rpc proxy - a different network path, so a
   // Cloudflare hiccup between the visitor and the RPC doesn't kill the UI.
-  const direct = http(getEvmRpcUrl(), { retryCount: 3, retryDelay: 300, timeout: 12_000 });
+  // The RPC rate-limits per IP, so VOLUME is the real enemy: batch JSON-RPC
+  // calls into one HTTP request, and collapse concurrent contract reads into
+  // multicall3 aggregates (the map's per-hex status reads went from ~800
+  // requests per pan to a handful).
+  const direct = http(getEvmRpcUrl(), {
+    retryCount: 3,
+    retryDelay: 300,
+    timeout: 12_000,
+    batch: { wait: 20 },
+  });
   const transport =
     typeof window === 'undefined'
       ? direct
-      : fallback([direct, http('/api/rpc', { retryCount: 2, timeout: 15_000 })], { rank: false });
-  _client = createPublicClient({ chain: robinhoodChain, transport });
+      : fallback(
+          [
+            direct,
+            // batchSize stays under the relay's 50-call array cap.
+            http('/api/rpc', { retryCount: 2, timeout: 15_000, batch: { wait: 20, batchSize: 40 } }),
+          ],
+          { rank: false },
+        );
+  _client = createPublicClient({
+    chain: robinhoodChain,
+    transport,
+    batch: { multicall: { wait: 30 } },
+  });
   return _client;
 }
 
