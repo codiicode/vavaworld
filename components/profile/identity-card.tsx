@@ -10,7 +10,7 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { useUserTiles } from '@/lib/use-user-tiles';
 import { useWalletBalance } from '@/lib/use-wallet-balance';
-import { useUsdFmt } from '@/lib/usd';
+import { fmtUsdValue } from '@/lib/usd';
 import { ConnectX } from './connect-x';
 import { EditProfileDialog } from './edit-profile-dialog';
 import { ExportKeyButton } from './export-key-button';
@@ -41,8 +41,7 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
   const profile = useUserProfile();
   const wallet = useActiveWallet();
   const { tiles } = useUserTiles();
-  const { balance } = useWalletBalance(wallet.address);
-  const usd = useUsdFmt();
+  const { balanceUsd } = useWalletBalance(wallet.address);
   const [copied, setCopied] = useState(false);
 
   const totalSpent = tiles?.reduce((sum, t) => sum + t.paidUsd, 0) ?? null;
@@ -163,12 +162,12 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
             <SummaryStat label="Hexes" value={tiles ? String(tiles.length) : '-'} />
             <SummaryStat
               label="Spent"
-              value={totalSpent !== null ? usd(totalSpent) : '-'}
+              value={totalSpent !== null ? fmtUsdValue(totalSpent) : '-'}
               unit=""
             />
             <SummaryStat
               label="Balance"
-              value={balance !== null ? usd(balance) : '-'}
+              value={balanceUsd !== null ? fmtUsdValue(balanceUsd) : '-'}
               unit=""
             />
           </div>
