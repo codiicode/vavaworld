@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -15,7 +15,7 @@ import {
 import type { ClaimedTile } from '@/types/tile';
 import type { HexLocation } from '@/lib/use-hex-locations';
 
-import { fmtUsdValue, useUsdFmt } from '@/lib/usd';
+import { fmtUsdValue } from '@/lib/usd';
 /**
  * "List for sale" dialog opened from the tile row "..." menu.
  *
@@ -35,17 +35,34 @@ export function TileListDialog({
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
-  const usd = useUsdFmt();
   const [price, setPrice] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const wallet = useActiveWallet();
+  const [ethUsd, setEthUsd] = useState<number | null>(null);
+
+  // The field is dollars but the listing settles in native coin, so a
+  // live rate is required before submit - never a fallback constant.
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    fetch('/api/eth-price')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (alive && j?.ethUsd > 0) setEthUsd(j.ethUsd);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [open]);
 
   if (!tile) return null;
 
+  // All figures below are dollars; conversion to native happens at submit.
   const numeric = Number(price);
-  const valid = Number.isFinite(numeric) && numeric > 0;
+  const valid = Number.isFinite(numeric) && numeric > 0 && ethUsd !== null;
   const fee = valid ? numeric * 0.025 : 0;
   const proceeds = valid ? numeric - fee : 0;
   const paidUsd = tile.paidUsd;
@@ -94,8 +111,8 @@ export function TileListDialog({
               </div>
 
               <dl className="space-y-1.5 rounded-md border border-border bg-muted/40 p-3 text-xs">
-                <Row label="Marketplace fee (2.5%)" value={`${usd(fee)}`} />
-                <Row label="You receive" value={`${usd(proceeds)}`} bold />
+                <Row label="Marketplace fee (2.5%)" value={fmtUsdValue(fee)} />
+                <Row label="You receive" value={fmtUsdValue(proceeds)} bold />
               </dl>
 
               {error && (
@@ -134,10 +151,12 @@ export function TileListDialog({
                     }
 
                     if (!wallet.signMessage) throw new Error('Wallet cannot sign messages');
+                    if (!ethUsd) throw new Error('Live price unavailable - try again');
                     await createListing({
                       h3: tile.h3,
                       seller: wallet.address,
-                      priceSol: numeric,
+                      // Typed in dollars; the listing column holds native coin.
+                      priceSol: numeric / ethUsd,
                       signMessage: wallet.signMessage,
                     });
                     dispatchListingsChanged();
@@ -166,7 +185,7 @@ export function TileListDialog({
               <p className="text-sm font-medium">Listed</p>
               <p className="max-w-sm text-xs text-muted-foreground">
                 Your hex is live in the marketplace at{' '}
-                <span className="tabular-nums text-foreground">{usd(numeric)}</span>.
+                <span className="tabular-nums text-foreground">{fmtUsdValue(numeric)}</span>.
                 On-chain settlement happens when the marketplace contract ships;
                 until then the listing is held off-chain.
               </p>

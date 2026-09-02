@@ -9,7 +9,7 @@ import { Flag } from '@/components/flag';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { placeBidOnChain } from '@/lib/bid-chain';
 
-import { useUsdFmt } from '@/lib/usd';
+import { fmtUsdValue, useUsdFmt } from '@/lib/usd';
 type Phase = 'input' | 'signing' | 'done' | 'error';
 
 /**
@@ -60,12 +60,14 @@ export function BidDialog({
     };
   }, [open]);
 
+  // The field is dollars; the escrow locks native coin, so a live rate
+  // is required before submitting - never a fallback constant.
   const parsed = Number(amount);
-  const valid = Number.isFinite(parsed) && parsed > 0;
-  const usdApprox = valid && solUsd ? parsed * solUsd : null;
+  const valid = Number.isFinite(parsed) && parsed > 0 && solUsd !== null && solUsd > 0;
+  const askUsd = askSol != null && solUsd ? askSol * solUsd : null;
 
   const submit = async () => {
-    if (!valid) return;
+    if (!valid || !solUsd) return;
     if (!wallet.connected || !wallet.address || !wallet.writeContract) {
       setError('Log in first');
       return;
@@ -76,7 +78,8 @@ export function BidDialog({
       await placeBidOnChain({
         wallet,
         h3,
-        wei: BigInt(Math.round(parsed * 1e6)) * 10n ** 12n,
+        // Typed in dollars, escrowed in native coin (micro-eth precision).
+        wei: BigInt(Math.round((parsed / solUsd) * 1e6)) * 10n ** 12n,
       });
       setPhase('done');
       onPlaced?.();
@@ -128,15 +131,14 @@ export function BidDialog({
                   step="0.001"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0.000"
+                  placeholder="0.00"
                   className="h-10 w-full rounded-md border border-border bg-background px-3 pr-14 text-sm tabular-nums outline-none transition-colors focus:border-primary"
                 />
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">$</span>
               </div>
-              <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
-                <span>{usdApprox != null ? `≈ $${usdApprox.toFixed(2)}` : ' '}</span>
-                {askSol != null && valid && parsed < askSol && (
-                  <span>{Math.round((1 - parsed / askSol) * 100)}% below ask</span>
+              <div className="mt-1.5 flex justify-end text-[11px] text-muted-foreground">
+                {askUsd != null && valid && parsed < askUsd && (
+                  <span>{Math.round((1 - parsed / askUsd) * 100)}% below ask</span>
                 )}
               </div>
             </div>
@@ -145,7 +147,7 @@ export function BidDialog({
           {phase === 'done' && (
             <div className="flex items-center gap-2 rounded-md border border-white/12 bg-white/[0.04] px-3 py-2.5 text-sm text-white/80">
               <CheckCircle2 size={15} />
-              {usd(parsed)} locked in escrow - offer live.
+              {fmtUsdValue(parsed)} locked in escrow - offer live.
             </div>
           )}
 
