@@ -61,7 +61,7 @@ EVM keeper, so no service reconfiguration is needed beyond env vars.
 | `CHAIN_ID` | 46630 / 4663 | keeper service |
 | `KEEPER_EVM_KEY` | keeper private key | web server (quote signing) + keeper service |
 | `KEEPER_INTERVAL_SECS` | `60` | keeper service |
-| `KEEPER_SWAP` | `reference` until launch minute, then `uniswap` | keeper service |
+| `KEEPER_SWAP` | `hold` before the token exists (president sync + registry heal only - embedding stand-in would block updateMint), `uniswap` from the launch minute; `reference` is for rehearsals | keeper service |
 | `SWAP_ROUTER` | `0xcaf681a66d020601342297493863e78c959e5cb2` (Uniswap SwapRouter02, verified on-chain: factory matches the live pool's, WETH9 matches) | keeper service |
 | `WETH_ADDRESS` | `0x0bd7d308f8e1639FAb988df18A8011f41eACAd73` (symbol WETH, confirmed via the live USDG/WETH pool) | keeper service |
 | `POOL_FEE` | fee tier of the VAVA pool Pons creates (see §5) | keeper service |

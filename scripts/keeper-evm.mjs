@@ -284,6 +284,13 @@ async function runOnce() {
     // Throne sync must never block the buyback either.
     console.error('[keeper] president sync failed:', String(e).slice(0, 160));
   }
+  // Pre-launch 'hold': registry healing and president sync run, but the
+  // buyback must NOT - embedding stand-in VAVA would leave tokens in the
+  // vault and block updateMint at the launch minute.
+  if (SWAP_MODE === 'hold') {
+    console.log('[keeper] hold mode - escrow accumulates until the real token is live');
+    return;
+  }
   const pending = await findPending(logs);
   if (pending.length === 0) {
     console.log('[keeper] nothing pending');
