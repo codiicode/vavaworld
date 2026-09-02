@@ -23,7 +23,9 @@ if (!treasury || !keeper) {
 
 let vavaAddr = process.env.STANDIN_MINT;
 if (!vavaAddr) {
-  const Vava = await ethers.getContractFactory("MockVava");
+  // Owner-only mint: an open stand-in lets anyone stake free tokens
+  // (fake discounts/presidencies) and brick updateMint with one unit.
+  const Vava = await ethers.getContractFactory("StandInVava");
   const vava = await Vava.deploy();
   await vava.waitForDeployment();
   vavaAddr = await vava.getAddress();
