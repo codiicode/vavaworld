@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isValidCell, getResolution } from 'h3-js';
 import { getHexFloor, H3_RESOLUTION } from '@/lib/pricing';
+import { lockedInfo } from '@/lib/locked-countries';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,13 @@ export async function GET(req: Request) {
   }
   try {
     const data = await getHexFloor(h3);
+    const lock = lockedInfo(data.countryIso);
+    if (lock) {
+      return NextResponse.json(
+        { ...data, available: false, locked: true, lockName: lock.name, unlockAt: lock.unlockAt },
+        { headers: { 'Cache-Control': 's-maxage=5, stale-while-revalidate=30' } },
+      );
+    }
     // CDN-cache per hex: clients poll their selected hex on an interval, so
     // s-maxage collapses every browser's polls into ~1 origin hit per window
     // and stale-while-revalidate keeps responses instant while refreshing.

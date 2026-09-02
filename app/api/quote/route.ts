@@ -3,6 +3,7 @@ import { isValidCell, getResolution } from 'h3-js';
 import { privateKeyToAccount } from 'viem/accounts';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { resolveHexCountry } from '@/lib/geo/country-resolver';
+import { lockedInfo } from '@/lib/locked-countries';
 import { H3_RESOLUTION, PRICING } from '@/lib/pricing';
 import { getEthUsd } from '@/lib/eth-price';
 import { getStakedWhole } from '@/lib/server-verify';
@@ -92,6 +93,15 @@ export async function POST(req: Request) {
 
   const isos = h3s.map((h3) => resolveHexCountry(h3));
   const uniqueIsos = Array.from(new Set(isos));
+  for (const iso of uniqueIsos) {
+    const lock = lockedInfo(iso);
+    if (lock) {
+      return NextResponse.json(
+        { error: `${lock.name} is still locked in the Vault`, code: 'COUNTRY_LOCKED', countryIso: lock.iso },
+        { status: 423 },
+      );
+    }
+  }
   const { data: countries } = await sb
     .from('countries')
     .select('iso_code, claim_count')

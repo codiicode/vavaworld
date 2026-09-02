@@ -14,6 +14,8 @@ type HexFloor = {
   currentFloor: number;
   nextFloor: number;
   claimed: null | { owner: string; purchasePrice: number; claimedAt: string };
+  locked?: boolean;
+  lockName?: string;
 };
 
 const fmt = (n: number) => n.toFixed(4);
@@ -155,7 +157,21 @@ export function HexPricingCard({ h3 }: { h3: string | null }) {
             </div>
           </div>
 
-          {data.claimed ? (
+          {data.locked ? (
+            <div
+              className="mt-3 rounded-[10px] px-3 py-2.5 text-[12.5px]"
+              style={{
+                background: 'rgba(212, 169, 78, 0.16)',
+                border: '1px solid rgba(240, 201, 107, 0.4)',
+              }}
+            >
+              <div className="font-semibold text-[#f0c96b]">🔒 Locked in the Vault</div>
+              <div className="mt-0.5 text-white/70">
+                {data.lockName ?? data.countryName} is not claimable yet. Watch{' '}
+                <span className="font-medium text-white/90">@vavaworldnet</span> for the unlock.
+              </div>
+            </div>
+          ) : data.claimed ? (
             <div
               className="mt-3 rounded-[10px] px-3 py-2 text-[12.5px]"
               style={{ background: 'rgba(255,255,255,0.10)' }}

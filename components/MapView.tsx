@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Map, { type MapRef, type MapMouseEvent } from 'react-map-gl/mapbox';
 import type { Feature, FeatureCollection, Polygon, Position } from 'geojson';
 import type { GeoJSONSource, Map as MapboxMap } from 'mapbox-gl';
+import { lockedIsos } from '@/lib/locked-countries';
 import { hexCenter, hexToFeature, hexesForBounds } from '@/lib/h3-utils';
 import { TIER_FILL, type Tier, classifyTier } from '@/lib/tier';
 import { useTiles } from '@/lib/use-tiles';
@@ -65,6 +66,9 @@ const LINE_LAYER = 'h3-grid-line';
 const STATE_FILL_LAYER = 'h3-grid-state-fill';
 const SELECTED_LAYER = 'h3-grid-selected';
 
+const VAULT_SOURCE = 'vault-countries';
+const VAULT_FILL = 'vault-fill';
+const VAULT_LINE = 'vault-line';
 const AGG_SOURCE = 'country-agg';
 const AGG_CIRCLE = 'country-agg-circle';
 const AGG_LABEL = 'country-agg-label';
@@ -462,6 +466,40 @@ export function MapView({
   const installHexLayers = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
+
+    // The Vault: locked nations glow gold under the hex grid. Mapbox's own
+    // country-boundaries tileset supplies the polygons; the worldview filter
+    // keeps one polygon per nation instead of every disputed variant.
+    if (!map.getSource(VAULT_SOURCE)) {
+      map.addSource(VAULT_SOURCE, {
+        type: 'vector',
+        url: 'mapbox://mapbox.country-boundaries-v1',
+      });
+      // `match` (not `in`) so Mapbox parses this as an expression - the
+      // legacy-filter heuristic silently matches nothing with `in` here.
+      const vaultFilter: Parameters<typeof map.addLayer>[0]['filter'] = [
+        'all',
+        ['match', ['get', 'iso_3166_1'], lockedIsos(), true, false],
+        ['any', ['==', ['get', 'worldview'], 'all'], ['in', 'US', ['get', 'worldview']]],
+      ];
+      map.addLayer({
+        id: VAULT_FILL,
+        type: 'fill',
+        source: VAULT_SOURCE,
+        'source-layer': 'country_boundaries',
+        filter: vaultFilter,
+        paint: { 'fill-color': '#d4a94e', 'fill-opacity': 0.32 },
+      });
+      map.addLayer({
+        id: VAULT_LINE,
+        type: 'line',
+        source: VAULT_SOURCE,
+        'source-layer': 'country_boundaries',
+        filter: vaultFilter,
+        paint: { 'line-color': '#f0c96b', 'line-width': 1.5, 'line-opacity': 0.85 },
+      });
+    }
+
     if (map.getSource(SOURCE_ID)) return;
 
     map.addSource(SOURCE_ID, {
@@ -591,6 +629,9 @@ export function MapView({
 
     // Free up Shift+drag (Mapbox box-zoom) - we use Ctrl+drag for box-select.
     map.boxZoom.disable();
+
+    // Debug handle for headless map verification (layer/source inspection).
+    (window as unknown as { __vavaMap?: MapboxMap }).__vavaMap = map;
 
     installHexLayers();
     applyStandardConfig(map);
