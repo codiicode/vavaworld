@@ -19,6 +19,7 @@ export type EvmClaimQuote = {
   payToken: `0x${string}`;
   prices: string[];
   tiers: number[];
+  countries: number[];
   totalWei: string;
   totalUsd: number;
   expiry: string;
@@ -55,6 +56,7 @@ export function buildClaimCall(quote: EvmClaimQuote) {
       quote.h3s.map(h3ToUint64),
       quote.prices.map(BigInt),
       quote.tiers,
+      quote.countries,
       BigInt(quote.expiry),
       quote.payToken,
       quote.signature,

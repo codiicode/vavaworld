@@ -269,6 +269,81 @@
       "inputs": [
         {
           "indexed": true,
+          "internalType": "uint16",
+          "name": "country",
+          "type": "uint16"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "president",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "inUsdg",
+          "type": "bool"
+        }
+      ],
+      "name": "PresidentEarned",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint16",
+          "name": "country",
+          "type": "uint16"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "president",
+          "type": "address"
+        }
+      ],
+      "name": "PresidentSet",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "president",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amountWei",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amountUsd",
+          "type": "uint256"
+        }
+      ],
+      "name": "PresidentWithdrew",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
           "internalType": "uint64",
           "name": "h3",
           "type": "uint64"
@@ -456,6 +531,19 @@
     },
     {
       "inputs": [],
+      "name": "PRESIDENT_BPS",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "RAZE_HAIRCUT_BPS",
       "outputs": [
         {
@@ -624,6 +712,11 @@
           "internalType": "uint8[]",
           "name": "tiers",
           "type": "uint8[]"
+        },
+        {
+          "internalType": "uint16[]",
+          "name": "countries",
+          "type": "uint16[]"
         },
         {
           "internalType": "uint256",
@@ -851,6 +944,63 @@
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "presidentOwedUsd",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "presidentOwedWei",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "name": "presidents",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint64",
           "name": "h3",
           "type": "uint64"
@@ -870,6 +1020,24 @@
         }
       ],
       "name": "razeBatch",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint16",
+          "name": "country",
+          "type": "uint16"
+        },
+        {
+          "internalType": "address",
+          "name": "who",
+          "type": "address"
+        }
+      ],
+      "name": "setPresident",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1037,6 +1205,13 @@
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "withdrawPresidentEarnings",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {

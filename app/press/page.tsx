@@ -24,7 +24,7 @@ export default function PressPage() {
         VAVAWORLD divides Earth into 1.66 trillion hexagons and lets anyone claim one on
         Robinhood Chain, paying in ETH or USDG. Every claim buys $VAVA and seals it inside
         the land itself, so a hex always holds redeemable value. Each of the 249 nations
-        has a throne - stake enough $VAVA and its presidency is yours to take.
+        has a throne - take its presidency and earn 5% of every claim made on its soil.
       </p>
 
       <h2>Boilerplate</h2>

@@ -57,13 +57,14 @@ export const CLAIM_TYPES = {
     { name: 'h3s', type: 'uint64[]' },
     { name: 'prices', type: 'uint256[]' },
     { name: 'tiers', type: 'uint8[]' },
+    { name: 'countries', type: 'uint16[]' },
     { name: 'expiry', type: 'uint256' },
   ],
 } as const;
 
 const EXPLORER_BASE =
   process.env.NEXT_PUBLIC_EVM_CHAIN_ID === '4663'
-    ? 'https://explorer.chain.robinhood.com'
+    ? 'https://explorer.mainnet.chain.robinhood.com'
     : 'https://explorer.testnet.chain.robinhood.com';
 
 export function explorerTxUrl(hash: string): string {
@@ -72,6 +73,13 @@ export function explorerTxUrl(hash: string): string {
 
 export function explorerAddressUrl(address: string): string {
   return `${EXPLORER_BASE}/address/${address}`;
+}
+
+/** ISO alpha-2 -> uint16 ('SE' = 0x5345); unknown/INTL -> 0 (treasury keeps the president cut). */
+export function packCountry(iso: string | null | undefined): number {
+  if (!iso || iso.length !== 2) return 0;
+  const s = iso.toUpperCase();
+  return (s.charCodeAt(0) << 8) | s.charCodeAt(1);
 }
 
 /** Zero address = pay in native ETH; the USDG address = pay in dollars. */

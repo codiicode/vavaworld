@@ -38,6 +38,7 @@ const types = {
     { name: "h3s", type: "uint64[]" },
     { name: "prices", type: "uint256[]" },
     { name: "tiers", type: "uint8[]" },
+    { name: "countries", type: "uint16[]" },
     { name: "expiry", type: "uint256" },
   ],
 };
@@ -50,9 +51,9 @@ const ethPrices = ethH3s.map(() => ethers.parseEther("0.0001"));
 const ethTiers = ethH3s.map(() => 3);
 const sigEth = await keeper.signTypedData(domain, types, {
   claimer: admin.address, payToken: ethers.ZeroAddress,
-  h3s: ethH3s, prices: ethPrices, tiers: ethTiers, expiry,
+  h3s: ethH3s, prices: ethPrices, tiers: ethTiers, countries: ethH3s.map(() => 0), expiry,
 });
-await tiles.claim(ethH3s, ethPrices, ethTiers, expiry, ethers.ZeroAddress, sigEth, {
+await tiles.claim(ethH3s, ethPrices, ethTiers, ethH3s.map(() => 0), expiry, ethers.ZeroAddress, sigEth, {
   value: ethPrices.reduce((s, p) => s + p, 0n),
 });
 
@@ -63,9 +64,9 @@ const usdTiers = usdH3s.map(() => 1);
 const usdgAddr = await usdg.getAddress();
 const sigUsd = await keeper.signTypedData(domain, types, {
   claimer: admin.address, payToken: usdgAddr,
-  h3s: usdH3s, prices: usdPrices, tiers: usdTiers, expiry,
+  h3s: usdH3s, prices: usdPrices, tiers: usdTiers, countries: usdH3s.map(() => 0), expiry,
 });
-await tiles.claim(usdH3s, usdPrices, usdTiers, expiry, usdgAddr, sigUsd);
+await tiles.claim(usdH3s, usdPrices, usdTiers, usdH3s.map(() => 0), expiry, usdgAddr, sigUsd);
 
 console.log(JSON.stringify({
   tiles: await tiles.getAddress(),

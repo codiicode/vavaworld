@@ -70,8 +70,11 @@ contract VavaTiles {
 
     // ---------------------------------------------------------------- config
 
-    uint16 public constant TREASURY_BPS = 8500;
+    uint16 public constant TREASURY_BPS = 8000;
     uint16 public constant EMBED_BPS = 1500;
+    /** 5% of every claim to the sitting president of the hex's nation.
+     *  No president -> this share joins the treasury's. */
+    uint16 public constant PRESIDENT_BPS = 500;
     uint16 public constant SECONDARY_FEE_BPS = 500; // standard seller fee
     uint16 public constant SECONDARY_FEE_BARON_BPS = 300;
     uint16 public constant RAZE_HAIRCUT_BPS = 1000;
@@ -83,7 +86,7 @@ contract VavaTiles {
     // ---------------------------------------------------------------- EIP-712
 
     bytes32 public constant CLAIM_TYPEHASH =
-        keccak256("VavaClaim(address claimer,address payToken,uint64[] h3s,uint256[] prices,uint8[] tiers,uint256 expiry)");
+        keccak256("VavaClaim(address claimer,address payToken,uint64[] h3s,uint256[] prices,uint8[] tiers,uint16[] countries,uint256 expiry)");
     bytes32 public immutable DOMAIN_SEPARATOR;
 
     // ---------------------------------------------------------------- events
@@ -147,6 +150,18 @@ contract VavaTiles {
         _entered = 1;
     }
 
+    /** Nation (ISO alpha-2 packed big-endian, 'SE' = 0x5345) -> president.
+     *  Set by the keeper, which verifies the throne stake off-chain. */
+    mapping(uint16 => address) public presidents;
+    /** Presidents pull their claim earnings; push could let a hostile
+     *  president contract block everyone's claims. */
+    mapping(address => uint256) public presidentOwedWei;
+    mapping(address => uint256) public presidentOwedUsd;
+
+    event PresidentSet(uint16 indexed country, address indexed president);
+    event PresidentEarned(uint16 indexed country, address indexed president, uint256 amount, bool inUsdg);
+    event PresidentWithdrew(address indexed president, uint256 amountWei, uint256 amountUsd);
+
     modifier onlyAdmin() {
         if (msg.sender != admin) revert NotAdmin();
         _;
@@ -170,19 +185,21 @@ contract VavaTiles {
         uint64[] calldata h3s,
         uint256[] calldata prices,
         uint8[] calldata tiers,
+        uint16[] calldata countries,
         uint256 expiry,
         address payToken,
         bytes calldata signature
     ) external payable nonReentrant {
         uint256 n = h3s.length;
         if (n == 0 || n > 1000) revert TooMany();
-        if (prices.length != n || tiers.length != n) revert LengthMismatch();
+        if (prices.length != n || tiers.length != n || countries.length != n) revert LengthMismatch();
         if (block.timestamp > expiry) revert QuoteExpired();
         bool inUsdg = payToken != address(0);
         if (inUsdg && payToken != address(usdg)) revert WrongPayment();
-        _verifyQuote(msg.sender, payToken, h3s, prices, tiers, expiry, signature);
+        _verifyQuote(msg.sender, payToken, h3s, prices, tiers, countries, expiry, signature);
 
         uint256 total;
+        uint256 presidentTotal;
         for (uint256 i; i < n; ++i) {
             uint64 id = h3s[i];
             if (hexes[id].owner != address(0)) revert AlreadyClaimed(id);
@@ -203,10 +220,15 @@ contract VavaTiles {
             unchecked {
                 tierCounts[tiers[i] - 1] += 1;
             }
+
+            // The nation's president earns their cut; vacant throne -> treasury.
+            presidentTotal += _creditPresident(countries[i], price, inUsdg);
             emit Claimed(msg.sender, id, price, tiers[i]);
         }
 
-        uint256 toTreasury = (total * TREASURY_BPS) / 10_000;
+        // 80% to treasury (+ any vacant-throne 5%); president cuts stay in
+        // the contract until withdrawn; the 15% embed escrow stays too.
+        uint256 toTreasury = total - (total * EMBED_BPS) / 10_000 - presidentTotal;
         if (inUsdg) {
             // $ path: prices are USDG base units (6 decimals) - no oracle.
             if (msg.value != 0) revert WrongPayment();
@@ -214,9 +236,36 @@ contract VavaTiles {
             require(usdg.transferFrom(msg.sender, address(this), total - toTreasury), "usdg escrow");
         } else {
             if (msg.value != total) revert WrongPayment();
-            // 85% out to treasury now; the 15% stays in the contract as escrow.
             _pay(treasury, toTreasury);
         }
+    }
+
+    /** Credit the sitting president 5% of one hex's price; 0 if vacant. */
+    function _creditPresident(uint16 country, uint256 price, bool inUsdg) private returns (uint256) {
+        address pres = presidents[country];
+        if (pres == address(0)) return 0;
+        uint256 presAmt = (price * PRESIDENT_BPS) / 10_000;
+        if (inUsdg) presidentOwedUsd[pres] += presAmt;
+        else presidentOwedWei[pres] += presAmt;
+        emit PresidentEarned(country, pres, presAmt, inUsdg);
+        return presAmt;
+    }
+
+    /** Keeper-attested throne changes (stake verified off-chain). */
+    function setPresident(uint16 country, address who) external onlyKeeper {
+        presidents[country] = who;
+        emit PresidentSet(country, who);
+    }
+
+    function withdrawPresidentEarnings() external nonReentrant {
+        uint256 w = presidentOwedWei[msg.sender];
+        uint256 u = presidentOwedUsd[msg.sender];
+        if (w == 0 && u == 0) revert NothingPending();
+        presidentOwedWei[msg.sender] = 0;
+        presidentOwedUsd[msg.sender] = 0;
+        if (u > 0) require(usdg.transfer(msg.sender, u), "usdg out");
+        if (w > 0) _pay(msg.sender, w);
+        emit PresidentWithdrew(msg.sender, w, u);
     }
 
     function _verifyQuote(
@@ -225,6 +274,7 @@ contract VavaTiles {
         uint64[] calldata h3s,
         uint256[] calldata prices,
         uint8[] calldata tiers,
+        uint16[] calldata countries,
         uint256 expiry,
         bytes calldata signature
     ) internal view {
@@ -236,6 +286,7 @@ contract VavaTiles {
                 keccak256(abi.encodePacked(h3s)),
                 keccak256(abi.encodePacked(prices)),
                 keccak256(abi.encodePacked(tiers)),
+                keccak256(abi.encodePacked(countries)),
                 expiry
             )
         );

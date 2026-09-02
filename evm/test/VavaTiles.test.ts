@@ -43,6 +43,7 @@ describe("VavaTiles", () => {
         { name: "h3s", type: "uint64[]" },
         { name: "prices", type: "uint256[]" },
         { name: "tiers", type: "uint8[]" },
+        { name: "countries", type: "uint16[]" },
         { name: "expiry", type: "uint256" },
       ],
     };
@@ -54,7 +55,11 @@ describe("VavaTiles", () => {
       tiers: number[],
       expiry: number,
       payToken: string = ethers.ZeroAddress,
-    ) => signer.signTypedData(domain, types, { claimer, payToken, h3s, prices, tiers, expiry });
+      countries: number[] | null = null,
+    ) => signer.signTypedData(domain, types, {
+      claimer, payToken, h3s, prices, tiers,
+      countries: countries ?? h3s.map(() => 0), expiry,
+    });
 
     const now = async () => (await ethers.provider.getBlock("latest"))!.timestamp;
 
@@ -71,12 +76,12 @@ describe("VavaTiles", () => {
     const sig = await quote(keeper, alice.address, [H1, H2], [PRICE, PRICE], [1, 3], expiry);
 
     const tBefore = await ethers.provider.getBalance(treasury.address);
-    await tiles.connect(alice).claim([H1, H2], [PRICE, PRICE], [1, 3], expiry, ethers.ZeroAddress, sig, {
+    await tiles.connect(alice).claim([H1, H2], [PRICE, PRICE], [1, 3], [H1, H2].map(() => 0), expiry, ethers.ZeroAddress, sig, {
       value: PRICE * 2n,
     });
 
     const tAfter = await ethers.provider.getBalance(treasury.address);
-    expect(tAfter - tBefore).to.equal((PRICE * 2n * 8500n) / 10000n);
+    expect(tAfter - tBefore).to.equal((PRICE * 2n * 8500n) / 10000n); // 80% + orphaned 5% (no president set)
 
     const h = await tiles.hexes(H1);
     expect(h.owner).to.equal(alice.address);
@@ -92,7 +97,7 @@ describe("VavaTiles", () => {
     const expiry = (await now()) + 300;
     const sig = await quote(bob as never, alice.address, [H1], [1n], [3], expiry);
     await expect(
-      tiles.connect(alice).claim([H1], [1n], [3], expiry, ethers.ZeroAddress, sig, { value: 1n }),
+      tiles.connect(alice).claim([H1], [1n], [3], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: 1n }),
     ).to.be.revertedWithCustomError(tiles, "BadSignature");
   });
 
@@ -101,7 +106,7 @@ describe("VavaTiles", () => {
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [PRICE], [3], expiry);
     await expect(
-      tiles.connect(alice).claim([H1], [1n], [3], expiry, ethers.ZeroAddress, sig, { value: 1n }),
+      tiles.connect(alice).claim([H1], [1n], [3], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: 1n }),
     ).to.be.revertedWithCustomError(tiles, "BadSignature");
   });
 
@@ -110,19 +115,19 @@ describe("VavaTiles", () => {
     let expiry = (await now()) - 1;
     let sig = await quote(keeper, alice.address, [H1], [PRICE], [3], expiry);
     await expect(
-      tiles.connect(alice).claim([H1], [PRICE], [3], expiry, ethers.ZeroAddress, sig, { value: PRICE }),
+      tiles.connect(alice).claim([H1], [PRICE], [3], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE }),
     ).to.be.revertedWithCustomError(tiles, "QuoteExpired");
 
     expiry = (await now()) + 300;
     sig = await quote(keeper, alice.address, [H1], [PRICE], [3], expiry);
     await expect(
-      tiles.connect(alice).claim([H1], [PRICE], [3], expiry, ethers.ZeroAddress, sig, { value: PRICE - 1n }),
+      tiles.connect(alice).claim([H1], [PRICE], [3], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE - 1n }),
     ).to.be.revertedWithCustomError(tiles, "WrongPayment");
 
-    await tiles.connect(alice).claim([H1], [PRICE], [3], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await tiles.connect(alice).claim([H1], [PRICE], [3], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE });
     const sig2 = await quote(keeper, alice.address, [H1], [PRICE], [3], expiry + 1);
     await expect(
-      tiles.connect(alice).claim([H1], [PRICE], [3], expiry + 1, ethers.ZeroAddress, sig2, { value: PRICE }),
+      tiles.connect(alice).claim([H1], [PRICE], [3], [0], expiry + 1, ethers.ZeroAddress, sig2, { value: PRICE }),
     ).to.be.revertedWithCustomError(tiles, "AlreadyClaimed");
   });
 
@@ -130,7 +135,7 @@ describe("VavaTiles", () => {
     const { tiles, alice, keeper, quote, now } = await deploy();
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [PRICE], [3], expiry);
-    await tiles.connect(alice).claim([H1], [PRICE], [3], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await tiles.connect(alice).claim([H1], [PRICE], [3], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE });
 
     const escrow = (PRICE * 1500n) / 10000n;
     const kBefore = await ethers.provider.getBalance(keeper.address);
@@ -149,7 +154,7 @@ describe("VavaTiles", () => {
     const { tiles, vava, alice, keeper, quote, now } = await deploy();
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [PRICE], [1], expiry);
-    await tiles.connect(alice).claim([H1], [PRICE], [1], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await tiles.connect(alice).claim([H1], [PRICE], [1], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE });
     await tiles.connect(keeper).embed([H1], [10_000_000n]);
 
     const before = await vava.balanceOf(alice.address);
@@ -160,16 +165,69 @@ describe("VavaTiles", () => {
     expect(await tiles.tierCounts(0)).to.equal(0);
   });
 
+  const SE = 0x5345; // 'SE' packed big-endian
+
+  it("80/15/5: a set president earns 5% of ETH claims, withdrawable", async () => {
+    const { tiles, treasury, alice, bob, keeper, quote, now } = await deploy();
+    await tiles.connect(keeper).setPresident(SE, bob.address);
+    const expiry = (await now()) + 300;
+    const sig = await quote(keeper, alice.address, [H1, H2], [PRICE, PRICE], [1, 3], expiry, ethers.ZeroAddress, [SE, SE]);
+
+    const tBefore = await ethers.provider.getBalance(treasury.address);
+    await tiles.connect(alice).claim([H1, H2], [PRICE, PRICE], [1, 3], [SE, SE], expiry, ethers.ZeroAddress, sig, { value: PRICE * 2n });
+    expect((await ethers.provider.getBalance(treasury.address)) - tBefore).to.equal((PRICE * 2n * 8000n) / 10000n);
+    expect(await tiles.presidentOwedWei(bob.address)).to.equal((PRICE * 2n * 500n) / 10000n);
+
+    const bBefore = await ethers.provider.getBalance(bob.address);
+    const tx = await tiles.connect(bob).withdrawPresidentEarnings();
+    const rc = await tx.wait();
+    const gas = rc!.gasUsed * rc!.gasPrice;
+    expect((await ethers.provider.getBalance(bob.address)) - bBefore + gas).to.equal((PRICE * 2n * 500n) / 10000n);
+    expect(await tiles.presidentOwedWei(bob.address)).to.equal(0);
+  });
+
+  it("80/15/5 in USDG: president cut held in USDG, withdrawable", async () => {
+    const { tiles, usdg, treasury, alice, bob, keeper, quote, now } = await deploy();
+    await tiles.connect(keeper).setPresident(SE, bob.address);
+    const expiry = (await now()) + 300;
+    const usdgAddr = await usdg.getAddress();
+    const sig = await quote(keeper, alice.address, [H1], [1_000_000n], [2], expiry, usdgAddr, [SE]);
+    await tiles.connect(alice).claim([H1], [1_000_000n], [2], [SE], expiry, usdgAddr, sig);
+    expect(await usdg.balanceOf(treasury.address)).to.equal(800_000n);
+    expect(await tiles.presidentOwedUsd(bob.address)).to.equal(50_000n);
+    await tiles.connect(bob).withdrawPresidentEarnings();
+    expect(await usdg.balanceOf(bob.address)).to.equal(50_000n);
+  });
+
+  it("no president: the 5% goes to treasury (80+5)", async () => {
+    const { tiles, treasury, alice, keeper, quote, now } = await deploy();
+    const expiry = (await now()) + 300;
+    const sig = await quote(keeper, alice.address, [H1], [PRICE], [1], expiry, ethers.ZeroAddress, [SE]);
+    const tBefore = await ethers.provider.getBalance(treasury.address);
+    await tiles.connect(alice).claim([H1], [PRICE], [1], [SE], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    expect((await ethers.provider.getBalance(treasury.address)) - tBefore).to.equal((PRICE * 8500n) / 10000n);
+  });
+
+  it("REJECTS tampered countries under a real signature; setPresident is keeper-only", async () => {
+    const { tiles, alice, bob, keeper, quote, now } = await deploy();
+    const expiry = (await now()) + 300;
+    const sig = await quote(keeper, alice.address, [H1], [PRICE], [1], expiry, ethers.ZeroAddress, [SE]);
+    await expect(
+      tiles.connect(alice).claim([H1], [PRICE], [1], [0], expiry, ethers.ZeroAddress, sig, { value: PRICE }),
+    ).to.be.revertedWithCustomError(tiles, "BadSignature");
+    await expect(tiles.connect(bob).setPresident(SE, bob.address)).to.be.revertedWithCustomError(tiles, "NotKeeper");
+  });
+
   it("razeBatch clears N hexes in one call: pooled payout, per-currency pending refunds", async () => {
     const { tiles, vava, usdg, alice, keeper, treasury, quote, now } = await deploy();
     const H3 = 0x8c1fb46741a33ffn;
     const expiry = (await now()) + 300;
     // Two ETH hexes + one USDG hex ($1 = 1_000_000 units).
     const sigEth = await quote(keeper, alice.address, [H1, H2], [PRICE, PRICE], [1, 3], expiry);
-    await tiles.connect(alice).claim([H1, H2], [PRICE, PRICE], [1, 3], expiry, ethers.ZeroAddress, sigEth, { value: PRICE * 2n });
+    await tiles.connect(alice).claim([H1, H2], [PRICE, PRICE], [1, 3], [H1, H2].map(() => 0), expiry, ethers.ZeroAddress, sigEth, { value: PRICE * 2n });
     const usdgAddr = await usdg.getAddress();
     const sigUsd = await quote(keeper, alice.address, [H3], [1_000_000n], [2], expiry, usdgAddr);
-    await tiles.connect(alice).claim([H3], [1_000_000n], [2], expiry, usdgAddr, sigUsd);
+    await tiles.connect(alice).claim([H3], [1_000_000n], [2], [H3].map(() => 0), expiry, usdgAddr, sigUsd);
     // Embed only H1 - H2 and H3 still carry un-embedded escrow.
     await tiles.connect(keeper).embed([H1], [10_000_000n]);
 
@@ -194,7 +252,7 @@ describe("VavaTiles", () => {
     const { tiles, alice, bob, keeper, quote, now } = await deploy();
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [PRICE], [1], expiry);
-    await tiles.connect(alice).claim([H1], [PRICE], [1], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await tiles.connect(alice).claim([H1], [PRICE], [1], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE });
     await expect(tiles.connect(bob).razeBatch([H1])).to.be.revertedWithCustomError(tiles, "NotOwner");
     expect((await tiles.hexes(H1)).owner).to.equal(alice.address);
   });
@@ -203,7 +261,7 @@ describe("VavaTiles", () => {
     const { tiles, alice, bob, keeper, quote, now } = await deploy();
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1, H2], [PRICE, PRICE], [1, 3], expiry);
-    await tiles.connect(alice).claim([H1, H2], [PRICE, PRICE], [1, 3], expiry, ethers.ZeroAddress, sig, { value: PRICE * 2n });
+    await tiles.connect(alice).claim([H1, H2], [PRICE, PRICE], [1, 3], [H1, H2].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE * 2n });
 
     const ask1 = ethers.parseEther("0.05");
     const ask2 = ethers.parseEther("0.07");
@@ -222,7 +280,7 @@ describe("VavaTiles", () => {
     const { tiles, alice, bob, keeper, quote, now } = await deploy();
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [PRICE], [1], expiry);
-    await tiles.connect(alice).claim([H1], [PRICE], [1], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await tiles.connect(alice).claim([H1], [PRICE], [1], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE });
     await expect(tiles.connect(alice).listBatch([H1], [])).to.be.revertedWithCustomError(tiles, "LengthMismatch");
     await expect(tiles.connect(alice).listBatch([H1], [0n])).to.be.revertedWithCustomError(tiles, "WrongPayment");
     await expect(tiles.connect(bob).listBatch([H1], [1n])).to.be.revertedWithCustomError(tiles, "NotOwner");
@@ -232,7 +290,7 @@ describe("VavaTiles", () => {
     const { tiles, alice, bob, treasury, keeper, quote, now } = await deploy();
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [PRICE], [3], expiry);
-    await tiles.connect(alice).claim([H1], [PRICE], [3], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await tiles.connect(alice).claim([H1], [PRICE], [3], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE });
 
     const ask = ethers.parseEther("0.05");
     await tiles.connect(alice).list(H1, ask);
@@ -250,7 +308,7 @@ describe("VavaTiles", () => {
     const { tiles, alice, bob, keeper, quote, now } = await deploy();
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [PRICE], [3], expiry);
-    await tiles.connect(alice).claim([H1], [PRICE], [3], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await tiles.connect(alice).claim([H1], [PRICE], [3], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE });
 
     const bid = ethers.parseEther("0.02");
     await tiles.connect(bob).placeBid(H1, { value: bid });
@@ -274,7 +332,7 @@ describe("VavaTiles", () => {
     await tiles.connect(alice).stake(500_000_000_000n); // 500k VAVA = baron
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [PRICE], [3], expiry);
-    await tiles.connect(alice).claim([H1], [PRICE], [3], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await tiles.connect(alice).claim([H1], [PRICE], [3], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE });
     const ask = ethers.parseEther("0.1");
     await tiles.connect(alice).list(H1, ask);
     const aBefore = await ethers.provider.getBalance(alice.address);
@@ -309,7 +367,7 @@ describe("VavaTiles", () => {
     const { tiles, vava, admin, alice, keeper, quote, now } = await deploy();
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [PRICE], [3], expiry);
-    await tiles.connect(alice).claim([H1], [PRICE], [3], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await tiles.connect(alice).claim([H1], [PRICE], [3], [H1].map(() => 0), expiry, ethers.ZeroAddress, sig, { value: PRICE });
     await tiles.connect(keeper).embed([H1], [1_000_000n]);
 
     const Vava2 = await ethers.getContractFactory("MockVava");
@@ -335,7 +393,7 @@ describe("VavaTiles", () => {
     const sig = await quote(keeper, alice.address, h3s, prices, tiers, expiry);
     const tx = await tiles
       .connect(alice)
-      .claim(h3s, prices, tiers, expiry, ethers.ZeroAddress, sig, { value: 10n ** 12n * 200n, gasLimit: 16_000_000n });
+      .claim(h3s, prices, tiers, h3s.map(() => 0), expiry, ethers.ZeroAddress, sig, { value: 10n ** 12n * 200n, gasLimit: 16_000_000n });
     const rc = await tx.wait();
     expect((await tiles.hexes(h3s[199])).owner).to.equal(alice.address);
     console.log("      gas/hex:", (rc!.gasUsed / 200n).toString());
@@ -349,7 +407,7 @@ describe("VavaTiles", () => {
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [priceUsd], [3], expiry, usdgAddr);
 
-    await tiles.connect(alice).claim([H1], [priceUsd], [3], expiry, usdgAddr, sig);
+    await tiles.connect(alice).claim([H1], [priceUsd], [3], [H1].map(() => 0), expiry, usdgAddr, sig);
 
     expect(await usdg.balanceOf(treasury.address)).to.equal((priceUsd * 8500n) / 10000n);
     const escrow = (priceUsd * 1500n) / 10000n;
@@ -370,7 +428,7 @@ describe("VavaTiles", () => {
     // quote signed for the ETH path (payToken = zero)
     const sig = await quote(keeper, alice.address, [H1], [100_000n], [3], expiry);
     await expect(
-      tiles.connect(alice).claim([H1], [100_000n], [3], expiry, usdgAddr, sig),
+      tiles.connect(alice).claim([H1], [100_000n], [3], [H1].map(() => 0), expiry, usdgAddr, sig),
     ).to.be.revertedWithCustomError(tiles, "BadSignature");
   });
 
@@ -382,7 +440,7 @@ describe("VavaTiles", () => {
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [100_000n], [3], expiry, evilAddr);
     await expect(
-      tiles.connect(alice).claim([H1], [100_000n], [3], expiry, evilAddr, sig),
+      tiles.connect(alice).claim([H1], [100_000n], [3], [H1].map(() => 0), expiry, evilAddr, sig),
     ).to.be.revertedWithCustomError(tiles, "WrongPayment");
   });
 
@@ -392,7 +450,7 @@ describe("VavaTiles", () => {
     const priceUsd = 200_000n;
     const expiry = (await now()) + 300;
     const sig = await quote(keeper, alice.address, [H1], [priceUsd], [2], expiry, usdgAddr);
-    await tiles.connect(alice).claim([H1], [priceUsd], [2], expiry, usdgAddr, sig);
+    await tiles.connect(alice).claim([H1], [priceUsd], [2], [H1].map(() => 0), expiry, usdgAddr, sig);
 
     const tBefore = await usdg.balanceOf(treasury.address);
     await tiles.connect(alice).raze(H1);

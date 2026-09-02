@@ -19,6 +19,7 @@ const message = {
   h3s: [h3ToUint64('8c1fb46741ae9ff'), h3ToUint64('8c1fb46741a17ff')],
   prices: [123456789000000n, 987654321000000n],
   tiers: [1, 3],
+  countries: [0x5345, 0],
   expiry: 1790000000n,
 };
 
@@ -37,7 +38,7 @@ describe('EIP-712 quote matches VavaTiles.sol byte-for-byte', () => {
   it('viem hashTypedData equals a manual replay of the contract hashing', () => {
     // --- replicate _verifyQuote from VavaTiles.sol exactly ---
     const TYPEHASH = keccak256(
-      toBytes('VavaClaim(address claimer,address payToken,uint64[] h3s,uint256[] prices,uint8[] tiers,uint256 expiry)'),
+      toBytes('VavaClaim(address claimer,address payToken,uint64[] h3s,uint256[] prices,uint8[] tiers,uint16[] countries,uint256 expiry)'),
     );
     const DOMAIN_SEPARATOR = keccak256(
       encodeAbiParameters(
@@ -53,7 +54,7 @@ describe('EIP-712 quote matches VavaTiles.sol byte-for-byte', () => {
     );
     const structHash = keccak256(
       encodeAbiParameters(
-        [{ type: 'bytes32' }, { type: 'address' }, { type: 'address' }, { type: 'bytes32' }, { type: 'bytes32' }, { type: 'bytes32' }, { type: 'uint256' }],
+        [{ type: 'bytes32' }, { type: 'address' }, { type: 'address' }, { type: 'bytes32' }, { type: 'bytes32' }, { type: 'bytes32' }, { type: 'bytes32' }, { type: 'uint256' }],
         [
           TYPEHASH,
           message.claimer,
@@ -61,6 +62,7 @@ describe('EIP-712 quote matches VavaTiles.sol byte-for-byte', () => {
           keccak256(encodePacked(['uint64[]'], [message.h3s])),
           keccak256(encodePacked(['uint256[]'], [message.prices])),
           keccak256(encodePacked(['uint8[]'], [message.tiers])),
+          keccak256(encodePacked(['uint16[]'], [message.countries])),
           message.expiry,
         ],
       ),

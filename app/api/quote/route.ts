@@ -7,7 +7,7 @@ import { H3_RESOLUTION, PRICING } from '@/lib/pricing';
 import { getEthUsd } from '@/lib/eth-price';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
-import { CLAIM_DOMAIN, CLAIM_TYPES, NATIVE_PAY, TILES_ADDRESS, USDG_ADDRESS, h3ToUint64 } from '@/lib/evm';
+import { CLAIM_DOMAIN, CLAIM_TYPES, NATIVE_PAY, TILES_ADDRESS, USDG_ADDRESS, h3ToUint64, packCountry } from '@/lib/evm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -127,6 +127,7 @@ export async function POST(req: Request) {
     const cWei = pricesWei.slice(i, i + CLAIM_CHUNK);
     const cTiers = tiers.slice(i, i + CLAIM_CHUNK);
     const cUsd = perHexUsd.slice(i, i + CLAIM_CHUNK);
+    const cCountries = isos.slice(i, i + CLAIM_CHUNK).map(packCountry);
 
     const signature = await signer.signTypedData({
       domain: CLAIM_DOMAIN(chainId, TILES_ADDRESS),
@@ -138,6 +139,7 @@ export async function POST(req: Request) {
         h3s: cH3s.map(h3ToUint64),
         prices: cWei,
         tiers: cTiers,
+        countries: cCountries,
         expiry,
       },
     });
@@ -148,6 +150,7 @@ export async function POST(req: Request) {
       payToken,
       prices: cWei.map(String),
       tiers: cTiers,
+      countries: cCountries,
       totalWei: cWei.reduce((s, p) => s + p, 0n).toString(),
       totalUsd: cUsd.reduce((s, u) => s + u, 0),
       expiry: expiry.toString(),
