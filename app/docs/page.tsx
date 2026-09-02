@@ -259,6 +259,8 @@ export default function DocsPage() {
               Every one of the <strong>249</strong> nations has a presidency. Own at least{' '}
               <strong>1,000 hexes</strong> in a country and stake 1,000,000 $VAVA to take the
               seat - the same requirement everywhere, from Iceland to the United States.
+              You can hold several thrones at once, but each demands its own million:
+              a second presidency requires 2,000,000 staked in total, a third 3,000,000.
             </p>
             <p>
               The president earns <strong>5% of every claim</strong> made anywhere in that
