@@ -158,7 +158,6 @@ export function TileListDialog({
                       throw new Error(j.error ?? 'Could not register hex');
                     }
 
-                    if (!wallet.signMessage) throw new Error('Wallet cannot sign messages');
                     if (!ethUsd) throw new Error('Live price unavailable - try again');
                     // Typed in dollars; the contract holds the ask in wei and
                     // buy() settles against it, so the on-chain list comes
@@ -170,7 +169,6 @@ export function TileListDialog({
                       h3: tile.h3,
                       seller: wallet.address,
                       priceSol: priceEth,
-                      signMessage: wallet.signMessage,
                     });
                     dispatchListingsChanged();
                     setDone(true);

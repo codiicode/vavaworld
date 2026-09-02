@@ -175,7 +175,7 @@ export default function TileDetailPage() {
                   className="flex-1"
                   disabled={cancelling}
                   onClick={async () => {
-                    if (!wallet.address || !wallet.signMessage) return;
+                    if (!wallet.address) return;
                     setCancelling(true);
                     try {
                       // Clear the on-chain ask first so nobody can buy() a
@@ -184,7 +184,6 @@ export default function TileDetailPage() {
                       await cancelListing({
                         id: listing.id,
                         seller: wallet.address,
-                        signMessage: wallet.signMessage,
                       });
                       dispatchListingsChanged();
                       router.push('/marketplace');

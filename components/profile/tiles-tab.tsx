@@ -87,11 +87,11 @@ export function TilesTab() {
 
   const cancelFor = async (tile: ClaimedTile) => {
     const l = listingByH3.get(tile.h3);
-    if (!l || !wallet.address || !wallet.signMessage) return;
+    if (!l || !wallet.address) return;
     try {
       // On-chain ask first, then the marketplace row.
       await delistOnChain({ wallet, h3: tile.h3 });
-      await cancelListing({ id: l.id, seller: wallet.address, signMessage: wallet.signMessage });
+      await cancelListing({ id: l.id, seller: wallet.address });
       dispatchListingsChanged();
     } catch {
       /* wallet rejected or chain error - the listing simply stays */
