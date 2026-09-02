@@ -369,9 +369,8 @@ function GroupRow({
       </TableCell>
       <TableCell className="text-right">
         <span className="text-sm font-medium tabular-nums text-foreground">
-          {g.totalUsd.toFixed(2)}
+          {fmtUsdValue(g.totalUsd)}
         </span>
-        <span className="ml-1 text-xs text-foreground/55">USD</span>
       </TableCell>
       <TableCell>
         <DropdownMenu>

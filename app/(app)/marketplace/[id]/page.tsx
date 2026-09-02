@@ -23,6 +23,7 @@ import {
   fetchListing,
   type DbListing,
 } from '@/lib/supabase-listings';
+import { fmtUsdValue } from '@/lib/usd';
 import { cn } from '@/lib/utils';
 import { delistOnChain } from '@/lib/bid-chain';
 
@@ -145,11 +146,7 @@ export default function TileDetailPage() {
             </div>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-3xl font-semibold tabular-nums tracking-tight">
-                {listing.price.toFixed(3)}
-              </span>
-              <span className="text-sm font-medium text-muted-foreground">USD</span>
-              <span className="ml-2 text-sm tabular-nums text-muted-foreground">
-                ≈ ${listing.priceUsd}
+                {fmtUsdValue(listing.price * solUsd)}
               </span>
             </div>
 
