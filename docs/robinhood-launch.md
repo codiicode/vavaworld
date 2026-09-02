@@ -104,12 +104,12 @@ scripted half (`evm/scripts/rehearse-testnet.ts` + a keeper pass with
 `START_BLOCK=111342775`, `SITE_URL` unset) passed: 85% landed in the
 treasury in both currencies, pending drained to 0/0.
 
-**Solana-era rows at cutover:** the shared database still holds the old
-devnet claims (base58 owners - 7 FR + 1 NZ as of 2026-09-02). Nothing
-on Robinhood Chain backs them, so on the EVM site they render as owned
-ground nobody can interact with. Before opening: either delete them
-(clean slate) or deliberately re-issue them on the new contract as a
-genesis gift to the early claimers - USER'S CALL, ask before launch.
+**Registry zeroed 2026-09-02 (user's call):** every claim from both eras
+- Solana devnet and Robinhood testnet - plus all bids, sales,
+notifications, property images and country counters were deleted.
+Launch starts from a truly empty world; profiles (accounts) were kept.
+Only the clicked mainnet rehearsal will write rows between now and
+launch, and it ends with the same scrub.
 
 ## 4. Mainnet deploy + small-money rehearsal
 
