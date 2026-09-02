@@ -1,4 +1,4 @@
-import { createPublicClient, defineChain, http, type PublicClient } from 'viem';
+import { createPublicClient, defineChain, fallback, http, type PublicClient } from 'viem';
 import abiJson from './evm-abi.json';
 
 /**
@@ -27,7 +27,16 @@ export const robinhoodChain = defineChain({
 let _client: PublicClient | null = null;
 export function getPublicClient(): PublicClient {
   if (_client) return _client;
-  _client = createPublicClient({ chain: robinhoodChain, transport: http(getEvmRpcUrl()) });
+  // The public RPC drops bursts under launch-day load ("Failed to fetch"
+  // straight to the user). Retry each request, and in the browser fall
+  // back to our own /api/rpc proxy - a different network path, so a
+  // Cloudflare hiccup between the visitor and the RPC doesn't kill the UI.
+  const direct = http(getEvmRpcUrl(), { retryCount: 3, retryDelay: 300, timeout: 12_000 });
+  const transport =
+    typeof window === 'undefined'
+      ? direct
+      : fallback([direct, http('/api/rpc', { retryCount: 2, timeout: 15_000 })], { rank: false });
+  _client = createPublicClient({ chain: robinhoodChain, transport });
   return _client;
 }
 
