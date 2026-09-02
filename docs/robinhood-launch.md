@@ -67,7 +67,7 @@ EVM keeper, so no service reconfiguration is needed beyond env vars.
 | `POOL_FEE` | fee tier of the VAVA pool Pons creates (see §5) | keeper service |
 | `USDG_HOP_FEE` | ONLY if liquidity is VAVA/WETH with no VAVA/USDG pool: fee tier of the USDG/WETH pool (the live one is 100 = 0.01%) - the USDG pot then swaps USDG->WETH->VAVA in one exactInput | keeper service |
 | `START_BLOCK` | the deploy block number | keeper (log-scan floor) |
-| `SITE_URL` | `https://vavaworld.net` - enables the registry reconcile (keeper re-mirrors any Claimed hex Supabase lacks). Leave UNSET for local rehearsals | keeper service |
+| `SITE_URL` | `https://vavaworld.net` - enables the registry reconcile AND the throne sync (keeper pushes DB thrones to setPresident on-chain each pass, so claims/coups reach the contract within one interval). Leave UNSET for local rehearsals | keeper service |
 | `ADMIN_WALLETS` / `NEXT_PUBLIC_ADMIN_WALLETS` | comma-separated moderator addresses (case-insensitive) - ASK THE USER before launch | web |
 | `CHAINLINK_ETH_USD_FEED` | ETH/USD aggregator on Robinhood Chain if one exists (verify on explorer); empty = Coinbase spot fallback | web server |
 | `ETH_USD_FALLBACK` | last-resort ETH/USD constant (default 4500) | web server |

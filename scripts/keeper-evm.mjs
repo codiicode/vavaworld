@@ -57,6 +57,12 @@ const ETH_USD_URL = process.env.SOL_PRICE_URL ?? 'https://vavaworld.net/api/sol-
  *  local rehearsal can never post its throwaway hexes into production. */
 const SITE_URL = (process.env.SITE_URL ?? '').replace(/\/$/, '');
 const MIRROR_CONCURRENCY = 4;
+/** ISO alpha-2 -> uint16 ('SE' = 0x5345). */
+const packCountry = (iso) =>
+  iso && iso.length === 2 ? (iso.toUpperCase().charCodeAt(0) << 8) | iso.toUpperCase().charCodeAt(1) : 0;
+/** Countries this process has pushed a president for - re-checked every
+ *  pass so a coup or abdication propagates without enumerating the map. */
+const syncedCountries = new Set();
 
 const abi = JSON.parse(readFileSync(new URL('../lib/evm-abi.json', import.meta.url), 'utf-8')).abi;
 const routerAbi = parseAbi([
@@ -231,6 +237,37 @@ async function swapToVava(currency, amountIn, vavaAddr, usdgAddr) {
   return after - before;
 }
 
+/**
+ * Thrones live in the database (stake-gated claims and coups); the
+ * CONTRACT pays the sitting president 5% of every claim, so the two
+ * must agree. Each pass reads the throne table and setPresident()s any
+ * country whose on-chain seat differs - covering claims, coups and
+ * vacancies within one keeper interval.
+ */
+async function syncPresidents() {
+  if (!SITE_URL) return;
+  const r = await fetch(`${SITE_URL}/api/thrones`, { cache: 'no-store' });
+  if (!r.ok) throw new Error(`thrones fetch ${r.status}`);
+  const { thrones } = await r.json();
+  const want = new Map();
+  for (const t of thrones ?? []) {
+    const code = packCountry(t.country_iso);
+    if (code) want.set(code, t.holder);
+  }
+  const toCheck = new Set([...want.keys(), ...syncedCountries]);
+  for (const code of toCheck) {
+    const holder = want.get(code) ?? '0x0000000000000000000000000000000000000000';
+    const current = await read('presidents', [code]);
+    if (current.toLowerCase() === holder.toLowerCase()) continue;
+    const hash = await wallet.writeContract({
+      address: TILES, abi, functionName: 'setPresident', args: [code, holder],
+    });
+    await pub.waitForTransactionReceipt({ hash });
+    syncedCountries.add(code);
+    console.log(`[keeper] president ${String.fromCharCode(code >> 8, code & 255)} -> ${holder.slice(0, 10)}…`);
+  }
+}
+
 async function runOnce() {
   const vavaAddr = await read('vava');
   const usdgAddr = await read('usdg');
@@ -240,6 +277,12 @@ async function runOnce() {
   } catch (e) {
     // Registry healing must never block the buyback.
     console.error('[keeper] reconcile failed:', String(e).slice(0, 160));
+  }
+  try {
+    await syncPresidents();
+  } catch (e) {
+    // Throne sync must never block the buyback either.
+    console.error('[keeper] president sync failed:', String(e).slice(0, 160));
   }
   const pending = await findPending(logs);
   if (pending.length === 0) {

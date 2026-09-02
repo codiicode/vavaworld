@@ -20,6 +20,8 @@ export type EvmClaimQuote = {
   prices: string[];
   tiers: number[];
   countries: number[];
+  /** Undiscounted curve prices - the ledger validates against these. */
+  perHexUsdFull?: number[];
   totalWei: string;
   totalUsd: number;
   expiry: string;

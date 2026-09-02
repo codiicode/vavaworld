@@ -16,6 +16,8 @@ import { getPublicClient } from '@/lib/evm';
 import { dispatchClaimDone } from '@/lib/claim-events';
 import { PRICING } from '@/lib/pricing';
 import { Flag } from '@/components/flag';
+import { useStakedTier } from '@/lib/use-staked-tier';
+import { CLAIM_DISCOUNT, TIERS } from '@/lib/tokenomics-constants';
 
 
 
@@ -88,7 +90,11 @@ export function ClaimModal({
     localOffset[iso] = off + 1;
     return PRICING.BASE_FLOOR_USD + (base + off) * PRICING.SLOPE_PER_CLAIM_USD;
   });
-  const totalUsd = perItemUsd.reduce((s, u) => s + u, 0);
+  // Mirror the server's staking discount in the estimate so the review
+  // figure matches what the signed quote will charge.
+  const stakeTier = useStakedTier(wallet.address);
+  const discount = CLAIM_DISCOUNT[stakeTier];
+  const totalUsd = perItemUsd.reduce((s, u) => s + u, 0) * (1 - discount);
   // Live ETH/USD (server-cached Chainlink) so the modal can show the ETH
   // figure; the authoritative wei prices come signed from /api/quote.
   const [ethUsd, setEthUsd] = useState<number>(4500);
@@ -204,7 +210,7 @@ export function ClaimModal({
             fetch('/api/claim', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ h3, owner, quotedPriceUsd: q.perHexUsd[i] }),
+              body: JSON.stringify({ h3, owner, quotedPriceUsd: (q.perHexUsdFull ?? q.perHexUsd)[i] }),
             }).then((r) => (r.ok ? h3 : null)),
           ),
         );
@@ -388,6 +394,12 @@ export function ClaimModal({
               </div>
             )}
 
+            {discount > 0 && (
+              <div className="relative mb-1 flex items-center justify-between text-[11.5px] text-white/55">
+                <span>{TIERS.find((t) => t.key === stakeTier)?.name} discount</span>
+                <span className="tabular-nums">-{Math.round(discount * 100)}%</span>
+              </div>
+            )}
             <div className="relative flex items-end justify-between border-t border-white/10 pt-4">
               <span className={EYEBROW}>Total</span>
               <div className="text-right">

@@ -5,6 +5,8 @@ import { getServerSupabase } from '@/lib/supabase-server';
 import { resolveHexCountry } from '@/lib/geo/country-resolver';
 import { H3_RESOLUTION, PRICING } from '@/lib/pricing';
 import { getEthUsd } from '@/lib/eth-price';
+import { getStakedWhole } from '@/lib/server-verify';
+import { CLAIM_DISCOUNT, tierFor } from '@/lib/tokenomics-constants';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { CLAIM_DOMAIN, CLAIM_TYPES, NATIVE_PAY, TILES_ADDRESS, USDG_ADDRESS, h3ToUint64, packCountry } from '@/lib/evm';
@@ -96,9 +98,16 @@ export async function POST(req: Request) {
     .in('iso_code', uniqueIsos);
   const countByIso = new Map((countries ?? []).map((c) => [c.iso_code, Number(c.claim_count)]));
 
+  // Staking discount: the tier comes from the CLAIMER's on-chain stake,
+  // and the discounted price is what the signed quote charges. The
+  // ledger keeps validating against the FULL curve price.
+  const stakedWhole = await getStakedWhole(claimer);
+  const discount = CLAIM_DISCOUNT[tierFor(stakedWhole)];
+
   const ethUsd = currency === 'eth' ? await getEthUsd() : 0;
   const localOffset = new Map<string, number>();
   const perHexUsd: number[] = [];
+  const perHexUsdFull: number[] = [];
   const pricesWei: bigint[] = [];
   const tiers: number[] = [];
   h3s.forEach((h3, i) => {
@@ -106,7 +115,9 @@ export async function POST(req: Request) {
     const base = countByIso.get(iso) ?? 0;
     const off = localOffset.get(iso) ?? 0;
     localOffset.set(iso, off + 1);
-    const usd = PRICING.BASE_FLOOR_USD + (base + off) * PRICING.SLOPE_PER_CLAIM_USD;
+    const usdFull = PRICING.BASE_FLOOR_USD + (base + off) * PRICING.SLOPE_PER_CLAIM_USD;
+    const usd = usdFull * (1 - discount);
+    perHexUsdFull.push(usdFull);
     perHexUsd.push(usd);
     if (currency === 'usdg') {
       // $ path: price IS the dollar amount, in 6-decimal USDG base units.
@@ -127,6 +138,7 @@ export async function POST(req: Request) {
     const cWei = pricesWei.slice(i, i + CLAIM_CHUNK);
     const cTiers = tiers.slice(i, i + CLAIM_CHUNK);
     const cUsd = perHexUsd.slice(i, i + CLAIM_CHUNK);
+    const cUsdFull = perHexUsdFull.slice(i, i + CLAIM_CHUNK);
     const cCountries = isos.slice(i, i + CLAIM_CHUNK).map(packCountry);
 
     const signature = await signer.signTypedData({
@@ -147,6 +159,7 @@ export async function POST(req: Request) {
     quotes.push({
       h3s: cH3s,
       perHexUsd: cUsd,
+      perHexUsdFull: cUsdFull,
       payToken,
       prices: cWei.map(String),
       tiers: cTiers,
@@ -163,6 +176,7 @@ export async function POST(req: Request) {
     quotes,
     totalWei: pricesWei.reduce((s, p) => s + p, 0n).toString(),
     totalUsd: perHexUsd.reduce((s, u) => s + u, 0),
+    discountPct: discount * 100,
     ethUsd,
     expiry: expiry.toString(),
   });
