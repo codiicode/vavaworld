@@ -38,12 +38,10 @@ export function TileListDialog({
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
-  const usd = useUsdFmt();
   const [price, setPrice] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [solUsd, setSolUsd] = useState<number | null>(null);
   const wallet = useActiveWallet();
   const tier = useStakedTier(wallet.address);
   const [ethUsd, setEthUsd] = useState<number | null>(null);
@@ -57,23 +55,6 @@ export function TileListDialog({
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (alive && j?.ethUsd > 0) setEthUsd(j.ethUsd);
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, [open]);
-
-  // The field is denominated in DOLLARS but the listing settles in the
-  // native coin, so a live rate is required before anything can be
-  // submitted - never convert through a stale fallback constant.
-  useEffect(() => {
-    if (!open) return;
-    let alive = true;
-    fetch('/api/sol-price')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => {
-        if (alive && j?.solUsd > 0) setSolUsd(j.solUsd);
       })
       .catch(() => {});
     return () => {

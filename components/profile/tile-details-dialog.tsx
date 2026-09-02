@@ -27,7 +27,6 @@ export function TileDetailsDialog({
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
-  const usd = useUsdFmt();
   if (!tile) return null;
   const c = hexCenter(tile.h3);
   const price = tile.paidUsd;

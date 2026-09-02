@@ -433,7 +433,6 @@ function GroupCard({
 }) {
   const usd = useUsdFmt();
   const router = useRouter();
-  const usd = useUsdFmt();
   const img = hexStaticMapUrl({
     lat: g.centerLat,
     lng: g.centerLng,

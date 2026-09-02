@@ -42,6 +42,7 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
   const wallet = useActiveWallet();
   const { tiles } = useUserTiles();
   const { balance } = useWalletBalance(wallet.address);
+  const usd = useUsdFmt();
   const [copied, setCopied] = useState(false);
 
   const totalSpent = tiles?.reduce((sum, t) => sum + t.paidUsd, 0) ?? null;
@@ -162,12 +163,12 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
             <SummaryStat label="Hexes" value={tiles ? String(tiles.length) : '-'} />
             <SummaryStat
               label="Spent"
-              value={totalSpent !== null ? totalSpent.toFixed(3) : '-'}
+              value={totalSpent !== null ? usd(totalSpent) : '-'}
               unit=""
             />
             <SummaryStat
               label="Balance"
-              value={balance !== null ? balance.toFixed(3) : '-'}
+              value={balance !== null ? usd(balance) : '-'}
               unit=""
             />
           </div>
