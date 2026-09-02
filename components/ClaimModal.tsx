@@ -172,16 +172,17 @@ export function ClaimModal({
         // a single signature - an exact-amount approve would cost the user
         // two confirmations on every claim forever.
         const approveCall = buildUsdgApproveCall(quotes[0]);
+        const spender = approveCall.args[0] as `0x${string}`;
         const allowance = (await client.readContract({
           address: approveCall.address,
           abi: ERC20_ALLOWANCE_ABI,
           functionName: 'allowance',
-          args: [owner, approveCall.args[0]],
+          args: [owner, spender],
         })) as bigint;
         if (allowance < totalNeeded) {
           const approveHash = await wallet.writeContract({
             ...approveCall,
-            args: [approveCall.args[0], maxUint256],
+            args: [spender, maxUint256],
           });
           await client.waitForTransactionReceipt({ hash: approveHash });
         }
