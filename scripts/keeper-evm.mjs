@@ -72,6 +72,7 @@ const routerAbi = parseAbi([
 const erc20Abi = parseAbi([
   'function approve(address,uint256) returns (bool)',
   'function balanceOf(address) view returns (uint256)',
+  'function allowance(address,address) view returns (uint256)',
 ]);
 
 // v4 mode: the keeper's own owner-only PoolManager buyer (the chain has no
@@ -356,12 +357,19 @@ async function runOnce() {
     return;
   }
 
-  // ensure the contract may pull our VAVA
-  const allowHash = await wallet.writeContract({
-    address: vavaAddr, abi: erc20Abi, functionName: 'approve',
-    args: [TILES, (1n << 255n)],
+  // ensure the contract may pull our VAVA - but pay the approve tx once,
+  // not every 60s pass (at congested gas that leak outruns the escrow).
+  const allowance = await pub.readContract({
+    address: vavaAddr, abi: erc20Abi, functionName: 'allowance',
+    args: [account.address, TILES],
   });
-  await pub.waitForTransactionReceipt({ hash: allowHash });
+  if (allowance < (1n << 128n)) {
+    const allowHash = await wallet.writeContract({
+      address: vavaAddr, abi: erc20Abi, functionName: 'approve',
+      args: [TILES, (1n << 255n)],
+    });
+    await pub.waitForTransactionReceipt({ hash: allowHash });
+  }
 
   const embedGroup = async (group, bought) => {
     const shares = proRata(bought, group.map((g) => g.pending));
