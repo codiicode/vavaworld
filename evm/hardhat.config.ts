@@ -14,7 +14,7 @@ const config: HardhatUserConfig = {
     },
     robinhood: {
       type: "http",
-      url: process.env.RH_RPC ?? "https://rpc.chain.robinhood.com/rpc",
+      url: process.env.RH_RPC ?? "https://rpc.mainnet.chain.robinhood.com/rpc",
       accounts: process.env.EVM_DEPLOYER_KEY ? [process.env.EVM_DEPLOYER_KEY] : [],
     },
   },

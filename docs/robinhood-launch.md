@@ -8,11 +8,12 @@ that file is kept for the frozen Solana fallback on `main`.
 
 | | Testnet | Mainnet |
 |---|---|---|
-| RPC | `https://rpc.testnet.chain.robinhood.com/rpc` | `https://rpc.chain.robinhood.com/rpc` |
+| RPC | `https://rpc.testnet.chain.robinhood.com/rpc` | `https://rpc.mainnet.chain.robinhood.com/rpc` |
 | Chain id | 46630 | 4663 |
-| Explorer | explorer.testnet.chain.robinhood.com | explorer.chain.robinhood.com |
+| Explorer | explorer.testnet.chain.robinhood.com | explorer.mainnet.chain.robinhood.com |
 | Gas token | ETH (no native chain token exists - anything sold as one is a scam) | ETH |
 | Faucet | faucet.testnet.chain.robinhood.com (paste address, no captcha) | - |
+| Bridge | - | canonical Arbitrum bridge (portal.arbitrum.io -> Robinhood Chain), ~10 min from Ethereum |
 
 ## Addresses
 
@@ -20,7 +21,8 @@ that file is kept for the frozen Solana fallback on `main`.
 |---|---|
 | Treasury (hardware wallet, baked into constructor) | `0x48097570cAe9857034536CE7226D34AF4E5587B9` |
 | Testnet deployer (throwaway; key in `evm/.deployer-testnet.key`, gitignored) | `0xcf45a13e079F3fFEF6197F318D70186b600adCF7` |
-| Mainnet deployer + keeper | generate fresh keys before mainnet deploy; keeper key goes in `KEEPER_EVM_KEY` env only |
+| Mainnet deployer (throwaway; key in `evm/.deployer-mainnet.key`, gitignored) | `0xcFf88702991e8314F2D042C81c8080e3d819435A` |
+| Mainnet keeper (key in `evm/.keeper-mainnet.key`, gitignored; goes in `KEEPER_EVM_KEY` env at launch) | `0xa5035b1dB2e1b07F64FFe731cC992Ff8088c0F44` |
 | USDG (mainnet) | look up the canonical USDG token on the mainnet explorer before deploy - do NOT trust a pasted address from chat/DMs |
 
 ## 1. Deploy (testnet first, then mainnet - same commands)
