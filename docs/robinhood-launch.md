@@ -62,7 +62,10 @@ EVM keeper, so no service reconfiguration is needed beyond env vars.
 | `KEEPER_EVM_KEY` | keeper private key | web server (quote signing) + keeper service |
 | `KEEPER_INTERVAL_SECS` | `60` | keeper service |
 | `KEEPER_SWAP` | `reference` until launch minute, then `uniswap` | keeper service |
-| `SWAP_ROUTER`, `WETH_ADDRESS`, `POOL_FEE` | where $VAVA liquidity lives (see §5) | keeper service |
+| `SWAP_ROUTER` | `0xcaf681a66d020601342297493863e78c959e5cb2` (Uniswap SwapRouter02, verified on-chain: factory matches the live pool's, WETH9 matches) | keeper service |
+| `WETH_ADDRESS` | `0x0bd7d308f8e1639FAb988df18A8011f41eACAd73` (symbol WETH, confirmed via the live USDG/WETH pool) | keeper service |
+| `POOL_FEE` | fee tier of the VAVA pool Pons creates (see §5) | keeper service |
+| `USDG_HOP_FEE` | ONLY if liquidity is VAVA/WETH with no VAVA/USDG pool: fee tier of the USDG/WETH pool (the live one is 100 = 0.01%) - the USDG pot then swaps USDG->WETH->VAVA in one exactInput | keeper service |
 | `START_BLOCK` | the deploy block number | keeper (log-scan floor) |
 | `SITE_URL` | `https://vavaworld.net` - enables the registry reconcile (keeper re-mirrors any Claimed hex Supabase lacks). Leave UNSET for local rehearsals | keeper service |
 | `ADMIN_WALLETS` / `NEXT_PUBLIC_ADMIN_WALLETS` | comma-separated moderator addresses (case-insensitive) - ASK THE USER before launch | web |
@@ -123,9 +126,11 @@ lands in `0x4809...87B9`. End by razing everything.
 ## 5. Launch minute (Pons)
 
 1. User creates $VAVA on **Pons** -> token address to Claude
-2. Find where the liquidity actually lives (Pons' own pool vs Uniswap) -
-   this decides `SWAP_ROUTER` + pool fee for the keeper. Verify by reading
-   the pair on the explorer, not from docs alone.
+2. Find where the liquidity actually lives. Uniswap v3 IS deployed on
+   the chain (router/factory verified 2026-09-02, see the env table) -
+   read the $VAVA pair off the factory to learn the pool + fee tier. If
+   the pool is VAVA/WETH, also set `USDG_HOP_FEE` so the USDG pot can
+   route USDG->WETH->VAVA.
 3. `updateMint(<real VAVA>)` (admin tx; refuses if stand-in vault not empty)
 4. One test claim + one keeper pass against the real token
 5. `lockMint()` - PERMANENT

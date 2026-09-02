@@ -30,7 +30,7 @@ import {
   parseAbi,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { proRata } from './keeper-math.mjs';
+import { encodePath, proRata } from './keeper-math.mjs';
 
 const RPC_URL = process.env.RPC_URL;
 const TILES = process.env.TILES_CONTRACT ?? process.env.NEXT_PUBLIC_TILES_CONTRACT;
@@ -44,6 +44,10 @@ const SWAP_MODE = process.env.KEEPER_SWAP ?? 'reference';
 const ROUTER = process.env.SWAP_ROUTER;
 const WETH = process.env.WETH_ADDRESS;
 const POOL_FEE = Number(process.env.POOL_FEE ?? 3000);
+/** Set when liquidity is VAVA/WETH only: fee tier of the USDG/WETH pool.
+ *  The USDG pot then swaps USDG -(this fee)-> WETH -(POOL_FEE)-> VAVA
+ *  in one exactInput. Unset = USDG/VAVA pool exists, single hop. */
+const USDG_HOP_FEE = process.env.USDG_HOP_FEE ? Number(process.env.USDG_HOP_FEE) : null;
 const LOG_SPAN = BigInt(process.env.LOG_SPAN ?? 500_000);
 const EMBED_BATCH = Number(process.env.KEEPER_EMBED_BATCH ?? 150);
 /** Reference mode prices VAVA at this many USD (devnet-style rehearsal). */
@@ -57,6 +61,7 @@ const MIRROR_CONCURRENCY = 4;
 const abi = JSON.parse(readFileSync(new URL('../lib/evm-abi.json', import.meta.url), 'utf-8')).abi;
 const routerAbi = parseAbi([
   'function exactInputSingle((address tokenIn,address tokenOut,uint24 fee,address recipient,uint256 amountIn,uint256 amountOutMinimum,uint160 sqrtPriceLimitX96)) payable returns (uint256)',
+  'function exactInput((bytes path,address recipient,uint256 amountIn,uint256 amountOutMinimum)) payable returns (uint256)',
 ]);
 const erc20Abi = parseAbi([
   'function approve(address,uint256) returns (bool)',
@@ -184,6 +189,7 @@ async function swapToVava(currency, amountIn, vavaAddr, usdgAddr) {
   if (!ROUTER) throw new Error('SWAP_ROUTER required in uniswap mode');
   const tokenIn = currency === 'eth' ? WETH : usdgAddr;
   if (!tokenIn) throw new Error('WETH_ADDRESS required for the ETH leg');
+  if (currency === 'usdg' && USDG_HOP_FEE !== null && !WETH) throw new Error('WETH_ADDRESS required for the USDG two-hop route');
   if (currency === 'usdg') {
     const approveHash = await wallet.writeContract({
       address: usdgAddr, abi: erc20Abi, functionName: 'approve', args: [ROUTER, amountIn],
@@ -193,16 +199,31 @@ async function swapToVava(currency, amountIn, vavaAddr, usdgAddr) {
   const before = await pub.readContract({
     address: vavaAddr, abi: erc20Abi, functionName: 'balanceOf', args: [account.address],
   });
-  const hash = await wallet.writeContract({
-    address: ROUTER,
-    abi: routerAbi,
-    functionName: 'exactInputSingle',
-    args: [{
-      tokenIn, tokenOut: vavaAddr, fee: POOL_FEE, recipient: account.address,
-      amountIn, amountOutMinimum: 0n, sqrtPriceLimitX96: 0n,
-    }],
-    value: currency === 'eth' ? amountIn : 0n,
-  });
+  const twoHop = currency === 'usdg' && USDG_HOP_FEE !== null;
+  const hash = await wallet.writeContract(
+    twoHop
+      ? {
+          address: ROUTER,
+          abi: routerAbi,
+          functionName: 'exactInput',
+          args: [{
+            path: encodePath([usdgAddr, WETH, vavaAddr], [USDG_HOP_FEE, POOL_FEE]),
+            recipient: account.address,
+            amountIn,
+            amountOutMinimum: 0n,
+          }],
+        }
+      : {
+          address: ROUTER,
+          abi: routerAbi,
+          functionName: 'exactInputSingle',
+          args: [{
+            tokenIn, tokenOut: vavaAddr, fee: POOL_FEE, recipient: account.address,
+            amountIn, amountOutMinimum: 0n, sqrtPriceLimitX96: 0n,
+          }],
+          value: currency === 'eth' ? amountIn : 0n,
+        },
+  );
   await pub.waitForTransactionReceipt({ hash });
   const after = await pub.readContract({
     address: vavaAddr, abi: erc20Abi, functionName: 'balanceOf', args: [account.address],

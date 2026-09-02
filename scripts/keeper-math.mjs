@@ -15,3 +15,19 @@ export function proRata(totalOut, pendings) {
   }
   return shares;
 }
+
+/**
+ * Uniswap v3 multi-hop path: token(20B) + fee(3B) + token(20B) + ...
+ * encodePath(['0xA..','0xB..','0xC..'], [500, 3000]) -> '0x...' for
+ * A -(500)-> B -(3000)-> C. Pure - unit-tested.
+ */
+export function encodePath(tokens, fees) {
+  if (tokens.length !== fees.length + 1) throw new Error('path: need N tokens and N-1 fees');
+  let out = '0x';
+  for (let i = 0; i < fees.length; i++) {
+    out += tokens[i].slice(2).toLowerCase();
+    out += fees[i].toString(16).padStart(6, '0');
+  }
+  out += tokens[tokens.length - 1].slice(2).toLowerCase();
+  return out;
+}
