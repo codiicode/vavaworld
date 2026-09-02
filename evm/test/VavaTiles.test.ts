@@ -160,6 +160,74 @@ describe("VavaTiles", () => {
     expect(await tiles.tierCounts(0)).to.equal(0);
   });
 
+  it("razeBatch clears N hexes in one call: pooled payout, per-currency pending refunds", async () => {
+    const { tiles, vava, usdg, alice, keeper, treasury, quote, now } = await deploy();
+    const H3 = 0x8c1fb46741a33ffn;
+    const expiry = (await now()) + 300;
+    // Two ETH hexes + one USDG hex ($1 = 1_000_000 units).
+    const sigEth = await quote(keeper, alice.address, [H1, H2], [PRICE, PRICE], [1, 3], expiry);
+    await tiles.connect(alice).claim([H1, H2], [PRICE, PRICE], [1, 3], expiry, ethers.ZeroAddress, sigEth, { value: PRICE * 2n });
+    const usdgAddr = await usdg.getAddress();
+    const sigUsd = await quote(keeper, alice.address, [H3], [1_000_000n], [2], expiry, usdgAddr);
+    await tiles.connect(alice).claim([H3], [1_000_000n], [2], expiry, usdgAddr, sigUsd);
+    // Embed only H1 - H2 and H3 still carry un-embedded escrow.
+    await tiles.connect(keeper).embed([H1], [10_000_000n]);
+
+    const vBefore = await vava.balanceOf(alice.address);
+    const tEthBefore = await ethers.provider.getBalance(treasury.address);
+    const tUsdBefore = await usdg.balanceOf(treasury.address);
+    await tiles.connect(alice).razeBatch([H1, H2, H3]);
+
+    expect((await vava.balanceOf(alice.address)) - vBefore).to.equal(9_000_000n);
+    expect(await vava.balanceOf("0x000000000000000000000000000000000000dEaD")).to.equal(1_000_000n);
+    expect((await ethers.provider.getBalance(treasury.address)) - tEthBefore).to.equal((PRICE * 1500n) / 10000n);
+    expect((await usdg.balanceOf(treasury.address)) - tUsdBefore).to.equal(150_000n);
+    for (const h of [H1, H2, H3]) expect((await tiles.hexes(h)).owner).to.equal(ethers.ZeroAddress);
+    expect(await tiles.totalPendingWei()).to.equal(0);
+    expect(await tiles.totalPendingUsd()).to.equal(0);
+    expect(await tiles.tierCounts(0)).to.equal(0);
+    expect(await tiles.tierCounts(1)).to.equal(0);
+    expect(await tiles.tierCounts(2)).to.equal(0);
+  });
+
+  it("razeBatch reverts WHOLE batch when one hex is not the caller's", async () => {
+    const { tiles, alice, bob, keeper, quote, now } = await deploy();
+    const expiry = (await now()) + 300;
+    const sig = await quote(keeper, alice.address, [H1], [PRICE], [1], expiry);
+    await tiles.connect(alice).claim([H1], [PRICE], [1], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await expect(tiles.connect(bob).razeBatch([H1])).to.be.revertedWithCustomError(tiles, "NotOwner");
+    expect((await tiles.hexes(H1)).owner).to.equal(alice.address);
+  });
+
+  it("listBatch sets every ask in one call; delistBatch clears them; buy honours a batch ask", async () => {
+    const { tiles, alice, bob, keeper, quote, now } = await deploy();
+    const expiry = (await now()) + 300;
+    const sig = await quote(keeper, alice.address, [H1, H2], [PRICE, PRICE], [1, 3], expiry);
+    await tiles.connect(alice).claim([H1, H2], [PRICE, PRICE], [1, 3], expiry, ethers.ZeroAddress, sig, { value: PRICE * 2n });
+
+    const ask1 = ethers.parseEther("0.05");
+    const ask2 = ethers.parseEther("0.07");
+    await tiles.connect(alice).listBatch([H1, H2], [ask1, ask2]);
+    expect(await tiles.listings(H1)).to.equal(ask1);
+    expect(await tiles.listings(H2)).to.equal(ask2);
+
+    await tiles.connect(bob).buy(H2, { value: ask2 });
+    expect((await tiles.hexes(H2)).owner).to.equal(bob.address);
+
+    await tiles.connect(alice).delistBatch([H1]);
+    expect(await tiles.listings(H1)).to.equal(0n);
+  });
+
+  it("listBatch rejects length mismatch, zero asks and foreign hexes", async () => {
+    const { tiles, alice, bob, keeper, quote, now } = await deploy();
+    const expiry = (await now()) + 300;
+    const sig = await quote(keeper, alice.address, [H1], [PRICE], [1], expiry);
+    await tiles.connect(alice).claim([H1], [PRICE], [1], expiry, ethers.ZeroAddress, sig, { value: PRICE });
+    await expect(tiles.connect(alice).listBatch([H1], [])).to.be.revertedWithCustomError(tiles, "LengthMismatch");
+    await expect(tiles.connect(alice).listBatch([H1], [0n])).to.be.revertedWithCustomError(tiles, "WrongPayment");
+    await expect(tiles.connect(bob).listBatch([H1], [1n])).to.be.revertedWithCustomError(tiles, "NotOwner");
+  });
+
   it("atomic listing buy flips owner and pays seller minus 5%", async () => {
     const { tiles, alice, bob, treasury, keeper, quote, now } = await deploy();
     const expiry = (await now()) + 300;

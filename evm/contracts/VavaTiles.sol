@@ -281,7 +281,15 @@ contract VavaTiles {
     }
 
     /** Owner: burn the hex, take its embedded VAVA minus the 10% burn. */
-    function raze(uint64 h3) external nonReentrant {
+    /**
+     * Clears one hex's state and returns what must be paid out. Transfers
+     * happen in the callers so a batch settles each currency ONCE instead
+     * of per hex.
+     */
+    function _razeCore(uint64 h3)
+        private
+        returns (uint256 payout, uint256 burned, uint256 pendingWei, uint256 pendingUsd)
+    {
         Hex storage h = hexes[h3];
         if (h.owner != msg.sender) revert NotOwner();
         uint256 embedded = h.embeddedVava;
@@ -296,35 +304,79 @@ contract VavaTiles {
             // No hex to attach the un-embedded escrow to - it goes to treasury.
             if (inUsdg) {
                 totalPendingUsd -= pending;
-                require(usdg.transfer(treasury, pending), "usdg out");
+                pendingUsd = pending;
             } else {
                 totalPendingWei -= pending;
-                _pay(treasury, pending);
+                pendingWei = pending;
             }
         }
         unchecked {
             tierCounts[tier - 1] -= 1;
         }
-        uint256 burned = (embedded * RAZE_HAIRCUT_BPS) / 10_000;
-        uint256 payout = embedded - burned;
+        burned = (embedded * RAZE_HAIRCUT_BPS) / 10_000;
+        payout = embedded - burned;
+        emit Razed(h3, msg.sender, payout, burned);
+    }
+
+    function _settleRaze(uint256 payout, uint256 burned, uint256 pendingWei, uint256 pendingUsd) private {
+        if (pendingUsd > 0) require(usdg.transfer(treasury, pendingUsd), "usdg out");
+        if (pendingWei > 0) _pay(treasury, pendingWei);
         if (payout > 0) require(vava.transfer(msg.sender, payout), "vava out");
         if (burned > 0) require(vava.transfer(BURN, burned), "vava burn");
-        emit Razed(h3, msg.sender, payout, burned);
+    }
+
+    function raze(uint64 h3) external nonReentrant {
+        (uint256 payout, uint256 burned, uint256 pWei, uint256 pUsd) = _razeCore(h3);
+        _settleRaze(payout, burned, pWei, pUsd);
+    }
+
+    /** Raze many hexes under ONE signature - payouts pooled per currency. */
+    function razeBatch(uint64[] calldata h3s) external nonReentrant {
+        uint256 payout;
+        uint256 burned;
+        uint256 pWei;
+        uint256 pUsd;
+        for (uint256 i; i < h3s.length; ++i) {
+            (uint256 po, uint256 bu, uint256 w, uint256 u) = _razeCore(h3s[i]);
+            payout += po;
+            burned += bu;
+            pWei += w;
+            pUsd += u;
+        }
+        _settleRaze(payout, burned, pWei, pUsd);
     }
 
     // ---------------------------------------------------------------- market
 
-    function list(uint64 h3, uint128 askWei) external {
+    function _list(uint64 h3, uint128 askWei) private {
         if (hexes[h3].owner != msg.sender) revert NotOwner();
         if (askWei == 0) revert WrongPayment();
         listings[h3] = askWei;
         emit Listed(h3, askWei);
     }
 
-    function delist(uint64 h3) external {
+    function list(uint64 h3, uint128 askWei) external {
+        _list(h3, askWei);
+    }
+
+    /** List many hexes for sale under ONE signature. */
+    function listBatch(uint64[] calldata h3s, uint128[] calldata asks) external {
+        if (asks.length != h3s.length) revert LengthMismatch();
+        for (uint256 i; i < h3s.length; ++i) _list(h3s[i], asks[i]);
+    }
+
+    function _delist(uint64 h3) private {
         if (hexes[h3].owner != msg.sender) revert NotOwner();
         delete listings[h3];
         emit Delisted(h3);
+    }
+
+    function delist(uint64 h3) external {
+        _delist(h3);
+    }
+
+    function delistBatch(uint64[] calldata h3s) external {
+        for (uint256 i; i < h3s.length; ++i) _delist(h3s[i]);
     }
 
     /** Atomic listing purchase - the EVM upgrade over wallet-transfer + sync_owner. */

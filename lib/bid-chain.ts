@@ -125,30 +125,49 @@ export async function delistOnChain(args: {
   return call(args.wallet, 'delist', args.h3);
 }
 
-/** Embedded $VAVA sitting inside a hex (6-decimal units). */
-export async function readEmbeddedVava(h3: string): Promise<bigint> {
-  const hex = (await getPublicClient().readContract({
-    address: TILES_ADDRESS,
-    abi: TILES_ABI,
-    functionName: 'hexes',
-    args: [h3ToUint64(h3)],
-  })) as readonly [`0x${string}`, number, number, boolean, bigint, bigint];
-  return hex[5];
+/** Total embedded $VAVA across hexes (6-decimal units). */
+export async function readEmbeddedVava(h3s: string[]): Promise<bigint> {
+  const client = getPublicClient();
+  let total = 0n;
+  const CHUNK = 25;
+  for (let i = 0; i < h3s.length; i += CHUNK) {
+    const hexes = await Promise.all(
+      h3s.slice(i, i + CHUNK).map(
+        (h3) =>
+          client.readContract({
+            address: TILES_ADDRESS,
+            abi: TILES_ABI,
+            functionName: 'hexes',
+            args: [h3ToUint64(h3)],
+          }) as Promise<readonly [`0x${string}`, number, number, boolean, bigint, bigint]>,
+      ),
+    );
+    for (const hex of hexes) total += hex[5];
+  }
+  return total;
 }
 
 /**
- * Raze: give the hex back to the world and take out its embedded $VAVA
- * minus the 10% haircut. Then the registry row is cleared through the
- * API, which verifies the hex is unowned on-chain before deleting.
+ * Raze: give the hexes back to the world and take out their embedded
+ * $VAVA minus the 10% haircut - ONE signature no matter how many hexes
+ * (razeBatch pools the payout). Then the registry rows are cleared
+ * through the API, which verifies each hex is unowned on-chain.
  */
 export async function razeOnChain(args: {
   wallet: ActiveWallet;
-  h3: string;
+  h3s: string[];
 }): Promise<`0x${string}`> {
-  const { wallet, h3 } = args;
-  const sig = await call(wallet, 'raze', h3);
-  await mirror('/api/raze', { h3, owner: wallet.address, txHash: sig });
-  return sig;
+  const { wallet, h3s } = args;
+  if (!wallet.writeContract) throw new Error('Log in first');
+  const hash = await wallet.writeContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'razeBatch',
+    args: [h3s.map(h3ToUint64)],
+  });
+  await getPublicClient().waitForTransactionReceipt({ hash });
+  await mirror('/api/raze', { h3s, owner: wallet.address, txHash: hash });
+  return hash;
 }
 
 /**

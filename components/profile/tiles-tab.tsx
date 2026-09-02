@@ -60,7 +60,7 @@ import {
 } from '@/lib/supabase-listings';
 import { delistOnChain } from '@/lib/bid-chain';
 type DialogKind = 'details' | 'list' | 'transfer' | 'cancel' | 'raze';
-type DialogState = { kind: DialogKind; tile: ClaimedTile } | null;
+type DialogState = { kind: DialogKind; tile: ClaimedTile; h3s?: string[] } | null;
 
 const PER_PAGE = 10;
 
@@ -98,9 +98,9 @@ export function TilesTab() {
       /* wallet rejected or chain error - the listing simply stays */
     }
   };
-  const openDialog = (kind: DialogKind, tile: ClaimedTile) => {
+  const openDialog = (kind: DialogKind, tile: ClaimedTile, h3s?: string[]) => {
     if (kind === 'cancel') void cancelFor(tile);
-    else setDialog({ kind, tile });
+    else setDialog({ kind, tile, h3s });
   };
   const dialogLocation = dialog ? locations.get(dialog.tile.h3) ?? null : null;
 
@@ -301,6 +301,7 @@ export function TilesTab() {
       />
       <TileRazeDialog
         tile={dialog?.kind === 'raze' ? dialog.tile : null}
+        h3s={dialog?.kind === 'raze' ? dialog.h3s ?? [dialog.tile.h3] : []}
         location={dialog?.kind === 'raze' ? dialogLocation : null}
         open={dialog?.kind === 'raze'}
         onOpenChange={(next) => !next && setDialog(null)}
@@ -319,7 +320,7 @@ function GroupRow({
   group: TileGroup;
   index: number;
   listing: DbListing | null;
-  onAction: (kind: DialogKind, tile: ClaimedTile) => void;
+  onAction: (kind: DialogKind, tile: ClaimedTile, h3s?: string[]) => void;
 }) {
   const usd = useUsdFmt();
   const isSingle = g.tiles.length === 1;
@@ -408,7 +409,7 @@ function GroupRow({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
-                  onSelect={() => onAction('raze', firstTile)}
+                  onSelect={() => onAction('raze', firstTile, g.tiles.map((t) => t.h3))}
                 >
                   Raze
                 </DropdownMenuItem>
@@ -428,7 +429,7 @@ function GroupCard({
 }: {
   group: TileGroup;
   listing: DbListing | null;
-  onAction: (kind: DialogKind, tile: ClaimedTile) => void;
+  onAction: (kind: DialogKind, tile: ClaimedTile, h3s?: string[]) => void;
 }) {
   const router = useRouter();
   const usd = useUsdFmt();
@@ -536,9 +537,9 @@ function GroupCard({
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
-                onSelect={() => onAction('raze', firstTile)}
+                onSelect={() => onAction('raze', firstTile, g.tiles.map((t) => t.h3))}
               >
-                Raze{!isSingle && ' (first hex)'}
+                Raze{!isSingle && ` property (${g.tiles.length} hexes)`}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => onAction('details', firstTile)}>

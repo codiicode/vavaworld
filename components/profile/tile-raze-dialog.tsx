@@ -20,12 +20,15 @@ const HAIRCUT_PCT = 10;
  */
 export function TileRazeDialog({
   tile,
+  h3s,
   location,
   open,
   onOpenChange,
   onRazed,
 }: {
   tile: ClaimedTile | null;
+  /** Every hex being razed - the whole property. One signature covers all. */
+  h3s: string[];
   location: HexLocation | null;
   open: boolean;
   onOpenChange: (next: boolean) => void;
@@ -41,7 +44,7 @@ export function TileRazeDialog({
     let alive = true;
     setEmbedded(null);
     setError(null);
-    readEmbeddedVava(tile.h3)
+    readEmbeddedVava(h3s.length ? h3s : [tile.h3])
       .then((v) => {
         if (alive) setEmbedded(Number(v) / VAVA_UNIT);
       })
@@ -51,6 +54,7 @@ export function TileRazeDialog({
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, tile]);
 
   if (!tile) return null;
@@ -63,7 +67,7 @@ export function TileRazeDialog({
       <DialogContent className="sm:max-w-[440px]">
         <div className="space-y-1.5">
           <DialogPrimitive.Title className="text-lg font-semibold tracking-tight">
-            Raze this hex
+            {h3s.length > 1 ? `Raze this property (${h3s.length} hexes)` : 'Raze this hex'}
           </DialogPrimitive.Title>
           <DialogPrimitive.Description className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Flag code={location?.countryCode} size={14} /> {place} · Tier {tile.tier}
@@ -71,7 +75,7 @@ export function TileRazeDialog({
         </div>
 
         <p className="text-sm text-muted-foreground">
-          The hex goes back to the world and the $VAVA sealed inside is paid out to you,
+          The ground goes back to the world and the $VAVA sealed inside is paid out to you,
           minus the {HAIRCUT_PCT}% burn. This cannot be undone - anyone can claim the ground
           again afterwards.
         </p>
@@ -108,7 +112,7 @@ export function TileRazeDialog({
               setBusy(true);
               setError(null);
               try {
-                await razeOnChain({ wallet, h3: tile.h3 });
+                await razeOnChain({ wallet, h3s: h3s.length ? h3s : [tile.h3] });
                 onRazed();
                 onOpenChange(false);
               } catch (e: unknown) {
