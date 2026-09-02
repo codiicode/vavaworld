@@ -308,11 +308,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Dark mode: same sky photo, multiplied down to a deep navy so the cloud
-   texture survives instead of swapping to a flat gradient. */
+/* Dark mode: solid black. Every dark surface paints its own backdrop
+   (GlowBackground on (app) routes, landing-root on marketing pages), so
+   body's colour is only ever seen by iOS Safari, which samples it for
+   its top/bottom bars whenever it falls back from theme-color. The old
+   navy-multiplied sky showed up there as slate bars. */
 .dark body, .force-dark body {
-  background-color: #26324e;
-  background-blend-mode: multiply;
+  background-color: #000000;
+  background-image: none;
 }
 
 /* Linear-style: no decorative shadows by default. We selectively re-enable for
