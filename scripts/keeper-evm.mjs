@@ -74,6 +74,17 @@ const erc20Abi = parseAbi([
   'function balanceOf(address) view returns (uint256)',
 ]);
 
+// v4 mode: the keeper's own owner-only PoolManager buyer (the chain has no
+// trusted public v4 router). Pool key comes from env so a re-pointed pool
+// never needs a code change.
+const V4_SWAPPER = process.env.V4_SWAPPER ?? '';
+const V4_HOOKS = process.env.V4_HOOKS ?? '0x0000000000000000000000000000000000000000';
+const V4_FEE = Number(process.env.V4_FEE ?? 0);
+const V4_TICK_SPACING = Number(process.env.V4_TICK_SPACING ?? 60);
+const v4SwapperAbi = parseAbi([
+  'function buyExactIn((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) key, uint256 minOut) payable returns (uint256)',
+]);
+
 const chain = defineChain({
   id: Number(process.env.CHAIN_ID ?? 0) || 1,
   name: 'robinhood',
@@ -191,6 +202,33 @@ async function swapToVava(currency, amountIn, vavaAddr, usdgAddr) {
     return BigInt(Math.max(1, Math.round((usd / VAVA_USD) * 1e6)));
   }
 
+  // v4 mode: buy through our own swapper straight against the PoolManager.
+  if (SWAP_MODE === 'v4') {
+    if (currency !== 'eth') {
+      throw new Error('v4 mode routes only the ETH pot - USDG accumulates until a route ships');
+    }
+    if (!V4_SWAPPER) throw new Error('V4_SWAPPER required in v4 mode');
+    const key = {
+      currency0: '0x0000000000000000000000000000000000000000',
+      currency1: vavaAddr,
+      fee: V4_FEE,
+      tickSpacing: V4_TICK_SPACING,
+      hooks: V4_HOOKS,
+    };
+    const before = await pub.readContract({
+      address: vavaAddr, abi: erc20Abi, functionName: 'balanceOf', args: [account.address],
+    });
+    const hash = await wallet.writeContract({
+      address: V4_SWAPPER, abi: v4SwapperAbi, functionName: 'buyExactIn',
+      args: [key, 0n], value: amountIn,
+    });
+    await pub.waitForTransactionReceipt({ hash });
+    const after = await pub.readContract({
+      address: vavaAddr, abi: erc20Abi, functionName: 'balanceOf', args: [account.address],
+    });
+    return after - before;
+  }
+
   // uniswap mode: real market buy via SwapRouter02 exactInputSingle.
   if (!ROUTER) throw new Error('SWAP_ROUTER required in uniswap mode');
   const tokenIn = currency === 'eth' ? WETH : usdgAddr;
@@ -304,14 +342,8 @@ async function runOnce() {
   });
   await pub.waitForTransactionReceipt({ hash: allowHash });
 
-  for (const currency of ['eth', 'usdg']) {
-    const group = pending.filter((p) => (currency === 'usdg') === p.inUsdg);
-    if (group.length === 0) continue;
-    const pot = group.reduce((s, p) => s + p.pending, 0n);
-    const bought = await swapToVava(currency, pot, vavaAddr, usdgAddr);
-    console.log(`[keeper] ${currency}: pot=${pot} -> ${bought} VAVA units for ${group.length} hexes`);
+  const embedGroup = async (group, bought) => {
     const shares = proRata(bought, group.map((g) => g.pending));
-
     for (let i = 0; i < group.length; i += EMBED_BATCH) {
       const bh = group.slice(i, i + EMBED_BATCH).map((g) => g.h3);
       const ba = shares.slice(i, i + EMBED_BATCH);
@@ -326,6 +358,52 @@ async function runOnce() {
         console.error(`[keeper] embed batch failed:`, String(e).slice(0, 160));
       }
     }
+  };
+
+  // Keep a gas cushion the tranche budget may never touch.
+  const GAS_MARGIN = 10n ** 15n; // 0.001 ETH
+
+  for (const currency of ['eth', 'usdg']) {
+    let group = pending.filter((p) => (currency === 'usdg') === p.inUsdg);
+    if (group.length === 0) continue;
+
+    if (currency === 'eth' && SWAP_MODE !== 'reference') {
+      // The keeper FRONTS the swap and is reimbursed by each embed(), so a
+      // pot bigger than its balance is processed in affordable tranches -
+      // each reimbursement funds the next slice.
+      while (group.length > 0) {
+        const balance = await pub.getBalance({ address: account.address });
+        const budget = balance > GAS_MARGIN ? balance - GAS_MARGIN : 0n;
+        const tranche = [];
+        let pot = 0n;
+        for (const g of group) {
+          if (pot + g.pending > budget) break;
+          pot += g.pending;
+          tranche.push(g);
+        }
+        if (tranche.length === 0) {
+          console.error(`[keeper] balance ${balance} too low to front even one hex - top up the keeper`);
+          break;
+        }
+        const bought = await swapToVava(currency, pot, vavaAddr, usdgAddr);
+        console.log(`[keeper] eth tranche: pot=${pot} -> ${bought} VAVA units for ${tranche.length} hexes (${group.length - tranche.length} left)`);
+        await embedGroup(tranche, bought);
+        group = group.slice(tranche.length);
+      }
+      continue;
+    }
+
+    let pot = 0n;
+    for (const g of group) pot += g.pending;
+    let bought;
+    try {
+      bought = await swapToVava(currency, pot, vavaAddr, usdgAddr);
+    } catch (e) {
+      console.error(`[keeper] ${currency} swap skipped:`, String(e).slice(0, 160));
+      continue;
+    }
+    console.log(`[keeper] ${currency}: pot=${pot} -> ${bought} VAVA units for ${group.length} hexes`);
+    await embedGroup(group, bought);
   }
   console.log('[keeper] pass complete');
 }
