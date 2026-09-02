@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { maxUint256 } from 'viem';
 import { getPublicClient, TILES_ABI, TILES_ADDRESS } from './evm';
 import { useActiveWallet } from './active-wallet';
 import { VAVA_UNIT } from './tokenomics-constants';
@@ -136,11 +137,12 @@ export function useStake() {
           args: [wallet.address!, TILES_ADDRESS],
         })) as bigint;
         if (allowance < amount) {
+          // Uncapped, so this is the ONLY time staking costs two signatures.
           const hash = await wallet.writeContract!({
             address: vava,
             abi: ERC20_ABI,
             functionName: 'approve',
-            args: [TILES_ADDRESS, amount],
+            args: [TILES_ADDRESS, maxUint256],
           });
           await client.waitForTransactionReceipt({ hash });
         }

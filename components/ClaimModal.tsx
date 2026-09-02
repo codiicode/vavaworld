@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { maxUint256 } from 'viem';
 import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { useActiveWallet } from '@/lib/active-wallet';
@@ -17,6 +18,16 @@ import { PRICING } from '@/lib/pricing';
 import { Flag } from '@/components/flag';
 
 
+
+const ERC20_ALLOWANCE_ABI = [
+  {
+    name: 'allowance',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [{ type: 'address' }, { type: 'address' }],
+    outputs: [{ type: 'uint256' }],
+  },
+] as const;
 
 // Fixed white-on-dark-glass, matching the /map chrome the modal floats over.
 const EYEBROW =
@@ -156,13 +167,24 @@ export function ClaimModal({
           throw new Error('Insufficient balance for this claim');
         }
       } else {
-        // $ path: one approve covering every chunk, then the claims can
-        // draw it down via transferFrom.
-        const approveHash = await wallet.writeContract({
-          ...buildUsdgApproveCall(quotes[0]),
-          args: [buildUsdgApproveCall(quotes[0]).args[0], totalNeeded],
-        });
-        await client.waitForTransactionReceipt({ hash: approveHash });
+        // $ path: the contract draws USDG via transferFrom, which needs an
+        // allowance. Grant it ONCE with no cap so every later purchase is
+        // a single signature - an exact-amount approve would cost the user
+        // two confirmations on every claim forever.
+        const approveCall = buildUsdgApproveCall(quotes[0]);
+        const allowance = (await client.readContract({
+          address: approveCall.address,
+          abi: ERC20_ALLOWANCE_ABI,
+          functionName: 'allowance',
+          args: [owner, approveCall.args[0]],
+        })) as bigint;
+        if (allowance < totalNeeded) {
+          const approveHash = await wallet.writeContract({
+            ...approveCall,
+            args: [approveCall.args[0], maxUint256],
+          });
+          await client.waitForTransactionReceipt({ hash: approveHash });
+        }
       }
 
       const mirrorChunk = async (q: (typeof quotes)[number]) => {
