@@ -1,6 +1,7 @@
 'use client';
 
 import { NATIVE_PAY, TILES_ABI, TILES_ADDRESS, h3ToUint64 } from './evm';
+import { resilientFetch } from './resilient-fetch';
 
 /**
  * EVM claim settlement. One quote from /api/quote authorizes exactly one
@@ -34,7 +35,7 @@ export async function fetchQuotes(
   claimer: string,
   currency: PayCurrency = 'eth',
 ): Promise<EvmClaimQuote[]> {
-  const r = await fetch('/api/quote', {
+  const r = await resilientFetch('/api/quote', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ h3s, claimer, currency }),

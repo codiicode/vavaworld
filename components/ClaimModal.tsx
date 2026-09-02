@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { maxUint256 } from 'viem';
 import { hexCenter } from '@/lib/h3-utils';
+import { resilientFetch } from '@/lib/resilient-fetch';
 import { classifyTier } from '@/lib/tier';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
@@ -103,7 +104,7 @@ export function ClaimModal({
   const [approving, setApproving] = useState(false);
   useEffect(() => {
     let alive = true;
-    fetch('/api/eth-price')
+    resilientFetch('/api/eth-price')
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (alive && j?.ethUsd) setEthUsd(j.ethUsd);
@@ -207,11 +208,11 @@ export function ClaimModal({
         // verifies on-chain ownership before accepting.
         const mirrors = await Promise.allSettled(
           q.h3s.map((h3, i) =>
-            fetch('/api/claim', {
+            resilientFetch('/api/claim', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ h3, owner, quotedPriceUsd: (q.perHexUsdFull ?? q.perHexUsd)[i] }),
-            }).then((r) => (r.ok ? h3 : null)),
+            }).then((r) => (r.ok || r.status === 409 ? h3 : null)),
           ),
         );
         for (const m of mirrors) {

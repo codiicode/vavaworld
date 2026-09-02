@@ -24,6 +24,9 @@ const ALLOWED = new Set([
   'eth_getTransactionCount',
   'eth_getTransactionReceipt',
   'eth_maxPriorityFeePerGas',
+  // Broadcasting an ALREADY-SIGNED transaction is safe to relay - the
+  // signature fixes every field, the relay can't alter or initiate anything.
+  'eth_sendRawTransaction',
 ]);
 
 type RpcCall = { jsonrpc?: string; id?: unknown; method?: string; params?: unknown };
