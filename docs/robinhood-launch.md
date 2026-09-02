@@ -97,7 +97,9 @@ Clicked (the user, in a real browser against the testnet site):
     it created) and decrement `countries.claim_count` by the same count
     per country, so the live price curve is untouched.
 
-Testnet deployment (2026-09-02): `evm/deployments/testnet.json`. The
+Testnet deployment (2026-09-02, batch-enabled contract
+`0x8677c5404970BC93Fd3B85747F0d92697b057763`, stand-in tokens reused):
+`evm/deployments/testnet.json`. The
 scripted half (`evm/scripts/rehearse-testnet.ts` + a keeper pass with
 `START_BLOCK=111342775`, `SITE_URL` unset) passed: 85% landed in the
 treasury in both currencies, pending drained to 0/0.
