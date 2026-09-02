@@ -125,6 +125,32 @@ export async function delistOnChain(args: {
   return call(args.wallet, 'delist', args.h3);
 }
 
+/** Embedded $VAVA sitting inside a hex (6-decimal units). */
+export async function readEmbeddedVava(h3: string): Promise<bigint> {
+  const hex = (await getPublicClient().readContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'hexes',
+    args: [h3ToUint64(h3)],
+  })) as readonly [`0x${string}`, number, number, boolean, bigint, bigint];
+  return hex[5];
+}
+
+/**
+ * Raze: give the hex back to the world and take out its embedded $VAVA
+ * minus the 10% haircut. Then the registry row is cleared through the
+ * API, which verifies the hex is unowned on-chain before deleting.
+ */
+export async function razeOnChain(args: {
+  wallet: ActiveWallet;
+  h3: string;
+}): Promise<`0x${string}`> {
+  const { wallet, h3 } = args;
+  const sig = await call(wallet, 'raze', h3);
+  await mirror('/api/raze', { h3, owner: wallet.address, txHash: sig });
+  return sig;
+}
+
 /**
  * Atomic listing purchase: pay the ask, hex flips in the same tx. The
  * contract demands msg.value == ask EXACTLY, so the amount sent is read

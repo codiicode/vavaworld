@@ -130,7 +130,9 @@ async function reconcileMirror(logs) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ h3, owner: m.owner, txHash: m.txHash }),
           });
-          if (r.ok || r.status === 409) {
+          // 409 = already in the registry; 400 = no on-chain hex any more
+          // (razed) - both are final, never retry them.
+          if (r.ok || r.status === 409 || r.status === 400) {
             mirrored.add(h3);
             if (r.ok) ok += 1;
           } else {

@@ -47,6 +47,7 @@ import type { ClaimedTile } from '@/types/tile';
 import { TileDetailsDialog } from './tile-details-dialog';
 import { TileListDialog } from './tile-list-dialog';
 import { TileTransferDialog } from './tile-transfer-dialog';
+import { TileRazeDialog } from './tile-raze-dialog';
 
 import { fmtUsdValue, useUsdFmt } from '@/lib/usd';
 import { useActiveWallet } from '@/lib/active-wallet';
@@ -58,7 +59,7 @@ import {
   type DbListing,
 } from '@/lib/supabase-listings';
 import { delistOnChain } from '@/lib/bid-chain';
-type DialogKind = 'details' | 'list' | 'transfer' | 'cancel';
+type DialogKind = 'details' | 'list' | 'transfer' | 'cancel' | 'raze';
 type DialogState = { kind: DialogKind; tile: ClaimedTile } | null;
 
 const PER_PAGE = 10;
@@ -298,6 +299,13 @@ export function TilesTab() {
         open={dialog?.kind === 'transfer'}
         onOpenChange={(next) => !next && setDialog(null)}
       />
+      <TileRazeDialog
+        tile={dialog?.kind === 'raze' ? dialog.tile : null}
+        location={dialog?.kind === 'raze' ? dialogLocation : null}
+        open={dialog?.kind === 'raze'}
+        onOpenChange={(next) => !next && setDialog(null)}
+        onRazed={refetch}
+      />
     </div>
   );
 }
@@ -397,6 +405,12 @@ function GroupRow({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => onAction('details', firstTile)}>
                   Details
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => onAction('raze', firstTile)}
+                >
+                  Raze
                 </DropdownMenuItem>
               </>
             )}
@@ -519,6 +533,12 @@ function GroupCard({
               )}
               <DropdownMenuItem onSelect={() => onAction('transfer', firstTile)}>
                 Transfer{!isSingle && ' (first hex)'}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={() => onAction('raze', firstTile)}
+              >
+                Raze{!isSingle && ' (first hex)'}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => onAction('details', firstTile)}>
