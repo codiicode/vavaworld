@@ -6,6 +6,7 @@ import { Flag } from '@/components/flag';
 import { hexStaticMapUrl } from '@/lib/static-map';
 import { cn } from '@/lib/utils';
 import type { Listing } from '@/lib/mock-marketplace';
+import { useUsdFmt } from '@/lib/usd';
 
 /**
  * Minimal listing card grid. Each card is a glass tile with a satellite
@@ -24,6 +25,8 @@ export function ListingGrid({ listings }: { listings: ReadonlyArray<Listing> }) 
 }
 
 function ListingCard({ listing: l }: { listing: Listing }) {
+  // l.price is the native-coin ask - convert for display, never label raw.
+  const usd = useUsdFmt();
   const img = hexStaticMapUrl({ lat: l.lat, lng: l.lng, width: 480, height: 320, zoom: 17 });
   const positive = l.change24h > 0;
   return (
@@ -64,9 +67,8 @@ function ListingCard({ listing: l }: { listing: Listing }) {
             <div className="text-[9px] uppercase tracking-[0.16em] text-white/38">Price</div>
             <div className="mt-1 flex items-baseline gap-1.5">
               <span className="text-[17px] font-semibold leading-none tabular-nums text-white">
-                {l.price.toFixed(3)}
+                {usd(l.price)}
               </span>
-              <span className="text-[11px] text-white/50">USD</span>
             </div>
           </div>
           {l.change24h !== 0 && (
