@@ -121,9 +121,24 @@ export async function POST(req: Request) {
   }
   const action = from.toLowerCase() === bid.bidder.toLowerCase() ? 'cancel' : 'decline';
 
+  // The RPC node reports `from` in lowercase while rows hold the wallet's
+  // checksummed form, and the SQL compares bytes - hand it the stored
+  // spelling so an owner's decline is recognised as the owner.
+  let actor: string = from;
+  if (action === 'cancel') {
+    actor = bid.bidder;
+  } else {
+    const { data: hexRow } = await sb
+      .from('hexes')
+      .select('owner')
+      .eq('h3_id', bid.h3_id)
+      .maybeSingle<{ owner: string }>();
+    if (hexRow && hexRow.owner.toLowerCase() === from.toLowerCase()) actor = hexRow.owner;
+  }
+
   const { data, error } = await sb.rpc('respond_bid', {
     p_bid_id: bidId,
-    p_actor: from,
+    p_actor: actor,
     p_action: action,
     p_secret: API_SECRET,
   });
