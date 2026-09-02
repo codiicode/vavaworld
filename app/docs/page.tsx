@@ -11,7 +11,7 @@ const IS_TESTNET = process.env.NEXT_PUBLIC_EVM_CHAIN_ID !== '4663';
 const TILES_CONTRACT = process.env.NEXT_PUBLIC_TILES_CONTRACT ?? '';
 const EXPLORER = IS_TESTNET
   ? 'explorer.testnet.chain.robinhood.com'
-  : 'explorer.chain.robinhood.com';
+  : 'explorer.mainnet.chain.robinhood.com';
 
 const SECTIONS = [
   { id: 'grid', n: '01', title: 'The grid' },
@@ -149,26 +149,21 @@ export default function DocsPage() {
           </Sec>
 
           <Sec id="split">
-            <p>Every claim splits three ways. There is no fee added on top.</p>
+            <p>Every claim splits two ways. There is no fee added on top.</p>
             <div className="doc-split">
               <div className="bar">
-                <i style={{ width: '80%', background: '#f2f5fa' }} />
+                <i style={{ width: '85%', background: '#f2f5fa' }} />
                 <i style={{ width: '15%', background: '#7db4f5' }} />
-                <i style={{ width: '5%', background: 'rgba(255,255,255,0.35)' }} />
               </div>
             </div>
             <dl>
               <div className="doc-row">
                 <dt>Treasury - runs the map, the marketplace, buybacks</dt>
-                <dd>80%</dd>
+                <dd>85%</dd>
               </div>
               <div className="doc-row">
                 <dt>Locked in your hex as $VAVA</dt>
                 <dd>15%</dd>
-              </div>
-              <div className="doc-row">
-                <dt>The president of that country</dt>
-                <dd>5%</dd>
               </div>
             </dl>
             <h3>The 15% that matters</h3>
