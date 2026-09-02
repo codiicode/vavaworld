@@ -29,6 +29,15 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
           landingHeader: 'Welcome to VAVAWORLD',
           showWalletLoginFirst: false,
           walletChainType: 'ethereum-only',
+          // Installed browser wallets (EIP-6963) surface first with a
+          // "detected" badge; the named entries are the fallback list.
+          walletList: [
+            'detected_ethereum_wallets',
+            'metamask',
+            'rabby_wallet',
+            'coinbase_wallet',
+            'wallet_connect',
+          ],
         },
         embeddedWallets: {
           ethereum: {
