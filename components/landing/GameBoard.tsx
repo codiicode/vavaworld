@@ -1,50 +1,101 @@
 'use client';
 
 /**
- * The standings. An earlier version put an abstract dot-map here, which
- * showed nothing a visitor could read. This is the actual information:
- * who owns the most ground, who holds each throne, and what just changed.
+ * The standings - REAL data only. Top landowners come from the same
+ * leaderboard the app uses, thrones from the live throne table, and the
+ * feed from on-chain activity. An empty world says so honestly instead
+ * of showing invented players.
  */
 
 import { useEffect, useState } from 'react';
 import { Flag } from '@/components/flag';
+import { findCountry } from '@/lib/countries';
 
-const LEADERS = [
-  { r: 1, cc: 'jp', name: '@shibuyaSam', tiles: '14,203', country: 'Japan', d: 0 },
-  { r: 2, cc: 'se', name: '@nordicwhale', tiles: '11,840', country: 'Sweden', d: 2 },
-  { r: 3, cc: 'fr', name: '@marais', tiles: '9,662', country: 'France', d: -1 },
-  { r: 4, cc: 'ma', name: '@atlasmine', tiles: '8,104', country: 'Morocco', d: 1 },
-  { r: 5, cc: 'us', name: '@harborline', tiles: '7,551', country: 'USA', d: -2 },
-  { r: 6, cc: 'br', name: '@paulista', tiles: '6,930', country: 'Brazil', d: 3 },
-];
+type Leader = {
+  rank: number;
+  username: string;
+  country: string;
+  hexes: number;
+  countries: number;
+};
+type Throne = { country_iso: string; holder: string; seized_at: string };
+type Coup = { country_iso: string; status: string };
+type Move = {
+  type: 'claim' | 'sale';
+  countryIso: string;
+  countryName: string;
+  to?: string | null;
+  buyer?: string | null;
+  at: string;
+};
 
-const THRONES = [
-  { cc: 'se', country: 'Sweden', holder: '@nordicwhale', held: '42d', state: 'held' },
-  { cc: 'fr', country: 'France', holder: '@marais', held: '7d', state: 'contested' },
-  { cc: 'jp', country: 'Japan', holder: '@shibuyaSam', held: '118d', state: 'held' },
-  { cc: 'ma', country: 'Morocco', holder: '@atlasmine', held: '23d', state: 'held' },
-  { cc: 'br', country: 'Brazil', holder: null, held: ' - ', state: 'open' },
-  { cc: 'au', country: 'Australia', holder: '@reefline', held: '61d', state: 'held' },
-];
+function ago(iso: string): string {
+  const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60_000));
+  if (mins < 1) return 'now';
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
 
-const RECENT = [
-  { cc: 'ma', who: '@atlasmine', what: 'claimed 320 hexes in', where: 'Casablanca', ago: '2m' },
-  { cc: 'fr', who: '@marais', what: 'took the throne of', where: 'France', ago: '11m' },
-  { cc: 'us', who: '@harborline', what: 'sold 40 hexes in', where: 'Chicago', ago: '18m' },
-  { cc: 'se', who: '@nordicwhale', what: 'claimed 1,204 hexes in', where: 'Stockholm', ago: '24m' },
-  { cc: 'jp', who: '@shibuyaSam', what: 'claimed 88 hexes in', where: 'Osaka', ago: '31m' },
-];
+function heldFor(iso: string): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  return days < 1 ? 'today' : `${days}d`;
+}
+
+const short = (s: string) => (s.startsWith('0x') && s.length > 12 ? `${s.slice(0, 4)}…${s.slice(-4)}` : s);
 
 export function GameBoard() {
   const [tab, setTab] = useState<'owners' | 'thrones'>('owners');
   const [top, setTop] = useState(0);
+  const [leaders, setLeaders] = useState<Leader[] | null>(null);
+  const [thrones, setThrones] = useState<{ rows: Throne[]; contested: Set<string> } | null>(null);
+  const [moves, setMoves] = useState<Move[] | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/leaderboard')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (alive) setLeaders((j?.entries ?? []).slice(0, 6));
+      })
+      .catch(() => alive && setLeaders([]));
+    fetch('/api/thrones')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive) return;
+        const contested = new Set<string>(
+          ((j?.coups ?? []) as Coup[]).filter((c) => c.status === 'active').map((c) => c.country_iso),
+        );
+        setThrones({ rows: ((j?.thrones ?? []) as Throne[]).slice(0, 6), contested });
+      })
+      .catch(() => alive && setThrones({ rows: [], contested: new Set() }));
+    fetch('/api/activity')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (alive) setMoves(((j?.events ?? []) as Move[]).slice(0, 5));
+      })
+      .catch(() => alive && setMoves([]));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // The activity list scrolls one row at a time.
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const t = setInterval(() => setTop((v) => (v + 1) % RECENT.length), 3600);
+    const n = moves?.length ?? 0;
+    if (n < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const t = setInterval(() => setTop((v) => (v + 1) % n), 3600);
     return () => clearInterval(t);
-  }, []);
+  }, [moves]);
+
+  const emptyRow = (text: string) => (
+    <div className="brow">
+      <span className="name" style={{ opacity: 0.6 }}>
+        {text}
+      </span>
+    </div>
+  );
 
   return (
     <div className="board-wrap">
@@ -61,33 +112,39 @@ export function GameBoard() {
 
         {tab === 'owners' ? (
           <div className="board-list">
-            {LEADERS.map((row) => (
-              <div key={row.name} className="brow">
-                <span className="rank">{row.r}</span>
-                <Flag code={row.cc} size={18} />
+            {leaders === null && emptyRow('Loading…')}
+            {leaders?.length === 0 &&
+              emptyRow('The world is untouched. The first claim tops this list.')}
+            {leaders?.map((row) => (
+              <div key={row.rank} className="brow">
+                <span className="rank">{row.rank}</span>
+                <Flag code={row.country || undefined} size={18} />
                 <span className="name">
-                  {row.name}
-                  <em className="sub">{row.country}</em>
+                  {short(row.username)}
+                  <em className="sub">
+                    {row.countries === 1
+                      ? findCountry(row.country)?.name ?? 'Landowner'
+                      : `${row.countries} nations`}
+                  </em>
                 </span>
-                <span className="val">{row.tiles}</span>
-                <span className={`delta ${row.d > 0 ? 'up' : row.d < 0 ? 'down' : 'flat'}`}>
-                  {row.d > 0 ? `▲${row.d}` : row.d < 0 ? `▼${Math.abs(row.d)}` : ' - '}
-                </span>
+                <span className="val">{row.hexes.toLocaleString('en-US')}</span>
               </div>
             ))}
           </div>
         ) : (
           <div className="board-list">
-            {THRONES.map((t) => (
-              <div key={t.country} className="brow">
-                <Flag code={t.cc} size={18} />
+            {thrones === null && emptyRow('Loading…')}
+            {thrones?.rows.length === 0 &&
+              emptyRow('All 249 thrones stand open. 1,000 hexes and 1M staked $VAVA takes one.')}
+            {thrones?.rows.map((t) => (
+              <div key={t.country_iso} className="brow">
+                <Flag code={t.country_iso.toLowerCase()} size={18} />
                 <span className="name">
-                  {t.country}
-                  <em className="sub">{t.holder ?? 'No president yet'}</em>
+                  {findCountry(t.country_iso)?.name ?? t.country_iso}
+                  <em className="sub">{short(t.holder)}</em>
                 </span>
-                {t.state === 'contested' && <span className="pill contested">Contested</span>}
-                {t.state === 'open' && <span className="pill open">Open</span>}
-                <span className="val held">{t.held}</span>
+                {thrones.contested.has(t.country_iso) && <span className="pill contested">Contested</span>}
+                <span className="val held">{heldFor(t.seized_at)}</span>
               </div>
             ))}
           </div>
@@ -98,16 +155,27 @@ export function GameBoard() {
       <div className="board-side">
         <div className="board-side-head">Latest moves</div>
         <div className="board-feed">
-          {RECENT.map((e, i) => (
-            <div
-              key={e.who + e.where}
-              className={`frow ${i === top ? 'now' : ''}`}
-            >
-              <Flag code={e.cc} size={16} />
-              <span className="ftext">
-                <b>{e.who}</b> {e.what} <span className="where">{e.where}</span>
+          {moves === null && (
+            <div className="frow now">
+              <span className="ftext" style={{ opacity: 0.6 }}>Loading…</span>
+            </div>
+          )}
+          {moves?.length === 0 && (
+            <div className="frow now">
+              <span className="ftext" style={{ opacity: 0.7 }}>
+                No moves yet - the map is wide open.
               </span>
-              <span className="fago">{e.ago}</span>
+            </div>
+          )}
+          {moves?.map((e, i) => (
+            <div key={`${e.at}-${i}`} className={`frow ${i === top ? 'now' : ''}`}>
+              <Flag code={e.countryIso} size={16} />
+              <span className="ftext">
+                <b>{short((e.type === 'sale' ? e.buyer : e.to) ?? 'someone')}</b>{' '}
+                {e.type === 'sale' ? 'bought a hex in' : 'claimed a hex in'}{' '}
+                <span className="where">{e.countryName}</span>
+              </span>
+              <span className="fago">{ago(e.at)}</span>
             </div>
           ))}
         </div>
