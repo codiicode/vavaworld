@@ -90,6 +90,17 @@ Clicked (the user, in a real browser against the testnet site):
 8. Large batch: ~50 hexes in one click, ONE transaction
 9. **Raze every rehearsal hex** - `updateMint` refuses while the vault
    holds tokens, so the stand-in vault must be drained
+10. **Scrub the registry.** The preview site mirrors into the SAME
+    Supabase project as production, so clicked testnet claims show up on
+    the live leaderboard/activity until removed. After razing, delete
+    the rehearsal wallet's rows from `hexes` (and any `listings`/`bids`
+    it created) and decrement `countries.claim_count` by the same count
+    per country, so the live price curve is untouched.
+
+Testnet deployment (2026-09-02): `evm/deployments/testnet.json`. The
+scripted half (`evm/scripts/rehearse-testnet.ts` + a keeper pass with
+`START_BLOCK=111342775`, `SITE_URL` unset) passed: 85% landed in the
+treasury in both currencies, pending drained to 0/0.
 
 ## 4. Mainnet deploy + small-money rehearsal
 
