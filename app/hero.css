@@ -115,7 +115,9 @@ html:has(.landing-root) {
 .line-mask {
   /* Clip the wipe vertically only — a nowrap line that outgrows a narrow
      viewport must stay visible, not get silently sliced mid-word. */
-  overflow: hidden visible;
+  /* `clip` (not `hidden`): pairing hidden with visible coerces visible
+     to auto, which paints a scrollbar on every headline line. */
+  overflow: visible clip;
   display: block;
   /* Descenders (g, y) sit below the baseline — pad the mask so it clips the
      animation's start position, never the glyphs themselves. */
