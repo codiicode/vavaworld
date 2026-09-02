@@ -43,6 +43,10 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
           ethereum: {
             createOnLogin: 'users-without-wallets',
           },
+          // Email/social users already consented by logging in; the app's
+          // own review step is the confirmation. External wallets
+          // (MetaMask etc.) keep their native prompt - that is theirs.
+          showWalletUIs: false,
         },
         defaultChain: robinhoodChain,
         supportedChains: [robinhoodChain],
