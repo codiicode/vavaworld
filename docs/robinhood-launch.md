@@ -104,6 +104,13 @@ scripted half (`evm/scripts/rehearse-testnet.ts` + a keeper pass with
 `START_BLOCK=111342775`, `SITE_URL` unset) passed: 85% landed in the
 treasury in both currencies, pending drained to 0/0.
 
+**Solana-era rows at cutover:** the shared database still holds the old
+devnet claims (base58 owners - 7 FR + 1 NZ as of 2026-09-02). Nothing
+on Robinhood Chain backs them, so on the EVM site they render as owned
+ground nobody can interact with. Before opening: either delete them
+(clean slate) or deliberately re-issue them on the new contract as a
+genesis gift to the early claimers - USER'S CALL, ask before launch.
+
 ## 4. Mainnet deploy + small-money rehearsal
 
 Same §1 commands against `robinhood` with real USDG address. Fund the
