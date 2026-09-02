@@ -67,7 +67,37 @@ function segDistKm2(
 }
 
 /** ISO alpha-2 (uppercase) for a lat/lng, or "INTL". */
+// Microstates absent from the 50m dataset, checked before it. Vatican City
+// (0.5 km²) simply doesn't exist at 50m scale - without this its hexes
+// resolve to IT, which broke the launch lock. Polygon traces the wall line
+// closely enough that only the state itself (plus St. Peter's Square, which
+// IS the border) matches.
+const MICROSTATES: Array<{ iso: string; bbox: [number, number, number, number]; ring: Ring }> = [
+  {
+    iso: 'VA',
+    bbox: [12.4429, 41.9, 12.4584, 41.9077],
+    ring: [
+      [12.4454, 41.9],
+      [12.4584, 41.9017],
+      [12.4576, 41.9059],
+      [12.4529, 41.9077],
+      [12.4462, 41.9072],
+      [12.4429, 41.9043],
+      [12.4431, 41.9009],
+      [12.4454, 41.9],
+    ],
+  },
+];
+
 export function resolveCountry(lat: number, lng: number): string {
+  // 0. Microstate overrides (see above).
+  for (const m of MICROSTATES) {
+    const [minX, minY, maxX, maxY] = m.bbox;
+    if (lng >= minX && lng <= maxX && lat >= minY && lat <= maxY && inRing(lng, lat, m.ring)) {
+      return m.iso;
+    }
+  }
+
   // 1. Strict containment.
   for (const c of COUNTRIES) {
     const [minX, minY, maxX, maxY] = c.bbox;
