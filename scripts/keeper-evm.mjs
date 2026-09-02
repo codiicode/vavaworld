@@ -49,6 +49,10 @@ const EMBED_BATCH = Number(process.env.KEEPER_EMBED_BATCH ?? 150);
 /** Reference mode prices VAVA at this many USD (devnet-style rehearsal). */
 const VAVA_USD = Number(process.env.VAVA_REFERENCE_USD ?? 0.0001);
 const ETH_USD_URL = process.env.SOL_PRICE_URL ?? 'https://vavaworld.net/api/sol-price';
+/** Site origin for the registry reconcile. Unset = reconcile disabled, so a
+ *  local rehearsal can never post its throwaway hexes into production. */
+const SITE_URL = (process.env.SITE_URL ?? '').replace(/\/$/, '');
+const MIRROR_CONCURRENCY = 4;
 
 const abi = JSON.parse(readFileSync(new URL('../lib/evm-abi.json', import.meta.url), 'utf-8')).abi;
 const routerAbi = parseAbi([
@@ -73,18 +77,75 @@ const read = (functionName, args = []) =>
   pub.readContract({ address: TILES, abi, functionName, args });
 
 
-async function findPending() {
+async function fetchClaimedLogs() {
   const latest = await pub.getBlockNumber();
   const from = process.env.START_BLOCK
     ? BigInt(process.env.START_BLOCK)
     : latest > LOG_SPAN ? latest - LOG_SPAN : 0n;
-  const logs = await pub.getContractEvents({
+  return pub.getContractEvents({
     address: TILES,
     abi,
     eventName: 'Claimed',
     fromBlock: from,
     toBlock: latest,
   });
+}
+
+/** Hexes this process has already confirmed in the registry - saves a
+ *  round trip per pass; the registry fetch is the source of truth. */
+const mirrored = new Set();
+
+/**
+ * Self-healing registry: the browser mirrors a claim into Supabase right
+ * after the tx, but a closed tab or an API blip loses it - the hex is
+ * owned on-chain and invisible to leaderboard/activity/pricing. Every
+ * pass re-posts any Claimed hex the registry lacks through the same
+ * owner-verified /api/claim path (idempotent: 409 = already there).
+ */
+async function reconcileMirror(logs) {
+  if (!SITE_URL) return;
+  const reg = await fetch(`${SITE_URL}/api/claimed`, { cache: 'no-store' });
+  if (!reg.ok) throw new Error(`registry fetch ${reg.status}`);
+  const { hexes } = await reg.json();
+  const known = new Set((hexes ?? []).map((h) => h.h3));
+  for (const k of known) mirrored.add(k);
+
+  const missing = new Map();
+  for (const log of logs) {
+    const h3 = log.args.h3.toString(16);
+    if (mirrored.has(h3) || missing.has(h3)) continue;
+    missing.set(h3, { owner: log.args.owner, txHash: log.transactionHash });
+  }
+  if (missing.size === 0) return;
+  console.log(`[keeper] registry missing ${missing.size} claimed hex(es) - mirroring`);
+
+  const entries = [...missing.entries()];
+  let ok = 0;
+  for (let i = 0; i < entries.length; i += MIRROR_CONCURRENCY) {
+    await Promise.all(
+      entries.slice(i, i + MIRROR_CONCURRENCY).map(async ([h3, m]) => {
+        try {
+          const r = await fetch(`${SITE_URL}/api/claim`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ h3, owner: m.owner, txHash: m.txHash }),
+          });
+          if (r.ok || r.status === 409) {
+            mirrored.add(h3);
+            if (r.ok) ok += 1;
+          } else {
+            console.error(`[keeper] mirror ${h3} -> ${r.status}`);
+          }
+        } catch (e) {
+          console.error(`[keeper] mirror ${h3} failed:`, String(e).slice(0, 120));
+        }
+      }),
+    );
+  }
+  console.log(`[keeper] mirrored ${ok}/${missing.size}`);
+}
+
+async function findPending(logs) {
   const seen = new Set();
   const out = [];
   for (const log of logs) {
@@ -150,7 +211,14 @@ async function swapToVava(currency, amountIn, vavaAddr, usdgAddr) {
 async function runOnce() {
   const vavaAddr = await read('vava');
   const usdgAddr = await read('usdg');
-  const pending = await findPending();
+  const logs = await fetchClaimedLogs();
+  try {
+    await reconcileMirror(logs);
+  } catch (e) {
+    // Registry healing must never block the buyback.
+    console.error('[keeper] reconcile failed:', String(e).slice(0, 160));
+  }
+  const pending = await findPending(logs);
   if (pending.length === 0) {
     console.log('[keeper] nothing pending');
     return;

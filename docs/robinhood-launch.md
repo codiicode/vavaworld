@@ -62,6 +62,7 @@ EVM keeper, so no service reconfiguration is needed beyond env vars.
 | `KEEPER_SWAP` | `reference` until launch minute, then `uniswap` | keeper service |
 | `SWAP_ROUTER`, `WETH_ADDRESS`, `POOL_FEE` | where $VAVA liquidity lives (see §5) | keeper service |
 | `START_BLOCK` | the deploy block number | keeper (log-scan floor) |
+| `SITE_URL` | `https://vavaworld.net` - enables the registry reconcile (keeper re-mirrors any Claimed hex Supabase lacks). Leave UNSET for local rehearsals | keeper service |
 | `ADMIN_WALLETS` / `NEXT_PUBLIC_ADMIN_WALLETS` | comma-separated moderator addresses (case-insensitive) - ASK THE USER before launch | web |
 | `CHAINLINK_ETH_USD_FEED` | ETH/USD aggregator on Robinhood Chain if one exists (verify on explorer); empty = Coinbase spot fallback | web server |
 | `ETH_USD_FALLBACK` | last-resort ETH/USD constant (default 4500) | web server |
