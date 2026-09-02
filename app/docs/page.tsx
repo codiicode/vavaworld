@@ -251,7 +251,7 @@ export default function DocsPage() {
 
           <Sec id="thrones">
             <p>
-              Every one of the <strong>249</strong> territories has a presidency. Hold enough
+              Every one of the <strong>249</strong> nations has a presidency. Hold enough
               ground in a country and stake 1,000,000 $VAVA to take the seat.
             </p>
             <p>

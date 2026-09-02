@@ -38,7 +38,14 @@ export const metadata: Metadata = {
       'Claim hexes on a live world map. Buy, sell, and trade pieces of the earth.',
     images: ['/logo.jpg'],
   },
-  icons: { icon: '/favicon.ico' },
+  icons: {
+    icon: [
+      { url: '/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
