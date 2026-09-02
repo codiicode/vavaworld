@@ -11,7 +11,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { PublicKey, Transaction, VersionedTransaction } from '@solana/web3.js';
 import type { User as PrivyUser } from '@privy-io/react-auth';
 
 // ─────────────────────────────────────────────────────────────
@@ -28,32 +27,33 @@ import type { User as PrivyUser } from '@privy-io/react-auth';
 // import would drag the stack right back into every page.
 // ─────────────────────────────────────────────────────────────
 
-export type ActiveWalletSource = 'privy' | 'adapter' | null;
+export type ActiveWalletSource = 'privy' | null;
+
+/** A contract write ready for the wallet: address/abi/functionName/args/value. */
+export type WriteCall = {
+  address: `0x${string}`;
+  abi: readonly unknown[] | unknown[];
+  functionName: string;
+  args?: readonly unknown[] | unknown[];
+  value?: bigint;
+};
 
 export type ActiveWallet = {
   source: ActiveWalletSource;
-  publicKey: PublicKey | null;
-  /** Address as base58 string, or null if not connected */
-  address: string | null;
+  /** 0x-address, or null if not connected */
+  address: `0x${string}` | null;
   /** Whether the SDK has finished hydrating from storage. Use this to avoid showing stale UI. */
   ready: boolean;
-  /** Whether a wallet (any kind) is connected */
+  /** Whether a wallet (embedded or external via Privy) is connected */
   connected: boolean;
-  /** Sign and send a built transaction. Returns the signature string. */
-  signAndSendTransaction: ((tx: Transaction | VersionedTransaction) => Promise<string>) | null;
-  /**
-   * Sign MANY transactions with ONE wallet approval (adapter wallets like
-   * Phantom). Null when the wallet can't - callers fall back to parallel
-   * signAndSendTransaction (Privy embedded signs programmatically anyway).
-   */
-  signAllTransactions: ((txs: Transaction[]) => Promise<Transaction[]>) | null;
-  /** Sign an arbitrary message (throne actions etc). Returns raw 64-byte sig. */
-  signMessage: ((message: Uint8Array) => Promise<Uint8Array>) | null;
-  /** Open Privy login modal */
+  /** Execute a contract write. Resolves to the transaction hash. */
+  writeContract: ((call: WriteCall) => Promise<`0x${string}`>) | null;
+  /** personal_sign over a UTF-8 message (property images, throne actions). */
+  signMessage: ((message: string) => Promise<`0x${string}`>) | null;
+  /** Open Privy login modal (covers social AND wallet login). */
   login: () => void;
-  /** Open Privy logout */
   logout: () => Promise<void>;
-  /** Open the wallet-adapter picker (Phantom / Solflare / Coinbase). */
+  /** Kept for API compat - opens the same Privy modal. */
   openWalletModal: () => void;
   /** Privy embedded-wallet key export. Null until the engine loads / non-Privy session. */
   exportWallet: ((address: string) => Promise<void>) | null;
@@ -113,12 +113,10 @@ export function WalletStateProvider({ children }: { children: ReactNode }) {
   const stub = useMemo<ActiveWallet>(
     () => ({
       source: null,
-      publicKey: null,
       address: null,
       ready: false,
       connected: false,
-      signAndSendTransaction: null,
-      signAllTransactions: null,
+      writeContract: null,
       signMessage: null,
       login: () => demand('login'),
       logout: async () => {},

@@ -1,0 +1,13 @@
+{
+  "network": "robinhood",
+  "chainId": 4663,
+  "deployer": "0xcFf88702991e8314F2D042C81c8080e3d819435A",
+  "tiles": "0xa19a615616087E98d18DfCFe151f4f075a9ef1d4",
+  "standinVava": "0x999F2d692025e62780B6678b28c846f1ea792288",
+  "usdg": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+  "treasury": "0x48097570cAe9857034536CE7226D34AF4E5587B9",
+  "keeper": "0xa5035b1dB2e1b07F64FFe731cC992Ff8088c0F44",
+  "deployBlock": 52736775,
+  "deployedAt": "2026-09-02",
+  "note": "80/15/5 + owner-guarded stand-in (sVAVA). Replaces 0xa2Fce... (open-mint stand-in was a free stake-griefing lever); zero claims on any predecessor"
+}

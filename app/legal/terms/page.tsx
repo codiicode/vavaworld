@@ -16,7 +16,7 @@ export default function TermsPage() {
     >
       <h2>What a hex is</h2>
       <p>
-        Claiming a hex records your wallet as its owner in the VAVAWORLD program on Solana. It
+        Claiming a hex records your wallet as its owner in the VAVAWORLD contract on Robinhood Chain. It
         is a position in a game world. <strong>It does not convey any real-world property
         right</strong>, land title, easement or interest in the physical location it depicts,
         and it grants no rights against whoever owns or occupies that ground.
@@ -24,7 +24,7 @@ export default function TermsPage() {
 
       <h2>Your wallet, your responsibility</h2>
       <p>
-        You are responsible for your wallet and its keys. Transactions on Solana are final and
+        You are responsible for your wallet and its keys. On-chain transactions are final and
         irreversible. We cannot undo a claim, reverse a sale, or recover a lost key.
       </p>
 
@@ -46,9 +46,9 @@ export default function TermsPage() {
 
       <h2>Availability</h2>
       <p>
-        The service is provided as-is. VAVAWORLD currently runs on <strong>Solana devnet</strong>,
-        and devnet state may be reset by the network itself - outside our control. We do not
-        guarantee uninterrupted availability.
+        The service is provided as-is. VAVAWORLD runs on <strong>Robinhood Chain</strong>, a
+        public network outside our control - we do not guarantee its availability or finality,
+        nor uninterrupted availability of the service itself.
       </p>
 
       <h2>Liability</h2>

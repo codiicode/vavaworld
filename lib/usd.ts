@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback } from 'react';
 import { useSolPrice } from './use-sol-price';
 
 /**
@@ -10,8 +9,7 @@ import { useSolPrice } from './use-sol-price';
  */
 export function useUsdFmt(): (native: number) => string {
   const price = useSolPrice();
-  // Stable identity per rate so the formatter can sit in memo deps.
-  return useCallback((native: number) => fmtUsdValue(native * price), [price]);
+  return (native: number) => fmtUsdValue(native * price);
 }
 
 export function fmtUsdValue(v: number): string {

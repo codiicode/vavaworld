@@ -1,7 +1,6 @@
 'use client';
 
 import { PrivyProviders } from '@/components/PrivyProviders';
-import { WalletProviders } from '@/components/WalletProviders';
 import { WalletBridge } from './wallet-bridge';
 
 /**
@@ -14,9 +13,7 @@ import { WalletBridge } from './wallet-bridge';
 export default function WalletEngine() {
   return (
     <PrivyProviders>
-      <WalletProviders>
-        <WalletBridge />
-      </WalletProviders>
+      <WalletBridge />
     </PrivyProviders>
   );
 }

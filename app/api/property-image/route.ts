@@ -9,13 +9,17 @@ const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_HEXES = 1000;
 
-/** Wallets allowed to moderate (clear anyone's image). Comma-separated. */
+/**
+ * Wallets allowed to moderate (clear anyone's image). Comma-separated.
+ * Case-insensitive: EVM addresses arrive checksummed from wallets but
+ * are often pasted lowercase into env vars.
+ */
 function isAdmin(address: string): boolean {
   return (process.env.ADMIN_WALLETS ?? '')
     .split(',')
-    .map((a) => a.trim())
+    .map((a) => a.trim().toLowerCase())
     .filter(Boolean)
-    .includes(address);
+    .includes(address.toLowerCase());
 }
 
 /**
@@ -62,7 +66,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'image too large (max 8MB)' }, { status: 413 });
   }
 
-  const auth = verifySignedAction({
+  const auth = await verifySignedAction({
     address,
     message,
     signatureB58: signature,
@@ -113,7 +117,7 @@ export async function DELETE(req: Request) {
   if (h3s.length === 0 || h3s.length > MAX_HEXES) {
     return NextResponse.json({ error: 'invalid h3s' }, { status: 400 });
   }
-  const auth = verifySignedAction({
+  const auth = await verifySignedAction({
     address,
     message: String(body.message ?? ''),
     signatureB58: String(body.signature ?? ''),

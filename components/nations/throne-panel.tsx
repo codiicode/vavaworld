@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Crown, Loader2, Swords } from 'lucide-react';
-import bs58 from 'bs58';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { UserLink } from '@/components/user-link';
 import { TIERS } from '@/lib/tokenomics-constants';
 
 import { useUsdFmt } from '@/lib/usd';
+import { getPublicClient, TILES_ABI, TILES_ADDRESS } from '@/lib/evm';
 const CARD = 'rounded-2xl border border-white/40 bg-white/30 backdrop-blur-md';
 
 type Throne = { country_iso: string; holder: string; seized_at: string; via: 'claim' | 'coup' };
@@ -55,6 +55,28 @@ export function ThronePanel({ iso }: { iso: string }) {
   }, []);
 
   const throne = data?.thrones[0] ?? null;
+  const isHolder =
+    !!throne && !!wallet.address && wallet.address.toLowerCase() === throne.holder.toLowerCase();
+
+  // The contract holds the president's unclaimed 5% until they pull it.
+  const [owed, setOwed] = useState<{ wei: bigint; usd: bigint } | null>(null);
+  const [withdrawing, setWithdrawing] = useState(false);
+  useEffect(() => {
+    if (!isHolder || !wallet.address || !TILES_ADDRESS) return;
+    let alive = true;
+    const client = getPublicClient();
+    Promise.all([
+      client.readContract({ address: TILES_ADDRESS, abi: TILES_ABI, functionName: 'presidentOwedWei', args: [wallet.address as `0x${string}`] }),
+      client.readContract({ address: TILES_ADDRESS, abi: TILES_ABI, functionName: 'presidentOwedUsd', args: [wallet.address as `0x${string}`] }),
+    ]).then(([w, u]) => {
+      if (alive) setOwed({ wei: w as bigint, usd: u as bigint });
+    }).catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [isHolder, wallet.address, withdrawing]);
+  const owedUsdTotal = owed ? usd(Number(owed.wei) / 1e18) : null;
+  const owedHasFunds = !!owed && (owed.wei > 0n || owed.usd > 0n);
   const activeCoup = data?.coups.find((c) => c.status === 'active') ?? null;
   const presidentStake = TIERS.find((t) => t.key === 'president')!.threshold;
 
@@ -67,7 +89,7 @@ export function ThronePanel({ iso }: { iso: string }) {
     setError(null);
     try {
       const message = `vava:throne:${action}:${iso}:${wallet.address}:ts=${Date.now()}`;
-      const sig = await wallet.signMessage(new TextEncoder().encode(message));
+      const sig = await wallet.signMessage(message);
       const res = await fetch('/api/thrones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,7 +98,7 @@ export function ThronePanel({ iso }: { iso: string }) {
           countryIso: iso,
           address: wallet.address,
           message,
-          signature: bs58.encode(sig),
+          signature: sig,
         }),
       });
       const json = await res.json();
@@ -127,6 +149,46 @@ export function ThronePanel({ iso }: { iso: string }) {
             </div>
           </div>
 
+          {isHolder && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-400/40 bg-emerald-500/10 p-4">
+              <div>
+                <div className="text-[10px] font-medium uppercase tracking-[0.08em] text-foreground/60">
+                  Unclaimed on-chain earnings
+                </div>
+                <div className="text-lg font-semibold tabular-nums text-foreground">
+                  {owed === null
+                    ? '…'
+                    : `${owedUsdTotal}${owed.usd > 0n ? ` + ${(Number(owed.usd) / 1e6).toFixed(2)} USDG` : ''}`}
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={!owedHasFunds || withdrawing || !wallet.writeContract}
+                onClick={async () => {
+                  if (!wallet.writeContract) return;
+                  setWithdrawing(true);
+                  try {
+                    const hash = await wallet.writeContract({
+                      address: TILES_ADDRESS,
+                      abi: TILES_ABI,
+                      functionName: 'withdrawPresidentEarnings',
+                      args: [],
+                    });
+                    await getPublicClient().waitForTransactionReceipt({ hash });
+                  } catch {
+                    /* rejected or reverted - balance stays, button re-enables */
+                  } finally {
+                    setWithdrawing(false);
+                  }
+                }}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-foreground px-4 text-xs font-semibold text-background transition-opacity disabled:opacity-50"
+              >
+                {withdrawing && <Loader2 size={12} className="animate-spin" />}
+                Claim earnings
+              </button>
+            </div>
+          )}
+
           {activeCoup ? (
             <div className="rounded-xl border border-red-400/40 bg-red-500/10 p-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-red-700 dark:text-red-300">
@@ -162,7 +224,7 @@ export function ThronePanel({ iso }: { iso: string }) {
           <p className="text-sm text-foreground/70">
             <span className="font-semibold text-foreground">This throne is vacant.</span>{' '}
             5% of every claim here is unclaimed salary. Requirements: own at least{' '}
-            <span className="font-semibold tabular-nums">{data.landFloor ?? 250}</span> hexes in
+            <span className="font-semibold tabular-nums">{data.landFloor ?? 1000}</span> hexes in
             this country and stake{' '}
             <span className="font-semibold tabular-nums">{presidentStake.toLocaleString('en-US')}</span>{' '}
             $VAVA.

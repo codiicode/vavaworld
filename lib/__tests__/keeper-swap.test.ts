@@ -68,3 +68,29 @@ describe('jupiterSwap error paths', () => {
     await expect(jupiterSwap(base, fakeFetch as never)).rejects.toThrow(/429/);
   });
 });
+
+describe('encodePath', () => {
+  const A = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168'; // USDG
+  const B = '0x0bd7d308f8e1639FAb988df18A8011f41eACAd73'; // WETH
+  const C = '0x1111111111111111111111111111111111111111';
+
+  it('packs token(20B)+fee(3B)+token per Uniswap v3 spec', async () => {
+    const { encodePath } = await import('../../scripts/keeper-math.mjs');
+    const path = encodePath([A, B], [100]);
+    expect(path).toBe('0x' + A.slice(2).toLowerCase() + '000064' + B.slice(2).toLowerCase());
+    expect(path.length).toBe(2 + 40 + 6 + 40);
+  });
+
+  it('two-hop path carries both fees in order', async () => {
+    const { encodePath } = await import('../../scripts/keeper-math.mjs');
+    const path = encodePath([A, B, C], [100, 3000]);
+    expect(path).toBe(
+      '0x' + A.slice(2).toLowerCase() + '000064' + B.slice(2).toLowerCase() + '000bb8' + C.slice(2).toLowerCase(),
+    );
+  });
+
+  it('rejects mismatched token/fee counts', async () => {
+    const { encodePath } = await import('../../scripts/keeper-math.mjs');
+    expect(() => encodePath([A, B], [100, 3000])).toThrow();
+  });
+});

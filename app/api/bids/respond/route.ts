@@ -1,32 +1,28 @@
 import { NextResponse } from 'next/server';
-import { Connection, PublicKey } from '@solana/web3.js';
 import { getServerSupabase } from '@/lib/supabase-server';
-import { getRpcUrl } from '@/lib/anchor-client';
-import { bidEscrowPda, tilePda } from '@/lib/tile-pda';
-import {
-  SECONDARY_FEE_BPS,
-  TIERS,
-  VAVA_UNIT,
-} from '@/lib/tokenomics-constants';
-import idl from '@/lib/anchor-idl.json';
+import { getPublicClient, h3ToUint64, TILES_ABI, TILES_ADDRESS } from '@/lib/evm';
+import { SECONDARY_FEE_BPS, TIERS, VAVA_UNIT } from '@/lib/tokenomics-constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
-const PROGRAM_ID = new PublicKey((idl as { address: string }).address);
+const ZERO = '0x0000000000000000000000000000000000000000';
 
-async function sellerFeeBps(connection: Connection, seller: string): Promise<number> {
+/** Baron sellers (>= 500k staked $VAVA on the contract) sell at 3%. */
+async function sellerFeeBps(seller: string): Promise<number> {
   try {
-    const [stakePda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('stake'), new PublicKey(seller).toBuffer()],
-      PROGRAM_ID,
-    );
-    const info = await connection.getAccountInfo(stakePda);
-    if (!info) return SECONDARY_FEE_BPS.standard;
-    const amount = info.data.readBigUInt64LE(40);
-    const baron = BigInt(TIERS.find((t) => t.key === 'baron')!.threshold) * BigInt(VAVA_UNIT);
-    return amount >= baron ? SECONDARY_FEE_BPS.baron : SECONDARY_FEE_BPS.standard;
+    const client = getPublicClient();
+    const s = (await client.readContract({
+      address: TILES_ADDRESS,
+      abi: TILES_ABI,
+      functionName: 'stakes',
+      args: [seller as `0x${string}`],
+    })) as [bigint, bigint, bigint] | { amount: bigint };
+    const amount = Array.isArray(s) ? s[0] : s.amount;
+    const baronThreshold =
+      BigInt(TIERS.find((t) => t.key === 'baron')!.threshold) * BigInt(VAVA_UNIT);
+    return amount >= baronThreshold ? SECONDARY_FEE_BPS.baron : SECONDARY_FEE_BPS.standard;
   } catch {
     return SECONDARY_FEE_BPS.standard;
   }
@@ -34,13 +30,11 @@ async function sellerFeeBps(connection: Connection, seller: string): Promise<num
 
 /**
  * POST /api/bids/respond { bidId, txSig }
- * Mirrors the on-chain resolution of a bid escrow. The chain decides
- * what happened - this endpoint just reads it:
- *  - escrow closed + tile owner == bidder  → accepted (settled sale)
- *  - escrow closed + tx signed by bidder   → cancelled (refunded)
- *  - escrow closed + tx signed by owner    → declined (refunded)
- * No wallet signature needed: the mirrored outcome is whatever already
- * happened on-chain, verified against the ledger.
+ * Mirrors the on-chain resolution of a bid. The CONTRACT decides what
+ * happened - this route only reads the outcome:
+ *  - bid slot cleared + hex owner == bidder → accepted (settled sale)
+ *  - bid slot cleared + tx sent by bidder   → cancelled (refunded)
+ *  - bid slot cleared + tx sent by owner    → declined (refunded)
  */
 export async function POST(req: Request) {
   let body: { bidId?: string; txSig?: string };
@@ -66,30 +60,38 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, bid, note: 'already resolved' });
   }
 
-  const connection = new Connection(getRpcUrl(), 'confirmed');
-  const bidderPk = new PublicKey(bid.bidder);
+  const client = getPublicClient();
+  const h3u = h3ToUint64(bid.h3_id);
 
-  // The escrow must actually be resolved on-chain.
-  const escrow = await connection.getAccountInfo(
-    bidEscrowPda(bid.h3_id, bidderPk, PROGRAM_ID)[0],
-  );
-  if (escrow && escrow.data.length >= 48 && escrow.data.readBigUInt64LE(48) > 0n) {
+  // The escrow slot must actually be resolved on-chain.
+  const live = (await client.readContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'bids',
+    args: [h3u],
+  })) as [`0x${string}`, bigint] | { bidder: `0x${string}`; amountWei: bigint };
+  const liveBidder = Array.isArray(live) ? live[0] : live.bidder;
+  if (liveBidder.toLowerCase() === bid.bidder.toLowerCase()) {
     return NextResponse.json({ error: 'Bid escrow is still live on-chain' }, { status: 409 });
   }
 
-  // Outcome 1: tile now belongs to the bidder → accepted + settled.
-  const tileInfo = await connection.getAccountInfo(tilePda(bid.h3_id, PROGRAM_ID)[0]);
-  const onchainOwner =
-    tileInfo && tileInfo.data.length >= 40 ? new PublicKey(tileInfo.data.subarray(8, 40)) : null;
+  // Outcome 1: hex now belongs to the bidder → accepted + settled.
+  const hex = (await client.readContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'hexes',
+    args: [h3u],
+  })) as [`0x${string}`, ...unknown[]] | { owner: `0x${string}` };
+  const onchainOwner = Array.isArray(hex) ? hex[0] : hex.owner;
 
-  if (onchainOwner && onchainOwner.equals(bidderPk)) {
-    // Fee tier matches what the program charged: seller = pre-flip owner.
+  if (onchainOwner.toLowerCase() === bid.bidder.toLowerCase()) {
+    // Fee tier matches what the contract charged: seller = pre-flip owner.
     const { data: hexRow } = await sb
       .from('hexes')
       .select('owner')
       .eq('h3_id', bid.h3_id)
       .maybeSingle<{ owner: string }>();
-    const feeBps = hexRow ? await sellerFeeBps(connection, hexRow.owner) : SECONDARY_FEE_BPS.standard;
+    const feeBps = hexRow ? await sellerFeeBps(hexRow.owner) : SECONDARY_FEE_BPS.standard;
 
     const { data, error } = await sb.rpc('settle_bid_sale', {
       p_bid_id: bidId,
@@ -104,20 +106,35 @@ export async function POST(req: Request) {
   }
 
   // Outcome 2/3: refunded - cancelled by the bidder or declined by the
-  // owner. The transaction's fee payer tells us which.
-  const tx = await connection.getTransaction(txSig, {
-    commitment: 'confirmed',
-    maxSupportedTransactionVersion: 0,
-  });
-  if (!tx || tx.meta?.err) {
-    return NextResponse.json({ error: 'Transaction not found or failed' }, { status: 400 });
+  // owner. The transaction's sender tells us which.
+  let from: string;
+  let to: string;
+  try {
+    const tx = await client.getTransaction({ hash: txSig as `0x${string}` });
+    from = tx.from;
+    to = tx.to ?? ZERO;
+  } catch {
+    return NextResponse.json({ error: 'Transaction not found' }, { status: 400 });
   }
-  const keys = tx.transaction.message.getAccountKeys().staticAccountKeys.map((k) => k.toBase58());
-  if (!keys.includes(PROGRAM_ID.toBase58())) {
-    return NextResponse.json({ error: 'Transaction did not touch the program' }, { status: 400 });
+  if (to.toLowerCase() !== TILES_ADDRESS.toLowerCase()) {
+    return NextResponse.json({ error: 'Transaction did not touch the contract' }, { status: 400 });
   }
-  const actor = keys[0];
-  const action = actor === bid.bidder ? 'cancel' : 'decline';
+  const action = from.toLowerCase() === bid.bidder.toLowerCase() ? 'cancel' : 'decline';
+
+  // The RPC node reports `from` in lowercase while rows hold the wallet's
+  // checksummed form, and the SQL compares bytes - hand it the stored
+  // spelling so an owner's decline is recognised as the owner.
+  let actor: string = from;
+  if (action === 'cancel') {
+    actor = bid.bidder;
+  } else {
+    const { data: hexRow } = await sb
+      .from('hexes')
+      .select('owner')
+      .eq('h3_id', bid.h3_id)
+      .maybeSingle<{ owner: string }>();
+    if (hexRow && hexRow.owner.toLowerCase() === from.toLowerCase()) actor = hexRow.owner;
+  }
 
   const { data, error } = await sb.rpc('respond_bid', {
     p_bid_id: bidId,
@@ -128,5 +145,9 @@ export async function POST(req: Request) {
   if (error) {
     return NextResponse.json({ error: error.message.replace(/^.*?: /, '') }, { status: 409 });
   }
-  return NextResponse.json({ ok: true, outcome: action === 'cancel' ? 'cancelled' : 'declined', bid: data });
+  return NextResponse.json({
+    ok: true,
+    outcome: action === 'cancel' ? 'cancelled' : 'declined',
+    bid: data,
+  });
 }

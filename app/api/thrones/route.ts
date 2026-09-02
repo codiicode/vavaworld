@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
-import { meetsPresidentStake, verifySignedAction } from '@/lib/server-verify';
+import { getStakedWhole, verifySignedAction } from '@/lib/server-verify';
 
 const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
 
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
   }
   const iso = countryIso.toUpperCase();
 
-  const sig = verifySignedAction({
+  const sig = await verifySignedAction({
     address,
     message,
     signatureB58: signature,
@@ -86,14 +86,25 @@ export async function POST(req: Request) {
   });
   if (!sig.ok) return NextResponse.json({ error: sig.error }, { status: 401 });
 
-  if (!(await meetsPresidentStake(address))) {
+  // Multiple thrones are allowed - but each one demands its OWN million.
+  // Throne #2 needs 2M staked in total, #3 needs 3M, and so on; the same
+  // bar applies to coups. Land is always per country (1000+ hexes there).
+  const sb = getServerSupabase();
+  const { count: held } = await sb
+    .from('thrones')
+    .select('*', { count: 'exact', head: true })
+    .eq('holder', address);
+  const requiredStake = ((held ?? 0) + 1) * 1_000_000;
+  const staked = await getStakedWhole(address);
+  if (staked < requiredStake) {
     return NextResponse.json(
-      { error: 'Presidency requires 1,000,000 $VAVA staked' },
+      {
+        error: `Throne #${(held ?? 0) + 1} requires ${requiredStake.toLocaleString('en-US')} $VAVA staked - you have ${Math.floor(staked).toLocaleString('en-US')}`,
+      },
       { status: 403 },
     );
   }
 
-  const sb = getServerSupabase();
   const { data, error } =
     action === 'claim'
       ? await sb.rpc('claim_throne', { p_iso: iso, p_holder: address, p_secret: API_SECRET })

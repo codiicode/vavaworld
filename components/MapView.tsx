@@ -11,7 +11,6 @@ import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { syncPropertyImages } from '@/lib/property-image-layer';
 import { ownerColor } from '@/lib/owner-color';
 import { getMapView } from '@/lib/preferences';
-import { PublicKey } from '@solana/web3.js';
 
 // Per-hex geometry/tier cache. h3 IDs are deterministic so coords + center +
 // tier never change for a given cell - compute once, reuse across every
@@ -39,13 +38,13 @@ function getHexMeta(h3: string): HexMeta {
   return m;
 }
 
-// PublicKey.toBytes + base58 parse is expensive per-tile. The color is purely a
+// Hashing per-tile is cheap but repeated - the color is purely a
 // function of the address string, so memoize per owner.
 const ownerColorCache: globalThis.Map<string, string> = new globalThis.Map();
 function getOwnerColor(addr: string): string {
   let c = ownerColorCache.get(addr);
   if (!c) {
-    c = ownerColor(new PublicKey(addr));
+    c = ownerColor(addr);
     ownerColorCache.set(addr, c);
   }
   return c;

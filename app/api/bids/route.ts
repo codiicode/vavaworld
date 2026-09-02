@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server';
-import { Connection, PublicKey } from '@solana/web3.js';
 import { getServerSupabase } from '@/lib/supabase-server';
-import { getRpcUrl } from '@/lib/anchor-client';
-import { bidEscrowPda } from '@/lib/tile-pda';
-import idl from '@/lib/anchor-idl.json';
+import { getPublicClient, h3ToUint64, TILES_ABI, TILES_ADDRESS } from '@/lib/evm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
-const PROGRAM_ID = new PublicKey((idl as { address: string }).address);
 
 /**
  * POST /api/bids { h3, bidder }
@@ -30,26 +26,24 @@ export async function POST(req: Request) {
   if (!h3 || !bidder || !/^[0-9a-fA-F]{15,17}$/.test(h3)) {
     return NextResponse.json({ error: 'h3, bidder required' }, { status: 400 });
   }
-  let bidderPk: PublicKey;
-  try {
-    bidderPk = new PublicKey(bidder);
-  } catch {
+  if (!/^0x[0-9a-fA-F]{40}$/.test(bidder)) {
     return NextResponse.json({ error: 'invalid bidder address' }, { status: 400 });
   }
 
-  // Source of truth: the escrow PDA and its locked amount.
-  const connection = new Connection(getRpcUrl(), 'confirmed');
-  const escrow = await connection.getAccountInfo(bidEscrowPda(h3, bidderPk, PROGRAM_ID)[0]);
-  if (!escrow || !escrow.owner.equals(PROGRAM_ID) || escrow.data.length < 48) {
+  // Source of truth: the contract's bid escrow for this hex.
+  const client = getPublicClient();
+  const bid = (await client.readContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'bids',
+    args: [h3ToUint64(h3)],
+  })) as [`0x${string}`, bigint] | { bidder: `0x${string}`; amountWei: bigint };
+  const escrowBidder = Array.isArray(bid) ? bid[0] : bid.bidder;
+  const amountWei = Array.isArray(bid) ? bid[1] : bid.amountWei;
+  if (escrowBidder.toLowerCase() !== bidder.toLowerCase()) {
     return NextResponse.json({ error: 'No on-chain bid escrow found for this hex/bidder' }, { status: 404 });
   }
-  // BidEscrow layout: 8 disc + 32 bidder + 8 h3 + 8 amount (LE)
-  const escrowBidder = new PublicKey(escrow.data.subarray(8, 40));
-  if (!escrowBidder.equals(bidderPk)) {
-    return NextResponse.json({ error: 'Escrow bidder mismatch' }, { status: 400 });
-  }
-  const amount = escrow.data.readBigUInt64LE(48);
-  const priceSol = Number(amount) / 1e9;
+  const priceSol = Number(amountWei) / 1e18; // native coin (ETH)
   if (priceSol <= 0) {
     return NextResponse.json({ error: 'Escrow is empty' }, { status: 400 });
   }

@@ -3,13 +3,11 @@
 import { useEffect, useState } from 'react';
 import { CheckCircle2, Info, Loader2 } from 'lucide-react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Flag } from '@/components/flag';
 import type { Listing } from '@/lib/mock-marketplace';
-import { getConnection } from '@/lib/anchor-client';
-import { preflight } from '@/lib/preflight';
+import { buyListingOnChain } from '@/lib/bid-chain';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { dispatchListingsChanged } from '@/lib/supabase-listings';
 
@@ -82,37 +80,20 @@ export function BuyDialog({
 
   const buy = async () => {
     if (!quote) return;
-    if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
+    if (!wallet.connected || !wallet.address || !wallet.writeContract) {
       setError('Log in first');
       return;
     }
     setError(null);
     setPhase('signing');
     try {
-      const connection = getConnection();
-      const buyer = new PublicKey(wallet.publicKey.toString());
-      const tx = new Transaction();
-      for (const t of quote.transfers) {
-        if (t.lamports > 0) {
-          tx.add(
-            SystemProgram.transfer({
-              fromPubkey: buyer,
-              toPubkey: new PublicKey(t.to),
-              lamports: t.lamports,
-            }),
-          );
-        }
-      }
-      tx.feePayer = buyer;
-      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-      await preflight({
-        connection,
-        feePayer: buyer,
-        tx,
-        lamportsNeeded: quote.totalLamports,
+      // One atomic contract call: pays the ask, splits seller/protocol
+      // and flips ownership in the same transaction.
+      const sig = await buyListingOnChain({
+        wallet,
+        h3: listing.h3,
+        expectedWei: BigInt(quote.totalLamports) * 10n ** 9n,
       });
-      const sig = await wallet.signAndSendTransaction(tx);
-      await connection.confirmTransaction(sig, 'confirmed');
 
       setPhase('settling');
       const res = await fetch('/api/buy', {
@@ -120,7 +101,7 @@ export function BuyDialog({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           listingId: quote.listingId,
-          buyer: buyer.toBase58(),
+          buyer: wallet.address,
           txSig: sig,
         }),
       });

@@ -1,20 +1,14 @@
 import { NextResponse } from 'next/server';
 import { isValidCell, getResolution } from 'h3-js';
-import { Connection, PublicKey } from '@solana/web3.js';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { resolveHexCountry } from '@/lib/geo/country-resolver';
 import { H3_RESOLUTION } from '@/lib/pricing';
-import { getSolUsd } from '@/lib/sol-price';
-import { getRpcUrl } from '@/lib/anchor-client';
-import idl from '@/lib/anchor-idl.json';
+import { getPublicClient, h3ToUint64, TILES_ABI, TILES_ADDRESS } from '@/lib/evm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const TREASURY = process.env.NEXT_PUBLIC_TREASURY ?? '74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X';
-const PROGRAM_ID = new PublicKey((idl as { address: string }).address);
 const API_SECRET = process.env.INDEXER_API_SECRET ?? '';
-const MAX_TX_AGE_SECS = 15 * 60;
 
 /**
  * POST /api/claim  { h3, owner, txHash?, quotedPriceUsd? }
@@ -68,54 +62,27 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'owner required' }, { status: 400 });
   }
 
-  const connection = new Connection(getRpcUrl(), 'confirmed');
-  let paidUsd: number | null = null;
-  let effectiveTx: string;
-
-  if (txHash) {
-    // ---- Payment path: verify the SOL payment on-chain ----
-    const tx = await connection.getTransaction(txHash, {
-      commitment: 'confirmed',
-      maxSupportedTransactionVersion: 0,
-    });
-    if (!tx || tx.meta?.err) {
-      return NextResponse.json({ error: 'payment tx not found or failed' }, { status: 400 });
-    }
-    if (tx.blockTime && Date.now() / 1000 - tx.blockTime > MAX_TX_AGE_SECS) {
-      return NextResponse.json({ error: 'payment tx too old' }, { status: 400 });
-    }
-    const keys = tx.transaction.message.getAccountKeys().staticAccountKeys.map((k) => k.toBase58());
-    if (keys[0] !== owner) {
-      return NextResponse.json({ error: 'payment not signed by owner' }, { status: 400 });
-    }
-    const ti = keys.indexOf(TREASURY);
-    const paidLamports = ti >= 0 ? tx.meta!.postBalances[ti] - tx.meta!.preBalances[ti] : 0;
-    if (paidLamports <= 0) {
-      return NextResponse.json({ error: 'no payment to treasury in tx' }, { status: 400 });
-    }
-    const solUsd = await getSolUsd();
-    paidUsd = (paidLamports / 1e9) * solUsd;
-    effectiveTx = txHash;
-  } else {
-    // ---- Mirror path: hex was claimed through the on-chain program ----
-    const [tilePda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('hex'), h3IdToLeBytes(h3)],
-      PROGRAM_ID,
+  // Claims settle ONLY through the contract's claim() - the mirror just
+  // confirms the on-chain owner before the DB row is written.
+  const client = getPublicClient();
+  const hex = (await client.readContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'hexes',
+    args: [h3ToUint64(h3)],
+  })) as [`0x${string}`, ...unknown[]] | { owner: `0x${string}` };
+  const chainOwner = Array.isArray(hex) ? hex[0] : hex.owner;
+  if (!chainOwner || chainOwner === '0x0000000000000000000000000000000000000000') {
+    return NextResponse.json(
+      { error: 'no on-chain hex to mirror' },
+      { status: 400 },
     );
-    const info = await connection.getAccountInfo(tilePda);
-    if (!info || !info.owner.equals(PROGRAM_ID)) {
-      return NextResponse.json(
-        { error: 'no payment tx and no on-chain hex to mirror' },
-        { status: 400 },
-      );
-    }
-    // Tile layout: 8 disc + 32 owner …
-    const tileOwner = new PublicKey(info.data.subarray(8, 40)).toBase58();
-    if (tileOwner !== owner) {
-      return NextResponse.json({ error: 'on-chain hex not owned by owner' }, { status: 403 });
-    }
-    effectiveTx = `mirror:${h3}`;
   }
+  if (chainOwner.toLowerCase() !== owner.toLowerCase()) {
+    return NextResponse.json({ error: 'on-chain hex not owned by owner' }, { status: 403 });
+  }
+  const paidUsd: number | null = null;
+  const effectiveTx = txHash ?? `mirror:${h3}`;
 
   const countryIso = resolveHexCountry(h3);
   const sb = getServerSupabase();
@@ -150,9 +117,3 @@ export async function POST(req: Request) {
 }
 
 /** h3 string → the LE u64 bytes used in the tile PDA seed. */
-function h3IdToLeBytes(h3: string): Buffer {
-  const big = BigInt('0x' + h3);
-  const buf = Buffer.alloc(8);
-  buf.writeBigUInt64LE(big);
-  return buf;
-}

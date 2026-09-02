@@ -1,6 +1,5 @@
 'use client';
 
-import bs58 from 'bs58';
 import type { ActiveWallet } from './wallet-context';
 
 /**
@@ -41,6 +40,6 @@ async function signAction(wallet: ActiveWallet, count: number) {
     throw new Error('Wallet cannot sign messages');
   }
   const message = `vava:property-image:${count}:ts=${Date.now()}`;
-  const sig = await wallet.signMessage(new TextEncoder().encode(message));
-  return { address: wallet.address, message, signature: bs58.encode(sig) };
+  const signature = await wallet.signMessage(message);
+  return { address: wallet.address, message, signature };
 }

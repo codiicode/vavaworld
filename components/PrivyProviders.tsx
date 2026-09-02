@@ -1,48 +1,17 @@
 'use client';
 
 import { PrivyProvider } from '@privy-io/react-auth';
-import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
-import { createSolanaRpc, createSolanaRpcSubscriptions } from '@solana/kit';
-import { useMemo, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
+import { robinhoodChain } from '@/lib/evm';
 
 /**
- * Wraps Privy with our Solana RPC configuration. Without `solana.rpcs[<chain>]`,
- * Privy v3 throws "No RPC configuration found for chain solana:devnet" the moment
- * we try to sign + send a transaction.
- *
- * Builds the WSS URL from the HTTPS env var so both endpoints share the same
- * Helius API key.
+ * Privy in EVM mode for Robinhood Chain. One Log in button covers social
+ * (email/Google/X -> embedded wallet) AND external wallets (MetaMask,
+ * Rabby, Coinbase Wallet, ...) inside the same modal. The chain config
+ * makes Privy default every wallet to Robinhood Chain.
  */
-function buildRpcs(httpsUrl: string) {
-  // wss equivalent of https://devnet.helius-rpc.com/?api-key=... is
-  // wss://devnet.helius-rpc.com/?api-key=... - Helius accepts both subprotocols
-  // on the same host. Public RPC also supports `wss://api.devnet.solana.com`.
-  const wssUrl = httpsUrl.replace(/^https?:\/\//, 'wss://');
-
-  // Pick the chain from the URL - same heuristic as inferSolanaChain() in active-wallet.
-  const chain: 'solana:mainnet' | 'solana:devnet' | 'solana:testnet' =
-    httpsUrl.includes('devnet') ? 'solana:devnet' :
-    httpsUrl.includes('testnet') ? 'solana:testnet' :
-    'solana:mainnet';
-
-  return {
-    [chain]: {
-      rpc: createSolanaRpc(httpsUrl),
-      rpcSubscriptions: createSolanaRpcSubscriptions(wssUrl),
-      blockExplorerUrl:
-        chain === 'solana:devnet'
-          ? 'https://explorer.solana.com/?cluster=devnet'
-          : 'https://explorer.solana.com',
-    },
-  };
-}
-
 export function PrivyProviders({ children }: { children: ReactNode }) {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
-  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL ?? 'https://api.devnet.solana.com';
-
-  // Memoize so we don't re-create RPC clients on every render (they hold sockets).
-  const rpcs = useMemo(() => buildRpcs(rpcUrl), [rpcUrl]);
 
   // During server-side prerender (and missing-env scenarios) skip the provider
   // so the build doesn't crash. The runtime client will pick up the env var.
@@ -52,27 +21,35 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
     <PrivyProvider
       appId={appId}
       config={{
-        // 'wallet' puts Phantom/Solflare/Backpack INSIDE the Privy modal, so
-        // one Log in button covers social AND wallet users.
         loginMethods: ['email', 'google', 'twitter', 'wallet'],
-        externalWallets: {
-          solana: { connectors: toSolanaWalletConnectors() },
-        },
         appearance: {
           theme: 'dark',
           accentColor: '#7db4f5',
           logo: '/logo-globe-white.png',
           landingHeader: 'Welcome to VAVAWORLD',
           showWalletLoginFirst: false,
-          walletChainType: 'solana-only',
-          walletList: ['detected_solana_wallets', 'phantom', 'solflare', 'backpack'],
+          walletChainType: 'ethereum-only',
+          // Installed browser wallets (EIP-6963) surface first with a
+          // "detected" badge; the named entries are the fallback list.
+          walletList: [
+            'detected_ethereum_wallets',
+            'metamask',
+            'rabby_wallet',
+            'coinbase_wallet',
+            'wallet_connect',
+          ],
         },
         embeddedWallets: {
-          solana: {
+          ethereum: {
             createOnLogin: 'users-without-wallets',
           },
+          // Email/social users already consented by logging in; the app's
+          // own review step is the confirmation. External wallets
+          // (MetaMask etc.) keep their native prompt - that is theirs.
+          showWalletUIs: false,
         },
-        solana: { rpcs },
+        defaultChain: robinhoodChain,
+        supportedChains: [robinhoodChain],
       }}
     >
       {children}

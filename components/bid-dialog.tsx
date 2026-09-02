@@ -60,15 +60,15 @@ export function BidDialog({
     };
   }, [open]);
 
-  // The field is dollars; the escrow locks native coin, so a live rate is
-  // required before submitting - never convert through a fallback constant.
+  // The field is dollars; the escrow locks native coin, so a live rate
+  // is required before submitting - never a fallback constant.
   const parsed = Number(amount);
   const valid = Number.isFinite(parsed) && parsed > 0 && solUsd !== null && solUsd > 0;
   const askUsd = askSol != null && solUsd ? askSol * solUsd : null;
 
   const submit = async () => {
     if (!valid || !solUsd) return;
-    if (!wallet.connected || !wallet.publicKey || !wallet.signAndSendTransaction) {
+    if (!wallet.connected || !wallet.address || !wallet.writeContract) {
       setError('Log in first');
       return;
     }
@@ -78,8 +78,8 @@ export function BidDialog({
       await placeBidOnChain({
         wallet,
         h3,
-        // Typed in dollars, escrowed in native coin.
-        lamports: Math.round((parsed / solUsd) * 1e9),
+        // Typed in dollars, escrowed in native coin (micro-eth precision).
+        wei: BigInt(Math.round((parsed / solUsd) * 1e6)) * 10n ** 12n,
       });
       setPhase('done');
       onPlaced?.();

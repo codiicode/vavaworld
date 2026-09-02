@@ -1,0 +1,11 @@
+{
+  "network": "robinhoodTestnet",
+  "chainId": 46630,
+  "deployer": "0xcf45a13e079F3fFEF6197F318D70186b600adCF7",
+  "tiles": "0x8677c5404970BC93Fd3B85747F0d92697b057763",
+  "standinVava": "0x6e7B6B1Fd0bBD8bfAD337cA916fF9aCf43acED23",
+  "usdg": "0xE737a539527ca07c1e96aFEBA342F6923027De08",
+  "treasury": "0x48097570cAe9857034536CE7226D34AF4E5587B9",
+  "keeper": "0xE1b3EF2332446B8a48dd205409a43A02B23CE1c0",
+  "deployedAt": "2026-09-02"
+}

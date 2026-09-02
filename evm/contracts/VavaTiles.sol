@@ -1,0 +1,558 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+/**
+ * VAVAWORLD on Robinhood Chain (EVM port of anchor/programs/tiles).
+ *
+ * Economic invariants carried over 1:1 from the Solana program:
+ *  - Primary claims are priced ONLY by keeper-signed quotes (EIP-712).
+ *    The contract rejects any unquoted price, so pricing can never be
+ *    bypassed - same guarantee as the ed25519 gate on Solana.
+ *  - Every claim splits 85/15: treasury / buyback escrow. The 15% is
+ *    tracked per hex as pendingWei until the keeper embeds $VAVA.
+ *  - embed() is atomic per hex: VAVA into the vault + hex credited +
+ *    keeper reimbursed its escrowed wei in one call.
+ *  - raze() burns the hex and pays out embedded VAVA minus a 10%
+ *    haircut, which is burned (sent to 0xdead).
+ *  - Staking locks VAVA in the contract with a 24h unstake cooldown
+ *    that RESETS for the whole pending amount on each beginUnstake.
+ *  - Bids escrow ETH in the contract; accept splits 95/5 (or 97/3 for
+ *    baron-tier sellers) and flips the hex atomically.
+ *
+ * EVM-specific wins vs Solana: one transaction claims up to 1000 hexes,
+ * and listing sales settle atomically on-chain (no sync_owner keeper).
+ */
+
+import {IERC20} from "./interfaces/IERC20.sol";
+
+contract VavaTiles {
+    // ---------------------------------------------------------------- types
+
+    // Packed to 2 storage slots - at 1000-hex batches every slot counts.
+    // Price paid lives in the Claimed event (indexers), not in storage.
+    struct Hex {
+        address owner;
+        uint40 claimedAt;
+        uint8 tier; // 1..3, from the city bbox table
+        bool paidInUsdg; // which currency the 15% escrow is held in
+        uint128 pendingAmount; // 15% escrow awaiting embed (wei or usd6)
+        uint128 embeddedVava; // VAVA base units locked in this hex
+    }
+
+    struct Stake {
+        uint128 amount;
+        uint128 pendingAmount;
+        uint40 availableAt;
+    }
+
+    struct Bid {
+        address bidder;
+        uint128 amountWei;
+    }
+
+    // ---------------------------------------------------------------- state
+
+    address public admin;
+    address public keeper; // signs quotes + runs embed
+    address public immutable treasury;
+    IERC20 public vava;
+    IERC20 public usdg; // stable payment path - $0.10 is literally 0.10 USDG
+    bool public mintLocked;
+
+    mapping(uint64 => Hex) public hexes; // h3 index -> hex
+    mapping(address => Stake) public stakes;
+    mapping(uint64 => Bid) public bids; // one active bid per hex
+    mapping(uint64 => uint128) public listings; // askWei; 0 = not listed
+
+    uint256 public totalPendingWei; // sum of ETH-paid hex escrows
+    uint256 public totalPendingUsd; // sum of USDG-paid hex escrows (6 decimals)
+    uint64[3] public tierCounts;
+
+    // ---------------------------------------------------------------- config
+
+    uint16 public constant TREASURY_BPS = 8000;
+    uint16 public constant EMBED_BPS = 1500;
+    /** 5% of every claim to the sitting president of the hex's nation.
+     *  No president -> this share joins the treasury's. */
+    uint16 public constant PRESIDENT_BPS = 500;
+    uint16 public constant SECONDARY_FEE_BPS = 500; // standard seller fee
+    uint16 public constant SECONDARY_FEE_BARON_BPS = 300;
+    uint16 public constant RAZE_HAIRCUT_BPS = 1000;
+    uint32 public constant UNSTAKE_DELAY = 86400;
+    uint128 public constant BARON_THRESHOLD = 500_000e6; // whole VAVA, 6 decimals
+
+    address public constant BURN = 0x000000000000000000000000000000000000dEaD;
+
+    // ---------------------------------------------------------------- EIP-712
+
+    bytes32 public constant CLAIM_TYPEHASH =
+        keccak256("VavaClaim(address claimer,address payToken,uint64[] h3s,uint256[] prices,uint8[] tiers,uint16[] countries,uint256 expiry)");
+    bytes32 public immutable DOMAIN_SEPARATOR;
+
+    // ---------------------------------------------------------------- events
+
+    event Claimed(address indexed owner, uint64 indexed h3, uint256 priceWei, uint8 tier);
+    event Embedded(uint64 indexed h3, uint256 vavaAmount, uint256 reimbursedWei);
+    event Razed(uint64 indexed h3, address indexed owner, uint256 vavaPaid, uint256 vavaBurned);
+    event Listed(uint64 indexed h3, uint256 askWei);
+    event Delisted(uint64 indexed h3);
+    event Sold(uint64 indexed h3, address indexed from, address indexed to, uint256 priceWei);
+    event BidPlaced(uint64 indexed h3, address indexed bidder, uint256 amountWei);
+    event BidResolved(uint64 indexed h3, address indexed bidder, bool accepted);
+    event Staked(address indexed who, uint256 amount);
+    event UnstakeBegun(address indexed who, uint256 amount, uint256 availableAt);
+    event UnstakeWithdrawn(address indexed who, uint256 amount);
+    event MintUpdated(address mint);
+    event MintLocked();
+
+    // ---------------------------------------------------------------- errors
+
+    error NotAdmin();
+    error NotKeeper();
+    error NotOwner();
+    error QuoteExpired();
+    error BadSignature();
+    error AlreadyClaimed(uint64 h3);
+    error WrongPayment();
+    error MintIsLocked();
+    error VaultNotEmpty();
+    error NothingPending();
+    error CooldownActive();
+    error NoBid();
+    error BidExists();
+    error NotListed();
+    error LengthMismatch();
+    error TooMany();
+
+    // ---------------------------------------------------------------- init
+
+    constructor(address _treasury, address _keeper, address _vava) {
+        admin = msg.sender;
+        treasury = _treasury;
+        keeper = _keeper;
+        vava = IERC20(_vava);
+        DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes("VAVAWORLD")),
+                keccak256(bytes("1")),
+                block.chainid,
+                address(this)
+            )
+        );
+    }
+
+    uint256 private _entered = 1;
+    modifier nonReentrant() {
+        require(_entered == 1, "reentrant");
+        _entered = 2;
+        _;
+        _entered = 1;
+    }
+
+    /** Nation (ISO alpha-2 packed big-endian, 'SE' = 0x5345) -> president.
+     *  Set by the keeper, which verifies the throne stake off-chain. */
+    mapping(uint16 => address) public presidents;
+    /** Presidents pull their claim earnings; push could let a hostile
+     *  president contract block everyone's claims. */
+    mapping(address => uint256) public presidentOwedWei;
+    mapping(address => uint256) public presidentOwedUsd;
+
+    event PresidentSet(uint16 indexed country, address indexed president);
+    event PresidentEarned(uint16 indexed country, address indexed president, uint256 amount, bool inUsdg);
+    event PresidentWithdrew(address indexed president, uint256 amountWei, uint256 amountUsd);
+
+    modifier onlyAdmin() {
+        if (msg.sender != admin) revert NotAdmin();
+        _;
+    }
+
+    modifier onlyKeeper() {
+        if (msg.sender != keeper) revert NotKeeper();
+        _;
+    }
+
+    // ---------------------------------------------------------------- claim
+
+    /**
+     * Claim up to 1000 hexes in ONE transaction. Prices come from the
+     * keeper-signed quote; msg.value must equal their sum exactly.
+     * Tier is provided per hex by the quote too - the keeper classifies
+     * server-side against the same city table, and signs the result, so
+     * a claimer cannot lie about tiers without breaking the signature.
+     */
+    function claim(
+        uint64[] calldata h3s,
+        uint256[] calldata prices,
+        uint8[] calldata tiers,
+        uint16[] calldata countries,
+        uint256 expiry,
+        address payToken,
+        bytes calldata signature
+    ) external payable nonReentrant {
+        uint256 n = h3s.length;
+        if (n == 0 || n > 1000) revert TooMany();
+        if (prices.length != n || tiers.length != n || countries.length != n) revert LengthMismatch();
+        if (block.timestamp > expiry) revert QuoteExpired();
+        bool inUsdg = payToken != address(0);
+        if (inUsdg && payToken != address(usdg)) revert WrongPayment();
+        _verifyQuote(msg.sender, payToken, h3s, prices, tiers, countries, expiry, signature);
+
+        uint256 total;
+        uint256 presidentTotal;
+        for (uint256 i; i < n; ++i) {
+            uint64 id = h3s[i];
+            if (hexes[id].owner != address(0)) revert AlreadyClaimed(id);
+            uint256 price = prices[i];
+            total += price;
+
+            uint128 pending = uint128((price * EMBED_BPS) / 10_000);
+            hexes[id] = Hex({
+                owner: msg.sender,
+                claimedAt: uint40(block.timestamp),
+                tier: tiers[i],
+                paidInUsdg: inUsdg,
+                pendingAmount: pending,
+                embeddedVava: 0
+            });
+            if (inUsdg) totalPendingUsd += pending;
+            else totalPendingWei += pending;
+            unchecked {
+                tierCounts[tiers[i] - 1] += 1;
+            }
+
+            // The nation's president earns their cut; vacant throne -> treasury.
+            presidentTotal += _creditPresident(countries[i], price, inUsdg);
+            emit Claimed(msg.sender, id, price, tiers[i]);
+        }
+
+        // 80% to treasury (+ any vacant-throne 5%); president cuts stay in
+        // the contract until withdrawn; the 15% embed escrow stays too.
+        uint256 toTreasury = total - (total * EMBED_BPS) / 10_000 - presidentTotal;
+        if (inUsdg) {
+            // $ path: prices are USDG base units (6 decimals) - no oracle.
+            if (msg.value != 0) revert WrongPayment();
+            require(usdg.transferFrom(msg.sender, treasury, toTreasury), "usdg treasury");
+            require(usdg.transferFrom(msg.sender, address(this), total - toTreasury), "usdg escrow");
+        } else {
+            if (msg.value != total) revert WrongPayment();
+            _pay(treasury, toTreasury);
+        }
+    }
+
+    /** Credit the sitting president 5% of one hex's price; 0 if vacant. */
+    function _creditPresident(uint16 country, uint256 price, bool inUsdg) private returns (uint256) {
+        address pres = presidents[country];
+        if (pres == address(0)) return 0;
+        uint256 presAmt = (price * PRESIDENT_BPS) / 10_000;
+        if (inUsdg) presidentOwedUsd[pres] += presAmt;
+        else presidentOwedWei[pres] += presAmt;
+        emit PresidentEarned(country, pres, presAmt, inUsdg);
+        return presAmt;
+    }
+
+    /** Keeper-attested throne changes (stake verified off-chain). */
+    function setPresident(uint16 country, address who) external onlyKeeper {
+        presidents[country] = who;
+        emit PresidentSet(country, who);
+    }
+
+    function withdrawPresidentEarnings() external nonReentrant {
+        uint256 w = presidentOwedWei[msg.sender];
+        uint256 u = presidentOwedUsd[msg.sender];
+        if (w == 0 && u == 0) revert NothingPending();
+        presidentOwedWei[msg.sender] = 0;
+        presidentOwedUsd[msg.sender] = 0;
+        if (u > 0) require(usdg.transfer(msg.sender, u), "usdg out");
+        if (w > 0) _pay(msg.sender, w);
+        emit PresidentWithdrew(msg.sender, w, u);
+    }
+
+    function _verifyQuote(
+        address claimer,
+        address payToken,
+        uint64[] calldata h3s,
+        uint256[] calldata prices,
+        uint8[] calldata tiers,
+        uint16[] calldata countries,
+        uint256 expiry,
+        bytes calldata signature
+    ) internal view {
+        bytes32 structHash = keccak256(
+            abi.encode(
+                CLAIM_TYPEHASH,
+                claimer,
+                payToken,
+                keccak256(abi.encodePacked(h3s)),
+                keccak256(abi.encodePacked(prices)),
+                keccak256(abi.encodePacked(tiers)),
+                keccak256(abi.encodePacked(countries)),
+                expiry
+            )
+        );
+        bytes32 digest = keccak256(abi.encodePacked(hex"1901", DOMAIN_SEPARATOR, structHash));
+        if (_recover(digest, signature) != keeper) revert BadSignature();
+    }
+
+    function _recover(bytes32 digest, bytes calldata sig) internal pure returns (address) {
+        if (sig.length != 65) revert BadSignature();
+        bytes32 r = bytes32(sig[0:32]);
+        bytes32 s = bytes32(sig[32:64]);
+        uint8 v = uint8(sig[64]);
+        return ecrecover(digest, v, r, s);
+    }
+
+    // ---------------------------------------------------------------- embed / raze
+
+    /** Keeper: lock bought VAVA into hexes, get escrowed ETH back. */
+    function embed(uint64[] calldata h3s, uint256[] calldata amounts) external onlyKeeper nonReentrant {
+        if (h3s.length != amounts.length) revert LengthMismatch();
+        uint256 reimburseWei;
+        uint256 reimburseUsd;
+        uint256 vavaIn;
+        for (uint256 i; i < h3s.length; ++i) {
+            Hex storage h = hexes[h3s[i]];
+            uint128 pending = h.pendingAmount;
+            if (pending == 0) revert NothingPending();
+            h.embeddedVava += uint128(amounts[i]);
+            h.pendingAmount = 0;
+            if (h.paidInUsdg) {
+                totalPendingUsd -= pending;
+                reimburseUsd += pending;
+            } else {
+                totalPendingWei -= pending;
+                reimburseWei += pending;
+            }
+            vavaIn += amounts[i];
+            emit Embedded(h3s[i], amounts[i], pending);
+        }
+        require(vava.transferFrom(msg.sender, address(this), vavaIn), "vava in");
+        if (reimburseWei > 0) _pay(msg.sender, reimburseWei);
+        if (reimburseUsd > 0) require(usdg.transfer(msg.sender, reimburseUsd), "usdg out");
+    }
+
+    /** Owner: burn the hex, take its embedded VAVA minus the 10% burn. */
+    /**
+     * Clears one hex's state and returns what must be paid out. Transfers
+     * happen in the callers so a batch settles each currency ONCE instead
+     * of per hex.
+     */
+    function _razeCore(uint64 h3)
+        private
+        returns (uint256 payout, uint256 burned, uint256 pendingWei, uint256 pendingUsd)
+    {
+        Hex storage h = hexes[h3];
+        if (h.owner != msg.sender) revert NotOwner();
+        uint256 embedded = h.embeddedVava;
+        uint256 pending = h.pendingAmount;
+        bool inUsdg = h.paidInUsdg;
+        uint8 tier = h.tier;
+        delete hexes[h3];
+        delete listings[h3];
+        // A pending bid on a razed hex is refunded.
+        _refundBid(h3);
+        if (pending > 0) {
+            // No hex to attach the un-embedded escrow to - it goes to treasury.
+            if (inUsdg) {
+                totalPendingUsd -= pending;
+                pendingUsd = pending;
+            } else {
+                totalPendingWei -= pending;
+                pendingWei = pending;
+            }
+        }
+        unchecked {
+            tierCounts[tier - 1] -= 1;
+        }
+        burned = (embedded * RAZE_HAIRCUT_BPS) / 10_000;
+        payout = embedded - burned;
+        emit Razed(h3, msg.sender, payout, burned);
+    }
+
+    function _settleRaze(uint256 payout, uint256 burned, uint256 pendingWei, uint256 pendingUsd) private {
+        if (pendingUsd > 0) require(usdg.transfer(treasury, pendingUsd), "usdg out");
+        if (pendingWei > 0) _pay(treasury, pendingWei);
+        if (payout > 0) require(vava.transfer(msg.sender, payout), "vava out");
+        if (burned > 0) require(vava.transfer(BURN, burned), "vava burn");
+    }
+
+    function raze(uint64 h3) external nonReentrant {
+        (uint256 payout, uint256 burned, uint256 pWei, uint256 pUsd) = _razeCore(h3);
+        _settleRaze(payout, burned, pWei, pUsd);
+    }
+
+    /** Raze many hexes under ONE signature - payouts pooled per currency. */
+    function razeBatch(uint64[] calldata h3s) external nonReentrant {
+        uint256 payout;
+        uint256 burned;
+        uint256 pWei;
+        uint256 pUsd;
+        for (uint256 i; i < h3s.length; ++i) {
+            (uint256 po, uint256 bu, uint256 w, uint256 u) = _razeCore(h3s[i]);
+            payout += po;
+            burned += bu;
+            pWei += w;
+            pUsd += u;
+        }
+        _settleRaze(payout, burned, pWei, pUsd);
+    }
+
+    // ---------------------------------------------------------------- market
+
+    function _list(uint64 h3, uint128 askWei) private {
+        if (hexes[h3].owner != msg.sender) revert NotOwner();
+        if (askWei == 0) revert WrongPayment();
+        listings[h3] = askWei;
+        emit Listed(h3, askWei);
+    }
+
+    function list(uint64 h3, uint128 askWei) external {
+        _list(h3, askWei);
+    }
+
+    /** List many hexes for sale under ONE signature. */
+    function listBatch(uint64[] calldata h3s, uint128[] calldata asks) external {
+        if (asks.length != h3s.length) revert LengthMismatch();
+        for (uint256 i; i < h3s.length; ++i) _list(h3s[i], asks[i]);
+    }
+
+    function _delist(uint64 h3) private {
+        if (hexes[h3].owner != msg.sender) revert NotOwner();
+        delete listings[h3];
+        emit Delisted(h3);
+    }
+
+    function delist(uint64 h3) external {
+        _delist(h3);
+    }
+
+    function delistBatch(uint64[] calldata h3s) external {
+        for (uint256 i; i < h3s.length; ++i) _delist(h3s[i]);
+    }
+
+    /** Atomic listing purchase - the EVM upgrade over wallet-transfer + sync_owner. */
+    function buy(uint64 h3) external payable nonReentrant {
+        uint128 ask = listings[h3];
+        if (ask == 0) revert NotListed();
+        if (msg.value != ask) revert WrongPayment();
+        address seller = hexes[h3].owner;
+        _settleSale(h3, seller, msg.sender, ask);
+        emit Sold(h3, seller, msg.sender, ask);
+    }
+
+    function placeBid(uint64 h3) external payable nonReentrant {
+        if (hexes[h3].owner == address(0) || hexes[h3].owner == msg.sender) revert NotOwner();
+        if (bids[h3].bidder != address(0)) revert BidExists();
+        if (msg.value == 0) revert WrongPayment();
+        bids[h3] = Bid({bidder: msg.sender, amountWei: uint128(msg.value)});
+        emit BidPlaced(h3, msg.sender, msg.value);
+    }
+
+    function cancelBid(uint64 h3) external nonReentrant {
+        Bid memory b = bids[h3];
+        if (b.bidder != msg.sender) revert NoBid();
+        delete bids[h3];
+        _pay(b.bidder, b.amountWei);
+        emit BidResolved(h3, b.bidder, false);
+    }
+
+    function declineBid(uint64 h3) external nonReentrant {
+        if (hexes[h3].owner != msg.sender) revert NotOwner();
+        _refundBid(h3);
+    }
+
+    function acceptBid(uint64 h3) external nonReentrant {
+        if (hexes[h3].owner != msg.sender) revert NotOwner();
+        Bid memory b = bids[h3];
+        if (b.bidder == address(0)) revert NoBid();
+        delete bids[h3];
+        _settleSale(h3, msg.sender, b.bidder, b.amountWei);
+        emit BidResolved(h3, b.bidder, true);
+        emit Sold(h3, msg.sender, b.bidder, b.amountWei);
+    }
+
+    function _settleSale(uint64 h3, address seller, address buyer, uint256 priceWei) internal {
+        uint16 feeBps =
+            stakes[seller].amount >= BARON_THRESHOLD ? SECONDARY_FEE_BARON_BPS : SECONDARY_FEE_BPS;
+        uint256 fee = (priceWei * feeBps) / 10_000;
+        hexes[h3].owner = buyer;
+        hexes[h3].claimedAt = uint40(block.timestamp);
+        delete listings[h3];
+        _refundBid(h3); // any open bid from a third party is returned
+        _pay(treasury, fee);
+        _pay(seller, priceWei - fee);
+    }
+
+    function _refundBid(uint64 h3) internal {
+        Bid memory b = bids[h3];
+        if (b.bidder != address(0)) {
+            delete bids[h3];
+            _pay(b.bidder, b.amountWei);
+            emit BidResolved(h3, b.bidder, false);
+        }
+    }
+
+    // ---------------------------------------------------------------- staking
+
+    function stake(uint256 amount) external {
+        require(amount > 0, "zero");
+        require(vava.transferFrom(msg.sender, address(this), amount), "vava in");
+        stakes[msg.sender].amount += uint128(amount);
+        emit Staked(msg.sender, amount);
+    }
+
+    /** Starts/extends the 24h cooldown for the WHOLE pending amount. */
+    function beginUnstake(uint256 amount) external {
+        Stake storage s = stakes[msg.sender];
+        require(amount > 0 && amount <= s.amount, "amount");
+        s.amount -= uint128(amount);
+        s.pendingAmount += uint128(amount);
+        s.availableAt = uint40(block.timestamp + UNSTAKE_DELAY);
+        emit UnstakeBegun(msg.sender, amount, s.availableAt);
+    }
+
+    function withdrawUnstaked() external nonReentrant {
+        Stake storage s = stakes[msg.sender];
+        uint256 amount = s.pendingAmount;
+        if (amount == 0) revert NothingPending();
+        if (block.timestamp < s.availableAt) revert CooldownActive();
+        s.pendingAmount = 0;
+        s.availableAt = 0;
+        require(vava.transfer(msg.sender, amount), "vava out");
+        emit UnstakeWithdrawn(msg.sender, amount);
+    }
+
+    // ---------------------------------------------------------------- admin
+
+    function updateKeeper(address k) external onlyAdmin {
+        keeper = k;
+    }
+
+    /** Set/replace the USDG payment token. Refuses while the contract
+     *  still holds old-token escrow. */
+    function setUsdg(address token) external onlyAdmin {
+        if (totalPendingUsd != 0) revert VaultNotEmpty();
+        usdg = IERC20(token);
+    }
+
+    /** Swap the VAVA token (launch minute). Refuses once locked or while
+     *  the contract still holds old-token balances. */
+    function updateMint(address newVava) external onlyAdmin {
+        if (mintLocked) revert MintIsLocked();
+        if (address(vava) != address(0) && vava.balanceOf(address(this)) != 0) revert VaultNotEmpty();
+        vava = IERC20(newVava);
+        emit MintUpdated(newVava);
+    }
+
+    function lockMint() external onlyAdmin {
+        mintLocked = true;
+        emit MintLocked();
+    }
+
+    // ---------------------------------------------------------------- util
+
+    function _pay(address to, uint256 amount) internal {
+        (bool ok, ) = to.call{value: amount}("");
+        require(ok, "eth transfer");
+    }
+}

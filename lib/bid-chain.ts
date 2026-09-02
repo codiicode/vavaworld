@@ -1,131 +1,64 @@
 'use client';
 
-import { PublicKey, Transaction } from '@solana/web3.js';
-import { AnchorProvider, Program, BN, type Idl, type Wallet } from '@coral-xyz/anchor';
-import idl from './anchor-idl.json';
-import { getConnection } from './anchor-client';
-import { preflight } from './preflight';
+import { getPublicClient, TILES_ABI, TILES_ADDRESS, h3ToUint64 } from './evm';
 import type { ActiveWallet } from './wallet-context';
 
 /**
- * On-chain bid escrow. Placing a bid locks the offered SOL in a program
- * PDA immediately; accept settles seller/treasury and flips the tile in
- * one atomic transaction; decline/cancel refund by closing the escrow.
- * After each confirmed transaction the caller mirrors to the database
- * via /api/bids (place) or /api/bids/respond (accept/decline/cancel).
+ * On-chain bid escrow, EVM edition. The contract holds the bid's ETH;
+ * accept splits 95/5 (97/3 for baron-staked sellers) and flips the hex
+ * atomically; decline/cancel auto-refund. After each action we mirror to
+ * the API, which re-verifies contract state server-side.
  */
 
-const PROGRAM_ID = new PublicKey((idl as { address: string }).address);
-const TREASURY = new PublicKey(
-  process.env.NEXT_PUBLIC_TREASURY ?? '74fWA4NXGtv7RJEd9oTJk9vjqZCTMz2W1s5soCvC6b4X',
-);
-
-function readProgram(): Program {
-  const connection = getConnection();
-  const dummy = {
-    publicKey: PublicKey.default,
-    signTransaction: async (t: unknown) => t,
-    signAllTransactions: async (t: unknown) => t,
-  } as unknown as Wallet;
-  return new Program(idl as Idl, new AnchorProvider(connection, dummy, {}));
-}
-
-function h3ToBn(h3Hex: string): BN {
-  return new BN(h3Hex, 16);
-}
-
-export function bidEscrowPda(h3Hex: string, bidder: PublicKey): PublicKey {
-  const buf = Buffer.alloc(8);
-  buf.writeBigUInt64LE(BigInt('0x' + h3Hex));
-  return PublicKey.findProgramAddressSync(
-    [Buffer.from('bid'), buf, bidder.toBuffer()],
-    PROGRAM_ID,
-  )[0];
-}
-
-function tilePdaOf(h3Hex: string): PublicKey {
-  const buf = Buffer.alloc(8);
-  buf.writeBigUInt64LE(BigInt('0x' + h3Hex));
-  return PublicKey.findProgramAddressSync([Buffer.from('tile'), buf], PROGRAM_ID)[0];
-}
-
-function stakePdaOf(owner: PublicKey): PublicKey {
-  return PublicKey.findProgramAddressSync([Buffer.from('stake'), owner.toBuffer()], PROGRAM_ID)[0];
-}
-
-async function sendTx(
+async function call(
   wallet: ActiveWallet,
-  buildIx: (program: Program, signer: PublicKey) => Promise<Transaction>,
-  lamportsNeeded?: number,
-): Promise<string> {
-  if (!wallet.publicKey || !wallet.signAndSendTransaction) {
-    throw new Error('Connect a wallet first');
-  }
-  const connection = getConnection();
-  const signer = new PublicKey(wallet.publicKey.toString());
-  const tx = await buildIx(readProgram(), signer);
-  tx.feePayer = signer;
-  tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-  await preflight({ connection, feePayer: signer, tx, lamportsNeeded });
-  const sig = await wallet.signAndSendTransaction(tx);
-  await connection.confirmTransaction(sig, 'confirmed');
-  return sig;
+  functionName: string,
+  h3: string,
+  value?: bigint,
+): Promise<`0x${string}`> {
+  if (!wallet.writeContract) throw new Error('Log in first');
+  const hash = await wallet.writeContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName,
+    args: [h3ToUint64(h3)],
+    value,
+  });
+  await getPublicClient().waitForTransactionReceipt({ hash });
+  return hash;
 }
 
 async function mirror(path: string, body: Record<string, unknown>): Promise<void> {
-  const res = await fetch(path, {
+  const r = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const j = (await res.json().catch(() => ({}))) as { error?: string };
-    // The chain transaction already succeeded - surface the mirror
-    // failure but with that context.
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
     throw new Error(j.error ? `Settled on-chain, sync failed: ${j.error}` : 'Settled on-chain, sync failed');
   }
 }
 
-/** Lock `lamports` in the bid escrow and notify the owner. */
+/** Lock `wei` in the bid escrow and notify the owner. */
 export async function placeBidOnChain(args: {
   wallet: ActiveWallet;
   h3: string;
-  lamports: number;
+  wei: bigint;
 }): Promise<void> {
-  const { wallet, h3, lamports } = args;
-  const bidderPk = new PublicKey(wallet.publicKey!.toString());
-  await sendTx(
-    wallet,
-    async (program, signer) => {
-      const ix = await program.methods
-        .placeBid(h3ToBn(h3), new BN(lamports))
-        .accounts({
-          bidder: signer,
-          tile: tilePdaOf(h3),
-          bidEscrow: bidEscrowPda(h3, signer),
-        })
-        .instruction();
-      return new Transaction().add(ix);
-    },
-    lamports + 3_000_000, // escrow rent + fee margin
-  );
-  await mirror('/api/bids', { h3, bidder: bidderPk.toBase58() });
+  const { wallet, h3, wei } = args;
+  await call(wallet, 'placeBid', h3, wei);
+  await mirror('/api/bids', { h3, bidder: wallet.address });
 }
 
-/** Withdraw own bid - escrow closes, full refund. */
+/** Withdraw own bid - escrow refunds in the same transaction. */
 export async function cancelBidOnChain(args: {
   wallet: ActiveWallet;
   h3: string;
   bidId: string;
 }): Promise<void> {
   const { wallet, h3, bidId } = args;
-  const sig = await sendTx(wallet, async (program, signer) => {
-    const ix = await program.methods
-      .cancelBid(h3ToBn(h3))
-      .accounts({ bidder: signer, bidEscrow: bidEscrowPda(h3, signer) })
-      .instruction();
-    return new Transaction().add(ix);
-  });
+  const sig = await call(wallet, 'cancelBid', h3);
   await mirror('/api/bids/respond', { bidId, txSig: sig });
 }
 
@@ -136,26 +69,14 @@ export async function declineBidOnChain(args: {
   bidId: string;
   bidder: string;
 }): Promise<void> {
-  const { wallet, h3, bidId, bidder } = args;
-  const bidderPk = new PublicKey(bidder);
-  const sig = await sendTx(wallet, async (program, signer) => {
-    const ix = await program.methods
-      .declineBid(h3ToBn(h3))
-      .accounts({
-        owner: signer,
-        tile: tilePdaOf(h3),
-        bidder: bidderPk,
-        bidEscrow: bidEscrowPda(h3, bidderPk),
-      })
-      .instruction();
-    return new Transaction().add(ix);
-  });
+  const { wallet, h3, bidId } = args;
+  const sig = await call(wallet, 'declineBid', h3);
   await mirror('/api/bids/respond', { bidId, txSig: sig });
 }
 
 /**
  * Owner accepts - one atomic transaction: escrow splits 95/5 (97/3 for
- * baron-staked sellers) between seller and treasury, and the tile flips
+ * baron-staked sellers) between seller and treasury, and the hex flips
  * to the bidder.
  */
 export async function acceptBidOnChain(args: {
@@ -164,21 +85,117 @@ export async function acceptBidOnChain(args: {
   bidId: string;
   bidder: string;
 }): Promise<void> {
-  const { wallet, h3, bidId, bidder } = args;
-  const bidderPk = new PublicKey(bidder);
-  const sig = await sendTx(wallet, async (program, signer) => {
-    const ix = await program.methods
-      .acceptBid(h3ToBn(h3))
-      .accounts({
-        owner: signer,
-        tile: tilePdaOf(h3),
-        bidder: bidderPk,
-        bidEscrow: bidEscrowPda(h3, bidderPk),
-        treasury: TREASURY,
-        sellerStake: stakePdaOf(signer),
-      })
-      .instruction();
-    return new Transaction().add(ix);
-  });
+  const { wallet, h3, bidId } = args;
+  const sig = await call(wallet, 'acceptBid', h3);
   await mirror('/api/bids/respond', { bidId, txSig: sig });
+}
+
+/** The live on-chain ask for a hex (0 = not listed). */
+export async function readListingAsk(h3: string): Promise<bigint> {
+  return (await getPublicClient().readContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'listings',
+    args: [h3ToUint64(h3)],
+  })) as bigint;
+}
+
+/** Put the hex up for sale on-chain - buy() settles against THIS ask. */
+export async function listOnChain(args: {
+  wallet: ActiveWallet;
+  h3: string;
+  askWei: bigint;
+}): Promise<`0x${string}`> {
+  const { wallet, h3, askWei } = args;
+  if (!wallet.writeContract) throw new Error('Log in first');
+  const hash = await wallet.writeContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'list',
+    args: [h3ToUint64(h3), askWei],
+  });
+  await getPublicClient().waitForTransactionReceipt({ hash });
+  return hash;
+}
+
+export async function delistOnChain(args: {
+  wallet: ActiveWallet;
+  h3: string;
+}): Promise<`0x${string}`> {
+  return call(args.wallet, 'delist', args.h3);
+}
+
+/** Total embedded $VAVA across hexes (6-decimal units). */
+export async function readEmbeddedVava(h3s: string[]): Promise<bigint> {
+  const client = getPublicClient();
+  let total = 0n;
+  const CHUNK = 25;
+  for (let i = 0; i < h3s.length; i += CHUNK) {
+    const hexes = await Promise.all(
+      h3s.slice(i, i + CHUNK).map(
+        (h3) =>
+          client.readContract({
+            address: TILES_ADDRESS,
+            abi: TILES_ABI,
+            functionName: 'hexes',
+            args: [h3ToUint64(h3)],
+          }) as Promise<readonly [`0x${string}`, number, number, boolean, bigint, bigint]>,
+      ),
+    );
+    for (const hex of hexes) total += hex[5];
+  }
+  return total;
+}
+
+/**
+ * Raze: give the hexes back to the world and take out their embedded
+ * $VAVA minus the 10% haircut - ONE signature no matter how many hexes
+ * (razeBatch pools the payout). Then the registry rows are cleared
+ * through the API, which verifies each hex is unowned on-chain.
+ */
+export async function razeOnChain(args: {
+  wallet: ActiveWallet;
+  h3s: string[];
+}): Promise<`0x${string}`> {
+  const { wallet, h3s } = args;
+  if (!wallet.writeContract) throw new Error('Log in first');
+  const hash = await wallet.writeContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'razeBatch',
+    args: [h3s.map(h3ToUint64)],
+  });
+  await getPublicClient().waitForTransactionReceipt({ hash });
+  await mirror('/api/raze', { h3s, owner: wallet.address, txHash: hash });
+  return hash;
+}
+
+/**
+ * Atomic listing purchase: pay the ask, hex flips in the same tx. The
+ * contract demands msg.value == ask EXACTLY, so the amount sent is read
+ * from the contract, never from the quote (a float that went through the
+ * DB); `expectedWei` only guards against a seller re-listing higher
+ * since the buyer looked.
+ */
+export async function buyListingOnChain(args: {
+  wallet: ActiveWallet;
+  h3: string;
+  expectedWei: bigint;
+}): Promise<`0x${string}`> {
+  const { wallet, h3, expectedWei } = args;
+  const ask = await readListingAsk(h3);
+  if (ask === 0n) throw new Error('This hex is not listed on-chain - ask the seller to re-list');
+  if (ask > (expectedWei * 102n) / 100n) throw new Error('The asking price changed - reload and try again');
+  return call(wallet, 'buy', h3, ask);
+}
+
+/** Read the live on-chain owner of a hex (zero address = unclaimed). */
+export async function readHexOwner(h3: string): Promise<`0x${string}`> {
+  const hex = (await getPublicClient().readContract({
+    address: TILES_ADDRESS,
+    abi: TILES_ABI,
+    functionName: 'hexes',
+    args: [h3ToUint64(h3)],
+  })) as readonly [`0x${string}`, bigint, number, bigint, bigint];
+  return hex[0];
 }

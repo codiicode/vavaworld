@@ -1,10 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import bs58 from 'bs58';
 import { getSupabase } from './supabase';
-
-const bs58encode = (bytes: Uint8Array) => bs58.encode(bytes);
 
 /** Row shape returned by `public.listings`. */
 export type DbListing = {
@@ -82,14 +79,17 @@ export async function fetchListing(id: string): Promise<DbListing | null> {
  * sign an intent message - direct table writes are closed (ownership
  * enforced atomically in SQL, signature proves the seller asked).
  */
+/**
+ * Mirror an on-chain listing into the marketplace index. No signature:
+ * the server proves intent by reading the contract (seller owns the hex
+ * and the ask is set), so listing costs the seller exactly one wallet
+ * prompt - the list() transaction itself.
+ */
 export async function createListing(args: {
   h3: string;
   seller: string;
   priceSol: number;
-  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
 }): Promise<DbListing> {
-  const message = `vava:list:${args.h3}:${args.priceSol}:${args.seller}:ts=${Date.now()}`;
-  const sig = await args.signMessage(new TextEncoder().encode(message));
   const res = await fetch('/api/list', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -97,8 +97,6 @@ export async function createListing(args: {
       h3: args.h3,
       seller: args.seller,
       priceSol: args.priceSol,
-      message,
-      signature: bs58encode(sig),
     }),
   });
   const json = await res.json();
@@ -106,22 +104,17 @@ export async function createListing(args: {
   return json.listing as DbListing;
 }
 
-/** Cancel an active listing through the API (signed intent). */
+/** Close a listing row after the on-chain delist - verified against the contract, no signature. */
 export async function cancelListing(args: {
   id: string;
   seller: string;
-  signMessage: (message: Uint8Array) => Promise<Uint8Array>;
 }): Promise<void> {
-  const message = `vava:delist:${args.id}:${args.seller}:ts=${Date.now()}`;
-  const sig = await args.signMessage(new TextEncoder().encode(message));
   const res = await fetch('/api/delist', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       listingId: args.id,
       seller: args.seller,
-      message,
-      signature: bs58encode(sig),
     }),
   });
   if (!res.ok) {

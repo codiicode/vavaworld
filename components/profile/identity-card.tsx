@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { AtSign, Check, Copy, LogOut } from 'lucide-react';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Flag } from '@/components/flag';
@@ -42,12 +41,10 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
   const profile = useUserProfile();
   const wallet = useActiveWallet();
   const { tiles } = useUserTiles();
-  const { balance } = useWalletBalance(wallet.publicKey);
-  const usd = useUsdFmt();
+  const { balance } = useWalletBalance(wallet.address);
   const [copied, setCopied] = useState(false);
 
-  const totalSpent =
-    tiles?.reduce((sum, t) => sum + Number(t.pricePaid) / LAMPORTS_PER_SOL, 0) ?? null;
+  const totalSpent = tiles?.reduce((sum, t) => sum + t.paidUsd, 0) ?? null;
   const country = findCountry(profile.flagCountryCode);
 
   const handleCopy = async () => {
@@ -165,12 +162,12 @@ export function IdentityCard({ onSavedBumpVersion }: { onSavedBumpVersion: () =>
             <SummaryStat label="Hexes" value={tiles ? String(tiles.length) : '-'} />
             <SummaryStat
               label="Spent"
-              value={totalSpent !== null ? usd(totalSpent) : '-'}
+              value={totalSpent !== null ? totalSpent.toFixed(3) : '-'}
               unit=""
             />
             <SummaryStat
               label="Balance"
-              value={balance !== null ? usd(balance) : '-'}
+              value={balance !== null ? balance.toFixed(3) : '-'}
               unit=""
             />
           </div>

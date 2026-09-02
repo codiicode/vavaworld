@@ -54,8 +54,8 @@ export async function POST(req: Request) {
   const ownsWallet = accounts.some(
     (a) =>
       a.type === 'wallet' &&
-      (a as { chainType?: string }).chainType === 'solana' &&
-      (a as { address?: string }).address === address,
+      (a as { chainType?: string }).chainType === 'ethereum' &&
+      (a as { address?: string }).address?.toLowerCase() === address.toLowerCase(),
   );
   if (!ownsWallet) {
     return NextResponse.json({ error: 'Wallet does not belong to this account' }, { status: 403 });

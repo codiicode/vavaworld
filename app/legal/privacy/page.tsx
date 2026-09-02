@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       <h2>What we collect</h2>
       <p>
         <strong>Your wallet address.</strong> Public by nature - it is how the chain knows which
-        hexes are yours. Every claim, sale and transfer is already public on Solana.
+        hexes are yours. Every claim, sale and transfer is already public on Robinhood Chain.
       </p>
       <p>
         <strong>Profile details you choose to add.</strong> A username, avatar and any social
@@ -53,7 +53,7 @@ export default function PrivacyPage() {
           <strong>Mapbox</strong> - map hexes and place search.
         </li>
         <li>
-          <strong>Solana RPC providers</strong> - reading and submitting transactions.
+          <strong>Robinhood Chain RPC providers</strong> - reading and submitting transactions.
         </li>
       </ul>
       <p>
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
 
       <h2>On-chain data is permanent</h2>
       <p>
-        Anything written to Solana - your claims, sales and transfers - is public and cannot be
+        Anything written to the chain - your claims, sales and transfers - is public and cannot be
         edited or erased by us or anyone else. Consider that before linking a wallet to an
         identity you would rather keep separate.
       </p>

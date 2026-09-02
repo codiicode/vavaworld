@@ -47,10 +47,20 @@ import type { ClaimedTile } from '@/types/tile';
 import { TileDetailsDialog } from './tile-details-dialog';
 import { TileListDialog } from './tile-list-dialog';
 import { TileTransferDialog } from './tile-transfer-dialog';
+import { TileRazeDialog } from './tile-raze-dialog';
 
-import { useUsdFmt } from '@/lib/usd';
-type DialogKind = 'details' | 'list' | 'transfer';
-type DialogState = { kind: DialogKind; tile: ClaimedTile } | null;
+import { fmtUsdValue, useUsdFmt } from '@/lib/usd';
+import { useActiveWallet } from '@/lib/active-wallet';
+import {
+  cancelListing,
+  dispatchListingsChanged,
+  useActiveListings,
+  useListingsVersion,
+  type DbListing,
+} from '@/lib/supabase-listings';
+import { delistOnChain } from '@/lib/bid-chain';
+type DialogKind = 'details' | 'list' | 'transfer' | 'cancel' | 'raze';
+type DialogState = { kind: DialogKind; tile: ClaimedTile; h3s?: string[] } | null;
 
 const PER_PAGE = 10;
 
@@ -64,7 +74,34 @@ export function TilesTab() {
   const hexSet = useMemo(() => new Set(tiles?.map((t) => t.h3) ?? []), [tiles]);
   const locations = useHexLocations(hexSet);
   const [dialog, setDialog] = useState<DialogState>(null);
-  const openDialog = (kind: DialogKind, tile: ClaimedTile) => setDialog({ kind, tile });
+  const wallet = useActiveWallet();
+
+  // Which of my hexes are up for sale - drives the menu (List vs Cancel)
+  // and the "For sale" badge.
+  const { listings } = useActiveListings(useListingsVersion());
+  const listingByH3 = useMemo(() => {
+    const m = new Map<string, DbListing>();
+    for (const l of listings) m.set(l.h3_id, l);
+    return m;
+  }, [listings]);
+  const listingFor = (g: TileGroup): DbListing | null => listingByH3.get(g.tiles[0].h3) ?? null;
+
+  const cancelFor = async (tile: ClaimedTile) => {
+    const l = listingByH3.get(tile.h3);
+    if (!l || !wallet.address) return;
+    try {
+      // On-chain ask first, then the marketplace row.
+      await delistOnChain({ wallet, h3: tile.h3 });
+      await cancelListing({ id: l.id, seller: wallet.address });
+      dispatchListingsChanged();
+    } catch {
+      /* wallet rejected or chain error - the listing simply stays */
+    }
+  };
+  const openDialog = (kind: DialogKind, tile: ClaimedTile, h3s?: string[]) => {
+    if (kind === 'cancel') void cancelFor(tile);
+    else setDialog({ kind, tile, h3s });
+  };
   const dialogLocation = dialog ? locations.get(dialog.tile.h3) ?? null : null;
 
   const filteredTiles = useMemo(() => {
@@ -215,6 +252,7 @@ export function TilesTab() {
                   key={g.key}
                   group={g}
                   index={start + i + 1}
+                  listing={listingFor(g)}
                   onAction={openDialog}
                 />
               ))}
@@ -226,7 +264,7 @@ export function TilesTab() {
       {!loading && tiles && tiles.length > 0 && view === 'grid' && (
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {pageGroups.map((g) => (
-            <GroupCard key={g.key} group={g} onAction={openDialog} />
+            <GroupCard key={g.key} group={g} listing={listingFor(g)} onAction={openDialog} />
           ))}
         </div>
       )}
@@ -261,6 +299,14 @@ export function TilesTab() {
         open={dialog?.kind === 'transfer'}
         onOpenChange={(next) => !next && setDialog(null)}
       />
+      <TileRazeDialog
+        tile={dialog?.kind === 'raze' ? dialog.tile : null}
+        h3s={dialog?.kind === 'raze' ? dialog.h3s ?? [dialog.tile.h3] : []}
+        location={dialog?.kind === 'raze' ? dialogLocation : null}
+        open={dialog?.kind === 'raze'}
+        onOpenChange={(next) => !next && setDialog(null)}
+        onRazed={refetch}
+      />
     </div>
   );
 }
@@ -268,11 +314,13 @@ export function TilesTab() {
 function GroupRow({
   group: g,
   index,
+  listing,
   onAction,
 }: {
   group: TileGroup;
   index: number;
-  onAction: (kind: DialogKind, tile: ClaimedTile) => void;
+  listing: DbListing | null;
+  onAction: (kind: DialogKind, tile: ClaimedTile, h3s?: string[]) => void;
 }) {
   const usd = useUsdFmt();
   const isSingle = g.tiles.length === 1;
@@ -321,8 +369,9 @@ function GroupRow({
       </TableCell>
       <TableCell className="text-right">
         <span className="text-sm font-medium tabular-nums text-foreground">
-          {usd(g.totalSol)}
+          {g.totalUsd.toFixed(2)}
         </span>
+        <span className="ml-1 text-xs text-foreground/55">USD</span>
       </TableCell>
       <TableCell>
         <DropdownMenu>
@@ -342,15 +391,27 @@ function GroupRow({
             </DropdownMenuItem>
             {isSingle && (
               <>
-                <DropdownMenuItem onSelect={() => onAction('list', firstTile)}>
-                  List for sale
-                </DropdownMenuItem>
+                {listing ? (
+                  <DropdownMenuItem onSelect={() => onAction('cancel', firstTile)}>
+                    Cancel listing ({usd(listing.price_sol)})
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onSelect={() => onAction('list', firstTile)}>
+                    List for sale
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onSelect={() => onAction('transfer', firstTile)}>
                   Transfer
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => onAction('details', firstTile)}>
                   Details
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onSelect={() => onAction('raze', firstTile, g.tiles.map((t) => t.h3))}
+                >
+                  Raze
                 </DropdownMenuItem>
               </>
             )}
@@ -363,13 +424,16 @@ function GroupRow({
 
 function GroupCard({
   group: g,
+  listing,
   onAction,
 }: {
   group: TileGroup;
-  onAction: (kind: DialogKind, tile: ClaimedTile) => void;
+  listing: DbListing | null;
+  onAction: (kind: DialogKind, tile: ClaimedTile, h3s?: string[]) => void;
 }) {
   const usd = useUsdFmt();
   const router = useRouter();
+  const usd = useUsdFmt();
   const img = hexStaticMapUrl({
     lat: g.centerLat,
     lng: g.centerLng,
@@ -412,6 +476,11 @@ function GroupCard({
           <span className="max-w-[160px] truncate">{g.citiesLabel}</span>
         </div>
         <span className="absolute right-2 top-2 flex items-center gap-1.5">
+          {listing && (
+            <span className="rounded-md border border-emerald-300/40 bg-emerald-400/20 px-2 py-1 text-[11px] font-semibold text-foreground backdrop-blur-md">
+              For sale · {usd(listing.price_sol)}
+            </span>
+          )}
           {!isSingle && (
             <span className="inline-flex items-center gap-1 rounded-md border border-white/40 bg-white/30 px-2 py-1 text-[11px] font-semibold text-foreground backdrop-blur-md">
               <Layers size={11} strokeWidth={2} />
@@ -455,11 +524,23 @@ function GroupCard({
               <DropdownMenuItem asChild>
                 <Link href={`/map#${firstTile.h3}`}>View on map</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onAction('list', firstTile)}>
-                List for sale{!isSingle && ' (first hex)'}
-              </DropdownMenuItem>
+              {listing ? (
+                <DropdownMenuItem onSelect={() => onAction('cancel', firstTile)}>
+                  Cancel listing ({usd(listing.price_sol)})
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onSelect={() => onAction('list', firstTile)}>
+                  List for sale{!isSingle && ' (first hex)'}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onSelect={() => onAction('transfer', firstTile)}>
                 Transfer{!isSingle && ' (first hex)'}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={() => onAction('raze', firstTile, g.tiles.map((t) => t.h3))}
+              >
+                Raze{!isSingle && ` property (${g.tiles.length} hexes)`}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => onAction('details', firstTile)}>
@@ -473,7 +554,7 @@ function GroupCard({
             {isSingle ? 'Paid' : 'Total paid'}
           </span>
           <span className="text-sm font-medium tabular-nums text-foreground">
-            {usd(g.totalSol)}
+            {fmtUsdValue(g.totalUsd)}
           </span>
         </div>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Mail, Wallet, Lock } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 import { useActiveWallet } from '@/lib/active-wallet';
 
 /**
@@ -53,9 +53,8 @@ export function SignInGate({
           </div>
         </div>
         <p className="mb-5 text-sm leading-relaxed text-foreground/70">
-          Your {label} is tied to a Solana wallet. Sign in with email, Google or
-          X - we&apos;ll create an embedded wallet for you - or connect an
-          existing Phantom, Solflare or Backpack wallet.
+          Your {label} is tied to your wallet. Log in with email, Google, X
+          or a wallet like MetaMask - one button, everything inside.
         </p>
 
         <div className="flex flex-col gap-2">
@@ -70,23 +69,7 @@ export function SignInGate({
                 Log in
               </div>
               <div className="text-[11.5px] text-foreground/60">
-                Email · Google · X - we make a wallet for you
-              </div>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={wallet.openWalletModal}
-            className="flex items-center gap-3 rounded-xl border border-white/45 bg-white/40 px-4 py-3 text-left transition-colors hover:bg-white/55"
-          >
-            <Wallet size={16} className="flex-none text-foreground/65" />
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-semibold text-foreground">
-                Connect wallet
-              </div>
-              <div className="text-[11.5px] text-foreground/60">
-                Phantom · Solflare · Backpack
+                Email · Google · X · MetaMask
               </div>
             </div>
           </button>

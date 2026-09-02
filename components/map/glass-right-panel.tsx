@@ -3,7 +3,6 @@
 import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle2, ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useActiveWallet } from '@/lib/active-wallet';
 import { useHexLocations, type HexLocation } from '@/lib/use-hex-locations';
 import { useTiles } from '@/lib/use-tiles';
@@ -14,6 +13,7 @@ import { hexCenter } from '@/lib/h3-utils';
 import { classifyTier } from '@/lib/tier';
 import { PRICING } from '@/lib/pricing';
 import { useUsdFmt } from '@/lib/usd';
+import { useActiveListings, useListingsVersion } from '@/lib/supabase-listings';
 import { BidDialog } from '@/components/bid-dialog';
 import { Flag } from '@/components/flag';
 import { HexPricingCard } from '@/components/map/hex-pricing-card';
@@ -62,6 +62,13 @@ export function GlassRightPanel({
   const { tiles: claimedCache } = useTiles(selectedArr);
   const registry = useClaimedRegistry();
   const usdFmt = useUsdFmt();
+  // Live asks, so an owned hex that is up for sale says so on its card.
+  const { listings } = useActiveListings(useListingsVersion());
+  const askByH3 = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const l of listings) m.set(l.h3_id, usdFmt(l.price_sol));
+    return m;
+  }, [listings, usdFmt]);
   const claimedTiles = useMemo(() => {
     const m = new Map<string, ClaimedView>();
     for (const h of selectedArr) {
@@ -70,9 +77,10 @@ export function GlassRightPanel({
         m.set(h, {
           owner: t.owner,
           username: null,
-          paidLabel: usdFmt(Number(t.pricePaid) / LAMPORTS_PER_SOL),
+          paidLabel: registry.get(h)?.priceUsd != null ? `$${registry.get(h)!.priceUsd.toFixed(2)}` : ' - ',
           claimedAtMs: t.claimedAt * 1000,
           imageUrl: registry.get(h)?.imageUrl ?? null,
+          askLabel: askByH3.get(h) ?? null,
         });
         continue;
       }
@@ -84,11 +92,12 @@ export function GlassRightPanel({
           paidLabel: `$${r.priceUsd.toFixed(4)}`,
           claimedAtMs: r.claimedAt,
           imageUrl: r.imageUrl,
+          askLabel: askByH3.get(h) ?? null,
         });
       }
     }
     return m;
-  }, [selectedArr, claimedCache, registry, usdFmt]);
+  }, [selectedArr, claimedCache, registry, askByH3]);
 
   const items = Array.from(selectedHexes).map((h3) => {
     const c = hexCenter(h3);
@@ -285,6 +294,8 @@ type ClaimedView = {
   paidLabel: string;
   claimedAtMs: number;
   imageUrl: string | null;
+  /** Formatted asking price when the hex is listed, else null. */
+  askLabel: string | null;
 };
 
 function SelectionBody({
@@ -641,15 +652,18 @@ function ClaimedHexView({
   const ownerHandle = info.username ?? info.owner;
   const wallet = useActiveWallet();
   const [bidOpen, setBidOpen] = useState(false);
-  const canBid = wallet.connected && wallet.address !== info.owner;
-  const isOwn = wallet.connected && wallet.address === info.owner;
+  // EVM addresses mix checksummed and lowercase forms depending on the
+  // source (wallet vs registry vs env) - every comparison must fold case.
+  const me = wallet.address?.toLowerCase();
+  const canBid = wallet.connected && me !== info.owner.toLowerCase();
+  const isOwn = wallet.connected && me === info.owner.toLowerCase();
   const isAdmin =
     wallet.connected &&
-    !!wallet.address &&
+    !!me &&
     (process.env.NEXT_PUBLIC_ADMIN_WALLETS ?? '')
       .split(',')
-      .map((a) => a.trim())
-      .includes(wallet.address);
+      .map((a) => a.trim().toLowerCase())
+      .includes(me);
 
   // The property = every hex the owner claimed in the same transaction
   // (same claimed-at second, matching the tile-groups convention). One
@@ -772,10 +786,16 @@ function ClaimedHexView({
             </div>
             <div>
               <div className="uppercase tracking-wider text-white/55">Status</div>
-              <div className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-white/70">
-                <CheckCircle2 size={12} />
-                Owned
-              </div>
+              {info.askLabel ? (
+                <div className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-semibold text-emerald-300">
+                  For sale · {info.askLabel}
+                </div>
+              ) : (
+                <div className="mt-0.5 inline-flex items-center gap-1 text-[12.5px] font-medium text-white/70">
+                  <CheckCircle2 size={12} />
+                  Owned
+                </div>
+              )}
             </div>
           </div>
         </div>

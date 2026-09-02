@@ -1,152 +1,134 @@
 'use client';
 
-import type { Map as MapboxMap, GeoJSONSource } from 'mapbox-gl';
-import { cellToBoundary, cellToLatLng } from 'h3-js';
+import type { Map as MapboxMap } from 'mapbox-gl';
+import { cellToBoundary } from 'h3-js';
 import type { ClaimedInfo } from './use-claimed-registry';
 
 /**
- * Renders property images INSIDE their hexes (the on-map layer, visible
- * from the zoom where the grid appears). One bitmap per property: the
- * image is clipped to the property's exact hexagon shape (H3 cell
- * orientation varies with longitude, so the clip path is computed from a
- * real cell boundary) and stamped as a symbol at every hex centre, sized
- * to match the cell's ground footprint at every zoom.
+ * Renders property images INSIDE their hexes. Each imaged hex gets its own
+ * geo-anchored raster: the photo is clipped to that cell's exact hexagon
+ * outline (H3 orientation varies with longitude, so the clip path comes
+ * from the real boundary) and pinned to the cell's ground coordinates, so
+ * it fills the hex edge to edge at every zoom and tilt. Only visible from
+ * the zoom where the grid itself appears.
  */
 
-const SOURCE = 'property-images';
-const LAYER = 'property-images-symbols';
+/** Must match MIN_ZOOM_FOR_HEXES in MapView - no picture without its hex. */
+const MIN_ZOOM = 16;
 /** Bitmap edge in px - one hex is at most ~600px on screen at z22. */
 const BITMAP = 512;
-const MIN_ZOOM = 14.5;
+const M_PER_DEG_LAT = 111_320;
 
-const loadedIcons = new Set<string>();
-const inFlight = new Set<string>();
+const sourceId = (h3: string) => `prop-img:${h3}`;
+const layerId = (h3: string) => `prop-img-layer:${h3}`;
+
+/** url -> hex-clipped PNG data URL (one bitmap per property photo). */
+const bitmaps = new Map<string, Promise<string>>();
+/** h3 -> url currently placed on the map. */
+const placed = new Map<string, string>();
 
 export function syncPropertyImages(
   map: MapboxMap,
   registry: Map<string, ClaimedInfo>,
   beforeLayer?: string,
 ): void {
-  ensureLayer(map, beforeLayer);
+  const wanted = new Map<string, string>();
+  for (const [h3, info] of registry) if (info.imageUrl) wanted.set(h3, info.imageUrl);
 
-  // Group image-bearing hexes by URL (one property = one URL).
-  const byUrl = new Map<string, string[]>();
-  for (const [h3, info] of registry) {
-    if (info.imageUrl) {
-      const list = byUrl.get(info.imageUrl);
-      if (list) list.push(h3);
-      else byUrl.set(info.imageUrl, [h3]);
+  // Drop hexes whose image was removed or replaced.
+  for (const [h3, url] of placed) {
+    if (wanted.get(h3) !== url) {
+      removeHex(map, h3);
+      placed.delete(h3);
     }
   }
 
-  const features: GeoJSON.Feature[] = [];
-  for (const [url, h3s] of byUrl) {
-    const iconId = `prop:${url}`;
-    if (!loadedIcons.has(iconId) && !inFlight.has(iconId)) {
-      inFlight.add(iconId);
-      void makeHexIcon(url, h3s[0])
-        .then((bitmap) => {
-          if (!map.hasImage(iconId)) map.addImage(iconId, bitmap);
-          loadedIcons.add(iconId);
-          // Re-run so the features referencing this icon appear.
-          syncPropertyImages(map, registry, beforeLayer);
-        })
-        .catch(() => {
-          /* broken image - hex simply keeps its plain owner fill */
-        })
-        .finally(() => inFlight.delete(iconId));
-    }
-    if (!loadedIcons.has(iconId)) continue;
+  for (const [h3, url] of wanted) {
+    // A style toggle wipes custom sources; re-place anything that vanished.
+    if (placed.get(h3) === url && map.getSource(sourceId(h3))) continue;
+    placed.set(h3, url);
 
-    for (const h3 of h3s) {
-      const [lat, lng] = cellToLatLng(h3);
-      features.push({
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [lng, lat] },
-        properties: { icon: iconId, s10: iconScaleAtZ10(h3, lat) },
+    let bmp = bitmaps.get(url);
+    if (!bmp) {
+      bmp = makeHexBitmap(url, h3);
+      bitmaps.set(url, bmp);
+    }
+    void bmp
+      .then((dataUrl) => {
+        // Registry may have moved on while the image loaded.
+        if (placed.get(h3) !== url || map.getSource(sourceId(h3))) return;
+        map.addSource(sourceId(h3), {
+          type: 'image',
+          url: dataUrl,
+          coordinates: bitmapCorners(h3),
+        });
+        map.addLayer(
+          {
+            id: layerId(h3),
+            type: 'raster',
+            source: sourceId(h3),
+            minzoom: MIN_ZOOM,
+            paint: {
+              'raster-opacity': 0.92,
+              'raster-fade-duration': 0,
+              'raster-resampling': 'linear',
+            },
+          },
+          beforeLayer && map.getLayer(beforeLayer) ? beforeLayer : undefined,
+        );
+      })
+      .catch(() => {
+        // Broken image: the hex simply keeps its plain owner fill.
+        bitmaps.delete(url);
+        placed.delete(h3);
       });
-    }
   }
-
-  const src = map.getSource(SOURCE) as GeoJSONSource | undefined;
-  src?.setData({ type: 'FeatureCollection', features });
 }
 
-function ensureLayer(map: MapboxMap, beforeLayer?: string): void {
-  if (map.getSource(SOURCE)) return;
-  map.addSource(SOURCE, {
-    type: 'geojson',
-    data: { type: 'FeatureCollection', features: [] },
-  });
-  map.addLayer(
-    {
-      id: LAYER,
-      type: 'symbol',
-      source: SOURCE,
-      minzoom: MIN_ZOOM,
-      layout: {
-        'icon-image': ['get', 'icon'],
-        'icon-allow-overlap': true,
-        'icon-ignore-placement': true,
-        // s10 = icon-size that renders the hex at true scale at zoom 10;
-        // doubling per zoom level keeps it glued to the ground.
-        'icon-size': [
-          'interpolate',
-          ['exponential', 2],
-          ['zoom'],
-          10,
-          ['get', 's10'],
-          24,
-          ['*', ['get', 's10'], 16384],
-        ],
-      },
-      paint: { 'icon-opacity': 0.92 },
-    },
-    beforeLayer && map.getLayer(beforeLayer) ? beforeLayer : undefined,
-  );
+function removeHex(map: MapboxMap, h3: string): void {
+  if (map.getLayer(layerId(h3))) map.removeLayer(layerId(h3));
+  if (map.getSource(sourceId(h3))) map.removeSource(sourceId(h3));
 }
 
 /**
- * icon-size multiplier at zoom 10 so BITMAP px covers the hex's real
- * ground width at that zoom (Web Mercator metres-per-pixel at the lat).
+ * The square bitmap covers the hex's longitude span, centred on the hex.
+ * These are its four corners in the order Mapbox wants: TL, TR, BR, BL.
  */
-function iconScaleAtZ10(h3: string, lat: number): number {
-  const widthM = hexWidthMeters(h3);
-  const mppZ10 = (156543.03392 * Math.cos((lat * Math.PI) / 180)) / 2 ** 10;
-  return widthM / mppZ10 / BITMAP;
+type Corner = [number, number];
+
+function bitmapCorners(h3: string): [Corner, Corner, Corner, Corner] {
+  const g = hexGeometry(h3);
+  const halfLat = g.spanM / 2 / M_PER_DEG_LAT;
+  const midLat = (g.minLat + g.maxLat) / 2;
+  return [
+    [g.minLng, midLat + halfLat],
+    [g.maxLng, midLat + halfLat],
+    [g.maxLng, midLat - halfLat],
+    [g.minLng, midLat - halfLat],
+  ];
 }
 
-function hexWidthMeters(h3: string): number {
+function hexGeometry(h3: string) {
   const b = cellToBoundary(h3); // [lat, lng] x6
-  const lat0 = (b[0][0] * Math.PI) / 180;
-  const mPerDegLng = 111_320 * Math.cos(lat0);
-  let maxX = -Infinity, minX = Infinity;
-  for (const [, lng] of b) {
-    const x = lng * mPerDegLng;
-    if (x > maxX) maxX = x;
-    if (x < minX) minX = x;
-  }
-  return maxX - minX;
+  const lats = b.map((p) => p[0]);
+  const lngs = b.map((p) => p[1]);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+  const mPerDegLng = M_PER_DEG_LAT * Math.cos(((minLat + maxLat) / 2) * (Math.PI / 180));
+  return { b, minLat, maxLat, minLng, maxLng, mPerDegLng, spanM: (maxLng - minLng) * mPerDegLng };
 }
 
-/** Fetch the image and clip it to this cell's exact hexagon outline. */
-async function makeHexIcon(url: string, h3: string): Promise<ImageData> {
+/** Fetch the photo and clip it to this cell's exact hexagon outline. */
+async function makeHexBitmap(url: string, h3: string): Promise<string> {
   const img = await loadImage(url);
-
-  const b = cellToBoundary(h3);
-  const lat0 = (b[0][0] * Math.PI) / 180;
-  const mPerDegLat = 111_320;
-  const mPerDegLng = 111_320 * Math.cos(lat0);
-  const pts = b.map(([lat, lng]) => ({ x: lng * mPerDegLng, y: -lat * mPerDegLat }));
-  const minX = Math.min(...pts.map((p) => p.x));
-  const maxX = Math.max(...pts.map((p) => p.x));
-  const minY = Math.min(...pts.map((p) => p.y));
-  const maxY = Math.max(...pts.map((p) => p.y));
-  const spanX = maxX - minX;
-  const spanY = maxY - minY;
-  // Canvas is square BITMAP px = spanX metres wide; hexagon is centred.
-  const scale = BITMAP / spanX;
-  const yOff = (BITMAP - spanY * scale) / 2;
+  const g = hexGeometry(h3);
+  // Square canvas = spanM metres on both axes; the hexagon is centred.
+  const pxPerM = BITMAP / g.spanM;
+  const midLat = (g.minLat + g.maxLat) / 2;
+  const toPx = ([lat, lng]: number[]) => ({
+    x: (lng - g.minLng) * g.mPerDegLng * pxPerM,
+    y: BITMAP / 2 - (lat - midLat) * M_PER_DEG_LAT * pxPerM,
+  });
 
   const canvas = document.createElement('canvas');
   canvas.width = BITMAP;
@@ -155,22 +137,21 @@ async function makeHexIcon(url: string, h3: string): Promise<ImageData> {
   if (!ctx) throw new Error('no 2d context');
 
   ctx.beginPath();
-  pts.forEach((p, i) => {
-    const x = (p.x - minX) * scale;
-    const y = (p.y - minY) * scale + yOff;
+  g.b.forEach((p, i) => {
+    const { x, y } = toPx(p);
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   });
   ctx.closePath();
   ctx.clip();
 
-  // cover-fit the image into the square
+  // cover-fit the photo into the square
   const s = Math.max(BITMAP / img.width, BITMAP / img.height);
   const dw = img.width * s;
   const dh = img.height * s;
   ctx.drawImage(img, (BITMAP - dw) / 2, (BITMAP - dh) / 2, dw, dh);
 
-  return ctx.getImageData(0, 0, BITMAP, BITMAP);
+  return canvas.toDataURL('image/png');
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useMemo } from 'react';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import {
   ArrowUpRight,
   BarChart3,
@@ -17,10 +16,9 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { useUserProfile } from '@/lib/use-user-profile';
 import { SignInGate } from '@/components/auth/sign-in-gate';
 import { useUserTiles } from '@/lib/use-user-tiles';
-import { useSolPrice } from '@/lib/use-sol-price';
 import { useHexLocations } from '@/lib/use-hex-locations';
-import { useCounters } from '@/lib/use-counters';
-import { quoteOne } from '@/lib/quote';
+import { useCountryCounts } from '@/lib/use-country-counts';
+import { PRICING } from '@/lib/pricing';
 import { groupTilesByClaim } from '@/lib/tile-groups';
 import { cn } from '@/lib/utils';
 import type { ClaimedTile } from '@/types/tile';
@@ -48,25 +46,33 @@ function timeAgo(unixSec: number): string {
  * is no jarring nuance shift when navigating in.
  */
 export default function PortfolioPage() {
-  const SOL_USD = useSolPrice();
   const wallet = useActiveWallet();
   const profile = useUserProfile();
   const { tiles } = useUserTiles();
-  const counters = useCounters();
   const hexSet = useMemo(() => new Set(tiles?.map((t) => t.h3) ?? []), [tiles]);
   const locations = useHexLocations(hexSet);
+  // Mark-to-floor in dollars: each hex is valued at its country's CURRENT
+  // floor - the price the next claim pays. Same model as /api/owner.
+  const isos = useMemo(
+    () => (tiles ?? []).map((t) => locations.get(t.h3)?.countryCode).filter((x): x is string => Boolean(x)),
+    [tiles, locations],
+  );
+  const countryCounts = useCountryCounts(isos);
+  const floorUsd = (h3: string) => {
+    const iso = locations.get(h3)?.countryCode ?? 'INTL';
+    const count = countryCounts.get(iso) ?? 0;
+    return PRICING.BASE_FLOOR_USD + count * PRICING.SLOPE_PER_CLAIM_USD;
+  };
 
   const derived = useMemo(() => {
     const list: ClaimedTile[] = tiles ?? [];
-    let spentLamports = 0n;
-    let valueLamports = 0n;
+    let spent = 0;
+    let value = 0;
     for (const t of list) {
-      spentLamports += t.pricePaid;
-      valueLamports += quoteOne(t.tier, counters[t.tier]);
+      spent += t.paidUsd;
+      value += floorUsd(t.h3);
     }
-    const spent = Number(spentLamports) / LAMPORTS_PER_SOL;
-    const value = Number(valueLamports) / LAMPORTS_PER_SOL;
-    const retSol = value - spent;
+    const retSol = value - spent; // dollars (name kept for the render below)
     const roiPct = spent > 0 ? (retSol / spent) * 100 : 0;
 
     const now = Date.now() / 1000;
@@ -76,11 +82,8 @@ export default function PortfolioPage() {
     const tileGroups = groupTilesByClaim(list, locations);
 
     const properties = tileGroups.slice(0, 6).map((g) => {
-      const cur = g.tiles.reduce(
-        (s, t) => s + Number(quoteOne(t.tier, counters[t.tier])),
-        0,
-      );
-      const paid = g.tiles.reduce((s, t) => s + Number(t.pricePaid), 0);
+      const cur = g.tiles.reduce((s, t) => s + floorUsd(t.h3), 0);
+      const paid = g.tiles.reduce((s, t) => s + t.paidUsd, 0);
       const roi = paid > 0 ? (cur - paid) / paid : 0;
       const isSingle = g.tiles.length === 1;
       return {
@@ -90,8 +93,8 @@ export default function PortfolioPage() {
         countryName: g.countryName,
         tier: tierName(g.representativeTier),
         count: g.tiles.length,
-        paidUsd: (paid / LAMPORTS_PER_SOL) * SOL_USD,
-        valueUsd: (cur / LAMPORTS_PER_SOL) * SOL_USD,
+        paidUsd: paid,
+        valueUsd: cur,
         roiPct: roi * 100,
         when: timeAgo(g.claimedAt),
         firstH3: g.tiles[0].h3,
@@ -126,7 +129,7 @@ export default function PortfolioPage() {
         key: g.key,
         place,
         count: g.tiles.length,
-        amountUsd: g.totalSol * SOL_USD,
+        amountUsd: g.totalUsd,
         when: timeAgo(g.claimedAt),
       };
     });
@@ -143,7 +146,7 @@ export default function PortfolioPage() {
       activity,
       propertyCount: tileGroups.length,
     };
-  }, [tiles, counters, locations, SOL_USD]);
+  }, [tiles, locations, countryCounts]);
 
   const displayName = profile.username
     ? `@${profile.username}`
@@ -179,7 +182,7 @@ export default function PortfolioPage() {
         <KpiCard
           icon={<BarChart3 size={16} strokeWidth={1.8} />}
           label="Total portfolio value"
-          value={`$${fmtUsd(derived.value * SOL_USD)}`}
+          value={`$${fmtUsd(derived.value)}`}
           delta={
             derived.spent > 0
               ? `${derived.roiPct >= 0 ? '+' : ''}${derived.roiPct.toFixed(1)}% vs spent`
@@ -312,7 +315,7 @@ export default function PortfolioPage() {
           </div>
           <div className="flex items-baseline gap-3">
             <span className="text-3xl font-semibold tabular-nums tracking-tight text-foreground">
-              {derived.retSol < 0 ? '−' : ''}${fmtUsd(Math.abs(derived.retSol) * SOL_USD)}
+              {derived.retSol < 0 ? '−' : ''}${fmtUsd(Math.abs(derived.retSol))}
             </span>
             <span
               className={cn(
@@ -328,7 +331,7 @@ export default function PortfolioPage() {
             </span>
           </div>
           <p className="mt-2 text-xs text-foreground/55">
-            vs. ${fmtUsd(derived.spent * SOL_USD)} spent
+            vs. ${fmtUsd(derived.spent)} spent
           </p>
         </section>
 
