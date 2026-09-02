@@ -9,5 +9,15 @@
   "keeper": "0xa5035b1dB2e1b07F64FFe731cC992Ff8088c0F44",
   "deployBlock": 52736775,
   "deployedAt": "2026-09-02",
-  "note": "80/15/5 + owner-guarded stand-in (sVAVA). Replaces 0xa2Fce... (open-mint stand-in was a free stake-griefing lever); zero claims on any predecessor"
+  "note": "80/15/5 + owner-guarded stand-in (sVAVA). Replaces 0xa2Fce... (open-mint stand-in was a free stake-griefing lever); zero claims on any predecessor",
+  "vavaToken": "0x0967afE6dC2Af73aDb9E2d62195ebCDEe37324b5",
+  "v4Swapper": "0xd1bd2084d6031020775093b036309df476be9f3a",
+  "v4Pool": {
+    "id": "0x377852f4e20c92d1dbedcf40f8a3da4f4dc6fb0a848e2be6a43add54f9ce8e0b",
+    "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+    "hooks": "0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044",
+    "fee": 0,
+    "tickSpacing": 200
+  },
+  "mintLockedTx": "0x9255a6e302bf6f906f1af101ae465b768cc5c97a0cd181d5eeacf9a57ac1cede"
 }
