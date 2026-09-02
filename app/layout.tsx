@@ -1,9 +1,17 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 import 'flag-icons/css/flag-icons.min.css';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Providers } from './providers';
+
+// Every surface is near-black; without an explicit theme-color iOS Safari
+// tints its top/bottom bars a mismatched slate. viewport-fit lets the page
+// paint into the safe areas so the app runs edge to edge.
+export const viewport: Viewport = {
+  themeColor: '#000000',
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://vavaworld.fun'),
