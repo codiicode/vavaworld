@@ -37,18 +37,21 @@ export function groupTilesByClaim(
   tiles: ClaimedTile[],
   locations: Map<string, HexLocation | undefined>,
 ): TileGroup[] {
-  // Bucket by claimedAt second - Postgres `now()` is transaction-start, and
-  // Solana block_time has 1-second granularity, so all tiles claimed in one TX
-  // share the same value.
-  const buckets = new Map<number, ClaimedTile[]>();
+  // Bucket by claim TX HASH - the exact "bought together" boundary. Mirror
+  // timestamps drift seconds apart under load, so time-bucketing split real
+  // purchases; the hash never lies. Rows without one (pre-backfill edge
+  // cases) fall back to the old claimedAt-second bucket.
+  const buckets = new Map<string, ClaimedTile[]>();
   for (const t of tiles) {
-    const arr = buckets.get(t.claimedAt);
+    const key = t.tx && t.tx.startsWith('0x') ? t.tx : `t:${t.claimedAt}`;
+    const arr = buckets.get(key);
     if (arr) arr.push(t);
-    else buckets.set(t.claimedAt, [t]);
+    else buckets.set(key, [t]);
   }
 
   const out: TileGroup[] = [];
-  for (const [claimedAt, list] of buckets) {
+  for (const [bucketKey, list] of buckets) {
+    const claimedAt = Math.min(...list.map((t) => t.claimedAt));
     const sorted = [...list].sort((a, b) => (a.h3 < b.h3 ? -1 : 1));
     const totalUsd = sorted.reduce((s, t) => s + t.paidUsd, 0);
 
@@ -100,7 +103,7 @@ export function groupTilesByClaim(
     const citiesLabel = topCities.length > 0 ? topCities.join(' · ') + more : '-';
 
     out.push({
-      key: String(claimedAt),
+      key: bucketKey,
       tiles: sorted,
       claimedAt,
       totalUsd,

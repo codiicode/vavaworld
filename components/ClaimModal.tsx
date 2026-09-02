@@ -203,7 +203,7 @@ export function ClaimModal({
         }
       }
 
-      const mirrorChunk = async (q: (typeof quotes)[number]) => {
+      const mirrorChunk = async (q: (typeof quotes)[number], chunkTx: string) => {
         // Mirror into Supabase (registry + pricing ledger). The server
         // verifies on-chain ownership before accepting.
         const mirrors = await Promise.allSettled(
@@ -211,7 +211,7 @@ export function ClaimModal({
             resilientFetch('/api/claim', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ h3, owner, quotedPriceUsd: (q.perHexUsdFull ?? q.perHexUsd)[i] }),
+              body: JSON.stringify({ h3, owner, txHash: chunkTx, quotedPriceUsd: (q.perHexUsdFull ?? q.perHexUsd)[i] }),
             }).then((r) => (r.ok || r.status === 409 ? h3 : null)),
           ),
         );
@@ -225,7 +225,7 @@ export function ClaimModal({
       for (const q of quotes) {
         const hash = await wallet.writeContract(buildClaimCall(q));
         await client.waitForTransactionReceipt({ hash });
-        await mirrorChunk(q);
+        await mirrorChunk(q, hash);
         done += 1;
         setProgress({ done, total: quotes.length });
         lastSig = hash;

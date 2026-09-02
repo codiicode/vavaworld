@@ -39,6 +39,7 @@ function toClaimedTile(h3: string, hex: HexTuple): ClaimedTile | null {
     tier: (Number(hex[2]) || 3) as Tier,
     claimedAt: Number(hex[1]),
     paidUsd: 0,
+    tx: null,
   };
 }
 

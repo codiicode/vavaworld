@@ -13,4 +13,5 @@ export type ClaimedTile = {
   tier: Tier;
   claimedAt: number;      // unix seconds
   paidUsd: number;        // dollars - from the claim mirror (registry)
+  tx: string | null;      // claim tx hash - the property grouping key
 };

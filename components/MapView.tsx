@@ -742,14 +742,14 @@ export function MapView({
         // convention property images and moderation already use). Clicking
         // any cell of it toggles the whole property as one unit.
         const group = [h3];
+        const myTx = claimed.tx;
         for (const [id, v] of claimedRegistry) {
-          if (
-            id !== h3 &&
-            v.owner === claimed.owner &&
-            Math.abs(v.claimedAt - claimed.claimedAt) < 2000
-          ) {
-            group.push(id);
-          }
+          if (id === h3 || v.owner !== claimed.owner) continue;
+          const same =
+            myTx && myTx.startsWith('0x')
+              ? v.tx === myTx
+              : Math.abs(v.claimedAt - claimed.claimedAt) < 2000;
+          if (same) group.push(id);
         }
         const on = next.has(h3);
         for (const id of group) {

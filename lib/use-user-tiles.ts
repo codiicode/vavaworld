@@ -41,6 +41,7 @@ export function useUserTiles(): {
         tier: classifyTier(c.lat, c.lng),
         claimedAt: Math.floor(info.claimedAt / 1000),
         paidUsd: info.priceUsd,
+        tx: info.tx,
       });
     }
     mine.sort((a, b) => b.claimedAt - a.claimedAt);

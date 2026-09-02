@@ -17,12 +17,12 @@ const PAGE = 1000; // Supabase silently caps un-ranged selects at 1000 rows
 
 export async function GET() {
   const sb = getServerSupabase();
-  type Row = { h3_id: string; owner: string; purchase_price: number; claimed_at: string; image_url: string | null };
+  type Row = { h3_id: string; owner: string; purchase_price: number; claimed_at: string; image_url: string | null; tx_hash: string | null };
   const hexes: Row[] = [];
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await sb
       .from('hexes')
-      .select('h3_id, owner, purchase_price, claimed_at, image_url')
+      .select('h3_id, owner, purchase_price, claimed_at, image_url, tx_hash')
       .order('claimed_at', { ascending: true })
       .range(from, from + PAGE - 1);
     if (error) {
@@ -49,6 +49,7 @@ export async function GET() {
         priceUsd: Number(h.purchase_price),
         claimedAt: h.claimed_at,
         imageUrl: h.image_url ?? null,
+        tx: h.tx_hash ?? null,
       })),
     },
     { headers: { 'Cache-Control': 'public, max-age=0, must-revalidate, s-maxage=15, stale-while-revalidate=60' } },

@@ -671,17 +671,17 @@ function ClaimedHexView({
   const registry = useClaimedRegistry();
   const propertyH3s = useMemo(() => {
     if (!isOwn && !isAdmin) return [item.h3];
-    if (!isOwn && isAdmin) {
-      // Moderation clears the whole offending property, not one cell.
-      const out: string[] = [];
-      for (const [h3, v] of registry) {
-        if (v.owner === info.owner && Math.abs(v.claimedAt - info.claimedAtMs) < 2000) out.push(h3);
-      }
-      return out.length > 0 ? out : [item.h3];
-    }
+    // Same claim TX = same property (fallback: the old 2s window for rows
+    // that somehow lack a hash).
+    const myTx = registry.get(item.h3)?.tx ?? null;
+    const sameProperty = (v: { owner: string; claimedAt: number; tx: string | null }) =>
+      v.owner === info.owner &&
+      (myTx && myTx.startsWith('0x')
+        ? v.tx === myTx
+        : Math.abs(v.claimedAt - info.claimedAtMs) < 2000);
     const out: string[] = [];
     for (const [h3, v] of registry) {
-      if (v.owner === info.owner && Math.abs(v.claimedAt - info.claimedAtMs) < 2000) out.push(h3);
+      if (sameProperty(v)) out.push(h3);
     }
     return out.length > 0 ? out : [item.h3];
   }, [isOwn, isAdmin, registry, info.owner, info.claimedAtMs, item.h3]);
