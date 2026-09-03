@@ -34,7 +34,11 @@ export async function verifySolanaPayment(args: {
       maxSupportedTransactionVersion: 0,
     });
   } catch (e) {
-    return { ok: false, reason: `rpc: ${e instanceof Error ? e.message : String(e)}`, retry: true };
+    const msg = e instanceof Error ? e.message : String(e);
+    // A malformed signature is never going to finalize - don't make the
+    // client poll for it.
+    const permanent = /Invalid param|WrongSize|invalid base58/i.test(msg);
+    return { ok: false, reason: `rpc: ${msg}`, retry: !permanent };
   }
   if (!tx) return { ok: false, reason: 'transaction not finalized yet', retry: true };
   if (tx.meta?.err) return { ok: false, reason: 'transaction failed on-chain', retry: false };
