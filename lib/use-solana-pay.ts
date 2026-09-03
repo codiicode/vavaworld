@@ -24,6 +24,7 @@ import { resilientFetch } from './resilient-fetch';
 import {
   MEMO_PROGRAM_ID,
   SOLANA_CLUSTER,
+  SOLANA_PAY_ENABLED,
   SOLANA_RPC_URL,
   USDC_MINT,
   type ForeignCurrency,
@@ -42,20 +43,26 @@ export type ForeignQuote = {
 
 export type SolanaPayPhase = 'signing' | 'verifying' | 'funding';
 
+export type SolanaPay = {
+  ready: boolean;
+  address: string | null;
+  pay: (q: ForeignQuote, onPhase?: (p: SolanaPayPhase) => void) => Promise<{ signature: string; fundTx: string }>;
+};
+
 /**
  * Pays a foreign quote from the user's Privy Solana wallet, then waits for
  * the server to verify the transfer and fund the EVM wallet. Resolves once
  * the ETH leg has landed - the caller then runs the normal on-chain action
  * (claim / buy / placeBid) from the EVM wallet as if the user paid in ETH.
  */
-export function useSolanaPay() {
+function useSolanaPayLive(): SolanaPay {
   const { wallets, ready } = useSolanaWallets();
   const { signAndSendTransaction } = useSignAndSendTransaction();
   const { createWallet } = useCreateWallet();
   const wallet = wallets[0] ?? null;
 
-  const pay = useCallback(
-    async (q: ForeignQuote, onPhase?: (p: SolanaPayPhase) => void): Promise<{ signature: string; fundTx: string }> => {
+  const pay = useCallback<SolanaPay['pay']>(
+    async (q, onPhase) => {
       // Users who logged in before Solana wallets were switched on get one
       // created on the spot.
       const w = wallet ?? (await createWallet().then(() => null));
@@ -123,4 +130,24 @@ export function useSolanaPay() {
   );
 
   return { ready, address: wallet?.address ?? null, pay };
+}
+
+/**
+ * With the rail switched off the Privy Solana hooks must not even be
+ * called - without a Solana config in the provider they read a null
+ * connectors context and crash the page. The flag is a build-time
+ * constant, so picking the implementation once at module load keeps hook
+ * order stable across renders.
+ */
+function useSolanaPayDisabled(): SolanaPay {
+  const pay = useCallback<SolanaPay['pay']>(async () => {
+    throw new Error('Solana payments are not enabled');
+  }, []);
+  return { ready: false, address: null, pay };
+}
+
+const useSolanaPayImpl = SOLANA_PAY_ENABLED ? useSolanaPayLive : useSolanaPayDisabled;
+
+export function useSolanaPay(): SolanaPay {
+  return useSolanaPayImpl();
 }
