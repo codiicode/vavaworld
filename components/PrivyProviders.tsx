@@ -3,6 +3,7 @@
 import { PrivyProvider } from '@privy-io/react-auth';
 import { type ReactNode } from 'react';
 import { robinhoodChain } from '@/lib/evm';
+import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
 import { SOLANA_PAY_ENABLED } from '@/lib/solana-pay-config';
 
 /**
@@ -56,6 +57,12 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
         },
         defaultChain: robinhoodChain,
         supportedChains: [robinhoodChain],
+        // Privy's Solana hooks read `externalWallets.solana.connectors`
+        // even for embedded wallets; without it they dereference null.
+        // We never show external Solana wallets, but the context must exist.
+        ...(SOLANA_PAY_ENABLED
+          ? { externalWallets: { solana: { connectors: toSolanaWalletConnectors() } } }
+          : {}),
       }}
     >
       {children}
