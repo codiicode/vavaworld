@@ -6,27 +6,14 @@ import {
   useSignAndSendTransaction,
   useCreateWallet,
 } from '@privy-io/react-auth/solana';
-import {
-  Connection,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-  TransactionInstruction,
-} from '@solana/web3.js';
-import {
-  createAssociatedTokenAccountIdempotentInstruction,
-  createTransferInstruction,
-  getAssociatedTokenAddressSync,
-} from '@solana/spl-token';
-import { Buffer } from 'buffer';
+import { Connection } from '@solana/web3.js';
 import bs58 from 'bs58';
+import { buildPaymentTransaction } from './solana-tx';
 import { resilientFetch } from './resilient-fetch';
 import {
-  MEMO_PROGRAM_ID,
   SOLANA_CLUSTER,
   SOLANA_PAY_ENABLED,
   SOLANA_RPC_URL,
-  USDC_MINT,
   type ForeignCurrency,
 } from './solana-pay-config';
 
@@ -71,31 +58,15 @@ function useSolanaPayLive(): SolanaPay {
 
       onPhase?.('signing');
       const conn = new Connection(SOLANA_RPC_URL, 'confirmed');
-      const payer = new PublicKey(solWallet.address);
-      const treasury = new PublicKey(q.treasury);
-      const amount = BigInt(q.amountUnits);
-      const tx = new Transaction();
-      if (q.currency === 'sol') {
-        tx.add(SystemProgram.transfer({ fromPubkey: payer, toPubkey: treasury, lamports: amount }));
-      } else {
-        const mint = new PublicKey(USDC_MINT);
-        const from = getAssociatedTokenAddressSync(mint, payer);
-        const to = getAssociatedTokenAddressSync(mint, treasury);
-        // Idempotent create so a fresh treasury (no USDC account yet) can't
-        // make the first payment fail.
-        tx.add(createAssociatedTokenAccountIdempotentInstruction(payer, to, treasury, mint));
-        tx.add(createTransferInstruction(from, to, payer, amount));
-      }
-      tx.add(
-        new TransactionInstruction({
-          keys: [],
-          programId: new PublicKey(MEMO_PROGRAM_ID),
-          data: Buffer.from(q.memo, 'utf8'),
-        }),
-      );
       const { blockhash } = await conn.getLatestBlockhash('confirmed');
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = payer;
+      const tx = buildPaymentTransaction({
+        payer: solWallet.address,
+        treasury: q.treasury,
+        currency: q.currency,
+        amountUnits: BigInt(q.amountUnits),
+        memo: q.memo,
+        recentBlockhash: blockhash,
+      });
       const serialized = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
 
       const { signature } = await signAndSendTransaction({

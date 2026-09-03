@@ -78,6 +78,7 @@ Add a second service from the same repo, then set **Config Path** to
 | `KEEPER_SWAP` | mainnet | `reference` (default; devnet fixed-price credit) or `jupiter` (real SOL→$VAVA buy via Jupiter Order/Execute before each embed pass). |
 | `JUPITER_API_KEY` | optional | Keyless api.jup.ag access is 0.5 RPS — enough for one pass a minute. Set a key from Jupiter Portal for headroom. |
 | `JUPITER_BASE_URL` | optional | Defaults to `https://api.jup.ag/swap/v2`. |
+| `KEEPER_MAX_GAS_GWEI` | optional | Gas ceiling for embed passes (default `0.5`). Above it the keeper holds pending hexes for a calmer block instead of paying more gas than the $VAVA it locks. |
 | `KEEPER_MIN_SWAP_LAMPORTS` | optional | Skip a pass when total pending SOL is below this (default 1 000 000 = 0.001 SOL) so fee drag never eats dust. |
 
 The keeper reads the $VAVA mint from the on-chain config on every pass, so

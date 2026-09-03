@@ -50,6 +50,10 @@ const POOL_FEE = Number(process.env.POOL_FEE ?? 3000);
 const USDG_HOP_FEE = process.env.USDG_HOP_FEE ? Number(process.env.USDG_HOP_FEE) : null;
 const LOG_SPAN = BigInt(process.env.LOG_SPAN ?? 500_000);
 const EMBED_BATCH = Number(process.env.KEEPER_EMBED_BATCH ?? 150);
+/** Skip embed passes while gas is above this (gwei). Robinhood Chain idles
+ *  well under 0.1 gwei; launch rushes spiked past 1. */
+const MAX_GAS_GWEI = Number(process.env.KEEPER_MAX_GAS_GWEI ?? 0.5);
+const MAX_GAS_WEI = BigInt(Math.round(MAX_GAS_GWEI * 1e9));
 /** Reference mode prices VAVA at this many USD (devnet-style rehearsal). */
 const VAVA_USD = Number(process.env.VAVA_REFERENCE_USD ?? 0.0001);
 const ETH_USD_URL = process.env.SOL_PRICE_URL ?? 'https://vavaworld.net/api/sol-price';
@@ -377,6 +381,15 @@ async function runOnce() {
   const pending = await findPending(logs);
   if (pending.length === 0) {
     console.log('[keeper] nothing pending');
+    return;
+  }
+  // Gas gate: at launch-rush gas prices an embed can cost more than the
+  // $VAVA it locks. Escrow is safe in the contract, so wait the spike out
+  // rather than burn the keeper's float - pending hexes embed on the next
+  // calm pass.
+  const gasPrice = await pub.getGasPrice();
+  if (gasPrice > MAX_GAS_WEI) {
+    console.log(`[keeper] gas ${(Number(gasPrice) / 1e9).toFixed(3)} gwei > ceiling ${MAX_GAS_GWEI} gwei - holding ${pending.length} pending hex(es) for a calmer block`);
     return;
   }
 
