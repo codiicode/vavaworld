@@ -11,7 +11,8 @@ type ClaimRow = {
   username: string | null;
   country_iso: string;
   country_name: string | null;
-  purchase_price: number;
+  hex_count: number;
+  total_usd: number;
   claimed_at: string;
 };
 
@@ -35,7 +36,8 @@ export async function GET() {
   const SOL_USD = await getSolUsd();
   const sb = getServerSupabase();
   const [{ data: claims, error: e1 }, { data: sales, error: e2 }] = await Promise.all([
-    sb.rpc('recent_claims', { p_limit: 60 }),
+    // One purchase (claim tx) = one feed event, however many hexes it holds.
+    sb.rpc('recent_claim_groups', { p_limit: 60 }),
     sb.rpc('recent_sales', { p_limit: 60 }),
   ]);
   const err = e1 ?? e2;
@@ -50,7 +52,8 @@ export async function GET() {
     toUsername: r.username,
     countryIso: r.country_iso.toLowerCase(),
     countryName: r.country_name ?? r.country_iso,
-    priceSol: Number(r.purchase_price) / SOL_USD,
+    count: Number(r.hex_count),
+    priceSol: Number(r.total_usd) / SOL_USD,
     at: r.claimed_at,
   }));
 
@@ -63,6 +66,7 @@ export async function GET() {
     toUsername: r.buyer_username,
     countryIso: r.country_iso.toLowerCase(),
     countryName: r.country_name ?? r.country_iso,
+    count: 1,
     priceSol: Number(r.price_sol),
     at: r.sold_at,
   }));

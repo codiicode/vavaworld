@@ -29,7 +29,7 @@ type OwnerData = {
   returnUsd?: number;
   returnPct?: number;
   byCountry?: Array<{ iso: string; name: string; hexes: number; spentUsd: number; valueUsd?: number }>;
-  recentHexes?: Array<{ h3: string; iso: string; paidUsd: number; claimedAt: string }>;
+  recentHexes?: Array<{ h3: string; iso: string; count: number; paidUsd: number; claimedAt: string }>;
 };
 
 /**
@@ -263,7 +263,7 @@ function PropertyGrid({
         </div>
         {totalHexes > hexes.length && (
           <div className="text-[11px] text-foreground/50">
-            showing {hexes.length} most recent of {totalHexes.toLocaleString('en-US')}
+            latest {hexes.length} properties · {totalHexes.toLocaleString('en-US')} hexes total
           </div>
         )}
       </div>
@@ -292,6 +292,11 @@ function PropertyGrid({
                 <span className="absolute right-2 top-2 rounded border border-primary/30 bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-primary backdrop-blur-sm">
                   T{tier}
                 </span>
+                {h.count > 1 && (
+                  <span className="absolute left-2 top-2 rounded-md border border-white/15 bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold text-white/90 backdrop-blur-md">
+                    {h.count.toLocaleString('en-US')} hexes
+                  </span>
+                )}
               </div>
               <div className="flex items-center justify-between gap-2 p-2.5">
                 <div className="flex min-w-0 items-center gap-1.5">
@@ -301,7 +306,7 @@ function PropertyGrid({
                   </span>
                 </div>
                 <span className="flex-none text-[12px] font-semibold tabular-nums text-foreground/80">
-                  ${h.paidUsd.toFixed(4)}
+                  ${h.paidUsd.toFixed(2)}
                 </span>
               </div>
             </Link>

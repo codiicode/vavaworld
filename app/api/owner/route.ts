@@ -59,12 +59,8 @@ export async function GET(req: Request) {
   ] = await Promise.all([
     sb.rpc('owner_stats', { p_owner: address }),
     sb.rpc('owner_countries', { p_owner: address }),
-    sb
-      .from('hexes')
-      .select('h3_id, country_iso, purchase_price, claimed_at, image_url')
-      .eq('owner', address)
-      .order('claimed_at', { ascending: false })
-      .limit(12),
+    // Grouped by claim tx: one purchase = one property card.
+    sb.rpc('owner_properties', { p_owner: address, p_limit: 12 }),
   ]);
   const err = e1 ?? e2;
   if (err) return NextResponse.json({ error: err.message }, { status: 500 });
@@ -135,13 +131,15 @@ export async function GET(req: Request) {
     recentHexes: ((recent ?? []) as Array<{
       h3_id: string;
       country_iso: string;
-      purchase_price: number;
+      hex_count: number;
+      total_usd: number;
       claimed_at: string;
       image_url: string | null;
     }>).map((h) => ({
       h3: h.h3_id,
       iso: h.country_iso.toLowerCase(),
-      paidUsd: Number(h.purchase_price),
+      count: Number(h.hex_count),
+      paidUsd: Number(h.total_usd),
       claimedAt: h.claimed_at,
       imageUrl: h.image_url ?? null,
     })),

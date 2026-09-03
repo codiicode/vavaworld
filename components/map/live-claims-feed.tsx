@@ -19,6 +19,7 @@ type FeedEvent = {
   toUsername: string | null;
   countryIso: string;
   countryName: string;
+  count: number;
   at: string;
 };
 
@@ -81,7 +82,11 @@ export function LiveClaimsFeed() {
             <span className="text-[12px]">
               <span className="font-semibold">{who}</span>
               <span className="text-white/70">
-                {e.type === 'sale' ? ' bought in ' : ' claimed in '}
+                {e.type === 'sale'
+                  ? ' bought in '
+                  : e.count > 1
+                    ? ` claimed ${e.count.toLocaleString('en-US')} hexes in `
+                    : ' claimed in '}
               </span>
               <span className="font-medium">{where}</span>
             </span>

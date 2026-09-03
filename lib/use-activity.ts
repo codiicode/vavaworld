@@ -15,6 +15,7 @@ type ApiEvent = {
   toUsername: string | null;
   countryIso: string;
   countryName: string;
+  count: number;
   priceSol: number;
   at: string;
 };
@@ -49,7 +50,10 @@ export function useActivity(): { items: ActivityItem[]; loading: boolean } {
             id: `${e.type}-${e.h3Id}-${i}`,
             countryCode: e.countryIso,
             city: COUNTRY_NAME.get(e.countryIso) ?? e.countryName,
-            neighborhood: `${e.h3Id.slice(0, 5)}…${e.h3Id.slice(-4)}`,
+            neighborhood:
+              e.count > 1
+                ? `${e.count.toLocaleString('en-US')} hexes`
+                : `${e.h3Id.slice(0, 5)}…${e.h3Id.slice(-4)}`,
             fromAddr: e.from ?? '',
             toAddr: e.to,
             price: e.priceSol,

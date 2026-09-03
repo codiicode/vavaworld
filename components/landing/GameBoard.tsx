@@ -26,6 +26,7 @@ type Move = {
   countryName: string;
   to: string;
   toUsername: string | null;
+  count: number;
   at: string;
 };
 
@@ -172,7 +173,11 @@ export function GameBoard() {
               <Flag code={e.countryIso} size={16} />
               <span className="ftext">
                 <b>{e.toUsername ? `@${e.toUsername}` : short(e.to)}</b>{' '}
-                {e.type === 'sale' ? 'bought a hex in' : 'claimed a hex in'}{' '}
+                {e.type === 'sale'
+                  ? 'bought a hex in'
+                  : e.count > 1
+                    ? `claimed ${e.count.toLocaleString('en-US')} hexes in`
+                    : 'claimed a hex in'}{' '}
                 <span className="where">{e.countryName}</span>
               </span>
               <span className="fago">{ago(e.at)}</span>
