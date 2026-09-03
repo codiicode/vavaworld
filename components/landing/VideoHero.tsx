@@ -14,14 +14,13 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { LandingSections } from './LandingSections';
 import { useHeroMotion } from './useHeroMotion';
 import { AppDock } from './AppDock';
-import { useLandingStats, compact } from '@/lib/use-landing-stats';
+import { useLandingStats } from '@/lib/use-landing-stats';
 
 const VIDEO_URL = '/videos/hero-loop.mp4';
 
 /** Placeholder shown until the live figures arrive. */
 const HERO_FALLBACK = [
-  { k: 'Claimed today', v: ' - ' },
-  { k: 'Hexes left', v: ' - ' },
+  { k: 'Hexes claimed', v: ' - ' },
   { k: 'Floor', v: '$0.10' },
   { k: 'Owners', v: ' - ' },
 ];
@@ -155,8 +154,7 @@ export function VideoHero() {
   // Real figures from the same aggregates the app reads.
   const heroStats = stats
     ? [
-        { k: 'Claimed today', v: stats.claimedToday.toLocaleString('en-US') },
-        { k: 'Hexes left', v: compact(stats.tilesRemaining) },
+        { k: 'Hexes claimed', v: stats.totalClaimed.toLocaleString('en-US') },
         { k: 'Floor', v: '$0.10' },
         { k: 'Owners', v: stats.holders.toLocaleString('en-US') },
       ]
