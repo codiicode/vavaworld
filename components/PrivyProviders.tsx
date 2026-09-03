@@ -3,6 +3,7 @@
 import { PrivyProvider } from '@privy-io/react-auth';
 import { type ReactNode } from 'react';
 import { robinhoodChain } from '@/lib/evm';
+import { SOLANA_PAY_ENABLED } from '@/lib/solana-pay-config';
 
 /**
  * Privy in EVM mode for Robinhood Chain. One Log in button covers social
@@ -43,6 +44,11 @@ export function PrivyProviders({ children }: { children: ReactNode }) {
           ethereum: {
             createOnLogin: 'users-without-wallets',
           },
+          // The Solana rail pays from an embedded Solana wallet - still no
+          // external connects, the same login covers both chains.
+          ...(SOLANA_PAY_ENABLED
+            ? { solana: { createOnLogin: 'users-without-wallets' as const } }
+            : {}),
           // Email/social users already consented by logging in; the app's
           // own review step is the confirmation. External wallets
           // (MetaMask etc.) keep their native prompt - that is theirs.

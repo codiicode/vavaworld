@@ -2,6 +2,8 @@
 
 import { NATIVE_PAY, TILES_ABI, TILES_ADDRESS, h3ToUint64 } from './evm';
 import { resilientFetch } from './resilient-fetch';
+import type { ForeignCurrency } from './solana-pay-config';
+import type { ForeignQuote } from './use-solana-pay';
 
 /**
  * EVM claim settlement. One quote from /api/quote authorizes exactly one
@@ -30,11 +32,17 @@ export type EvmClaimQuote = {
   keeper: `0x${string}`;
 };
 
-export async function fetchQuotes(
+export type QuoteBundle = { quotes: EvmClaimQuote[]; foreign: ForeignQuote | null };
+
+/**
+ * Prices the basket. For 'sol' / 'usdc' the signed quotes are ETH quotes
+ * and `foreign` describes the Solana payment that funds them.
+ */
+export async function fetchQuoteBundle(
   h3s: string[],
   claimer: string,
-  currency: PayCurrency = 'eth',
-): Promise<EvmClaimQuote[]> {
+  currency: PayCurrency | ForeignCurrency = 'eth',
+): Promise<QuoteBundle> {
   const r = await resilientFetch('/api/quote', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -42,7 +50,15 @@ export async function fetchQuotes(
   });
   const j = await r.json();
   if (!r.ok) throw new Error(j.error ?? 'quote failed');
-  return j.quotes as EvmClaimQuote[];
+  return { quotes: j.quotes as EvmClaimQuote[], foreign: (j.foreign as ForeignQuote | undefined) ?? null };
+}
+
+export async function fetchQuotes(
+  h3s: string[],
+  claimer: string,
+  currency: PayCurrency = 'eth',
+): Promise<EvmClaimQuote[]> {
+  return (await fetchQuoteBundle(h3s, claimer, currency)).quotes;
 }
 
 /**

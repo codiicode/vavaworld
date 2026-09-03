@@ -97,6 +97,35 @@ liquidity on mainnet — the mode cannot be rehearsed on devnet, so keep
 
 ---
 
+## 2a. Solana payment rail (SOL / USDC)
+
+"Pay there, settle here." Off by default; nothing changes for users until
+both web-service variables below are set - no deploy needed to switch on.
+
+| Variable | Service | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_SOLANA_PAY` | web | `1` to show SOL/USDC in every Pay-with picker (claim, buy, bid). |
+| `NEXT_PUBLIC_SOLANA_TREASURY` | web | Solana address that receives payments. Both this and the flag must be set. |
+| `SOLANA_RPC_URL` | web | Server-side RPC used to verify payments (finalized). Paid endpoint recommended. |
+| `NEXT_PUBLIC_SOLANA_RPC_URL` | web | Browser RPC for building the transfer. |
+| `NEXT_PUBLIC_SOLANA_CLUSTER` | web | `mainnet` (default) or `devnet` for rehearsal. |
+| `INDEXER_API_SECRET` | keeper | Same value as the web service - authorises the keeper's sweep call. |
+
+Flow: `/api/quote` (or `/api/foreign-quote` for buy/bid) prices the action in
+SOL/USDC at the live rate +1% and opens a `foreign_payments` row. The user
+pays the treasury from the Privy Solana embedded wallet with the payment id
+in the memo. `/api/solana-pay` verifies the finalized transfer (recipient,
+amount, memo, signature never used before) and the web service's keeper key
+funds the payer's EVM wallet with the ETH the action needs plus gas. The
+user's own wallet then runs claim / buy / placeBid exactly like an ETH payer.
+The keeper calls `/api/solana-pay/sweep` each pass to re-drive any verified
+payment whose funding never landed.
+
+**Working capital:** the keeper key pays out ETH on every Solana purchase and
+the treasury accumulates SOL/USDC on Solana - rebalance SOL -> ETH on
+Robinhood Chain periodically and keep the keeper's ETH float above the
+largest expected purchase.
+
 ## 2b. If deploys sit at NEEDS_APPROVAL
 
 Railway can flag pushes as coming from an "external contributor" and hold

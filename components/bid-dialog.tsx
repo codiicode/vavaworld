@@ -10,6 +10,9 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { placeBidOnChain } from '@/lib/bid-chain';
 
 import { fmtUsdValue, useUsdFmt } from '@/lib/usd';
+import { PayWithPicker, solanaPhaseLabel, type PayChoice } from '@/components/foreign-pay';
+import { useSolanaPay, type ForeignQuote, type SolanaPayPhase } from '@/lib/use-solana-pay';
+import { resilientFetch } from '@/lib/resilient-fetch';
 type Phase = 'input' | 'signing' | 'done' | 'error';
 
 /**
@@ -42,6 +45,9 @@ export function BidDialog({
   const [phase, setPhase] = useState<Phase>('input');
   const [error, setError] = useState<string | null>(null);
   const [solUsd, setSolUsd] = useState<number | null>(null);
+  const [payWith, setPayWith] = useState<PayChoice>('eth');
+  const [solPhase, setSolPhase] = useState<SolanaPayPhase | null>(null);
+  const solana = useSolanaPay();
 
   useEffect(() => {
     if (!open) return;
@@ -75,12 +81,20 @@ export function BidDialog({
     setError(null);
     setPhase('signing');
     try {
-      await placeBidOnChain({
-        wallet,
-        h3,
-        // Typed in dollars, escrowed in native coin (micro-eth precision).
-        wei: BigInt(Math.round((parsed / solUsd) * 1e6)) * 10n ** 12n,
-      });
+      // Typed in dollars, escrowed in native coin (micro-eth precision).
+      const wei = BigInt(Math.round((parsed / solUsd) * 1e6)) * 10n ** 12n;
+      if (payWith !== 'eth') {
+        const r = await resilientFetch('/api/foreign-quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ purpose: 'bid', payer: wallet.address, wei: wei.toString(), reference: h3, currency: payWith }),
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error ?? 'Could not price in that currency');
+        await solana.pay(j.foreign as ForeignQuote, setSolPhase);
+        setSolPhase(null);
+      }
+      await placeBidOnChain({ wallet, h3, wei });
       setPhase('done');
       onPlaced?.();
     } catch (e) {
@@ -141,6 +155,15 @@ export function BidDialog({
                   <span>{Math.round((1 - parsed / askUsd) * 100)}% below ask</span>
                 )}
               </div>
+              <div className="mt-3">
+                <PayWithPicker value={payWith} onChange={setPayWith} disabled={phase === 'signing'} />
+              </div>
+              {payWith !== 'eth' && (
+                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+                  The escrow holds ETH on Robinhood Chain, so a declined or withdrawn offer is
+                  refunded in ETH to your wallet here - same value, different coin.
+                </p>
+              )}
             </div>
           )}
 
@@ -167,7 +190,7 @@ export function BidDialog({
             <Button disabled={!valid || phase === 'signing'} onClick={() => void submit()}>
               {phase === 'signing' ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 size={14} className="animate-spin" /> Sign in wallet…
+                  <Loader2 size={14} className="animate-spin" /> {solanaPhaseLabel(solPhase)}
                 </span>
               ) : (
                 'Place offer'

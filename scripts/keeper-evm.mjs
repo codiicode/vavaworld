@@ -63,6 +63,24 @@ const packCountry = (iso) =>
 /** Countries this process has pushed a president for - re-checked every
  *  pass so a coup or abdication propagates without enumerating the map. */
 const syncedCountries = new Set();
+/** Shared secret for the site's keeper-only endpoints (Solana-rail sweep). */
+const KEEPER_API_SECRET = process.env.INDEXER_API_SECRET ?? '';
+
+/**
+ * Solana-rail payments that were verified but never funded (tab closed,
+ * RPC blip) are re-driven by the site; the keeper just pokes it each pass
+ * so nobody's paid-for claim can sit stuck.
+ */
+async function sweepForeignPayments() {
+  if (!SITE_URL || !KEEPER_API_SECRET) return;
+  const r = await fetch(`${SITE_URL}/api/solana-pay/sweep`, {
+    method: 'POST',
+    headers: { 'x-keeper-secret': KEEPER_API_SECRET },
+  });
+  if (!r.ok) throw new Error(`sweep ${r.status}`);
+  const j = await r.json().catch(() => ({}));
+  if (j?.swept > 0) console.log(`[keeper] re-funded ${j.swept} stuck Solana payment(s)`);
+}
 
 const abi = JSON.parse(readFileSync(new URL('../lib/evm-abi.json', import.meta.url), 'utf-8')).abi;
 const routerAbi = parseAbi([
@@ -343,6 +361,11 @@ async function runOnce() {
   } catch (e) {
     // Throne sync must never block the buyback either.
     console.error('[keeper] president sync failed:', String(e).slice(0, 160));
+  }
+  try {
+    await sweepForeignPayments();
+  } catch (e) {
+    console.error('[keeper] foreign-payment sweep failed:', String(e).slice(0, 160));
   }
   // Pre-launch 'hold': registry healing and president sync run, but the
   // buyback must NOT - embedding stand-in VAVA would leave tokens in the

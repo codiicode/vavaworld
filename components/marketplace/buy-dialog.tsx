@@ -12,6 +12,9 @@ import { useActiveWallet } from '@/lib/active-wallet';
 import { dispatchListingsChanged } from '@/lib/supabase-listings';
 
 import { useUsdFmt } from '@/lib/usd';
+import { PayWithPicker, solanaPhaseLabel, type PayChoice } from '@/components/foreign-pay';
+import { useSolanaPay, type ForeignQuote, type SolanaPayPhase } from '@/lib/use-solana-pay';
+import { resilientFetch } from '@/lib/resilient-fetch';
 type Quote = {
   listingId: string;
   seller: string;
@@ -43,6 +46,9 @@ export function BuyDialog({
   const [quote, setQuote] = useState<Quote | null>(null);
   const [phase, setPhase] = useState<Phase>('quote');
   const [error, setError] = useState<string | null>(null);
+  const [payWith, setPayWith] = useState<PayChoice>('eth');
+  const [solPhase, setSolPhase] = useState<SolanaPayPhase | null>(null);
+  const solana = useSolanaPay();
 
   useEffect(() => {
     if (!open || !listing) return;
@@ -87,12 +93,31 @@ export function BuyDialog({
     setError(null);
     setPhase('signing');
     try {
+      const expectedWei = BigInt(quote.totalLamports) * 10n ** 9n;
+      if (payWith !== 'eth') {
+        // Solana rail: pay the ask there, get the ETH here, then buy as usual.
+        const r = await resilientFetch('/api/foreign-quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            purpose: 'buy',
+            payer: wallet.address,
+            wei: expectedWei.toString(),
+            reference: quote.listingId,
+            currency: payWith,
+          }),
+        });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.error ?? 'Could not price in that currency');
+        await solana.pay(j.foreign as ForeignQuote, setSolPhase);
+        setSolPhase(null);
+      }
       // One atomic contract call: pays the ask, splits seller/protocol
       // and flips ownership in the same transaction.
       const sig = await buyListingOnChain({
         wallet,
         h3: listing.h3,
-        expectedWei: BigInt(quote.totalLamports) * 10n ** 9n,
+        expectedWei,
       });
 
       setPhase('settling');
@@ -148,6 +173,10 @@ export function BuyDialog({
           )}
 
           {quote && phase !== 'done' && (
+            <PayWithPicker value={payWith} onChange={setPayWith} disabled={phase !== 'ready'} />
+          )}
+
+          {quote && phase !== 'done' && (
             <dl className="space-y-2 text-sm">
               <Row label="Price" value={`${usd(quote.priceSol)}`} bold />
               <Row
@@ -185,7 +214,7 @@ export function BuyDialog({
             >
               {phase === 'signing' ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 size={14} className="animate-spin" /> Sign in wallet…
+                  <Loader2 size={14} className="animate-spin" /> {solanaPhaseLabel(solPhase)}
                 </span>
               ) : phase === 'settling' ? (
                 <span className="flex items-center gap-2">

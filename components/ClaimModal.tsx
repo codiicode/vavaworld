@@ -11,7 +11,10 @@ import { useHexLocations } from '@/lib/use-hex-locations';
 import { useTiles } from '@/lib/use-tiles';
 import { useClaimedRegistry } from '@/lib/use-claimed-registry';
 import { useCountryCounts } from '@/lib/use-country-counts';
-import { buildClaimCall, buildUsdgApproveCall, fetchQuotes, type PayCurrency } from '@/lib/claim-chain-evm';
+import { buildClaimCall, buildUsdgApproveCall, fetchQuoteBundle, type PayCurrency } from '@/lib/claim-chain-evm';
+import { SOLANA_PAY_ENABLED, isForeignCurrency, type ForeignCurrency } from '@/lib/solana-pay-config';
+import { useSolanaPay, type SolanaPayPhase } from '@/lib/use-solana-pay';
+import { solanaPhaseLabel } from '@/components/foreign-pay';
 import { explorerTxUrl, USDG_ADDRESS } from '@/lib/evm';
 import { getPublicClient } from '@/lib/evm';
 import { dispatchClaimDone } from '@/lib/claim-events';
@@ -58,7 +61,10 @@ export function ClaimModal({
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   // '$' is the language of the UI; the currency picker only decides which
   // asset settles the dollars: ETH (default) or USDG 1:1.
-  const [currency, setCurrency] = useState<PayCurrency>('eth');
+  const [currency, setCurrency] = useState<PayCurrency | ForeignCurrency>('eth');
+  // Solana rail: paid there, settled here - the wallet then claims in ETH.
+  const solana = useSolanaPay();
+  const [solPhase, setSolPhase] = useState<SolanaPayPhase | null>(null);
 
   // NEVER charge for hexes someone already owns: the selection can contain
   // claimed cells (area select / mark-closest sweeps them up). Without this
@@ -167,10 +173,18 @@ export function ClaimModal({
       const succeeded: string[] = [];
       let lastSig = '';
 
-      const quotes = await fetchQuotes(items.map((it) => it.h3), owner, currency);
+      const bundle = await fetchQuoteBundle(items.map((it) => it.h3), owner, currency);
+      const quotes = bundle.quotes;
+
+      if (bundle.foreign) {
+        // Pay on Solana; the server funds this wallet with the ETH the
+        // signed quotes need. From here on it is a normal ETH claim.
+        await solana.pay(bundle.foreign, setSolPhase);
+        setSolPhase(null);
+      }
 
       const totalNeeded = quotes.reduce((s, q) => s + BigInt(q.totalWei), 0n);
-      if (currency === 'eth') {
+      if (currency !== 'usdg') {
         // Balance guard before the wallet is asked to sign anything.
         const balance = await client.getBalance({ address: owner });
         if (balance < totalNeeded) {
@@ -445,7 +459,28 @@ export function ClaimModal({
                   USDG
                 </button>
               )}
+              {SOLANA_PAY_ENABLED &&
+                (['sol', 'usdc'] as const).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCurrency(c)}
+                    className={`rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
+                      currency === c
+                        ? 'border-white/70 bg-white text-[#06080d]'
+                        : 'border-white/20 bg-white/[0.06] text-white/70 hover:bg-white/[0.12]'
+                    }`}
+                  >
+                    {c.toUpperCase()}
+                  </button>
+                ))}
             </div>
+            {isForeignCurrency(currency) && (
+              <p className="relative mt-2 text-[11.5px] leading-relaxed text-white/50">
+                Paid from your Solana wallet, settled on Robinhood Chain - the hexes land in the
+                same wallet as always. Includes a 1% conversion spread.
+              </p>
+            )}
 
             <div className="relative mt-5 flex gap-3">
               <button onClick={onClose} className={`${DARK_PILL} flex-1 py-3 text-[13.5px] font-medium`}>
@@ -470,7 +505,9 @@ export function ClaimModal({
               style={{ background: '#ffffff', animation: 'claim-pulse 1.6s ease-in-out infinite' }}
             />
             <span className={EYEBROW}>
-              {approving
+              {solPhase
+                ? solanaPhaseLabel(solPhase)
+                : approving
                 ? 'Step 1 of 2 · Allow USDG'
                 : progress && progress.total > 1
                   ? `Settling ${progress.done * 10 >= items.length ? items.length : progress.done * 10}/${items.length} hexes…`

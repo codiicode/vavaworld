@@ -4,6 +4,8 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { resolveHexCountry } from '@/lib/geo/country-resolver';
 import { lockedInfo } from '@/lib/locked-countries';
+import { createForeignQuote } from '@/lib/foreign-payments';
+import { SOLANA_PAY_ENABLED, isForeignCurrency } from '@/lib/solana-pay-config';
 import { H3_RESOLUTION, PRICING } from '@/lib/pricing';
 import { getEthUsd } from '@/lib/eth-price';
 import { getStakedWhole } from '@/lib/server-verify';
@@ -53,8 +55,14 @@ export async function POST(req: Request) {
     : [];
   const claimer = typeof body.claimer === 'string' ? body.claimer.trim() : '';
   // 'eth' (default) or 'usdg' - the $ path prices 1:1 in USDG, no oracle.
+  // 'sol' / 'usdc' are paid on Solana and settled here in ETH: the signed
+  // quote is a normal ETH quote, plus a foreign payment the keeper funds.
+  const foreign = isForeignCurrency(body.currency) ? body.currency : null;
   const currency = body.currency === 'usdg' ? 'usdg' : 'eth';
   const payToken = currency === 'usdg' ? USDG_ADDRESS : NATIVE_PAY;
+  if (foreign && !SOLANA_PAY_ENABLED) {
+    return NextResponse.json({ error: 'Solana payments are not enabled' }, { status: 503 });
+  }
   if (currency === 'usdg' && !USDG_ADDRESS) {
     return NextResponse.json({ error: 'USDG payments not configured' }, { status: 503 });
   }
@@ -182,12 +190,27 @@ export async function POST(req: Request) {
     });
   }
 
+  const totalWei = pricesWei.reduce((s, p) => s + p, 0n);
+  const totalUsd = perHexUsd.reduce((s, u) => s + u, 0);
+  const foreignQuote = foreign
+    ? await createForeignQuote({
+        purpose: 'claim',
+        reference: `claim:${h3s.length}:${expiry}`,
+        payerEvm: claimer,
+        usd: totalUsd,
+        weiNeeded: totalWei,
+        currency: foreign,
+        hexCount: h3s.length,
+      })
+    : null;
+
   return NextResponse.json({
     quotes,
-    totalWei: pricesWei.reduce((s, p) => s + p, 0n).toString(),
-    totalUsd: perHexUsd.reduce((s, u) => s + u, 0),
+    totalWei: totalWei.toString(),
+    totalUsd,
     discountPct: discount * 100,
     ethUsd,
     expiry: expiry.toString(),
+    ...(foreignQuote ? { foreign: foreignQuote } : {}),
   });
 }
