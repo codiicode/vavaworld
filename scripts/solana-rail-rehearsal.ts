@@ -33,8 +33,8 @@ async function main() {
   const treasury = Keypair.generate();
   process.env.NEXT_PUBLIC_SOLANA_TREASURY = treasury.publicKey.toBase58();
 
-  const { createForeignQuote, settleForeignPayment } = await import('./lib/foreign-payments');
-  const { MEMO_PROGRAM_ID } = await import('./lib/solana-pay-config');
+  const { createForeignQuote, settleForeignPayment } = await import('../lib/foreign-payments');
+  const { MEMO_PROGRAM_ID } = await import('../lib/solana-pay-config');
 
   const payerEvm = '0x1111111111111111111111111111111111111111';
   const q = await createForeignQuote({
